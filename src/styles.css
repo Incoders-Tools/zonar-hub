@@ -1,0 +1,4 @@
+:root { --bg: #ffffff; --fg: #1f2937; }
+:root[data-theme="dark"] { --bg: #0f172a; --fg: #f8fafc; }
+:root[data-theme="corporate"] { --bg: #f5f7fb; --fg: #102a43; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: Inter, Arial, sans-serif; }

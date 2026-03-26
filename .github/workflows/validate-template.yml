@@ -1,0 +1,19 @@
+name: Validate Template
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required files
+        run: |
+          test -f AGENTS.md
+          test -f .github/copilot-instructions.md
+          test -f docs/PROJECT_RULES.md
+          test -f src/app/app.config.ts
+          test -f src/app/app.routes.ts
