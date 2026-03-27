@@ -14,7 +14,7 @@ Core repository rules:
 - Keep business rules out of presentational components.
 - Every relevant screen must support loading, empty, error, and success states.
 - Every HTTP flow must comply with the global loader and blocking UX strategy defined by the repository.
-- Every new reusable or non-trivial component must include HTML, CSS, TypeScript, tests, and technical Markdown documentation.
+- Every new reusable or non-trivial component must include HTML, SCSS, TypeScript, tests, and technical Markdown documentation.
 - User-facing text must be prepared for i18n from day one. Do not hardcode UI copy that belongs in translation files.
 - Multi-theme support is mandatory. Use semantic design tokens and avoid hardcoded colors in components.
 - Full responsive behavior is mandatory.

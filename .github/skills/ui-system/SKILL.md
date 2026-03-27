@@ -26,7 +26,7 @@ The shared UI framework for Zonar Hub is Angular Material 3 + CDK. Keep the app 
 
 ## Styling principles
 - Use semantic design tokens.
-- Use modern CSS with custom properties, logical properties, gap, clamp, container queries when justified, and accessible focus states.
+- Use modern SCSS with custom properties, logical properties, gap, clamp, container queries when justified, and accessible focus states.
 - Never hardcode feature colors.
 - Prefer composition and variants over copy-paste components.
 

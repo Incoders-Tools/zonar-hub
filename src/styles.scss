@@ -6,9 +6,16 @@
   --muted: #475569;
   --border: #e2e8f0;
   --accent: #2563eb;
+
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --elevation-hero: 0 12px 32px rgba(15, 23, 42, 0.06);
+  --code-surface: rgba(148, 163, 184, 0.15);
+  --on-accent: #ffffff;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 

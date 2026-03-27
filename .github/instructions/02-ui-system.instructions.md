@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.ts,src/**/*.html,src/**/*.css,docs/copilot/templates/**/*,docs/architecture/design-system.md"
+applyTo: "src/**/*.ts,src/**/*.html,src/**/*.scss,docs/copilot/templates/**/*,docs/architecture/design-system.md"
 ---
 
 # UI System Instructions

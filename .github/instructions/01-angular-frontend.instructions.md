@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.ts,src/**/*.html,src/**/*.css"
+applyTo: "src/**/*.ts,src/**/*.html,src/**/*.scss"
 ---
 
 # Angular Frontend Instructions

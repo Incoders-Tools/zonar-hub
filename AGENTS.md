@@ -55,7 +55,7 @@ Always follow this order when reasoning about the project.
 - Use standalone Angular components
 - Prefer Signals for local state when applicable
 - Separate UI, orchestration, and API layers strictly
-- Use semantic, modern CSS and theme tokens (no hardcoded styles)
+- Use semantic, modern SCSS with theme tokens and SCSS custom properties (no hardcoded styles)
 
 ---
 
@@ -65,8 +65,9 @@ Every non-trivial component MUST include:
 
 - `.component.ts`
 - `.component.html`
-- `.component.css`
+- `.component.scss`
 - `.component.spec.ts`
+- `.component.md`
 
 Additionally, for reusable or complex components:
 
@@ -119,6 +120,19 @@ All forms MUST:
   - submitting
   - success
   - error
+
+Primary actions must remain disabled until both technical validation and business prerequisites are satisfied.
+
+---
+
+## User help / business-help rules
+
+For admin screens, CRUD tools, dashboard forms, and operator-facing workflows:
+
+- provide helper/help guidance when business rules affect user actions
+- explain why an action may be disabled
+- explain prerequisites, side effects, and visibility rules
+- all help content must be translatable
 
 ---
 
@@ -177,14 +191,15 @@ All forms MUST:
 Use the correct agent depending on the task:
 
 - Architecture and screen composition → `frontend-architect`
-- UI reuse and shared components → `frontend-architect` (UI enforcement is centralized)
+- UI reuse and shared components → `ui-system-guardian`
 - Documentation and business-help → `documentation-steward`
-- i18n and locale structure → `i18n-agent`
-- Theming and design tokens → `theme-architect`
-- Testing and coverage → `testing-guardian`
-- React to Angular migration → `react-interpreter`
+- i18n and locale structure → `multi-language-specialist`
+- Theming and design tokens → `multi-theme-specialist`
+- Testing and coverage → `test-engineer`
+- React to Angular migration → `react-to-angular-interpreter`
 - Dependency detection → `dependency-architect`
-- Final validation → `audit`
+- Final validation → `quality-auditor`
+- Cross-agent coordination → `orchestrator`
 
 ---
 

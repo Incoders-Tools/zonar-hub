@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.css,src/**/*.ts,docs/architecture/design-system.md,.github/skills/multi-theme/**/*"
+applyTo: "src/**/*.scss,src/**/*.ts,docs/architecture/design-system.md,.github/skills/multi-theme/**/*"
 ---
 
 # Multi-Theme Instructions
