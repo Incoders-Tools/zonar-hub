@@ -95,6 +95,19 @@ Before creating any UI element:
 3. Extend it if necessary
 4. NEVER duplicate it
 
+## Extended shared behavior rules
+
+The repository may define additional shared rules through skills for:
+
+- API mocking when backend integration is unavailable
+- app shell, sidebar, and responsive navigation
+- notifications and destructive confirmations
+- centralized validators, placeholders, helper texts, and tooltips
+- code style and formatting consistency
+- search, autocomplete, multiselect, and reusable selection patterns
+
+These rules are mandatory when the corresponding skill exists in `.github/skills/**/SKILL.md`.
+
 ### Canonical components (MANDATORY)
 
 - filter-panel

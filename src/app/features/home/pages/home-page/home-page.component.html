@@ -1,31 +1,30 @@
-<main class="page">
+<section class="page">
   <section class="hero">
-    <span class="badge">Angular template</span>
-    <h1>Zonar Hub starter</h1>
-    <p>
-      Este template ya viene listo para arrancar con Angular standalone y con el
-      contrato base de Copilot dentro de <code>.github/</code>.
-    </p>
+    <span class="badge">{{ 'home.badge' | t }}</span>
+
+    <h1>{{ 'home.title' | t }}</h1>
+
+    <p>{{ 'home.description' | t }}</p>
 
     <div class="actions">
-      <a routerLink="/" class="primary-link">La aplicación está corriendo</a>
+      <a class="primary-link" routerLink="/">{{ 'home.primaryAction' | t }}</a>
     </div>
   </section>
 
   <section class="card-grid">
     <article class="card">
-      <h2>Estructura base</h2>
-      <p>Feature-first, componentes standalone y separación clara para crecer sin ruido.</p>
+      <h2>{{ 'home.card.one.title' | t }}</h2>
+      <p>{{ 'home.card.one.description' | t }}</p>
     </article>
 
     <article class="card">
-      <h2>Contrato de Copilot</h2>
-      <p>Agentes, instrucciones y skills mínimos ya incluidos dentro de <code>.github</code>.</p>
+      <h2>{{ 'home.card.two.title' | t }}</h2>
+      <p>{{ 'home.card.two.description' | t }}</p>
     </article>
 
     <article class="card">
-      <h2>Primer siguiente paso</h2>
-      <p>Renombrar branding, agregar features y empezar a trabajar sobre tu dominio real.</p>
+      <h2>{{ 'home.card.three.title' | t }}</h2>
+      <p>{{ 'home.card.three.description' | t }}</p>
     </article>
   </section>
-</main>
+</section>

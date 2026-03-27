@@ -58,6 +58,7 @@ npm start
 
 ## 🤖 Copilot Guidelines
 This repository uses a structured Copilot ecosystem.
+Additional repository skills may extend the operating model for API mocking, layout/navigation, notifications, forms/validation, code style, and search/selection. Copilot must read all `.github/skills/**/SKILL.md` files before proposing implementations.
 See:
 - .github/copilot-instructions.md
 - AGENTS.md
