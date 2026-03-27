@@ -1,64 +1,197 @@
-# Angular Org Template
+# Zonar Hub Angular Template
 
-Template mínimo de Angular listo para iniciar una aplicación nueva y con el contrato base de Copilot dentro de `.github/`.
+Minimal Angular template ready to bootstrap a new application with a structured Copilot ecosystem.
 
-## Qué trae
+---
 
-- Angular standalone
-- estructura feature-first mínima
-- contrato base para Copilot en `.github/`
-- app inicial que levanta sin pasos extra fuera de Node/npm
+## Overview
 
-## Requisitos
+This repository provides:
 
-- Node.js 20.11.1 o superior
-- npm 10 o superior
+- Angular standalone setup
+- Feature-first folder structure
+- SCSS-based styling system
+- i18n-ready architecture
+- Theme-token-based UI system
+- Structured Copilot contract under `.github/`
+- Zero extra setup beyond Node/npm
 
-## Verificaciones previas
+---
 
-Ejecutá:
+## Requirements
+
+- Node.js 20.11.1 or higher
+- npm 10 or higher
+
+---
+
+## Verify environment
 
 ```bash
 node -v
 npm -v
 ```
 
-## Primer uso
+---
+
+## Getting started
 
 ```bash
 npm install
 npm start
 ```
 
-La aplicación debería quedar disponible en la URL que muestre Angular CLI, normalmente `http://localhost:4200`.
+The application should be available at:
 
-## Crear un repo nuevo desde este template
+```
+http://localhost:4200
+```
 
-1. Crear el nuevo repositorio desde GitHub usando **Use this template**.
-2. Clonar el repositorio nuevo, por ejemplo `zonar-hub`.
-3. Ejecutar:
+---
+
+## Creating a new repository from this template
+
+1. Click **Use this template** on GitHub
+2. Clone your new repository
+3. Run:
 
 ```bash
 npm install
 npm start
 ```
 
-## Qué revisar si no levanta
+---
 
-- que la versión de Node sea 20+
-- que `npm install` termine sin errores
-- que el puerto 4200 no esté ocupado
-- que estés parado en la raíz del proyecto al correr `npm start`
+## Troubleshooting
 
-## Archivos importantes
+Check:
 
-- `.github/` → contrato base para Copilot
-- `AGENTS.md` → reglas de entrada para agentes
-- `src/` → aplicación Angular base
+- Node version is 20+
+- `npm install` completed without errors
+- port 4200 is available
+- you are running commands from project root
 
-## 🤖 Copilot Guidelines
-This repository uses a structured Copilot ecosystem.
-Additional repository skills may extend the operating model for API mocking, layout/navigation, notifications, forms/validation, code style, and search/selection. Copilot must read all `.github/skills/**/SKILL.md` files before proposing implementations.
-See:
-- .github/copilot-instructions.md
-- AGENTS.md
+---
+
+## Project structure
+
+- `.github/` → Copilot ecosystem (instructions, skills, agents)
+- `AGENTS.md` → entry contract for reasoning
+- `docs/` → templates and architecture references (if present)
+- `src/` → Angular application
+
+---
+
+## Architecture highlights
+
+- Angular standalone components
+- Feature-first structure
+- Strict separation:
+  - UI
+  - orchestration
+  - data access
+- SCSS with semantic design tokens
+- i18n enforced (no hardcoded user-facing strings)
+- Theming enforced (no hardcoded color literals)
+- Reuse-first UI system
+
+---
+
+## Testing
+
+- Framework: **Jasmine**
+- All components MUST have `.spec.ts`
+- Behavior-driven tests only (no implementation coupling)
+
+---
+
+## Copilot ecosystem
+
+This repository uses a structured Copilot operating model.
+
+The canonical contract is defined in `AGENTS.md`.
+
+Mandatory read order:
+
+1. `.github/copilot-instructions.md`
+2. `.github/instructions/**/*.instructions.md`
+3. `.github/skills/**/SKILL.md`
+4. `.github/agents/*.agent.md`
+5. `docs/architecture/**`
+6. `docs/copilot/templates/**`
+
+If any summary or helper text conflicts with `AGENTS.md`, `AGENTS.md` takes precedence.
+
+---
+
+## Copilot validation
+
+When in doubt, use one of these prompts:
+
+- `docs/copilot/templates/ecosystem-rescue.prompt.md`
+- `docs/copilot/templates/ecosystem-rescue-short.prompt.md`
+
+These prompts verify whether Copilot is correctly following the repository contract and whether the current repository implementation is actually aligned with that contract.
+---
+
+## Extended shared behavior rules
+
+The repository standardizes behavior through skills for:
+
+- API mocking when backend integration is unavailable
+- App shell, sidebar, and responsive navigation
+- Notifications and destructive confirmations
+- Centralized validators, placeholders, helper texts, and tooltips
+- Code style and formatting consistency
+- Search, autocomplete, multiselect, and selection patterns
+- Icon system standardization
+
+All rules defined under `.github/skills/**/SKILL.md` are mandatory.
+
+---
+
+## UI system rules
+
+The application uses canonical shared primitives:
+
+- filter-panel
+- form-shell
+- data-table
+- confirm-dialog
+- async-button
+- loader-overlay
+
+These MUST be reused before creating new UI elements.
+
+---
+
+## Key constraints
+
+- No HttpClient usage inside components
+- No hardcoded UI strings
+- No hardcoded color values
+- No duplicated UI primitives
+- No ad-hoc architectural patterns
+
+---
+
+## Copilot validation
+
+When in doubt, use the rescue prompt:
+
+```
+docs/copilot/templates/ecosystem-rescue.prompt.md
+```
+
+This verifies whether Copilot is correctly following the repository contract.
+
+---
+
+## Goal
+
+Ensure that:
+
+- code is consistent
+- UI is reusable
+- architecture is predictable
+- Copilot operates deterministically within the system

@@ -105,6 +105,7 @@ The repository may define additional shared rules through skills for:
 - centralized validators, placeholders, helper texts, and tooltips
 - code style and formatting consistency
 - search, autocomplete, multiselect, and reusable selection patterns
+- icon system and icon library standardization
 
 These rules are mandatory when the corresponding skill exists in `.github/skills/**/SKILL.md`.
 

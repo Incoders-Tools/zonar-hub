@@ -1,6 +1,17 @@
 # Zonar Hub - Copilot Repository Instructions
 
-Read `AGENTS.md` first. Then read the relevant files under `.github/instructions/**`, `.github/skills/**`, and `.github/agents/**` before proposing or implementing changes.
+Follow the repository contract defined in `AGENTS.md`.
+
+Mandatory read order:
+
+1. `.github/copilot-instructions.md`
+2. `.github/instructions/**/*.instructions.md`
+3. `.github/skills/**/SKILL.md`
+4. `.github/agents/*.agent.md`
+5. `docs/architecture/**`
+6. `docs/copilot/templates/**`
+
+Do not override this order.
 
 Zonar Hub is a modern Angular frontend for a competitive padel circuit. It consumes a .NET API over HTTP and must be fast, accessible, responsive, scalable, and consistent.
 
@@ -25,3 +36,5 @@ When generating code:
 - Match existing naming, structure, file placement, and architecture.
 - Keep code testable and documented.
 - When migrating from React, preserve behavior and UX while translating idiomatically to Angular.
+
+If any instruction conflicts with `AGENTS.md`, `AGENTS.md` takes precedence.
