@@ -1,9 +1,10 @@
-# Angular / Node
+# Dependencies
 node_modules/
+
+# Build output
 dist/
 .angular/
 coverage/
-tmp/
 
 # Logs
 npm-debug.log*
@@ -12,11 +13,11 @@ yarn-error.log*
 pnpm-debug.log*
 *.log
 
-# OS / Editors
-.DS_Store
-Thumbs.db
+# IDE / OS
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
 
 # Environment
 .env

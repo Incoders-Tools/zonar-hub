@@ -2,18 +2,19 @@
   "name": "angular-org-template",
   "version": "0.1.0",
   "private": true,
-  "description": "Angular organization template with AI agent contract and scalable frontend structure.",
+  "description": "Angular organization template with Copilot repository contract and standalone Angular structure.",
   "scripts": {
     "start": "ng serve",
-    "build": "ng build",
-    "test": "ng test"
+    "build": "ng build"
+  },
+  "engines": {
+    "node": ">=20.11.1",
+    "npm": ">=10"
   },
   "dependencies": {
-    "@angular/animations": "^20.0.0",
     "@angular/common": "^20.0.0",
     "@angular/compiler": "^20.0.0",
     "@angular/core": "^20.0.0",
-    "@angular/forms": "^20.0.0",
     "@angular/platform-browser": "^20.0.0",
     "@angular/router": "^20.0.0",
     "rxjs": "^7.8.0",
