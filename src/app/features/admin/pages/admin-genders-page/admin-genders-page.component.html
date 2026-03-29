@@ -1,0 +1,97 @@
+<div class="genders-page">
+  <!-- Page Header -->
+  <div class="genders-page__header">
+    <div class="genders-page__title-row">
+      <div>
+        <h1 class="genders-page__title">{{ 'genders.title' | t }}</h1>
+        <p class="genders-page__subtitle">{{ 'genders.subtitle' | t }}</p>
+      </div>
+      <div class="genders-page__header-actions">
+        <button class="genders-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
+          ?
+        </button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'genders.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="facade.error()"
+    [selectable]="true"
+    [paginated]="true"
+    [pageSize]="10"
+    paginationPosition="both"
+    [reorderable]="true"
+    [rowActions]="genderRowActions"
+    emptyMessageKey="genders.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Gender Form Dialog -->
+@if (showFormDialog()) {
+  <app-gender-form-dialog
+    [gender]="editingGender()"
+    [saving]="facade.saving()"
+    (saved)="closeFormDialog()"
+    (cancelled)="closeFormDialog()">
+  </app-gender-form-dialog>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="genders.confirm.deleteTitle"
+    messageKey="genders.confirm.deleteMessage"
+    warningKey="genders.confirm.deleteWarning"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="genders.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    warningKey="genders.confirm.deleteWarning"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-gender-help-dialog (closed)="closeHelp()"></app-gender-help-dialog>
+}

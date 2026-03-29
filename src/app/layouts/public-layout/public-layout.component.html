@@ -1,0 +1,35 @@
+<header class="public-header">
+  <div class="public-header__inner">
+    <a class="public-header__logo" routerLink="/">{{ 'common.appName' | t }}</a>
+
+    <button class="public-header__hamburger" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+      ☰
+    </button>
+
+    <nav class="public-header__nav" [class.public-header__nav--open]="mobileMenuOpen()">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ 'nav.home' | t }}</a>
+      <a routerLink="/tournaments" routerLinkActive="active">{{ 'nav.tournaments' | t }}</a>
+      @if (auth.isAuthenticated()) {
+        @if (auth.isAdmin()) {
+          <a routerLink="/admin" routerLinkActive="active">{{ 'nav.admin' | t }}</a>
+        }
+        @if (auth.isPlayer()) {
+          <a routerLink="/player" routerLinkActive="active">{{ 'nav.player' | t }}</a>
+        }
+        <button class="public-header__logout" (click)="auth.logout()">{{ 'nav.logout' | t }}</button>
+      } @else {
+        <a routerLink="/login" routerLinkActive="active" class="public-header__login">{{ 'nav.login' | t }}</a>
+      }
+    </nav>
+  </div>
+</header>
+
+<main class="public-content">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="public-footer">
+  <div class="public-footer__inner">
+    <span>© 2026 Zonar Hub — {{ 'footer.rights' | t }}</span>
+  </div>
+</footer>

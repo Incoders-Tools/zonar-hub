@@ -1,0 +1,20 @@
+<div class="help-overlay" (click)="onClose()" role="dialog" [attr.aria-label]="'genders.help.title' | t">
+  <div class="help-dialog" (click)="$event.stopPropagation()">
+    <div class="help-dialog__header">
+      <h3 class="help-dialog__title">{{ 'genders.help.title' | t }}</h3>
+      <button class="help-dialog__close" (click)="onClose()" [attr.aria-label]="'common.close' | t">×</button>
+    </div>
+    <div class="help-dialog__body">
+      <p>{{ 'genders.help.intro' | t }}</p>
+      <h4>{{ 'genders.help.whatTitle' | t }}</h4>
+      <p>{{ 'genders.help.whatDescription' | t }}</p>
+      <h4>{{ 'genders.help.impactTitle' | t }}</h4>
+      <p>{{ 'genders.help.impactDescription' | t }}</p>
+      <h4>{{ 'genders.help.keyTitle' | t }}</h4>
+      <p>{{ 'genders.help.keyDescription' | t }}</p>
+    </div>
+    <div class="help-dialog__footer">
+      <button class="help-dialog__ok" (click)="onClose()">{{ 'tutorial.gotIt' | t }}</button>
+    </div>
+  </div>
+</div>

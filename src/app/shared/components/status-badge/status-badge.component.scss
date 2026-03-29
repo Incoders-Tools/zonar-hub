@@ -1,0 +1,48 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--zh-space-xs) var(--zh-space-sm);
+  border-radius: var(--zh-radius-full);
+  font-size: var(--zh-font-size-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+
+  &[data-status='open'],
+  &[data-status='confirmed'],
+  &[data-status='success'] {
+    background: var(--zh-success-soft);
+    color: var(--zh-success);
+  }
+
+  &[data-status='closed'],
+  &[data-status='cancelled'],
+  &[data-status='danger'] {
+    background: var(--zh-danger-soft);
+    color: var(--zh-danger);
+  }
+
+  &[data-status='upcoming'],
+  &[data-status='info'] {
+    background: var(--zh-info-soft);
+    color: var(--zh-info);
+  }
+
+  &[data-status='in-progress'],
+  &[data-status='warning'],
+  &[data-status='pending'] {
+    background: var(--zh-warning-soft);
+    color: var(--zh-warning);
+  }
+
+  &[data-status='completed'],
+  &[data-status='finished'] {
+    background: var(--zh-secondary-soft);
+    color: var(--zh-secondary);
+  }
+
+  &[data-status='draft'] {
+    background: var(--zh-surface-muted);
+    color: var(--zh-text-muted);
+  }
+}

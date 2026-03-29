@@ -1,0 +1,136 @@
+// ============================================================
+// Zonar Hub — Semantic Design Tokens
+// ============================================================
+// All component styles MUST consume these tokens.
+// Never hardcode color literals in feature/component SCSS.
+// ============================================================
+
+:root {
+  // ---- Surface ----
+  --zh-surface-bg: #f7f9f4;
+  --zh-surface-elevated: #ffffff;
+  --zh-surface-muted: #eef2e8;
+  --zh-surface-overlay: rgba(15, 35, 20, 0.5);
+
+  // ---- Text ----
+  --zh-text-primary: #1a2e1a;
+  --zh-text-secondary: #4a6349;
+  --zh-text-muted: #7a957a;
+  --zh-text-inverse: #ffffff;
+  --zh-text-link: #1b6b3a;
+
+  // ---- Border ----
+  --zh-border-subtle: #d4dece;
+  --zh-border-strong: #b8c9b0;
+  --zh-border-focus: #1b6b3a;
+
+  // ---- Primary Action ----
+  --zh-primary: #1b6b3a;
+  --zh-primary-hover: #145530;
+  --zh-primary-soft: rgba(27, 107, 58, 0.10);
+  --zh-on-primary: #ffffff;
+
+  // ---- Secondary Action ----
+  --zh-secondary: #5c7264;
+  --zh-secondary-hover: #4a5e52;
+  --zh-secondary-soft: rgba(92, 114, 100, 0.10);
+  --zh-on-secondary: #ffffff;
+
+  // ---- Semantic Status ----
+  --zh-success: #1b8a3e;
+  --zh-success-soft: rgba(27, 138, 62, 0.10);
+  --zh-on-success: #ffffff;
+
+  --zh-warning: #c2850c;
+  --zh-warning-soft: rgba(194, 133, 12, 0.10);
+  --zh-on-warning: #ffffff;
+
+  --zh-danger: #c42b2b;
+  --zh-danger-soft: rgba(196, 43, 43, 0.10);
+  --zh-on-danger: #ffffff;
+
+  --zh-info: #1a6b8a;
+  --zh-info-soft: rgba(26, 107, 138, 0.10);
+  --zh-on-info: #ffffff;
+
+  // ---- Badge States ----
+  --zh-badge-open: #1b8a3e;
+  --zh-badge-closed: #c42b2b;
+  --zh-badge-upcoming: #1b6b3a;
+  --zh-badge-in-progress: #c2850c;
+  --zh-badge-completed: #5c7264;
+  --zh-badge-draft: #7a957a;
+
+  // ---- Hero Accent ----
+  --zh-hero-accent: #1b6b3a;
+  --zh-hero-gradient-start: #0e4423;
+  --zh-hero-gradient-end: #2a8b50;
+
+  // ---- Tournament Status ----
+  --zh-tournament-open: #1b8a3e;
+  --zh-tournament-registration: #1b6b3a;
+  --zh-tournament-active: #c2850c;
+  --zh-tournament-finished: #5c7264;
+  --zh-tournament-cancelled: #c42b2b;
+
+  // ---- Draw Visualization ----
+  --zh-draw-zone-a: #2563eb;
+  --zh-draw-zone-b: #7c3aed;
+  --zh-draw-zone-c: #0891b2;
+  --zh-draw-zone-d: #c2410c;
+  --zh-draw-match-win: #16a34a;
+  --zh-draw-match-loss: #dc2626;
+  --zh-draw-bracket-line: #cbd5e1;
+
+  // ---- Elevation ----
+  --zh-elevation-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --zh-elevation-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --zh-elevation-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --zh-elevation-hero: 0 16px 48px rgba(15, 23, 42, 0.12);
+
+  // ---- Spacing ----
+  --zh-space-xs: 4px;
+  --zh-space-sm: 8px;
+  --zh-space-md: 16px;
+  --zh-space-lg: 24px;
+  --zh-space-xl: 32px;
+  --zh-space-2xl: 48px;
+  --zh-space-3xl: 64px;
+
+  // ---- Radius ----
+  --zh-radius-sm: 6px;
+  --zh-radius-md: 10px;
+  --zh-radius-lg: 16px;
+  --zh-radius-xl: 20px;
+  --zh-radius-full: 999px;
+
+  // ---- Typography ----
+  --zh-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --zh-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --zh-font-size-xs: 0.75rem;
+  --zh-font-size-sm: 0.875rem;
+  --zh-font-size-md: 1rem;
+  --zh-font-size-lg: 1.125rem;
+  --zh-font-size-xl: 1.25rem;
+  --zh-font-size-2xl: 1.5rem;
+  --zh-font-size-3xl: 2rem;
+  --zh-font-size-hero: clamp(2rem, 4vw, 3.5rem);
+
+  // ---- Transition ----
+  --zh-transition-fast: 150ms ease;
+  --zh-transition-normal: 250ms ease;
+  --zh-transition-slow: 400ms ease;
+
+  // ---- Sidebar ----
+  --zh-sidebar-width: 260px;
+  --zh-sidebar-collapsed-width: 64px;
+  --zh-sidebar-bg: #0e2a16;
+  --zh-sidebar-text: #d4dece;
+  --zh-sidebar-active: rgba(27, 107, 58, 0.25);
+  --zh-sidebar-hover: rgba(255, 255, 255, 0.06);
+
+  // ---- Toolbar ----
+  --zh-toolbar-height: 64px;
+  --zh-toolbar-bg: var(--zh-surface-elevated);
+  --zh-toolbar-border: var(--zh-border-subtle);
+}

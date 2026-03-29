@@ -1,0 +1,131 @@
+.tournament-detail {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--zh-space-xl) var(--zh-space-md);
+
+  &__loading,
+  &__error {
+    text-align: center;
+    padding: var(--zh-space-2xl);
+    color: var(--zh-text-secondary);
+
+    a {
+      color: var(--zh-primary);
+    }
+  }
+
+  &__header {
+    margin-bottom: var(--zh-space-xl);
+
+    h1 {
+      margin: var(--zh-space-sm) 0 var(--zh-space-xs);
+      font-size: var(--zh-font-size-2xl);
+      font-weight: 800;
+    }
+  }
+
+  &__back {
+    color: var(--zh-text-secondary);
+    text-decoration: none;
+    font-size: var(--zh-font-size-sm);
+
+    &:hover {
+      color: var(--zh-primary);
+    }
+  }
+
+  &__status {
+    display: inline-block;
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    border-radius: var(--zh-radius-sm);
+    background: var(--zh-surface-muted);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--zh-space-xl);
+
+    @media (max-width: 767px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.info-card {
+  background: var(--zh-surface-card);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-lg);
+  padding: var(--zh-space-lg);
+
+  h3 {
+    margin: 0 0 var(--zh-space-md);
+    font-weight: 700;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--zh-space-sm) var(--zh-space-md);
+
+    dt {
+      font-weight: 600;
+      color: var(--zh-text-secondary);
+      font-size: var(--zh-font-size-sm);
+    }
+
+    dd {
+      margin: 0;
+      font-size: var(--zh-font-size-sm);
+    }
+  }
+}
+
+.btn {
+  display: block;
+  text-align: center;
+  padding: var(--zh-space-sm) var(--zh-space-lg);
+  border-radius: var(--zh-radius-md);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--zh-font-size-sm);
+  margin-bottom: var(--zh-space-sm);
+  transition: background var(--zh-transition-fast);
+
+  &--primary {
+    background: var(--zh-primary);
+    color: var(--zh-on-primary);
+
+    &:hover {
+      background: var(--zh-primary-hover);
+    }
+  }
+
+  &--secondary {
+    background: var(--zh-surface-muted);
+    color: var(--zh-text-primary);
+    border: 1px solid var(--zh-border-subtle);
+
+    &:hover {
+      background: var(--zh-surface-elevated);
+    }
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--zh-border-subtle);
+  border-top-color: var(--zh-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

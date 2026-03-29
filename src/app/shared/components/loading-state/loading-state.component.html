@@ -1,0 +1,6 @@
+<div class="loading-state" role="status" [attr.aria-label]="messageKey() | t">
+  <div class="loading-state__spinner"></div>
+  @if (showMessage()) {
+    <p class="loading-state__message">{{ messageKey() | t }}</p>
+  }
+</div>

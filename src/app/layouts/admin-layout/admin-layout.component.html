@@ -1,0 +1,84 @@
+<div class="admin-layout" [class.admin-layout--collapsed]="sidebarCollapsed()">
+  <!-- Mobile Header -->
+  <header class="admin-mobile-header">
+    <button class="admin-mobile-header__toggle" (click)="toggleMobileSidebar()" aria-label="Toggle menu">☰</button>
+    <span class="admin-mobile-header__title">{{ 'common.appName' | t }}</span>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" [class.admin-sidebar--mobile-open]="mobileSidebarOpen()">
+    <div class="admin-sidebar__header">
+      <a routerLink="/" class="admin-sidebar__logo">{{ sidebarCollapsed() ? 'ZH' : ('common.appName' | t) }}</a>
+      <button class="admin-sidebar__collapse" (click)="toggleSidebar()">{{ sidebarCollapsed() ? '→' : '←' }}</button>
+    </div>
+
+    <nav class="admin-sidebar__nav">
+      <!-- Dashboard (always top-level) -->
+      <a
+        class="admin-sidebar__link"
+        [routerLink]="dashboardItem.route"
+        routerLinkActive="admin-sidebar__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="mobileSidebarOpen.set(false)">
+        <span class="admin-sidebar__icon">{{ dashboardItem.icon }}</span>
+        @if (!sidebarCollapsed()) {
+          <span class="admin-sidebar__label">{{ dashboardItem.labelKey | t }}</span>
+        }
+      </a>
+
+      <!-- Grouped navigation -->
+      @for (group of navGroups; track group.labelKey) {
+        <div class="admin-sidebar__group">
+          @if (sidebarCollapsed()) {
+            <!-- Collapsed: show only the group icon -->
+            <a
+              class="admin-sidebar__link admin-sidebar__link--group-icon"
+              [routerLink]="group.items[0]?.route"
+              [title]="group.labelKey | t"
+              routerLinkActive="admin-sidebar__link--active"
+              (click)="mobileSidebarOpen.set(false)">
+              <span class="admin-sidebar__icon">{{ group.icon }}</span>
+            </a>
+          } @else {
+            <button class="admin-sidebar__group-header" (click)="toggleGroup(group)">
+              <span class="admin-sidebar__icon">{{ group.icon }}</span>
+              <span class="admin-sidebar__group-label">{{ group.labelKey | t }}</span>
+              <span class="admin-sidebar__group-chevron" [class.admin-sidebar__group-chevron--open]="group.expanded">▸</span>
+            </button>
+            @if (group.expanded) {
+              @for (item of group.items; track item.route) {
+                <a
+                  class="admin-sidebar__link admin-sidebar__link--nested"
+                  [routerLink]="item.route"
+                  routerLinkActive="admin-sidebar__link--active"
+                  (click)="mobileSidebarOpen.set(false)">
+                  <span class="admin-sidebar__icon">{{ item.icon }}</span>
+                  <span class="admin-sidebar__label">{{ item.labelKey | t }}</span>
+                </a>
+              }
+            }
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="admin-sidebar__footer">
+      <button class="admin-sidebar__logout" (click)="auth.logout()">
+        <span class="admin-sidebar__icon">🚪</span>
+        @if (!sidebarCollapsed()) {
+          <span>{{ 'nav.logout' | t }}</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <!-- Overlay -->
+  @if (mobileSidebarOpen()) {
+    <div class="admin-overlay" (click)="mobileSidebarOpen.set(false)"></div>
+  }
+
+  <!-- Main content -->
+  <main class="admin-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

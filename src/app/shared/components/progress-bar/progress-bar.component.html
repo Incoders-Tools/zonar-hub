@@ -1,0 +1,28 @@
+<div class="progress-bar"
+     role="progressbar"
+     [attr.aria-valuenow]="clampedProgress()"
+     [attr.aria-valuemin]="0"
+     [attr.aria-valuemax]="100"
+     [attr.aria-label]="titleKey() ? (titleKey() | t) : null">
+
+  @if (titleKey()) {
+    <h3 class="progress-bar__title">{{ titleKey() | t }}</h3>
+  }
+
+  <div class="progress-bar__track">
+    <div class="progress-bar__fill" [style.width.%]="clampedProgress()"></div>
+  </div>
+
+  <div class="progress-bar__info">
+    @if (stageLabel()) {
+      <span class="progress-bar__stage">{{ stageLabel() }}</span>
+    }
+    @if (showPercentage()) {
+      <span class="progress-bar__percent">{{ clampedProgress() }}%</span>
+    }
+  </div>
+
+  @if (messageKey()) {
+    <p class="progress-bar__message">{{ messageKey() | t }}</p>
+  }
+</div>

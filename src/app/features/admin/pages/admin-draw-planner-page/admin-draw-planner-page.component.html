@@ -1,0 +1,97 @@
+<div class="draw-planner">
+  <h1>{{ 'admin.drawPlanner' | t }}</h1>
+
+  <!-- Tournament Selection -->
+  <div class="planner-section">
+    <h2>{{ 'drawPlanner.selectTournament' | t }}</h2>
+    <div class="field">
+      <select [ngModel]="selectedTournamentId()" (ngModelChange)="selectedTournamentId.set($event)">
+        <option value="">{{ 'drawPlanner.chooseTournament' | t }}</option>
+        @for (t of tournamentService.tournaments(); track t.id) {
+          <option [value]="t.id">{{ t.name }} — {{ t.categoryName }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (selectedTournament) {
+    <!-- Tournament Summary -->
+    <div class="planner-section">
+      <h2>{{ 'drawPlanner.inputSummary' | t }}</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-item__label">{{ 'tournaments.name' | t }}</span>
+          <span class="summary-item__value">{{ selectedTournament.name }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-item__label">{{ 'tournaments.category' | t }}</span>
+          <span class="summary-item__value">{{ selectedTournament.categoryName }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-item__label">{{ 'tournaments.maxPairs' | t }}</span>
+          <span class="summary-item__value">{{ selectedTournament.maxPairs }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="planner-section">
+      <h2>{{ 'drawPlanner.configuration' | t }}</h2>
+      <div class="field">
+        <label>{{ 'drawPlanner.pairsPerZone' | t }}</label>
+        <input type="number" min="2" max="8" [ngModel]="pairsPerZone()" (ngModelChange)="pairsPerZone.set($event)" />
+      </div>
+      <button class="btn btn--primary" [disabled]="generating()" (click)="generate()">
+        {{ 'drawPlanner.generate' | t }}
+      </button>
+    </div>
+
+    <!-- Progress -->
+    @if (generating()) {
+      <div class="planner-section">
+        <app-progress-bar
+          [progress]="progress()"
+          titleKey="planner.generate"
+          [stageLabel]="currentStageLabel() | t"
+          [showPercentage]="true">
+        </app-progress-bar>
+      </div>
+    }
+
+    <!-- Result Preview -->
+    @if (result()) {
+      <div class="planner-section">
+        <h2>{{ 'drawPlanner.result' | t }}</h2>
+
+        @if (result()!.warnings.length > 0) {
+          <div class="warnings">
+            @for (w of result()!.warnings; track w.type) {
+              <div class="warning-item">⚠️ {{ w.message }}</div>
+            }
+          </div>
+        }
+
+        <div class="zones-grid">
+          @for (zone of result()!.zones; track zone.zoneName) {
+            <div class="zone-card">
+              <h3>{{ zone.zoneName }}</h3>
+              <ul>
+                @for (a of zone.pairs; track a.registrationId) {
+                  <li>
+                    {{ a.player1Name }} & {{ a.player2Name }}
+                    @if (a.seedPosition) { <span class="seeded">★ #{{ a.seedPosition }}</span> }
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn--secondary" (click)="saveDraft()">{{ 'drawPlanner.saveDraft' | t }}</button>
+          <button class="btn btn--primary" (click)="publish()">{{ 'drawPlanner.publish' | t }}</button>
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -1,17 +1,6 @@
-:root {
-  color-scheme: light;
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --fg: #0f172a;
-  --muted: #475569;
-  --border: #e2e8f0;
-  --accent: #2563eb;
-
-  --accent-soft: rgba(37, 99, 235, 0.12);
-  --elevation-hero: 0 12px 32px rgba(15, 23, 42, 0.06);
-  --code-surface: rgba(148, 163, 184, 0.15);
-  --on-accent: #ffffff;
-}
+@use 'styles/tokens';
+@use 'styles/themes';
+@use 'styles/mixins';
 
 *,
 *::before,
@@ -23,9 +12,11 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  font-family: Inter, Arial, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
+  font-family: var(--zh-font-family);
+  background: var(--zh-surface-bg);
+  color: var(--zh-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -35,4 +26,26 @@ body {
 button,
 a {
   font: inherit;
+}
+
+a {
+  color: var(--zh-text-link);
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+}
+
+// Legacy compat aliases
+:root {
+  --bg: var(--zh-surface-bg);
+  --surface: var(--zh-surface-elevated);
+  --fg: var(--zh-text-primary);
+  --muted: var(--zh-text-secondary);
+  --border: var(--zh-border-subtle);
+  --accent: var(--zh-primary);
+  --accent-soft: var(--zh-primary-soft);
+  --on-accent: var(--zh-on-primary);
+  --elevation-hero: var(--zh-elevation-hero);
 }

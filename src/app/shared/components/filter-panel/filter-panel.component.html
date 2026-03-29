@@ -1,0 +1,99 @@
+<div class="filter-panel" [class.filter-panel--collapsible]="collapsible()">
+  @if (collapsible()) {
+    <button class="filter-panel__toggle" (click)="toggleCollapsed()">
+      <span class="filter-panel__toggle-icon" [class.filter-panel__toggle-icon--open]="!collapsed()">▸</span>
+      <span class="filter-panel__toggle-label">{{ 'filter.title' | t }}</span>
+    </button>
+  }
+
+  @if (!collapsible() || !collapsed()) {
+    <div class="filter-panel__body">
+      <div class="filter-panel__fields">
+        @for (field of fields(); track field.key) {
+          <div class="filter-panel__field">
+            <label class="filter-panel__label" [for]="'filter-' + field.key">{{ field.labelKey | t }}</label>
+            @if (field.type === 'text') {
+              <input
+                class="filter-panel__input"
+                [id]="'filter-' + field.key"
+                type="text"
+                [placeholder]="'filter.search' | t"
+                [(ngModel)]="values[field.key]" />
+            }
+            @if (field.type === 'select' && field.options) {
+              <select
+                class="filter-panel__select"
+                [id]="'filter-' + field.key"
+                [(ngModel)]="values[field.key]">
+                <option value="">{{ 'common.viewAll' | t }}</option>
+                @for (opt of field.options; track opt.value) {
+                  <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+                }
+              </select>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="filter-panel__actions">
+        <button class="filter-panel__clear" (click)="clear()">{{ 'filter.clear' | t }}</button>
+        <button class="filter-panel__apply" (click)="apply()">{{ 'filter.apply' | t }}</button>
+      </div>
+
+      <!-- Multi-criteria sort sub-panel -->
+      @if (sortFields().length > 0) {
+        <div class="sort-builder">
+          <button class="sort-builder__toggle" (click)="toggleSorts()">
+            <span class="sort-builder__toggle-label">{{ 'filter.sorts' | t }}</span>
+            @if (sortRules.length > 0) {
+              <span class="sort-builder__count">{{ sortRules.length }}</span>
+            }
+            <span class="sort-builder__toggle-icon" [class.sort-builder__toggle-icon--open]="sortsOpen()">▸</span>
+          </button>
+
+          @if (sortsOpen()) {
+            <div class="sort-builder__body">
+              @if (sortRules.length === 0) {
+                <p class="sort-builder__empty">{{ 'filter.noSortRules' | t }}</p>
+              }
+
+              @for (rule of sortRules; track $index; let i = $index) {
+                <div class="sort-builder__rule">
+                  <select
+                    class="sort-builder__field-select"
+                    [ngModel]="rule.field"
+                    (ngModelChange)="updateSortField(i, $event)">
+                    @for (opt of availableFieldsForRule(rule.field); track opt.key) {
+                      <option [value]="opt.key">{{ opt.labelKey | t }}</option>
+                    }
+                  </select>
+
+                  <select
+                    class="sort-builder__dir-select"
+                    [ngModel]="rule.dir"
+                    (ngModelChange)="updateSortDir(i, $event)">
+                    <option value="asc">{{ 'filter.sortAsc' | t }}</option>
+                    <option value="desc">{{ 'filter.sortDesc' | t }}</option>
+                  </select>
+
+                  <button
+                    class="sort-builder__remove"
+                    (click)="removeSortRule(i)"
+                    [attr.aria-label]="'common.remove' | t">
+                    ✕
+                  </button>
+                </div>
+              }
+
+              @if (canAddSortRule()) {
+                <button class="sort-builder__add" (click)="addSortRule()">
+                  + {{ 'filter.addSortRule' | t }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

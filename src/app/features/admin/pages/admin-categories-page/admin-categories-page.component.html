@@ -1,0 +1,97 @@
+<div class="categories-page">
+  <!-- Page Header -->
+  <div class="categories-page__header">
+    <div class="categories-page__title-row">
+      <div>
+        <h1 class="categories-page__title">{{ 'categories.title' | t }}</h1>
+        <p class="categories-page__subtitle">{{ 'categories.subtitle' | t }}</p>
+      </div>
+      <div class="categories-page__header-actions">
+        <button class="categories-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
+          ?
+        </button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'categories.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="facade.error()"
+    [selectable]="true"
+    [paginated]="true"
+    [pageSize]="10"
+    paginationPosition="both"
+    [reorderable]="true"
+    [rowActions]="categoryRowActions"
+    emptyMessageKey="categories.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Category Form Dialog -->
+@if (showFormDialog()) {
+  <app-category-form-dialog
+    [category]="editingCategory()"
+    [saving]="facade.saving()"
+    (saved)="closeFormDialog()"
+    (cancelled)="closeFormDialog()">
+  </app-category-form-dialog>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="categories.confirm.deleteTitle"
+    messageKey="categories.confirm.deleteMessage"
+    warningKey="categories.confirm.deleteWarning"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="categories.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    warningKey="categories.confirm.deleteWarning"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-category-help-dialog (closed)="closeHelp()"></app-category-help-dialog>
+}

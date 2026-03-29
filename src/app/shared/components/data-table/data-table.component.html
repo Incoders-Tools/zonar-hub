@@ -1,0 +1,116 @@
+<div class="data-table-wrapper">
+  @if (loading()) {
+    <app-loading-state [showMessage]="true"></app-loading-state>
+  } @else if (error()) {
+    <app-error-state></app-error-state>
+  } @else if (data().length === 0) {
+    <app-empty-state></app-empty-state>
+  } @else {
+    <!-- Top pagination -->
+    @if (paginated() && totalPages() > 1 && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
+      <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
+    }
+
+    <table class="data-table" role="grid">
+      <thead>
+        <tr>
+          @if (selectable()) {
+            <th class="data-table__th data-table__th--checkbox">
+              <input
+                type="checkbox"
+                [checked]="allSelected()"
+                (change)="toggleAll()"
+                aria-label="Select all rows" />
+            </th>
+          }
+          @for (col of orderedColumns(); track col.key) {
+            @if (col.key !== 'actions') {
+              <th class="data-table__th"
+                  [class.data-table__th--sortable]="col.sortable"
+                  [attr.draggable]="reorderable()"
+                  (dragstart)="onDragStart(col.key)"
+                  (dragover)="onDragOver($event)"
+                  (drop)="onDrop(col.key)"
+                  (click)="sortBy(col)">
+                {{ col.labelKey | t }}
+                @if (col.sortable && sortKey() === col.key) {
+                  <span class="data-table__sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </th>
+            }
+          }
+          @if (rowActions().length > 0) {
+            <th class="data-table__th data-table__th--actions">{{ 'common.actions' | t }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of paginatedData(); track getRowId(row)) {
+          <tr class="data-table__row"
+              [class.data-table__row--selected]="isSelected(row)">
+            @if (selectable()) {
+              <td class="data-table__td data-table__td--checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(row)"
+                  (change)="toggleRow(row)"
+                  [attr.aria-label]="'Select row'" />
+              </td>
+            }
+            @for (col of orderedColumns(); track col.key) {
+              @if (col.key !== 'actions') {
+                <td class="data-table__td">{{ row[col.key] }}</td>
+              }
+            }
+            @if (rowActions().length > 0) {
+              <td class="data-table__td data-table__td--actions">
+                <div class="data-table__row-actions">
+                  @for (act of rowActions(); track act.action) {
+                    <button
+                      class="data-table__action-btn"
+                      [title]="act.labelKey | t"
+                      (click)="onRowAction(act.action, row); $event.stopPropagation()">
+                      {{ act.icon }}
+                    </button>
+                  }
+                </div>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Bottom pagination -->
+    @if (paginated() && totalPages() > 1 && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
+      <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
+    }
+
+    <!-- Pagination template -->
+    <ng-template #paginationTpl>
+      <div class="data-table__pagination">
+        <span class="data-table__pagination-info">
+          {{ 'admin.pagination.showing' | t }}
+          {{ (currentPage() - 1) * pageSize() + 1 }}–{{ currentPage() * pageSize() > data().length ? data().length : currentPage() * pageSize() }}
+          {{ 'admin.pagination.of' | t }}
+          {{ data().length }}
+        </span>
+        <div class="data-table__pagination-controls">
+          <button
+            class="data-table__pagination-btn"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)">
+            {{ 'admin.pagination.prev' | t }}
+          </button>
+          <span class="data-table__pagination-page">{{ currentPage() }} / {{ totalPages() }}</span>
+          <button
+            class="data-table__pagination-btn"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)">
+            {{ 'admin.pagination.next' | t }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  }
+</div>

@@ -1,0 +1,25 @@
+<nav class="stepper" role="tablist" aria-label="Progress">
+  @for (step of steps(); track $index) {
+    <button
+      class="stepper__step"
+      role="tab"
+      [class.stepper__step--active]="$index === activeIndex()"
+      [class.stepper__step--completed]="step.completed"
+      [class.stepper__step--disabled]="!canNavigateTo($index)"
+      [attr.aria-selected]="$index === activeIndex()"
+      [disabled]="!canNavigateTo($index)"
+      (click)="selectStep($index)">
+      <span class="stepper__indicator">
+        @if (step.completed) {
+          ✓
+        } @else {
+          {{ $index + 1 }}
+        }
+      </span>
+      <span class="stepper__label">{{ step.labelKey | t }}</span>
+    </button>
+    @if ($index < steps().length - 1) {
+      <div class="stepper__connector" [class.stepper__connector--completed]="step.completed"></div>
+    }
+  }
+</nav>

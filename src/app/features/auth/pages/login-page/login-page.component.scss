@@ -1,0 +1,212 @@
+.auth-card {
+  background: var(--zh-surface-card);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-lg);
+  padding: var(--zh-space-xl);
+
+  h1 {
+    margin: 0 0 var(--zh-space-xs);
+    font-size: var(--zh-font-size-xl);
+    font-weight: 800;
+  }
+
+  &__desc {
+    color: var(--zh-text-secondary);
+    margin: 0 0 var(--zh-space-xl);
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__links {
+    margin-top: var(--zh-space-lg);
+    text-align: center;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xs);
+
+    a {
+      color: var(--zh-primary);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-md);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-xs);
+
+  label {
+    font-weight: 600;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
+  }
+
+  input[type='text'],
+  input[type='email'],
+  input[type='password'] {
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-bg);
+    color: var(--zh-text-primary);
+    font-size: var(--zh-font-size-sm);
+    width: 100%;
+
+    &:focus {
+      outline: 2px solid var(--zh-primary);
+      outline-offset: 1px;
+    }
+  }
+
+  &__password-wrapper {
+    position: relative;
+    display: flex;
+
+    input {
+      flex: 1;
+      padding-right: var(--zh-space-2xl);
+    }
+  }
+
+  &__toggle-password {
+    position: absolute;
+    right: var(--zh-space-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--zh-font-size-md);
+    padding: var(--zh-space-xs);
+    line-height: 1;
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &__error {
+    color: var(--zh-danger);
+    font-size: var(--zh-font-size-xs);
+  }
+
+  &__password-strength {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    margin-top: var(--zh-space-xs);
+  }
+
+  &__password-strength-bar {
+    height: 4px;
+    border-radius: 2px;
+    flex: 1;
+    transition: background 0.3s;
+
+    &--weak { background: var(--zh-danger); }
+    &--medium { background: var(--zh-warning, #f59e0b); }
+    &--strong { background: var(--zh-success); }
+  }
+
+  &__password-strength-label {
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    min-width: 48px;
+    text-align: right;
+  }
+
+  &--checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    cursor: pointer;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
+
+    input[type='checkbox'] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--zh-primary);
+      cursor: pointer;
+    }
+  }
+}
+
+.auth-error {
+  color: var(--zh-danger);
+  font-size: var(--zh-font-size-sm);
+  padding: var(--zh-space-sm);
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: var(--zh-radius-sm);
+
+  &__attempts {
+    display: block;
+    font-weight: 600;
+    margin-top: var(--zh-space-xs);
+  }
+}
+
+.success-msg {
+  color: var(--zh-success);
+  font-size: var(--zh-font-size-sm);
+  padding: var(--zh-space-sm);
+  background: rgba(34, 197, 94, 0.08);
+  border-radius: var(--zh-radius-sm);
+  text-align: center;
+}
+
+.btn {
+  padding: var(--zh-space-sm) var(--zh-space-lg);
+  border: none;
+  border-radius: var(--zh-radius-md);
+  font-weight: 600;
+  font-size: var(--zh-font-size-sm);
+  cursor: pointer;
+
+  &--primary {
+    background: var(--zh-primary);
+    color: var(--zh-on-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--zh-primary-hover);
+    }
+  }
+
+  &--full {
+    width: 100%;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-right: var(--zh-space-xs);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

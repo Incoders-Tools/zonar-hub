@@ -1,0 +1,33 @@
+.form-shell {
+  background: var(--zh-surface-elevated);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-xl);
+  padding: var(--zh-space-xl);
+  box-shadow: var(--zh-elevation-sm);
+
+  &__title {
+    font-size: var(--zh-font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--zh-space-xs);
+  }
+
+  &__description {
+    color: var(--zh-text-secondary);
+    margin-bottom: var(--zh-space-lg);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-md);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--zh-space-sm);
+    margin-top: var(--zh-space-xl);
+    padding-top: var(--zh-space-md);
+    border-top: 1px solid var(--zh-border-subtle);
+  }
+}

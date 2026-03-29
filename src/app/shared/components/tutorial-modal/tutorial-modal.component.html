@@ -1,0 +1,39 @@
+<div class="tutorial" [class.tutorial--minimized]="minimized()" role="dialog" [attr.aria-label]="titleKey() | t">
+  <div class="tutorial__header">
+    <h3 class="tutorial__title">{{ titleKey() | t }}</h3>
+    <div class="tutorial__controls">
+      <button class="tutorial__btn" (click)="toggleMinimize()" [attr.aria-label]="minimized() ? 'expand' : 'minimize'">
+        {{ minimized() ? '▢' : '─' }}
+      </button>
+      <button class="tutorial__btn" (click)="closed.emit()" [attr.aria-label]="'tutorial.close' | t">✕</button>
+    </div>
+  </div>
+  @if (!minimized()) {
+    <div class="tutorial__body">
+      @if (youtubeUrl()) {
+        <div class="tutorial__video">
+          <iframe
+            [src]="youtubeUrl()"
+            frameborder="0"
+            allowfullscreen
+            title="Tutorial video"
+            loading="lazy">
+          </iframe>
+        </div>
+      } @else if (videoUrl()) {
+        <div class="tutorial__video">
+          <video controls [src]="videoUrl()" preload="metadata">
+            <track kind="captions" />
+          </video>
+        </div>
+      }
+      @if (htmlContent()) {
+        <div class="tutorial__content" [innerHTML]="htmlContent()"></div>
+      }
+      <ng-content></ng-content>
+      <div class="tutorial__footer">
+        <button class="tutorial__got-it" (click)="closed.emit()">{{ 'tutorial.gotIt' | t }}</button>
+      </div>
+    </div>
+  }
+</div>

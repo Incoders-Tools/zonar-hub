@@ -1,0 +1,39 @@
+<section class="tournament-list">
+  <div class="tournament-list__header">
+    <h1>{{ 'tournaments.title' | t }}</h1>
+    <p>{{ 'tournaments.subtitle' | t }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="tournament-list__loading">
+      <span class="spinner"></span>
+      <span>{{ 'states.loading' | t }}</span>
+    </div>
+  } @else if (tournaments().length === 0) {
+    <div class="tournament-list__empty">
+      <p>{{ 'states.emptyTournaments' | t }}</p>
+    </div>
+  } @else {
+    <div class="tournament-list__grid">
+      @for (tournament of tournaments(); track tournament.id) {
+        <a class="tournament-card" [routerLink]="['/tournaments', tournament.id]">
+          <div class="tournament-card__status" [class]="getStatusClass(tournament.statusId)">
+            {{ tournament.statusLabel }}
+          </div>
+          <h3 class="tournament-card__name">{{ tournament.name }}</h3>
+          <div class="tournament-card__meta">
+            <span>📍 {{ tournament.complexName }}</span>
+            <span>📅 {{ tournament.startDate }}</span>
+          </div>
+          <div class="tournament-card__details">
+            <span>{{ tournament.categoryName }}</span>
+            <span>{{ tournament.genderLabel }}</span>
+          </div>
+          <div class="tournament-card__slots">
+            {{ tournament.maxPairs }} {{ 'tournaments.slots' | t }}
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>

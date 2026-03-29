@@ -1,0 +1,57 @@
+<div class="tournament-detail">
+  @if (loading()) {
+    <div class="tournament-detail__loading">
+      <span class="spinner"></span> {{ 'states.loading' | t }}
+    </div>
+  } @else if (!tournament()) {
+    <div class="tournament-detail__error">
+      <h2>{{ 'states.notFound' | t }}</h2>
+      <a routerLink="/tournaments">{{ 'tournaments.backToList' | t }}</a>
+    </div>
+  } @else {
+    @let t = tournament()!;
+    <div class="tournament-detail__header">
+      <a routerLink="/tournaments" class="tournament-detail__back">← {{ 'tournaments.backToList' | t }}</a>
+      <h1>{{ t.name }}</h1>
+      <span class="tournament-detail__status" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span>
+    </div>
+
+    <div class="tournament-detail__grid">
+      <div class="tournament-detail__info">
+        <div class="info-card">
+          <h3>{{ 'tournaments.details' | t }}</h3>
+          <dl>
+            <dt>{{ 'tournaments.complex' | t }}</dt>
+            <dd>{{ t.complexName }}</dd>
+            <dt>{{ 'tournaments.dates' | t }}</dt>
+            <dd>{{ t.startDate }} — {{ t.endDate }}</dd>
+            <dt>{{ 'tournaments.category' | t }}</dt>
+            <dd>{{ t.categoryName }}</dd>
+            <dt>{{ 'tournaments.gender' | t }}</dt>
+            <dd>{{ t.genderLabel }}</dd>
+            <dt>{{ 'tournaments.type' | t }}</dt>
+            <dd>{{ t.tournamentTypeName }}</dd>
+            <dt>{{ 'tournaments.slots' | t }}</dt>
+            <dd>{{ t.maxPairs }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="tournament-detail__actions">
+        <div class="info-card">
+          @if (canRegister) {
+            <a class="btn btn--primary" [routerLink]="['/tournaments', t.id, 'register']">
+              {{ 'tournaments.register' | t }}
+            </a>
+          }
+          <a class="btn btn--secondary" [routerLink]="['/tournaments', t.id, 'confirmed-pairs']">
+            {{ 'tournaments.viewConfirmedPairs' | t }}
+          </a>
+          <a class="btn btn--secondary" [routerLink]="['/tournaments', t.id, 'draw']">
+            {{ 'tournaments.viewDraw' | t }}
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+</div>

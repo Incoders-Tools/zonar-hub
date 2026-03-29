@@ -1,0 +1,148 @@
+// ============================================================
+// Zonar Hub — Theme Definitions
+// ============================================================
+// Three themes: court-energy (default), clay-match, night-arena
+// Apply via [data-theme] attribute on <html> or <body>.
+// ============================================================
+
+// ---- court-energy (Default — Wimbledon-inspired elegant green) ----
+[data-theme='court-energy'],
+:root {
+  --zh-primary: #1b6b3a;
+  --zh-primary-hover: #145530;
+  --zh-primary-soft: rgba(27, 107, 58, 0.10);
+  --zh-on-primary: #ffffff;
+
+  --zh-hero-accent: #1b6b3a;
+  --zh-hero-gradient-start: #0e4423;
+  --zh-hero-gradient-end: #2a8b50;
+
+  --zh-surface-bg: #f7f9f4;
+  --zh-surface-elevated: #ffffff;
+  --zh-surface-muted: #eef2e8;
+
+  --zh-text-primary: #1a2e1a;
+  --zh-text-secondary: #4a6349;
+  --zh-text-link: #1b6b3a;
+
+  --zh-border-subtle: #d4dece;
+  --zh-border-strong: #b8c9b0;
+  --zh-border-focus: #1b6b3a;
+
+  --zh-sidebar-bg: #0e2a16;
+  --zh-sidebar-text: #d4dece;
+  --zh-sidebar-active: rgba(27, 107, 58, 0.3);
+
+  --zh-draw-zone-a: #1b6b3a;
+  --zh-draw-zone-b: #5b3a8a;
+  --zh-draw-zone-c: #1a6b8a;
+  --zh-draw-zone-d: #8a5b1a;
+}
+
+// ---- clay-match (Warm clay court tones) ----
+[data-theme='clay-match'] {
+  --zh-primary: #a0522d;
+  --zh-primary-hover: #8b4513;
+  --zh-primary-soft: rgba(160, 82, 45, 0.10);
+  --zh-on-primary: #ffffff;
+
+  --zh-hero-accent: #a0522d;
+  --zh-hero-gradient-start: #6b3410;
+  --zh-hero-gradient-end: #c97848;
+
+  --zh-surface-bg: #faf6f0;
+  --zh-surface-elevated: #ffffff;
+  --zh-surface-muted: #f5ede2;
+
+  --zh-text-primary: #2c1810;
+  --zh-text-secondary: #6b5545;
+  --zh-text-link: #a0522d;
+
+  --zh-border-subtle: #e8ddd0;
+  --zh-border-strong: #d4c4b0;
+  --zh-border-focus: #a0522d;
+
+  --zh-sidebar-bg: #2c1810;
+  --zh-sidebar-text: #e8ddd0;
+  --zh-sidebar-active: rgba(160, 82, 45, 0.3);
+
+  --zh-draw-zone-a: #a0522d;
+  --zh-draw-zone-b: #8a6914;
+  --zh-draw-zone-c: #1b6b3a;
+  --zh-draw-zone-d: #1a5a8a;
+}
+
+// ---- night-arena (Dark mode, neon accents) ----
+[data-theme='night-arena'] {
+  color-scheme: dark;
+
+  --zh-primary: #818cf8;
+  --zh-primary-hover: #6366f1;
+  --zh-primary-soft: rgba(129, 140, 248, 0.15);
+  --zh-on-primary: #0f0e1a;
+
+  --zh-hero-accent: #818cf8;
+  --zh-hero-gradient-start: #312e81;
+  --zh-hero-gradient-end: #6366f1;
+
+  --zh-surface-bg: #0f0e1a;
+  --zh-surface-elevated: #1a1930;
+  --zh-surface-muted: #1e1d35;
+  --zh-surface-overlay: rgba(0, 0, 0, 0.6);
+
+  --zh-text-primary: #f1f0ff;
+  --zh-text-secondary: #a5a3c9;
+  --zh-text-muted: #6b6991;
+  --zh-text-inverse: #0f0e1a;
+  --zh-text-link: #818cf8;
+
+  --zh-border-subtle: #2d2b4a;
+  --zh-border-strong: #3f3d66;
+  --zh-border-focus: #818cf8;
+
+  --zh-secondary: #a5a3c9;
+  --zh-secondary-hover: #8886b0;
+  --zh-secondary-soft: rgba(165, 163, 201, 0.12);
+
+  --zh-success: #34d399;
+  --zh-success-soft: rgba(52, 211, 153, 0.15);
+  --zh-warning: #fbbf24;
+  --zh-warning-soft: rgba(251, 191, 36, 0.15);
+  --zh-danger: #f87171;
+  --zh-danger-soft: rgba(248, 113, 113, 0.15);
+  --zh-info: #38bdf8;
+  --zh-info-soft: rgba(56, 189, 248, 0.15);
+
+  --zh-badge-open: #34d399;
+  --zh-badge-closed: #f87171;
+  --zh-badge-upcoming: #818cf8;
+  --zh-badge-in-progress: #fbbf24;
+  --zh-badge-completed: #a5a3c9;
+  --zh-badge-draft: #6b6991;
+
+  --zh-tournament-open: #34d399;
+  --zh-tournament-registration: #818cf8;
+  --zh-tournament-active: #fbbf24;
+  --zh-tournament-finished: #a5a3c9;
+  --zh-tournament-cancelled: #f87171;
+
+  --zh-sidebar-bg: #0b0a15;
+  --zh-sidebar-text: #c4c2e0;
+  --zh-sidebar-active: rgba(129, 140, 248, 0.2);
+  --zh-sidebar-hover: rgba(255, 255, 255, 0.04);
+
+  --zh-toolbar-bg: var(--zh-surface-elevated);
+
+  --zh-elevation-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --zh-elevation-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --zh-elevation-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --zh-elevation-hero: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  --zh-draw-zone-a: #818cf8;
+  --zh-draw-zone-b: #a78bfa;
+  --zh-draw-zone-c: #22d3ee;
+  --zh-draw-zone-d: #fb923c;
+  --zh-draw-match-win: #34d399;
+  --zh-draw-match-loss: #f87171;
+  --zh-draw-bracket-line: #3f3d66;
+}

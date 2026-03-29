@@ -1,0 +1,59 @@
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--zh-surface-overlay);
+  z-index: 1000;
+  padding: var(--zh-space-md);
+}
+
+.confirm-dialog {
+  background: var(--zh-surface-elevated);
+  border-radius: var(--zh-radius-xl);
+  box-shadow: var(--zh-elevation-lg);
+  padding: var(--zh-space-xl);
+  max-width: 440px;
+  width: 100%;
+
+  &__title {
+    font-size: var(--zh-font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--zh-space-sm);
+  }
+
+  &__message {
+    color: var(--zh-text-secondary);
+    margin-bottom: var(--zh-space-sm);
+  }
+
+  &__warning {
+    color: var(--zh-danger);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 500;
+    margin-bottom: var(--zh-space-md);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--zh-space-sm);
+    margin-top: var(--zh-space-lg);
+  }
+
+  &__cancel {
+    padding: 0 var(--zh-space-lg);
+    min-height: 44px;
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-elevated);
+    color: var(--zh-text-primary);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--zh-surface-muted);
+    }
+  }
+}

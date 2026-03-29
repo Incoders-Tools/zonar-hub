@@ -1,0 +1,69 @@
+// ============================================================
+// Zonar Hub — Shared SCSS Mixins
+// ============================================================
+
+@mixin mobile {
+  @media (max-width: 599px) { @content; }
+}
+
+@mixin tablet {
+  @media (min-width: 600px) and (max-width: 959px) { @content; }
+}
+
+@mixin desktop {
+  @media (min-width: 960px) { @content; }
+}
+
+@mixin wide {
+  @media (min-width: 1280px) { @content; }
+}
+
+@mixin container($max-width: 1200px) {
+  max-width: $max-width;
+  margin-inline: auto;
+  padding-inline: var(--zh-space-md);
+}
+
+@mixin card {
+  background: var(--zh-surface-elevated);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-lg);
+  box-shadow: var(--zh-elevation-sm);
+}
+
+@mixin card-interactive {
+  @include card;
+  cursor: pointer;
+  transition: box-shadow var(--zh-transition-fast), border-color var(--zh-transition-fast);
+
+  &:hover {
+    box-shadow: var(--zh-elevation-md);
+    border-color: var(--zh-border-strong);
+  }
+}
+
+@mixin page-section {
+  padding-block: var(--zh-space-xl);
+}
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@mixin focus-ring {
+  outline: 2px solid var(--zh-border-focus);
+  outline-offset: 2px;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
