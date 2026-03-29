@@ -2,6 +2,8 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
+import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
 import { RegistrationService } from '../../../../core/services/registration.service';
 import { PlayerService } from '../../../../core/services/player.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
@@ -28,7 +30,7 @@ interface AvailabilityForm {
 @Component({
   selector: 'app-registration-wizard-page',
   standalone: true,
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, FormatDatePipe, TutorialModalComponent],
   templateUrl: './registration-wizard-page.component.html',
   styleUrl: './registration-wizard-page.component.scss'
 })
@@ -43,6 +45,7 @@ export class RegistrationWizardPageComponent implements OnInit {
   readonly tournament = signal<Tournament | null>(null);
   readonly loading = signal(true);
   readonly submitting = signal(false);
+  readonly showTutorial = signal(false);
   readonly currentStep = signal(0);
   readonly steps = signal<WizardStep[]>([
     { labelKey: 'registration.step.players', completed: false },
@@ -193,7 +196,8 @@ export class RegistrationWizardPageComponent implements OnInit {
         genderId: t.genderId,
         genderLabel: t.genderLabel,
         statusId: 'rs2',
-        statusLabel: 'Pendiente'
+        statusLabel: 'Pendiente',
+        source: 'wizard'
       });
       this.registrationId = reg.id;
       this.notifications.success('registration.success');

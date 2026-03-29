@@ -23,7 +23,7 @@
           <h3 class="tournament-card__name">{{ tournament.name }}</h3>
           <div class="tournament-card__meta">
             <span>📍 {{ tournament.complexName }}</span>
-            <span>📅 {{ tournament.startDate }}</span>
+            <span>📅 {{ tournament.startDate | formatDate }}</span>
           </div>
           <div class="tournament-card__details">
             <span>{{ tournament.categoryName }}</span>

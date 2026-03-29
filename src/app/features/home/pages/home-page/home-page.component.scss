@@ -263,16 +263,84 @@
   &__category { margin: var(--zh-space-xs) 0 0; font-size: var(--zh-font-size-xs); color: var(--zh-text-secondary); }
 }
 
-// ---- News Card ----
-.news-card {
-  padding: var(--zh-space-lg);
-  border: 1px solid var(--zh-border-subtle);
-  border-radius: var(--zh-radius-lg);
-  background: var(--zh-surface-card);
+// ---- Workflow Steps ----
+.workflow-section {
+  max-width: 960px;
+  margin-inline: auto;
+}
 
-  &__title { margin: 0 0 var(--zh-space-sm); font-weight: 700; font-size: var(--zh-font-size-lg); color: var(--zh-text-primary); }
-  &__summary { margin: 0; color: var(--zh-text-secondary); line-height: 1.5; }
-  &__date { display: block; margin-top: var(--zh-space-sm); font-size: var(--zh-font-size-xs); color: var(--zh-text-secondary); }
+.workflow-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--zh-space-sm);
+  margin-top: var(--zh-space-lg);
+}
+
+.workflow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--zh-space-xs);
+  flex: 1;
+  max-width: 180px;
+
+  &__number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-primary);
+    color: var(--zh-on-primary);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 800;
+  }
+
+  &__icon {
+    font-size: 1.75rem;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+    line-height: 1.4;
+  }
+
+  &__connector {
+    display: flex;
+    align-items: center;
+    padding-top: var(--zh-space-lg);
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-lg);
+    opacity: 0.5;
+  }
+}
+
+.workflow-highlight {
+  margin-top: var(--zh-space-lg);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--zh-space-sm);
+}
+
+.workflow-pro {
+  margin: 0;
+  font-size: var(--zh-font-size-sm);
+  font-weight: 600;
+  color: var(--zh-text-secondary);
 }
 
 // ---- CTA Section ----
@@ -310,4 +378,18 @@
   .sports-grid { grid-template-columns: repeat(2, 1fr); }
   .hero { padding: var(--zh-space-xl) var(--zh-space-md); }
   .cta-section { padding: var(--zh-space-xl) var(--zh-space-md); }
+
+  .workflow-steps {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .workflow-step {
+    max-width: 100%;
+  }
+
+  .workflow-step__connector {
+    transform: rotate(90deg);
+    padding-top: 0;
+  }
 }

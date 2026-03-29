@@ -124,8 +124,7 @@ export const routes: Routes = [
       },
       {
         path: 'catalogs/complexes',
-        redirectTo: '/admin/complexes',
-        pathMatch: 'full'
+        loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent)
       },
       {
         path: 'catalogs/categories',
@@ -134,10 +133,6 @@ export const routes: Routes = [
       {
         path: 'catalogs/genders',
         loadComponent: () => import('./features/admin/pages/admin-genders-page/admin-genders-page.component').then(m => m.AdminGendersPageComponent)
-      },
-      {
-        path: 'catalogs/cities',
-        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
       },
       {
         path: 'catalogs/tournament-statuses',
@@ -156,20 +151,8 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent)
       },
       {
-        path: 'news',
-        loadComponent: () => import('./features/admin/pages/admin-news-page/admin-news-page.component').then(m => m.AdminNewsPageComponent)
-      },
-      {
-        path: 'home-sections',
-        loadComponent: () => import('./features/admin/pages/admin-home-sections-page/admin-home-sections-page.component').then(m => m.AdminHomeSectionsPageComponent)
-      },
-      {
         path: 'system/users',
         loadComponent: () => import('./features/admin/pages/admin-users-page/admin-users-page.component').then(m => m.AdminUsersPageComponent)
-      },
-      {
-        path: 'system/home-sections',
-        loadComponent: () => import('./features/admin/pages/admin-home-sections-page/admin-home-sections-page.component').then(m => m.AdminHomeSectionsPageComponent)
       },
       {
         path: 'system/roles',

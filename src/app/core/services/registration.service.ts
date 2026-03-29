@@ -1,13 +1,15 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { Registration, RegistrationAvailability } from '../models';
-import { MOCK_REGISTRATIONS } from '../data/mock/mock-registrations';
+import { Registration, RegistrationAvailability, RegistrationToken } from '../models';
+import { MOCK_REGISTRATIONS, MOCK_REGISTRATION_TOKENS } from '../data/mock/mock-registrations';
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationService {
   private readonly registrationsState = signal<Registration[]>(MOCK_REGISTRATIONS);
+  private readonly tokensState = signal<RegistrationToken[]>(MOCK_REGISTRATION_TOKENS);
   private readonly loadingState = signal(false);
 
   readonly registrations = this.registrationsState.asReadonly();
+  readonly tokens = this.tokensState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
 
   getByTournament(tournamentId: string): Registration[] {
@@ -58,9 +60,49 @@ export class RegistrationService {
     await this.delay(500);
     this.registrationsState.update(items =>
       items.map(r => r.id === registrationId
-        ? { ...r, statusId: 'rs1', statusLabel: 'Confirmada', confirmedAt: new Date().toISOString() }
+        ? { ...r, statusId: 'rs1' as const, statusLabel: 'Confirmada', confirmedAt: new Date().toISOString() }
         : r
       )
+    );
+  }
+
+  async updateRegistration(id: string, updates: Partial<Registration>): Promise<void> {
+    await this.delay(500);
+    this.registrationsState.update(items =>
+      items.map(r => r.id === id ? { ...r, ...updates } : r)
+    );
+  }
+
+  async deleteRegistration(id: string): Promise<void> {
+    await this.delay(500);
+    this.registrationsState.update(items => items.filter(r => r.id !== id));
+  }
+
+  // Token management
+  getTokensByTournament(tournamentId: string): RegistrationToken[] {
+    return this.tokensState().filter(t => t.tournamentId === tournamentId);
+  }
+
+  async generateToken(tournamentId: string): Promise<RegistrationToken> {
+    await this.delay(300);
+    const token: RegistrationToken = {
+      id: 'tk-' + Date.now(),
+      tournamentId,
+      code: String(Math.floor(100000 + Math.random() * 900000)),
+      isActive: true,
+      createdBy: 'Admin',
+      assignedTo: null,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    this.tokensState.update(items => [...items, token]);
+    return token;
+  }
+
+  async deactivateToken(id: string): Promise<void> {
+    await this.delay(300);
+    this.tokensState.update(items =>
+      items.map(t => t.id === id ? { ...t, isActive: false } : t)
     );
   }
 

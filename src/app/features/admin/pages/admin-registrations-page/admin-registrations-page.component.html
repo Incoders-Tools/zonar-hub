@@ -1,0 +1,169 @@
+<div class="admin-registrations">
+  <!-- Page header -->
+  <header class="admin-registrations__header">
+    <div class="admin-registrations__header-left">
+      <h1 class="admin-registrations__title">{{ 'admin.registrations' | t }}</h1>
+      <p class="admin-registrations__subtitle">{{ 'registrations.subtitle' | t }}</p>
+    </div>
+    <div class="admin-registrations__header-actions">
+      @if (activeTab() === 'list') {
+        <app-async-button
+          [loading]="false"
+          (clicked)="openCreate()">
+          {{ 'registrations.newRegistration' | t }}
+        </app-async-button>
+      }
+      @if (activeTab() === 'tokens') {
+        <app-async-button
+          [loading]="false"
+          (clicked)="generateToken()">
+          {{ 'registrations.tokens.generate' | t }}
+        </app-async-button>
+      }
+    </div>
+  </header>
+
+  <!-- Tab navigation -->
+  <nav class="admin-registrations__tabs" role="tablist">
+    <button
+      class="admin-registrations__tab"
+      [class.admin-registrations__tab--active]="activeTab() === 'list'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'list'"
+      (click)="setTab('list')">
+      <mat-icon class="admin-registrations__tab-icon">list_alt</mat-icon>
+      {{ 'registrations.tabs.list' | t }}
+    </button>
+    <button
+      class="admin-registrations__tab"
+      [class.admin-registrations__tab--active]="activeTab() === 'importer'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'importer'"
+      (click)="setTab('importer')">
+      <mat-icon class="admin-registrations__tab-icon">upload_file</mat-icon>
+      {{ 'registrations.tabs.importer' | t }}
+    </button>
+    <button
+      class="admin-registrations__tab"
+      [class.admin-registrations__tab--active]="activeTab() === 'tokens'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'tokens'"
+      (click)="setTab('tokens')">
+      <mat-icon class="admin-registrations__tab-icon">token</mat-icon>
+      {{ 'registrations.tabs.tokens' | t }}
+    </button>
+  </nav>
+
+  <!-- Tab content -->
+  <div class="admin-registrations__content">
+
+    <!-- LIST TAB -->
+    @if (activeTab() === 'list') {
+      <!-- Inline form panel -->
+      @if (showFormPanel()) {
+        <div class="admin-registrations__form-panel" @slideDown>
+          <div class="admin-registrations__form-panel-header">
+            <h3 class="admin-registrations__form-panel-title">
+              {{ (editingRegistration() ? 'registrations.editRegistration' : 'registrations.newRegistration') | t }}
+            </h3>
+            <button
+              class="admin-registrations__form-panel-close"
+              (click)="closeForm()"
+              [attr.aria-label]="'common.close' | t">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="admin-registrations__form-panel-body">
+            <p class="admin-registrations__form-panel-placeholder">
+              {{ 'registrations.formPlaceholder' | t }}
+            </p>
+          </div>
+        </div>
+      }
+
+      <app-filter-panel
+        [fields]="filterFields"
+        [collapsible]="true"
+        [sortFields]="listSortOptions"
+        (filtersApplied)="onFiltersApplied($event)"
+        (filtersCleared)="onFiltersCleared()">
+      </app-filter-panel>
+
+      <app-data-table
+        [columns]="listColumns"
+        [data]="tableData()"
+        [loading]="facade.loading()"
+        [error]="facade.error()"
+        [selectable]="true"
+        [paginated]="true"
+        [paginationPosition]="'both'"
+        [pageSize]="50"
+        [rowActions]="listRowActions"
+        (rowAction)="onRowActionClicked($event)"
+        (selectionChanged)="onSelectionChanged($event)">
+      </app-data-table>
+    }
+
+    <!-- IMPORTER TAB -->
+    @if (activeTab() === 'importer') {
+      <div class="admin-registrations__importer">
+        <div class="admin-registrations__importer-zone">
+          <mat-icon class="admin-registrations__importer-icon">cloud_upload</mat-icon>
+          <h3 class="admin-registrations__importer-title">{{ 'registrations.importer.title' | t }}</h3>
+          <p class="admin-registrations__importer-desc">{{ 'registrations.importer.description' | t }}</p>
+          <p class="admin-registrations__importer-hint">{{ 'registrations.importer.hint' | t }}</p>
+        </div>
+
+        <div class="admin-registrations__importer-steps">
+          <div class="admin-registrations__importer-step">
+            <span class="admin-registrations__importer-step-number">1</span>
+            <span>{{ 'registrations.importer.step1' | t }}</span>
+          </div>
+          <div class="admin-registrations__importer-step">
+            <span class="admin-registrations__importer-step-number">2</span>
+            <span>{{ 'registrations.importer.step2' | t }}</span>
+          </div>
+          <div class="admin-registrations__importer-step">
+            <span class="admin-registrations__importer-step-number">3</span>
+            <span>{{ 'registrations.importer.step3' | t }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TOKENS TAB -->
+    @if (activeTab() === 'tokens') {
+      <app-filter-panel
+        [fields]="tokenFilterFields"
+        [collapsible]="true"
+        [sortFields]="tokenSortOptions"
+        (filtersApplied)="onTokenFiltersApplied($event)"
+        (filtersCleared)="onTokenFiltersCleared()">
+      </app-filter-panel>
+
+      <app-data-table
+        [columns]="tokenColumns"
+        [data]="tokenTableData()"
+        [loading]="facade.loading()"
+        [error]="facade.error()"
+        [paginated]="true"
+        [paginationPosition]="'both'"
+        [pageSize]="50"
+        [rowActions]="tokenRowActions"
+        (rowAction)="onTokenAction($event)">
+      </app-data-table>
+    }
+  </div>
+</div>
+
+<!-- Delete confirmation dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    [titleKey]="'registrations.deleteConfirm.title'"
+    [messageKey]="'registrations.deleteConfirm.message'"
+    [confirmLabelKey]="'common.delete'"
+    [loading]="facade.deleting()"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()">
+  </app-confirm-dialog>
+}

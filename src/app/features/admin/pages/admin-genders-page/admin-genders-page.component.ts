@@ -53,8 +53,8 @@ export class AdminGendersPageComponent implements OnInit {
   ];
 
   readonly genderRowActions = [
-    { icon: '✏️', labelKey: 'common.edit', action: 'edit' },
-    { icon: '🗑️', labelKey: 'common.delete', action: 'delete' }
+    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
   readonly filterFields: FilterField[] = [

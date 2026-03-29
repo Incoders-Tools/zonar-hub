@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -25,6 +25,7 @@ interface AdminNavGroup {
 })
 export class AdminLayoutComponent {
   protected readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   protected readonly sidebarCollapsed = signal(false);
   protected readonly mobileSidebarOpen = signal(false);
 
@@ -40,10 +41,8 @@ export class AdminLayoutComponent {
       items: [
         { labelKey: 'admin.tournaments', route: '/admin/tournaments', icon: '🏆' },
         { labelKey: 'admin.registrations', route: '/admin/registrations', icon: '📝' },
-        { labelKey: 'admin.players', route: '/admin/players', icon: '👥' },
-        { labelKey: 'admin.complexes', route: '/admin/complexes', icon: '🏟️' },
         { labelKey: 'admin.drawPlanner', route: '/admin/draw-planner', icon: '🎯' },
-        { labelKey: 'admin.news', route: '/admin/news', icon: '📰' }
+        { labelKey: 'admin.players', route: '/admin/players', icon: '👥' }
       ]
     },
     {
@@ -53,7 +52,7 @@ export class AdminLayoutComponent {
       items: [
         { labelKey: 'admin.categories', route: '/admin/catalogs/categories', icon: '🏷️' },
         { labelKey: 'admin.genders', route: '/admin/catalogs/genders', icon: '⚧' },
-        { labelKey: 'admin.cities', route: '/admin/catalogs/cities', icon: '🏙️' },
+        { labelKey: 'admin.complexes', route: '/admin/catalogs/complexes', icon: '🏟️' },
         { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊' },
         { labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types', icon: '🎾' },
         { labelKey: 'admin.playerConditions', route: '/admin/catalogs/player-conditions', icon: '🩺' }
@@ -65,7 +64,6 @@ export class AdminLayoutComponent {
       expanded: false,
       items: [
         { labelKey: 'admin.users', route: '/admin/system/users', icon: '🔑' },
-        { labelKey: 'admin.homeSections', route: '/admin/system/home-sections', icon: '🏠' },
         { labelKey: 'admin.roles', route: '/admin/system/roles', icon: '🛡️' },
         { labelKey: 'admin.nav.actions', route: '/admin/system/actions', icon: '⚡' },
         { labelKey: 'admin.audit', route: '/admin/system/audit', icon: '📜' },
@@ -86,5 +84,10 @@ export class AdminLayoutComponent {
 
   toggleGroup(group: AdminNavGroup): void {
     group.expanded = !group.expanded;
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/']);
   }
 }

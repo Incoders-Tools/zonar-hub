@@ -1,0 +1,287 @@
+// ── Admin Registrations Page ──
+
+.admin-registrations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-lg);
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--zh-space-md);
+  }
+
+  &__header-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xs);
+  }
+
+  &__title {
+    font-size: var(--zh-font-size-2xl);
+    font-weight: 800;
+    margin: 0;
+    color: var(--zh-text-primary);
+  }
+
+  &__subtitle {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    margin: 0;
+  }
+
+  &__header-actions {
+    display: flex;
+    gap: var(--zh-space-sm);
+    align-items: center;
+  }
+
+  // ── Tab navigation ──
+  &__tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--zh-border-subtle);
+  }
+
+  &__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-sm) var(--zh-space-lg);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      color var(--zh-transition-fast),
+      border-color var(--zh-transition-fast);
+
+    &:hover {
+      color: var(--zh-text-primary);
+    }
+
+    &--active {
+      color: var(--zh-primary);
+      border-bottom-color: var(--zh-primary);
+    }
+  }
+
+  &__tab-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-lg);
+  }
+
+  // ── Inline form panel ──
+  &__form-panel {
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    background: var(--zh-surface-elevated);
+    overflow: hidden;
+  }
+
+  &__form-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--zh-space-md) var(--zh-space-lg);
+    border-bottom: 1px solid var(--zh-border-subtle);
+    background: var(--zh-surface-subtle);
+  }
+
+  &__form-panel-title {
+    font-size: var(--zh-font-size-md);
+    font-weight: 700;
+    margin: 0;
+    color: var(--zh-text-primary);
+  }
+
+  &__form-panel-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--zh-text-secondary);
+    border-radius: var(--zh-radius-sm);
+    padding: var(--zh-space-xs);
+    transition: color var(--zh-transition-fast), background var(--zh-transition-fast);
+
+    &:hover {
+      color: var(--zh-text-primary);
+      background: var(--zh-surface-hover);
+    }
+  }
+
+  &__form-panel-body {
+    padding: var(--zh-space-lg);
+  }
+
+  &__form-panel-placeholder {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-muted);
+    margin: 0;
+    text-align: center;
+    padding: var(--zh-space-xl) 0;
+  }
+
+  // ── Importer ──
+  &__importer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xl);
+    align-items: center;
+  }
+
+  &__importer-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zh-space-md);
+    padding: var(--zh-space-2xl) var(--zh-space-xl);
+    border: 2px dashed var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    background: var(--zh-surface-elevated);
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+    cursor: pointer;
+    transition:
+      border-color var(--zh-transition-fast),
+      background var(--zh-transition-fast);
+
+    &:hover {
+      border-color: var(--zh-primary);
+      background: var(--zh-primary-soft);
+    }
+  }
+
+  &__importer-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--zh-primary);
+    opacity: 0.7;
+  }
+
+  &__importer-title {
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    margin: 0;
+    color: var(--zh-text-primary);
+  }
+
+  &__importer-desc {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    margin: 0;
+  }
+
+  &__importer-hint {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+    margin: 0;
+  }
+
+  &__importer-steps {
+    display: flex;
+    gap: var(--zh-space-xl);
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  &__importer-step {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+
+  &__importer-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-primary);
+    color: var(--zh-on-primary);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+}
+
+// ── Status pills ──
+:host ::ng-deep .status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--zh-radius-full);
+  font-size: var(--zh-font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--confirmed {
+    background: var(--zh-success-soft, rgba(76, 175, 80, 0.12));
+    color: var(--zh-success, #2e7d32);
+  }
+
+  &--pending {
+    background: var(--zh-warning-soft, rgba(255, 193, 7, 0.15));
+    color: var(--zh-warning-text, #f57f17);
+  }
+
+  &--rejected {
+    background: var(--zh-danger-soft, rgba(244, 67, 54, 0.12));
+    color: var(--zh-danger, #c62828);
+  }
+}
+
+// ── Row highlight animation ──
+@keyframes row-highlight-fade {
+  0% {
+    background-color: var(--zh-primary-soft, rgba(var(--zh-primary-rgb), 0.12));
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+:host ::ng-deep .data-table__row--highlight {
+  animation: row-highlight-fade 2s ease-out;
+}
+
+// ── Responsive ──
+@media (max-width: 768px) {
+  .admin-registrations {
+    &__header {
+      flex-direction: column;
+    }
+
+    &__tabs {
+      overflow-x: auto;
+    }
+
+    &__importer-steps {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}

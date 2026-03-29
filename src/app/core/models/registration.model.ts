@@ -1,3 +1,7 @@
+export type RegistrationSource = 'wizard' | 'admin' | 'excel';
+
+export type RegistrationStatusId = 'rs1' | 'rs2' | 'rs3';
+
 export interface Registration {
   id: string;
   tournamentId: string;
@@ -9,10 +13,13 @@ export interface Registration {
   categoryName: string;
   genderId: string;
   genderLabel: string;
-  statusId: string;
+  statusId: RegistrationStatusId;
   statusLabel: string;
+  source: RegistrationSource;
   registeredAt: string;
   confirmedAt?: string;
+  registrationOpenDate?: string;
+  registrationCloseDate?: string;
   paymentStatus?: string;
 }
 
@@ -27,10 +34,14 @@ export interface RegistrationAvailability {
 
 export interface RegistrationToken {
   id: string;
-  registrationId: string;
-  token: string;
+  tournamentId: string;
+  code: string;
+  isActive: boolean;
+  createdBy: string;
+  assignedTo: string | null;
   expiresAt: string;
   usedAt?: string;
+  createdAt: string;
 }
 
 export interface RegistrationMeta {

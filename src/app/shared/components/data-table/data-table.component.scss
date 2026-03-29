@@ -73,18 +73,94 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--zh-border-subtle);
-    border-radius: var(--zh-radius-sm);
-    background: var(--zh-surface-elevated);
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: var(--zh-radius-md);
+    background: transparent;
     cursor: pointer;
-    font-size: var(--zh-font-size-sm);
-    transition: background var(--zh-transition-fast), border-color var(--zh-transition-fast);
+    color: var(--zh-text-secondary);
+    transition:
+      background var(--zh-transition-fast),
+      color var(--zh-transition-fast),
+      box-shadow var(--zh-transition-fast);
 
     &:hover {
       background: var(--zh-surface-muted);
-      border-color: var(--zh-border-strong);
+      color: var(--zh-text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--zh-primary);
+      outline-offset: 2px;
+    }
+
+    &--primary {
+      color: var(--zh-primary);
+
+      &:hover {
+        background: var(--zh-primary-soft);
+        color: var(--zh-primary);
+      }
+    }
+
+    &--warn {
+      color: var(--zh-warning);
+
+      &:hover {
+        background: color-mix(in srgb, var(--zh-warning) 12%, transparent);
+        color: var(--zh-warning);
+      }
+    }
+
+    &--danger {
+      color: var(--zh-text-secondary);
+
+      &:hover {
+        background: color-mix(in srgb, var(--zh-error) 12%, transparent);
+        color: var(--zh-error);
+      }
+    }
+  }
+
+  &__action-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: var(--zh-radius-full, 999px);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
+
+    &[data-variant='rs1'] {
+      background: color-mix(in srgb, var(--zh-success) 14%, transparent);
+      color: var(--zh-success);
+    }
+
+    &[data-variant='rs2'] {
+      background: color-mix(in srgb, var(--zh-warning) 14%, transparent);
+      color: var(--zh-warning);
+    }
+
+    &[data-variant='rs3'] {
+      background: color-mix(in srgb, var(--zh-error) 14%, transparent);
+      color: var(--zh-error);
+    }
+
+    &[data-variant='active'] {
+      background: color-mix(in srgb, var(--zh-success) 14%, transparent);
+      color: var(--zh-success);
+    }
+
+    &[data-variant='inactive'] {
+      background: var(--zh-surface-muted);
+      color: var(--zh-text-secondary);
     }
   }
 

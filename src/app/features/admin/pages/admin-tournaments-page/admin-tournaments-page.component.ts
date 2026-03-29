@@ -1,12 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { TournamentService } from '../../../../core/services/tournament.service';
 
 @Component({
   selector: 'app-admin-tournaments-page',
   standalone: true,
-  imports: [RouterLink, TranslatePipe],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe],
   template: `
     <div class="admin-tournaments">
       <div class="page-header">
@@ -36,7 +37,7 @@ import { TournamentService } from '../../../../core/services/tournament.service'
                   <td>{{ t.name }}</td>
                   <td>{{ t.categoryName }}</td>
                   <td><span class="status-badge" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span></td>
-                  <td>{{ t.startDate }} — {{ t.endDate }}</td>
+                  <td>{{ t.startDate | formatDate }} — {{ t.endDate | formatDate }}</td>
                   <td>
                     <a [routerLink]="['/admin/tournaments', t.id]" class="table-action">{{ 'common.edit' | t }}</a>
                   </td>

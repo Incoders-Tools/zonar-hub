@@ -1,0 +1,84 @@
+<div class="bracket">
+  <div class="bracket__rounds">
+    @for (round of bracket().rounds; track round.name; let ri = $index) {
+      <div class="bracket__round">
+        <h3 class="bracket__round-title">{{ round.name | t }}</h3>
+        <div class="bracket__matches" [style.gap.px]="ri === 0 ? 16 : 16 + ri * 48">
+          @for (match of round.matches; track match.id) {
+            <div class="bracket__match" [class.bracket__match--final]="ri === bracket().rounds.length - 1">
+              <!-- Pair 1 -->
+              <div class="bracket__pair"
+                   [class.bracket__pair--winner]="isWinner(match, match.pair1?.id)"
+                   [class.bracket__pair--loser]="isLoser(match, match.pair1?.id)">
+                @if (match.pair1) {
+                  @if (match.pair1.seed) {
+                    <span class="bracket__seed">{{ match.pair1.seed }}</span>
+                  }
+                  <span class="bracket__names">{{ match.pair1.player1 }} / {{ match.pair1.player2 }}</span>
+                  <span class="bracket__scores">
+                    @for (s of match.score1; track $index) {
+                      <span class="bracket__set">{{ s }}</span>
+                    }
+                  </span>
+                  @if (isWinner(match, match.pair1.id)) {
+                    <mat-icon class="bracket__winner-icon">check_circle</mat-icon>
+                  }
+                } @else {
+                  <span class="bracket__names bracket__names--tbd">{{ 'bracket.tbd' | t }}</span>
+                }
+              </div>
+              <!-- Pair 2 -->
+              <div class="bracket__pair"
+                   [class.bracket__pair--winner]="isWinner(match, match.pair2?.id)"
+                   [class.bracket__pair--loser]="isLoser(match, match.pair2?.id)">
+                @if (match.pair2) {
+                  @if (match.pair2.seed) {
+                    <span class="bracket__seed">{{ match.pair2.seed }}</span>
+                  }
+                  <span class="bracket__names">{{ match.pair2.player1 }} / {{ match.pair2.player2 }}</span>
+                  <span class="bracket__scores">
+                    @for (s of match.score2; track $index) {
+                      <span class="bracket__set">{{ s }}</span>
+                    }
+                  </span>
+                  @if (isWinner(match, match.pair2.id)) {
+                    <mat-icon class="bracket__winner-icon">check_circle</mat-icon>
+                  }
+                } @else {
+                  <span class="bracket__names bracket__names--tbd">{{ 'bracket.tbd' | t }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Connectors between rounds -->
+      @if (ri < bracket().rounds.length - 1) {
+        <div class="bracket__connectors" aria-hidden="true">
+          @for (match of round.matches; track match.id; let mi = $index) {
+            @if (mi % 2 === 0) {
+              <div class="bracket__connector" [style.flex-grow]="ri + 1"></div>
+            }
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Champion highlight -->
+  @if (bracket().rounds.length > 0) {
+    @let finalRound = bracket().rounds[bracket().rounds.length - 1];
+    @if (finalRound.matches[0]?.winnerId; as winnerId) {
+      @let finalMatch = finalRound.matches[0];
+      @let champion = finalMatch.pair1?.id === winnerId ? finalMatch.pair1 : finalMatch.pair2;
+      @if (champion) {
+        <div class="bracket__champion">
+          <mat-icon class="bracket__champion-icon">emoji_events</mat-icon>
+          <span class="bracket__champion-label">{{ 'bracket.champion' | t }}</span>
+          <span class="bracket__champion-names">{{ champion.player1 }} / {{ champion.player2 }}</span>
+        </div>
+      }
+    }
+  }
+</div>

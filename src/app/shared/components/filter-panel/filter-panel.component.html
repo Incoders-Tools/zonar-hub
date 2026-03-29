@@ -37,7 +37,7 @@
 
       <div class="filter-panel__actions">
         <button class="filter-panel__clear" (click)="clear()">{{ 'filter.clear' | t }}</button>
-        <button class="filter-panel__apply" (click)="apply()">{{ 'filter.apply' | t }}</button>
+        <button class="filter-panel__apply" [disabled]="!hasActiveFilters" (click)="apply()">{{ 'filter.apply' | t }}</button>
       </div>
 
       <!-- Multi-criteria sort sub-panel -->

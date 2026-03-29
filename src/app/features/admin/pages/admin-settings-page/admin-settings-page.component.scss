@@ -60,6 +60,35 @@
     gap: var(--zh-space-sm);
   }
 
+  &__select-wrapper {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  &__select {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 var(--zh-space-md);
+    border: 2px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-card);
+    color: var(--zh-text-primary);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--zh-transition-fast);
+    appearance: auto;
+
+    &:hover {
+      border-color: var(--zh-primary);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--zh-primary);
+    }
+  }
+
   &__option {
     display: inline-flex;
     align-items: center;

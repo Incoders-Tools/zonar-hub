@@ -63,7 +63,7 @@
     </nav>
 
     <div class="admin-sidebar__footer">
-      <button class="admin-sidebar__logout" (click)="auth.logout()">
+      <button class="admin-sidebar__logout" (click)="logout()">
         <span class="admin-sidebar__icon">🚪</span>
         @if (!sidebarCollapsed()) {
           <span>{{ 'nav.logout' | t }}</span>

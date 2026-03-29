@@ -42,5 +42,43 @@
         }
       </div>
     </div>
+
+    <!-- Timezone Setting -->
+    <div class="settings-card">
+      <div class="settings-card__header">
+        <span class="settings-card__icon">🕐</span>
+        <h2 class="settings-card__title">{{ 'settings.timezone.title' | t }}</h2>
+      </div>
+      <p class="settings-card__description">{{ 'settings.timezone.description' | t }}</p>
+      <div class="settings-card__select-wrapper">
+        <select
+          class="settings-card__select"
+          [value]="selectedTimezone()"
+          (change)="onTimezoneChange($any($event.target).value)">
+          @for (tz of timezones; track tz.value) {
+            <option [value]="tz.value">{{ tz.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Date Format Setting -->
+    <div class="settings-card">
+      <div class="settings-card__header">
+        <span class="settings-card__icon">📅</span>
+        <h2 class="settings-card__title">{{ 'settings.dateFormat.title' | t }}</h2>
+      </div>
+      <p class="settings-card__description">{{ 'settings.dateFormat.description' | t }}</p>
+      <div class="settings-card__options">
+        @for (fmt of dateFormats; track fmt.value) {
+          <button
+            class="settings-card__option"
+            [class.settings-card__option--active]="selectedDateFormat() === fmt.value"
+            (click)="onDateFormatChange(fmt.value)">
+            {{ fmt.example }}
+          </button>
+        }
+      </div>
+    </div>
   </div>
 </div>

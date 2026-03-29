@@ -7,7 +7,7 @@
     <app-empty-state></app-empty-state>
   } @else {
     <!-- Top pagination -->
-    @if (paginated() && totalPages() > 1 && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
+    @if (paginated() && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
     }
 
@@ -59,7 +59,19 @@
             }
             @for (col of orderedColumns(); track col.key) {
               @if (col.key !== 'actions') {
-                <td class="data-table__td">{{ row[col.key] }}</td>
+                <td class="data-table__td">
+                  @if (col.renderType === 'pill') {
+                    <span class="data-table__pill" [attr.data-variant]="row[col.pillVariantKey ?? col.key]">
+                      {{ col.translate ? ($any(row[col.key]) | t) : row[col.key] }}
+                    </span>
+                  } @else if (col.renderType === 'date') {
+                    {{ $any(row[col.key]) | formatDate }}
+                  } @else if (col.translate) {
+                    {{ $any(row[col.key]) | t }}
+                  } @else {
+                    {{ row[col.key] }}
+                  }
+                </td>
               }
             }
             @if (rowActions().length > 0) {
@@ -68,9 +80,12 @@
                   @for (act of rowActions(); track act.action) {
                     <button
                       class="data-table__action-btn"
+                      [class.data-table__action-btn--primary]="act.variant === 'primary'"
+                      [class.data-table__action-btn--warn]="act.variant === 'warn'"
+                      [class.data-table__action-btn--danger]="act.variant === 'danger'"
                       [title]="act.labelKey | t"
                       (click)="onRowAction(act.action, row); $event.stopPropagation()">
-                      {{ act.icon }}
+                      <mat-icon class="data-table__action-icon">{{ act.icon }}</mat-icon>
                     </button>
                   }
                 </div>
@@ -82,7 +97,7 @@
     </table>
 
     <!-- Bottom pagination -->
-    @if (paginated() && totalPages() > 1 && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
+    @if (paginated() && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
     }
 

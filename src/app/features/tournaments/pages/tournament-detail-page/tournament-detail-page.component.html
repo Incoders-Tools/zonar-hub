@@ -13,45 +13,109 @@
     <div class="tournament-detail__header">
       <a routerLink="/tournaments" class="tournament-detail__back">← {{ 'tournaments.backToList' | t }}</a>
       <h1>{{ t.name }}</h1>
+      <p class="tournament-detail__meta">
+        📍 {{ t.complexName }} · 📅 {{ t.startDate | formatDate }} — {{ t.endDate | formatDate }} · {{ t.categoryName }} {{ t.genderLabel }}
+      </p>
       <span class="tournament-detail__status" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span>
+      @if (canRegister) {
+        <a class="btn btn--primary btn--sm" [routerLink]="['/tournaments', t.id, 'register']">
+          {{ 'tournaments.register' | t }}
+        </a>
+      }
     </div>
 
-    <div class="tournament-detail__grid">
-      <div class="tournament-detail__info">
-        <div class="info-card">
-          <h3>{{ 'tournaments.details' | t }}</h3>
-          <dl>
-            <dt>{{ 'tournaments.complex' | t }}</dt>
-            <dd>{{ t.complexName }}</dd>
-            <dt>{{ 'tournaments.dates' | t }}</dt>
-            <dd>{{ t.startDate }} — {{ t.endDate }}</dd>
-            <dt>{{ 'tournaments.category' | t }}</dt>
-            <dd>{{ t.categoryName }}</dd>
-            <dt>{{ 'tournaments.gender' | t }}</dt>
-            <dd>{{ t.genderLabel }}</dd>
-            <dt>{{ 'tournaments.type' | t }}</dt>
-            <dd>{{ t.tournamentTypeName }}</dd>
-            <dt>{{ 'tournaments.slots' | t }}</dt>
-            <dd>{{ t.maxPairs }}</dd>
-          </dl>
-        </div>
-      </div>
+    <!-- Tabs -->
+    <nav class="tournament-tabs" role="tablist">
+      <button class="tournament-tabs__tab"
+              [class.tournament-tabs__tab--active]="activeTab() === 'bracket'"
+              (click)="setTab('bracket')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'bracket'">
+        <mat-icon>account_tree</mat-icon>
+        <span>{{ 'tournaments.tab.bracket' | t }}</span>
+      </button>
+      <button class="tournament-tabs__tab"
+              [class.tournament-tabs__tab--active]="activeTab() === 'results'"
+              (click)="setTab('results')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'results'">
+        <mat-icon>scoreboard</mat-icon>
+        <span>{{ 'tournaments.tab.results' | t }}</span>
+      </button>
+      <button class="tournament-tabs__tab"
+              [class.tournament-tabs__tab--active]="activeTab() === 'pairs'"
+              (click)="setTab('pairs')"
+              role="tab"
+              [attr.aria-selected]="activeTab() === 'pairs'">
+        <mat-icon>groups</mat-icon>
+        <span>{{ 'tournaments.tab.pairs' | t }}</span>
+      </button>
+    </nav>
 
-      <div class="tournament-detail__actions">
-        <div class="info-card">
-          @if (canRegister) {
-            <a class="btn btn--primary" [routerLink]="['/tournaments', t.id, 'register']">
-              {{ 'tournaments.register' | t }}
-            </a>
-          }
-          <a class="btn btn--secondary" [routerLink]="['/tournaments', t.id, 'confirmed-pairs']">
-            {{ 'tournaments.viewConfirmedPairs' | t }}
-          </a>
-          <a class="btn btn--secondary" [routerLink]="['/tournaments', t.id, 'draw']">
-            {{ 'tournaments.viewDraw' | t }}
-          </a>
-        </div>
-      </div>
+    <!-- Tab content -->
+    <div class="tournament-detail__content" role="tabpanel">
+      @if (activeTab() === 'bracket') {
+        @if (bracket(); as b) {
+          <app-tournament-bracket [bracket]="b"></app-tournament-bracket>
+        } @else {
+          <div class="empty-state">
+            <mat-icon class="empty-state__icon">account_tree</mat-icon>
+            <p>{{ 'tournaments.bracket.notAvailable' | t }}</p>
+          </div>
+        }
+      }
+
+      @if (activeTab() === 'results') {
+        @if (bracket(); as b) {
+          <div class="results-list">
+            @for (round of b.rounds; track round.name) {
+              <div class="results-round">
+                <h3 class="results-round__title">{{ round.name | t }}</h3>
+                @for (match of round.matches; track match.id) {
+                  <div class="results-match">
+                    <div class="results-match__pair" [class.results-match__pair--winner]="match.winnerId === match.pair1?.id">
+                      <span class="results-match__name">{{ match.pair1?.player1 }} / {{ match.pair1?.player2 }}</span>
+                      <span class="results-match__score">{{ match.score1.join(' - ') }}</span>
+                    </div>
+                    <span class="results-match__vs">vs</span>
+                    <div class="results-match__pair" [class.results-match__pair--winner]="match.winnerId === match.pair2?.id">
+                      <span class="results-match__name">{{ match.pair2?.player1 }} / {{ match.pair2?.player2 }}</span>
+                      <span class="results-match__score">{{ match.score2.join(' - ') }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <mat-icon class="empty-state__icon">scoreboard</mat-icon>
+            <p>{{ 'tournaments.results.notAvailable' | t }}</p>
+          </div>
+        }
+      }
+
+      @if (activeTab() === 'pairs') {
+        @if (confirmedPairs().length > 0) {
+          <div class="pairs-list">
+            @for (pair of confirmedPairs(); track pair.id; let i = $index) {
+              <div class="pair-row">
+                <span class="pair-row__index">{{ i + 1 }}</span>
+                @if (pair.seed) {
+                  <span class="pair-row__seed">★ {{ pair.seed }}</span>
+                }
+                <span class="pair-row__names">{{ pair.player1 }} / {{ pair.player2 }}</span>
+                <span class="pair-row__category">{{ pair.category }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <mat-icon class="empty-state__icon">groups</mat-icon>
+            <p>{{ 'tournaments.pairs.noPairs' | t }}</p>
+          </div>
+        }
+      }
     </div>
   }
 </div>

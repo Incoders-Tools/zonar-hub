@@ -1,0 +1,202 @@
+.bracket {
+  width: 100%;
+  overflow-x: auto;
+  padding: var(--zh-space-lg);
+  border-radius: var(--zh-radius-xl);
+  background: var(--zh-surface-dark, #1a1a2e);
+  color: #e0e0e0;
+
+  &__rounds {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--zh-space-sm);
+    min-width: max-content;
+  }
+
+  &__round {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 260px;
+  }
+
+  &__round-title {
+    margin: 0 0 var(--zh-space-md);
+    padding: var(--zh-space-xs) var(--zh-space-lg);
+    border-radius: var(--zh-radius-sm);
+    background: linear-gradient(135deg, #c9a84c, #a67c3d);
+    color: #1a1a2e;
+    font-size: var(--zh-font-size-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  &__matches {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex: 1;
+  }
+
+  &__match {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--zh-radius-md);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+
+    &--final {
+      border-color: #c9a84c;
+      box-shadow: 0 0 12px rgba(201, 168, 76, 0.2);
+    }
+  }
+
+  &__pair {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    font-size: var(--zh-font-size-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background var(--zh-transition-fast);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--winner {
+      background: rgba(76, 175, 80, 0.12);
+    }
+
+    &--loser {
+      opacity: 0.5;
+    }
+  }
+
+  &__seed {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--zh-radius-full);
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 10px;
+    font-weight: 800;
+    color: #c9a84c;
+  }
+
+  &__names {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+
+    &--tbd {
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  &__scores {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  &__set {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 11px;
+    font-weight: 700;
+    color: #e0e0e0;
+  }
+
+  &__winner-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #4caf50;
+  }
+
+  // Connectors
+  &__connectors {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-self: stretch;
+    width: 24px;
+    flex-shrink: 0;
+  }
+
+  &__connector {
+    position: relative;
+    min-height: 60px;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      width: 12px;
+      border-right: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    &::before {
+      top: 25%;
+      height: 25%;
+      border-top: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    &::after {
+      bottom: 25%;
+      height: 25%;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  // Champion
+  &__champion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zh-space-sm);
+    margin-top: var(--zh-space-xl);
+    padding: var(--zh-space-md) var(--zh-space-lg);
+    border-radius: var(--zh-radius-lg);
+    background: linear-gradient(135deg, rgba(201, 168, 76, 0.15), rgba(201, 168, 76, 0.05));
+    border: 1px solid rgba(201, 168, 76, 0.3);
+  }
+
+  &__champion-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #c9a84c;
+  }
+
+  &__champion-label {
+    font-size: var(--zh-font-size-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #c9a84c;
+  }
+
+  &__champion-names {
+    font-size: var(--zh-font-size-md);
+    font-weight: 700;
+    color: #fff;
+  }
+}

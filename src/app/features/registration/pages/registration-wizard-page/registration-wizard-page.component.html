@@ -15,8 +15,19 @@
       <span class="rw__badge">{{ t.categoryName }} · {{ t.genderLabel }}</span>
       <h1 class="rw__title">{{ 'registration.title' | t }}</h1>
       <p class="rw__tournament-name">{{ t.name }}</p>
-      <p class="rw__tournament-meta">{{ t.complexName }} · {{ t.startDate }} — {{ t.endDate }}</p>
+      <p class="rw__tournament-meta">{{ t.complexName }} · {{ t.startDate | formatDate }} — {{ t.endDate | formatDate }}</p>
+      <button class="rw__tutorial-btn" (click)="showTutorial.set(true)" [title]="'registration.tutorial.open' | t">
+        {{ 'registration.tutorial.open' | t }}
+      </button>
     </div>
+
+    @if (showTutorial()) {
+      <app-tutorial-modal
+        [titleKey]="'registration.tutorial.title'"
+        [youtubeUrl]="'https://www.youtube.com/embed/PLACEHOLDER_VIDEO_ID'"
+        (closed)="showTutorial.set(false)">
+      </app-tutorial-modal>
+    }
 
     <!-- Stepper -->
     <nav class="rw-stepper" aria-label="Registration steps">
@@ -323,7 +334,7 @@
               </div>
               <div class="rw-summary__row">
                 <span class="rw-summary__label">{{ 'tournaments.dates' | t }}</span>
-                <span class="rw-summary__value">{{ t.startDate }} — {{ t.endDate }}</span>
+                <span class="rw-summary__value">{{ t.startDate | formatDate }} — {{ t.endDate | formatDate }}</span>
               </div>
             </div>
 

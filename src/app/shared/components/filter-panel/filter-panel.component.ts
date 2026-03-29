@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
@@ -40,6 +40,10 @@ export class FilterPanelComponent {
   readonly sortsOpen = signal(false);
   values: Record<string, string> = {};
   sortRules: SortRule[] = [];
+
+  get hasActiveFilters(): boolean {
+    return Object.values(this.values).some(v => v != null && v !== '');
+  }
 
   ngOnInit(): void {
     if (this.defaultCollapsed()) {

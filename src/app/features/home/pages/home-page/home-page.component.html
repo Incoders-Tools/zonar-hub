@@ -54,7 +54,7 @@
           <a class="tournament-card" [routerLink]="['/tournaments', t.id]">
             <span class="tournament-card__status" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span>
             <h3 class="tournament-card__name">{{ t.name }}</h3>
-            <p class="tournament-card__meta">📍 {{ t.complexName }} · 📅 {{ t.startDate }}</p>
+            <p class="tournament-card__meta">📍 {{ t.complexName }} · 📅 {{ t.startDate | formatDate }}</p>
             <p class="tournament-card__category">{{ t.categoryName }} — {{ t.genderLabel }}</p>
           </a>
         }
@@ -62,29 +62,36 @@
     </section>
   }
 
-  <!-- Dynamic Home Sections -->
-  @for (section of contentService.homeSections(); track section.id) {
-    @if (section.isActive) {
-      <section class="section home-section">
-        <h2 class="section__title">{{ section.title }}</h2>
-      </section>
-    }
-  }
-
-  <!-- News -->
-  @if (contentService.news().length > 0) {
-    <section class="section news-section">
-      <h2 class="section__title">{{ 'home.latestNews' | t }}</h2>
-      <div class="card-grid">
-        @for (article of contentService.news(); track article.id) {
-          <article class="news-card">
-            <h3 class="news-card__title">{{ article.title }}</h3>
-            <p class="news-card__summary">{{ article.summary }}</p>
-            <span class="news-card__date">{{ article.publishedAt }}</span>
-          </article>
+  <!-- How It Works -->
+  <section class="section workflow-section">
+    <h2 class="section__title">{{ 'home.workflow.title' | t }}</h2>
+    <div class="workflow-steps">
+      @for (step of workflowSteps; track step.titleKey; let i = $index) {
+        <div class="workflow-step">
+          <span class="workflow-step__number">{{ i + 1 }}</span>
+          <span class="workflow-step__icon">{{ step.icon }}</span>
+          <h4 class="workflow-step__title">{{ step.titleKey | t }}</h4>
+          <p class="workflow-step__desc">{{ step.descKey | t }}</p>
+        </div>
+        @if (i < workflowSteps.length - 1) {
+          <span class="workflow-step__connector">▸</span>
         }
-      </div>
-    </section>
+      }
+    </div>
+    <div class="workflow-highlight">
+      <p class="workflow-pro">{{ 'home.workflow.highlight' | t }}</p>
+      <button class="btn btn--outline" type="button" (click)="showTutorial.set(true)">
+        {{ 'home.workflow.tutorialLink' | t }}
+      </button>
+    </div>
+  </section>
+
+  @if (showTutorial()) {
+    <app-tutorial-modal
+      [titleKey]="'home.workflow.title'"
+      [youtubeUrl]="'https://www.youtube.com/embed/PLACEHOLDER_VIDEO_ID'"
+      (closed)="showTutorial.set(false)">
+    </app-tutorial-modal>
   }
 
   <!-- CTA Section -->

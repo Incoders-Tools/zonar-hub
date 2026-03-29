@@ -7,3 +7,4 @@ export * from './catalog.model';
 export * from './content.model';
 export * from './draw-planner.model';
 export * from './operational.model';
+export * from './bracket.model';

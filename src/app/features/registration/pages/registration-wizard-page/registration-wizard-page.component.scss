@@ -48,6 +48,29 @@
     color: var(--zh-text-secondary);
     margin: 0;
   }
+
+  &__tutorial-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    margin-top: var(--zh-space-md);
+    padding: var(--zh-space-xs) var(--zh-space-md);
+    border: 1px solid var(--zh-primary);
+    border-radius: var(--zh-radius-full);
+    background: transparent;
+    color: var(--zh-primary);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background var(--zh-transition-fast),
+      color var(--zh-transition-fast);
+
+    &:hover {
+      background: var(--zh-primary);
+      color: var(--zh-on-primary);
+    }
+  }
 }
 
 // ── Stepper with connectors ──
