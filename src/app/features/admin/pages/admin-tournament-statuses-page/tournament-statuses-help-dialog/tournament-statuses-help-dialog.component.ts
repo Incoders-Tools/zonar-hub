@@ -51,7 +51,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
       background-color: white;
       border-radius: 8px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      max-width: 500px;
+      max-width: 600px;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
@@ -79,9 +79,17 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
       cursor: pointer;
       color: #999;
       padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s;
 
       &:hover {
         color: #333;
+        background-color: #f5f5f5;
       }
     }
 
@@ -89,6 +97,8 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
       padding: 1.5rem;
       flex: 1;
       overflow-y: auto;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
 
       h3 {
         font-size: 1rem;

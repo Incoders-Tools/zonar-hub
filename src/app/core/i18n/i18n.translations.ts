@@ -632,6 +632,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.complex-services.confirm.deleteWarning': 'Esta acción no se puede deshacer.',
     'admin.complex-services.help.title': '¿Qué son los servicios de complejo?',
     'admin.complex-services.help.description': 'Los servicios son amenidades adicionales que las instalaciones pueden ofrecer a jugadores y organizadores.',
+    'admin.complex-services.help.section1Title': 'Definición',
+    'admin.complex-services.help.section1Text': 'Los servicios de complejo son amenidades adicionales que las instalaciones pueden ofrecer, como estacionamiento, cantina, WiFi, vestuarios, etc.',
+    'admin.complex-services.help.section2Title': 'Configuración',
+    'admin.complex-services.help.section2Text': 'Cada servicio requiere un nombre, una clave técnica única, un ícono FontAwesome y un orden de visualización.',
+    'admin.complex-services.help.section3Title': 'Casos de uso',
+    'admin.complex-services.help.section3Item1': 'Informar a jugadores sobre amenidades disponibles',
+    'admin.complex-services.help.section3Item2': 'Diferenciar complejos por servicios ofrecidos',
+    'admin.complex-services.help.section3Item3': 'Mejorar la experiencia del usuario al buscar complejos',
 
     // ---- Social Networks ----
     'admin.social-networks.title': 'Redes Sociales',
@@ -669,6 +677,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.social-networks.confirm.deleteWarning': 'Esta acción no se puede deshacer.',
     'admin.social-networks.help.title': '¿Qué son las redes sociales?',
     'admin.social-networks.help.description': 'Las redes sociales del circuito permiten a los jugadores seguir y compartir información sobre torneos.',
+    'admin.social-networks.help.section1Title': 'Definición',
+    'admin.social-networks.help.section1Text': 'Las redes sociales permiten a los jugadores conectar y seguir a tu circuito en plataformas como Instagram, Facebook, Twitter, y más.',
+    'admin.social-networks.help.section2Title': 'Configuración',
+    'admin.social-networks.help.section2Text': 'Cada red social requiere un nombre, una URL de perfil (ej: https://instagram.com/tucircuito), y un orden de visualización.',
+    'admin.social-networks.help.section3Title': 'Beneficios',
+    'admin.social-networks.help.section3Item1': 'Mayor visibilidad del circuito en redes',
+    'admin.social-networks.help.section3Item2': 'Facilitar el seguimiento de torneos y noticias',
+    'admin.social-networks.help.section3Item3': 'Mejorar la comunidad y engagement de jugadores',
 
     // ---- Tournament Types ----
     'admin.tournament-types.title': 'Tipos de Torneo',
@@ -705,6 +721,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-types.confirm.deleteWarning': 'Esta acción no se puede deshacer. Los torneos asociados podrían verse afectados.',
     'admin.tournament-types.help.title': '¿Qué son los tipos de torneo?',
     'admin.tournament-types.help.description': 'Los tipos definen la modalidad de competencia (singles, dobles, mixto, etc.).',
+    'admin.tournament-types.help.section1Title': 'Definición',
+    'admin.tournament-types.help.section1Text': 'Los tipos de torneo definen la modalidad de competencia, como singles, dobles, mixto, por equipos, etc.',
+    'admin.tournament-types.help.section2Title': 'Configuración',
+    'admin.tournament-types.help.section2Text': 'Cada tipo puede tener su propio sistema de puntajes y aplicarse de manera diferente según el género de los participantes.',
+    'admin.tournament-types.help.section3Title': 'Opciones',
+    'admin.tournament-types.help.section3Item1': 'Activar sistema de puntos para cada tipo',
+    'admin.tournament-types.help.section3Item2': 'Aplicar diferente modalidad por género',
+    'admin.tournament-types.help.section3Item3': 'Organizar los tipos en orden visual preferente',
 
     // ---- Tournament Statuses ----
     'admin.tournament-statuses.title': 'Estados de Torneo',
@@ -738,6 +762,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-statuses.confirm.deleteWarning': 'Esta acción no se puede deshacer.',
     'admin.tournament-statuses.help.title': '¿Qué son los estados de torneo?',
     'admin.tournament-statuses.help.description': 'Los estados representan el ciclo de vida de un torneo (inscripción abierta, en curso, finalizado, etc.).',
+    'admin.tournament-statuses.help.section1Title': 'Definición',
+    'admin.tournament-statuses.help.section1Text': 'Los estados de torneo representan las diferentes fases por las que pasa un torneo durante su ciclo de vida.',
+    'admin.tournament-statuses.help.section2Title': 'Ciclo de vida',
+    'admin.tournament-statuses.help.section2Text': 'Un torneo típicamente pasa por estados como: inscripción abierta, inscripción cerrada, en curso, finalizado, cancelado, etc.',
+    'admin.tournament-statuses.help.section3Title': 'Uso',
+    'admin.tournament-statuses.help.section3Item1': 'Filtrar y mostrar torneos según su estado',
+    'admin.tournament-statuses.help.section3Item2': 'Controlar el flujo de trabajo del torneo',
+    'admin.tournament-statuses.help.section3Item3': 'Comunicar a los jugadores el estado actual',
 
     // ---- Tournament Eligibility Profiles ----
     'admin.tournament-eligibility-profiles.title': 'Perfiles de Elegibilidad',
@@ -770,7 +802,16 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-eligibility-profiles.confirm.bulkDeleteTitle': 'Eliminar perfiles seleccionados',
     'admin.tournament-eligibility-profiles.confirm.deleteWarning': 'Esta acción no se puede deshacer. Los torneos asociados podrían verse afectados.',
     'admin.tournament-eligibility-profiles.help.title': '¿Qué son los perfiles de elegibilidad?',
-    'admin.tournament-eligibility-profiles.help.description': 'Los perfiles definen criterios de elegibilidad para participantes (edad,ranking, experiencia, etc.).'
+    'admin.tournament-eligibility-profiles.help.description': 'Los perfiles definen criterios de elegibilidad para participantes (edad,ranking, experiencia, etc.).',
+    'admin.tournament-eligibility-profiles.help.section1Title': 'Definición',
+    'admin.tournament-eligibility-profiles.help.section1Text': 'Los perfiles de elegibilidad definen los requisitos que deben cumplir los jugadores para participar en un torneo.',
+    'admin.tournament-eligibility-profiles.help.section2Title': 'Criterios',
+    'admin.tournament-eligibility-profiles.help.section2Text': 'Los criterios pueden incluir edad, ranking, experiencia, categoría de jugador, nivel de habilidad, etc.',
+    'admin.tournament-eligibility-profiles.help.section3Title': 'Aplicación',
+    'admin.tournament-eligibility-profiles.help.section3Item1': 'Asignar perfiles a torneos específicos',
+    'admin.tournament-eligibility-profiles.help.section3Item2': 'Verificar automáticamente la elegibilidad de inscriptos',
+    'admin.tournament-eligibility-profiles.help.section3Item3': 'Mantener la integridad del torneo con reglas claras'
+
   },
 
   en: {
@@ -1384,6 +1425,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.complex-services.confirm.deleteWarning': 'This action cannot be undone.',
     'admin.complex-services.help.title': 'What are complex services?',
     'admin.complex-services.help.description': 'Services are additional amenities that facilities can offer to players and organizers.',
+    'admin.complex-services.help.section1Title': 'Definition',
+    'admin.complex-services.help.section1Text': 'Complex services are additional amenities that facilities can offer, such as parking, cafeteria, WiFi, locker rooms, etc.',
+    'admin.complex-services.help.section2Title': 'Configuration',
+    'admin.complex-services.help.section2Text': 'Each service requires a name, a unique technical key, a FontAwesome icon, and a display order.',
+    'admin.complex-services.help.section3Title': 'Use cases',
+    'admin.complex-services.help.section3Item1': 'Inform players about available amenities',
+    'admin.complex-services.help.section3Item2': 'Differentiate complexes by services offered',
+    'admin.complex-services.help.section3Item3': 'Improve user experience when searching for complexes',
 
     // ---- Social Networks ----
     'admin.social-networks.title': 'Social Networks',
@@ -1421,6 +1470,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.social-networks.confirm.deleteWarning': 'This action cannot be undone.',
     'admin.social-networks.help.title': 'What are social networks?',
     'admin.social-networks.help.description': 'Social networks for the circuit allow players to follow and share tournament information.',
+    'admin.social-networks.help.section1Title': 'Definition',
+    'admin.social-networks.help.section1Text': 'Social networks allow players to connect and follow your circuit on platforms like Instagram, Facebook, Twitter, and more.',
+    'admin.social-networks.help.section2Title': 'Configuration',
+    'admin.social-networks.help.section2Text': 'Each social network requires a name, a profile URL (e.g., https://instagram.com/yourcircuit), and a display order.',
+    'admin.social-networks.help.section3Title': 'Benefits',
+    'admin.social-networks.help.section3Item1': 'Greater circuit visibility on social networks',
+    'admin.social-networks.help.section3Item2': 'Facilitate tournament and news tracking',
+    'admin.social-networks.help.section3Item3': 'Improve community and player engagement',
 
     // ---- Tournament Types ----
     'admin.tournament-types.title': 'Tournament Types',
@@ -1457,6 +1514,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-types.confirm.deleteWarning': 'This action cannot be undone. Associated tournaments may be affected.',
     'admin.tournament-types.help.title': 'What are tournament types?',
     'admin.tournament-types.help.description': 'Types define the competition modality (singles, doubles, mixed, etc.).',
+    'admin.tournament-types.help.section1Title': 'Definition',
+    'admin.tournament-types.help.section1Text': 'Tournament types define the competition modality, such as singles, doubles, mixed, team, etc.',
+    'admin.tournament-types.help.section2Title': 'Configuration',
+    'admin.tournament-types.help.section2Text': 'Each type can have its own scoring system and apply differently depending on the gender of participants.',
+    'admin.tournament-types.help.section3Title': 'Options',
+    'admin.tournament-types.help.section3Item1': 'Enable points system for each type',
+    'admin.tournament-types.help.section3Item2': 'Apply different modality by gender',
+    'admin.tournament-types.help.section3Item3': 'Organize types in preferred visual order',
 
     // ---- Tournament Statuses ----
     'admin.tournament-statuses.title': 'Tournament Statuses',
@@ -1490,6 +1555,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-statuses.confirm.deleteWarning': 'This action cannot be undone.',
     'admin.tournament-statuses.help.title': 'What are tournament statuses?',
     'admin.tournament-statuses.help.description': 'Statuses represent the lifecycle of a tournament (registration open, in progress, finished, etc.).',
+    'admin.tournament-statuses.help.section1Title': 'Definition',
+    'admin.tournament-statuses.help.section1Text': 'Tournament statuses represent the different phases through which a tournament passes during its lifecycle.',
+    'admin.tournament-statuses.help.section2Title': 'Lifecycle',
+    'admin.tournament-statuses.help.section2Text': 'A typical tournament passes through statuses such as: registration open, registration closed, in progress, finished, cancelled, etc.',
+    'admin.tournament-statuses.help.section3Title': 'Usage',
+    'admin.tournament-statuses.help.section3Item1': 'Filter and display tournaments by status',
+    'admin.tournament-statuses.help.section3Item2': 'Control tournament workflow',
+    'admin.tournament-statuses.help.section3Item3': 'Communicate current status to players',
 
     // ---- Tournament Eligibility Profiles ----
     'admin.tournament-eligibility-profiles.title': 'Eligibility Profiles',
@@ -1522,7 +1595,16 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-eligibility-profiles.confirm.bulkDeleteTitle': 'Delete selected profiles',
     'admin.tournament-eligibility-profiles.confirm.deleteWarning': 'This action cannot be undone. Associated tournaments may be affected.',
     'admin.tournament-eligibility-profiles.help.title': 'What are eligibility profiles?',
-    'admin.tournament-eligibility-profiles.help.description': 'Profiles define eligibility criteria for participants (age, ranking, experience, etc.).'
+    'admin.tournament-eligibility-profiles.help.description': 'Profiles define eligibility criteria for participants (age, ranking, experience, etc.).',
+    'admin.tournament-eligibility-profiles.help.section1Title': 'Definition',
+    'admin.tournament-eligibility-profiles.help.section1Text': 'Eligibility profiles define the requirements that players must meet to participate in a tournament.',
+    'admin.tournament-eligibility-profiles.help.section2Title': 'Criteria',
+    'admin.tournament-eligibility-profiles.help.section2Text': 'Criteria can include age, ranking, experience, player category, skill level, etc.',
+    'admin.tournament-eligibility-profiles.help.section3Title': 'Application',
+    'admin.tournament-eligibility-profiles.help.section3Item1': 'Assign profiles to specific tournaments',
+    'admin.tournament-eligibility-profiles.help.section3Item2': 'Automatically verify eligibility of registered players',
+    'admin.tournament-eligibility-profiles.help.section3Item3': 'Maintain tournament integrity with clear rules'
+
   },
 
   pt: {
@@ -2136,6 +2218,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.complex-services.confirm.deleteWarning': 'Esta ação não pode ser desfeita.',
     'admin.complex-services.help.title': 'O que são serviços de complexo?',
     'admin.complex-services.help.description': 'Serviços são amenidades adicionais que as instalações podem oferecer aos jogadores e organizadores.',
+    'admin.complex-services.help.section1Title': 'Definição',
+    'admin.complex-services.help.section1Text': 'Os serviços de complexo são amenidades adicionais que as instalações podem oferecer, como estacionamento, cantina, WiFi, vestiários, etc.',
+    'admin.complex-services.help.section2Title': 'Configuração',
+    'admin.complex-services.help.section2Text': 'Cada serviço requer um nome, uma chave técnica única, um ícone FontAwesome e uma ordem de exibição.',
+    'admin.complex-services.help.section3Title': 'Casos de uso',
+    'admin.complex-services.help.section3Item1': 'Informar jogadores sobre amenidades disponíveis',
+    'admin.complex-services.help.section3Item2': 'Diferenciar complexos pelos serviços oferecidos',
+    'admin.complex-services.help.section3Item3': 'Melhorar a experiência do usuário ao buscar complexos',
 
     // ---- Social Networks ----
     'admin.social-networks.title': 'Redes Sociais',
@@ -2173,6 +2263,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.social-networks.confirm.deleteWarning': 'Esta ação não pode ser desfeita.',
     'admin.social-networks.help.title': 'O que são redes sociais?',
     'admin.social-networks.help.description': 'Redes sociais do circuito permitem que os jogadores sigam e compartilhem informações sobre torneios.',
+    'admin.social-networks.help.section1Title': 'Definição',
+    'admin.social-networks.help.section1Text': 'As redes sociais permitem que os jogadores se conectem e sigam seu circuito em plataformas como Instagram, Facebook, Twitter e muito mais.',
+    'admin.social-networks.help.section2Title': 'Configuração',
+    'admin.social-networks.help.section2Text': 'Cada rede social requer um nome, uma URL de perfil (ex: https://instagram.com/seucircuito) e uma ordem de exibição.',
+    'admin.social-networks.help.section3Title': 'Benefícios',
+    'admin.social-networks.help.section3Item1': 'Maior visibilidade do circuito nas redes',
+    'admin.social-networks.help.section3Item2': 'Facilitar o acompanhamento de torneios e notícias',
+    'admin.social-networks.help.section3Item3': 'Melhorar a comunidade e o envolvimento dos jogadores',
 
     // ---- Tournament Types ----
     'admin.tournament-types.title': 'Tipos de Torneio',
@@ -2209,6 +2307,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-types.confirm.deleteWarning': 'Esta ação não pode ser desfeita. Torneios associados poderão ser afetados.',
     'admin.tournament-types.help.title': 'O que são tipos de torneio?',
     'admin.tournament-types.help.description': 'Tipos definem a modalidade de competição (singles, duplas, misto, etc.).',
+    'admin.tournament-types.help.section1Title': 'Definição',
+    'admin.tournament-types.help.section1Text': 'Os tipos de torneio definem a modalidade de competição, como singles, duplas, misto, por equipes, etc.',
+    'admin.tournament-types.help.section2Title': 'Configuração',
+    'admin.tournament-types.help.section2Text': 'Cada tipo pode ter seu próprio sistema de pontuação e ser aplicado de forma diferente dependendo do gênero dos participantes.',
+    'admin.tournament-types.help.section3Title': 'Opções',
+    'admin.tournament-types.help.section3Item1': 'Ativar sistema de pontos para cada tipo',
+    'admin.tournament-types.help.section3Item2': 'Aplicar modalidade diferente por gênero',
+    'admin.tournament-types.help.section3Item3': 'Organizar os tipos em ordem visual preferente',
 
     // ---- Tournament Statuses ----
     'admin.tournament-statuses.title': 'Status de Torneio',
@@ -2242,6 +2348,14 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-statuses.confirm.deleteWarning': 'Esta ação não pode ser desfeita.',
     'admin.tournament-statuses.help.title': 'O que são status de torneio?',
     'admin.tournament-statuses.help.description': 'Status representam o ciclo de vida de um torneio (inscrição aberta, em andamento, finalizado, etc.).',
+    'admin.tournament-statuses.help.section1Title': 'Definição',
+    'admin.tournament-statuses.help.section1Text': 'Os status de torneio representam as diferentes fases pelas quais um torneio passa durante seu ciclo de vida.',
+    'admin.tournament-statuses.help.section2Title': 'Ciclo de vida',
+    'admin.tournament-statuses.help.section2Text': 'Um torneio típico passa por status como: inscrição aberta, inscrição fechada, em andamento, finalizado, cancelado, etc.',
+    'admin.tournament-statuses.help.section3Title': 'Uso',
+    'admin.tournament-statuses.help.section3Item1': 'Filtrar e exibir torneios de acordo com seu status',
+    'admin.tournament-statuses.help.section3Item2': 'Controlar o fluxo de trabalho do torneio',
+    'admin.tournament-statuses.help.section3Item3': 'Comunicar aos jogadores o status atual',
 
     // ---- Tournament Eligibility Profiles ----
     'admin.tournament-eligibility-profiles.title': 'Perfis de Elegibilidade',
@@ -2274,6 +2388,15 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournament-eligibility-profiles.confirm.bulkDeleteTitle': 'Excluir perfis selecionados',
     'admin.tournament-eligibility-profiles.confirm.deleteWarning': 'Esta ação não pode ser desfeita. Torneios associados poderão ser afetados.',
     'admin.tournament-eligibility-profiles.help.title': 'O que são perfis de elegibilidade?',
-    'admin.tournament-eligibility-profiles.help.description': 'Perfis definem critérios de elegibilidade para participantes (idade, ranking, experiência, etc.).'
+    'admin.tournament-eligibility-profiles.help.description': 'Perfis definem critérios de elegibilidade para participantes (idade, ranking, experiência, etc.).',
+    'admin.tournament-eligibility-profiles.help.section1Title': 'Definição',
+    'admin.tournament-eligibility-profiles.help.section1Text': 'Os perfis de elegibilidade definem os requisitos que os jogadores devem atender para participar de um torneio.',
+    'admin.tournament-eligibility-profiles.help.section2Title': 'Critérios',
+    'admin.tournament-eligibility-profiles.help.section2Text': 'Os critérios podem incluir idade, ranking, experiência, categoria de jogador, nível de habilidade, etc.',
+    'admin.tournament-eligibility-profiles.help.section3Title': 'Aplicação',
+    'admin.tournament-eligibility-profiles.help.section3Item1': 'Atribuir perfis a torneios específicos',
+    'admin.tournament-eligibility-profiles.help.section3Item2': 'Verificar automaticamente a elegibilidade de inscritos',
+    'admin.tournament-eligibility-profiles.help.section3Item3': 'Manter a integridade do torneio com regras claras'
+
   }
 };

@@ -79,9 +79,17 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
       cursor: pointer;
       color: #999;
       padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s;
 
       &:hover {
         color: #333;
+        background-color: #f5f5f5;
       }
     }
 
@@ -89,6 +97,8 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
       padding: 1.5rem;
       flex: 1;
       overflow-y: auto;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
 
       h3 {
         font-size: 1rem;
