@@ -77,7 +77,7 @@
             @if (rowActions().length > 0) {
               <td class="data-table__td data-table__td--actions">
                 <div class="data-table__row-actions">
-                  @for (act of rowActions(); track act.action) {
+                  @for (act of getActionsForRow(row); track act.action) {
                     <button
                       class="data-table__action-btn"
                       [class.data-table__action-btn--primary]="act.variant === 'primary'"

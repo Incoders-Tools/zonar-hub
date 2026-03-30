@@ -7,9 +7,10 @@
         <p class="complex-services-page__subtitle">{{ 'admin.complex-services.subtitle' | t }}</p>
       </div>
       <div class="complex-services-page__header-actions">
-        <button class="complex-services-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
-          {{ 'admin.help' | t }}
-        </button>
+        <app-help-button
+          [titleKey]="'admin.complex-services.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -103,9 +104,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-complex-services-help-dialog (closed)="closeHelp()"></app-complex-services-help-dialog>
 }

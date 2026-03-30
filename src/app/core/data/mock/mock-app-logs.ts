@@ -44,8 +44,8 @@ export const MOCK_APP_LOGS: AppLog[] = [
     origin: 'frontend',
     category: 'api.call',
     message: 'API Request to /api/tournaments?page=1&limit=10',
-    component: 'AdminTournamentsPageComponent',
-    route: '/admin/tournaments',
+    component: 'AdminDashboardPageComponent',
+    route: '/admin',
     resolved: true,
     resolvedAt: new Date(Date.now() - 10000).toISOString()
   },

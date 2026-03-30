@@ -136,7 +136,7 @@
 
 // ---- Section ----
 .section {
-  margin-top: var(--zh-space-2xl);
+  margin-top: var(--zh-space-3xl);
 
   &__title {
     margin: 0 0 var(--zh-space-sm);
@@ -343,9 +343,259 @@
   color: var(--zh-text-secondary);
 }
 
+// ---- Pricing Section ----
+.pricing-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--zh-space-sm);
+  margin-bottom: var(--zh-space-xl);
+
+  &__label {
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+    cursor: pointer;
+    transition: color var(--zh-transition-fast);
+
+    &--active {
+      color: var(--zh-text-primary);
+    }
+  }
+
+  &__switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    border: 2px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-surface-muted);
+    cursor: pointer;
+    padding: 0;
+    transition: background var(--zh-transition-fast), border-color var(--zh-transition-fast);
+
+    &--annual {
+      background: var(--zh-primary);
+      border-color: var(--zh-primary);
+    }
+  }
+
+  &__knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-on-primary);
+    transition: transform var(--zh-transition-fast);
+    box-shadow: var(--zh-elevation-sm);
+
+    .pricing-toggle__switch--annual & {
+      transform: translateX(22px);
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    padding: 3px 10px;
+    border-radius: var(--zh-radius-full);
+    background: rgba(var(--zh-success-rgb, 34, 197, 94), 0.12);
+    color: var(--zh-success, #16a34a);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+  }
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--zh-space-lg);
+  align-items: stretch;
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--zh-space-xl);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-xl);
+  background: var(--zh-surface-card);
+  transition: box-shadow var(--zh-transition-fast), transform var(--zh-transition-fast);
+
+  &:hover {
+    box-shadow: var(--zh-elevation-md);
+    transform: translateY(-4px);
+  }
+
+  &--popular {
+    border-color: var(--zh-primary);
+    border-width: 2px;
+    box-shadow: var(--zh-elevation-md);
+  }
+
+  &__badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    padding: 4px 16px;
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-primary);
+    color: var(--zh-on-primary);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__name {
+    margin: 0 0 var(--zh-space-sm);
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+    text-align: center;
+  }
+
+  &__price {
+    margin-bottom: var(--zh-space-lg);
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    font-weight: 800;
+    color: var(--zh-text-primary);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  &__features {
+    list-style: none;
+    margin: 0 0 var(--zh-space-lg);
+    padding: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-sm);
+
+    li {
+      position: relative;
+      padding-left: var(--zh-space-lg);
+      font-size: var(--zh-font-size-sm);
+      color: var(--zh-text-secondary);
+      line-height: 1.5;
+
+      &::before {
+        content: '\2713';
+        position: absolute;
+        left: 0;
+        color: var(--zh-success, #16a34a);
+        font-weight: 700;
+      }
+    }
+  }
+
+  &__cta {
+    width: 100%;
+    text-align: center;
+    margin-top: auto;
+  }
+}
+
+// ---- FAQ Section ----
+.faq-section {
+  max-width: 800px;
+  margin-inline: auto;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--zh-border-subtle);
+
+  &:first-child {
+    border-top: 1px solid var(--zh-border-subtle);
+  }
+
+  &__question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--zh-space-md) var(--zh-space-sm);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    gap: var(--zh-space-md);
+    transition: color var(--zh-transition-fast);
+
+    &:hover {
+      color: var(--zh-primary);
+    }
+  }
+
+  &__question-text {
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+    line-height: 1.4;
+
+    .faq-item__question:hover & {
+      color: var(--zh-primary);
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-surface-muted);
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-lg);
+    font-weight: 300;
+    transition: background var(--zh-transition-fast), color var(--zh-transition-fast), transform var(--zh-transition-fast);
+
+    .faq-item--open & {
+      background: var(--zh-primary);
+      color: var(--zh-on-primary);
+      transform: rotate(180deg);
+    }
+  }
+
+  &__answer-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+
+    .faq-item--open & {
+      grid-template-rows: 1fr;
+    }
+  }
+
+  &__answer {
+    overflow: hidden;
+    margin: 0;
+    padding: 0 var(--zh-space-sm);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    line-height: 1.6;
+
+    .faq-item--open & {
+      padding-bottom: var(--zh-space-md);
+    }
+  }
+}
+
 // ---- CTA Section ----
 .cta-section {
-  margin-top: var(--zh-space-2xl);
+  margin-top: var(--zh-space-3xl);
   padding: var(--zh-space-2xl) var(--zh-space-xl);
   border-radius: var(--zh-radius-xl);
   background: var(--zh-primary);
@@ -391,5 +641,15 @@
   .workflow-step__connector {
     transform: rotate(90deg);
     padding-top: 0;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .pricing-card--popular {
+    order: -1;
   }
 }

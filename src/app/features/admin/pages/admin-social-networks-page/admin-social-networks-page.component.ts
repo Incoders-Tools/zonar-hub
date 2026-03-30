@@ -1,7 +1,10 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
@@ -9,8 +12,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { SocialNetwork } from '../../../../core/models';
 import { SocialNetworksFacadeService, SocialNetworkFilters } from './social-networks-facade.service';
-import { SocialNetworksFormDialogComponent } from './social-networks-form-dialog/social-networks-form-dialog.component';
-import { SocialNetworksHelpDialogComponent } from './social-networks-help-dialog/social-networks-help-dialog.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 
 interface SocialNetworkRow extends Record<string, unknown> {
   id: string;
@@ -28,14 +30,16 @@ interface SocialNetworkRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     MatIcon,
+    MatInputModule,
+    MatCheckboxModule,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    SocialNetworksFormDialogComponent,
-    SocialNetworksHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [SocialNetworksFacadeService],
   templateUrl: './admin-social-networks-page.component.html',
@@ -54,15 +58,19 @@ interface SocialNetworkRow extends Record<string, unknown> {
   ]
 })
 export class AdminSocialNetworksPageComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
   readonly facade = inject(SocialNetworksFacadeService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingNetwork = signal<SocialNetwork | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedNetworks = signal<SocialNetworkRow[]>([]);
+
+  form!: FormGroup;
+  isEditing = false;
+  submitted = false;
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.social-networks.column.name', sortable: true },
@@ -104,8 +112,57 @@ export class AdminSocialNetworksPageComponent implements OnInit {
 
   readonly hasSelection = computed(() => this.selectedNetworks().length > 0);
 
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.social-networks.help.section1Title', contentKey: 'admin.social-networks.help.section1Text' },
+    { titleKey: 'admin.social-networks.help.section2Title', contentKey: 'admin.social-networks.help.section2Text' },
+    { titleKey: 'admin.social-networks.help.section3Title', items: [
+      'admin.social-networks.help.section3Item1',
+      'admin.social-networks.help.section3Item2',
+      'admin.social-networks.help.section3Item3'
+    ] }
+  ];
+
   ngOnInit(): void {
+    this.initializeForm();
     this.facade.load();
+  }
+
+  private initializeForm(): void {
+    this.form = this.fb.group({
+      name: ['', [Validators.required]],
+      key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
+      url: [''],
+      description: [''],
+      sortOrder: ['', [Validators.min(0)]],
+      isActive: [true]
+    });
+  }
+
+  private populateForm(): void {
+    const network = this.editingNetwork();
+    if (network) {
+      this.isEditing = true;
+      this.submitted = false;
+      this.form.patchValue({
+        name: network.name,
+        key: network.key,
+        url: network.url || '',
+        description: network.description || '',
+        sortOrder: network.sortOrder || '',
+        isActive: network.isActive
+      });
+      this.form.get('key')?.disable();
+    } else {
+      this.isEditing = false;
+      this.submitted = false;
+      this.form.reset();
+      this.form.get('key')?.enable();
+      const nextOrder = this.facade.getNextSortOrder();
+      this.form.patchValue({
+        sortOrder: nextOrder,
+        isActive: true
+      });
+    }
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -130,6 +187,7 @@ export class AdminSocialNetworksPageComponent implements OnInit {
 
   openCreate(): void {
     this.editingNetwork.set(null);
+    this.populateForm();
     this.showFormPanel.set(true);
   }
 
@@ -137,6 +195,7 @@ export class AdminSocialNetworksPageComponent implements OnInit {
     const network = this.facade.filteredNetworks().find(n => n.id === row.id);
     if (network) {
       this.editingNetwork.set(network);
+      this.populateForm();
       this.showFormPanel.set(true);
     }
   }
@@ -190,15 +249,88 @@ export class AdminSocialNetworksPageComponent implements OnInit {
     this.showBulkDeleteDialog.set(false);
   }
 
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
-  }
-
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
     this.facade.applySortOption(`${event.key}_${event.direction}`);
+  }
+
+  async onFormSave(): Promise<void> {
+    this.submitted = true;
+
+    if (!this.form.valid) {
+      return;
+    }
+
+    const formValue = this.form.getRawValue();
+
+    // Validate key uniqueness (only for new records)
+    if (!this.isEditing) {
+      const keyExists = await this.facade.checkKeyExists(formValue.key);
+      if (keyExists) {
+        this.form.get('key')?.setErrors({ keyExists: true });
+        return;
+      }
+    }
+
+    // Validate name uniqueness
+    const nameExists = await this.facade.checkNameExists(formValue.name, this.editingNetwork()?.id);
+    if (nameExists) {
+      this.form.get('name')?.setErrors({ nameExists: true });
+      return;
+    }
+
+    // Validate sort order uniqueness
+    const sortOrderExists = await this.facade.checkSortOrderExists(
+      formValue.sortOrder ? Number(formValue.sortOrder) : null,
+      this.editingNetwork()?.id
+    );
+    if (sortOrderExists) {
+      this.form.get('sortOrder')?.setErrors({ sortOrderExists: true });
+      return;
+    }
+
+    const payload = this.isEditing
+      ? {
+          ...this.editingNetwork(),
+          ...formValue
+        }
+      : formValue;
+
+    const success = await this.facade.saveNetwork(payload);
+    if (success) {
+      this.closeFormPanel();
+    }
+  }
+
+  getErrorMessage(controlName: string): string {
+    const control = this.form.get(controlName);
+    if (!control || !this.submitted || !control.errors) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return `admin.social-networks.error.${controlName}Required`;
+    }
+    if (control.errors['pattern']) {
+      return `admin.social-networks.error.${controlName}Invalid`;
+    }
+    if (control.errors['min']) {
+      return 'admin.social-networks.error.sortOrderMin';
+    }
+    if (control.errors['keyExists']) {
+      return 'admin.social-networks.error.keyExists';
+    }
+    if (control.errors['nameExists']) {
+      return 'admin.social-networks.error.nameExists';
+    }
+    if (control.errors['sortOrderExists']) {
+      return 'admin.social-networks.error.sortOrderExists';
+    }
+
+    return 'admin.social-networks.error.invalid';
+  }
+
+  isFieldInvalid(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    return this.submitted && control?.invalid || false;
   }
 }

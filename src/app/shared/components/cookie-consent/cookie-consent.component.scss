@@ -1,0 +1,70 @@
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.88);
+  padding: var(--zh-space-md) var(--zh-space-lg);
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zh-space-md);
+    max-width: 1200px;
+    margin: 0 auto;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  &__message {
+    margin: 0;
+    color: var(--zh-text-inverse);
+    font-size: var(--zh-font-size-sm);
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    flex-shrink: 0;
+  }
+
+  &__accept {
+    padding: var(--zh-space-sm) var(--zh-space-lg);
+    border: none;
+    border-radius: var(--zh-radius-sm);
+    background: var(--zh-primary);
+    color: var(--zh-text-inverse);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity var(--zh-transition-fast);
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  &__dismiss {
+    border: none;
+    background: transparent;
+    color: var(--zh-text-inverse);
+    font-size: var(--zh-font-size-xl);
+    cursor: pointer;
+    line-height: 1;
+    padding: var(--zh-space-xs);
+    border-radius: var(--zh-radius-sm);
+    transition: opacity var(--zh-transition-fast);
+
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+}

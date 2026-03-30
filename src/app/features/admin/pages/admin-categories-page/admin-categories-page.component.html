@@ -7,9 +7,10 @@
         <p class="categories-page__subtitle">{{ 'categories.subtitle' | t }}</p>
       </div>
       <div class="categories-page__header-actions">
-        <button class="categories-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
-          {{ 'admin.help' | t }}
-        </button>
+        <app-help-button
+          [titleKey]="'categories.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -86,9 +87,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-category-help-dialog (closed)="closeHelp()"></app-category-help-dialog>
 }

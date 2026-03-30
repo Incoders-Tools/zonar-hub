@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -8,9 +9,8 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { TournamentType } from '../../../../core/models';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentTypesFacadeService, TournamentTypeFilters } from './tournament-types-facade.service';
-import { TournamentTypesFormDialogComponent } from './tournament-types-form-dialog/tournament-types-form-dialog.component';
-import { TournamentTypesHelpDialogComponent } from './tournament-types-help-dialog/tournament-types-help-dialog.component';
 
 interface TournamentTypeRow extends Record<string, unknown> {
   id: string;
@@ -30,14 +30,14 @@ interface TournamentTypeRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     MatIcon,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    TournamentTypesFormDialogComponent,
-    TournamentTypesHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [TournamentTypesFacadeService],
   templateUrl: './admin-tournament-types-page.component.html',
@@ -56,15 +56,19 @@ interface TournamentTypeRow extends Record<string, unknown> {
   ]
 })
 export class AdminTournamentTypesPageComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
   readonly facade = inject(TournamentTypesFacadeService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingType = signal<TournamentType | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedTypes = signal<TournamentTypeRow[]>([]);
+
+  form!: FormGroup;
+  isEditing = false;
+  submitted = false;
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.tournament-types.column.name', sortable: true },
@@ -108,8 +112,51 @@ export class AdminTournamentTypesPageComponent implements OnInit {
 
   readonly hasSelection = computed(() => this.selectedTypes().length > 0);
 
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.tournament-types.help.section1Title', contentKey: 'admin.tournament-types.help.section1Text' },
+    { titleKey: 'admin.tournament-types.help.section2Title', contentKey: 'admin.tournament-types.help.section2Text' },
+    { titleKey: 'admin.tournament-types.help.section3Title', items: [
+      'admin.tournament-types.help.section3Item1',
+      'admin.tournament-types.help.section3Item2',
+      'admin.tournament-types.help.section3Item3'
+    ] }
+  ];
+
   ngOnInit(): void {
     this.facade.load();
+    this.initializeForm();
+  }
+
+  private initializeForm(): void {
+    this.form = this.fb.group({
+      name: ['', [Validators.required]],
+      key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
+      sortOrder: ['', [Validators.min(0)]],
+      scoresPoints: [false],
+      appliesGender: [false],
+      isActive: [true]
+    });
+  }
+
+  private populateForm(): void {
+    const type = this.editingType();
+    if (type) {
+      this.isEditing = true;
+      this.form.patchValue({
+        name: type.name,
+        key: type.key,
+        sortOrder: type.sortOrder || '',
+        scoresPoints: type.scoresPoints,
+        appliesGender: type.appliesGender,
+        isActive: type.isActive
+      });
+      this.form.get('key')?.disable();
+    } else {
+      this.isEditing = false;
+      this.form.reset({ name: '', key: '', sortOrder: this.facade.getNextSortOrder(), scoresPoints: false, appliesGender: false, isActive: true });
+      this.form.get('key')?.enable();
+    }
+    this.submitted = false;
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -135,6 +182,7 @@ export class AdminTournamentTypesPageComponent implements OnInit {
   openCreate(): void {
     this.editingType.set(null);
     this.showFormPanel.set(true);
+    this.populateForm();
   }
 
   openEdit(row: TournamentTypeRow): void {
@@ -142,12 +190,49 @@ export class AdminTournamentTypesPageComponent implements OnInit {
     if (type) {
       this.editingType.set(type);
       this.showFormPanel.set(true);
+      this.populateForm();
     }
   }
 
   closeFormPanel(): void {
     this.showFormPanel.set(false);
     this.editingType.set(null);
+    this.submitted = false;
+  }
+
+  async onFormSave(): Promise<void> {
+    this.submitted = true;
+    if (!this.form.valid) return;
+
+    const formValue = this.form.getRawValue();
+
+    if (!this.isEditing) {
+      const keyExists = await this.facade.checkKeyExists(formValue.key);
+      if (keyExists) {
+        this.form.get('key')?.setErrors({ keyExists: true });
+        return;
+      }
+    }
+
+    const nameExists = await this.facade.checkNameExists(formValue.name, this.editingType()?.id);
+    if (nameExists) {
+      this.form.get('name')?.setErrors({ nameExists: true });
+      return;
+    }
+
+    const payload = this.isEditing
+      ? { ...this.editingType(), ...formValue }
+      : formValue;
+
+    const success = await this.facade.saveType(payload);
+    if (success) {
+      this.closeFormPanel();
+    }
+  }
+
+  isFieldInvalid(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    return this.submitted && !!control?.invalid;
   }
 
   confirmDelete(row: TournamentTypeRow): void {
@@ -192,14 +277,6 @@ export class AdminTournamentTypesPageComponent implements OnInit {
 
   cancelBulkDelete(): void {
     this.showBulkDeleteDialog.set(false);
-  }
-
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
   }
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

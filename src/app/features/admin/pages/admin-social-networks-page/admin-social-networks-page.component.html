@@ -6,7 +6,10 @@
         <p class="social-networks-page__subtitle">{{ 'admin.social-networks.subtitle' | t }}</p>
       </div>
       <div class="social-networks-page__header-actions">
-        <button class="social-networks-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">{{ 'admin.help' | t }}</button>
+        <app-help-button
+          [titleKey]="'admin.social-networks.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
         @if (hasSelection()) {
           <app-async-button variant="danger" [loading]="facade.deleting()" (clicked)="openBulkDelete()">
             {{ 'admin.bulkDelete' | t }}
@@ -36,12 +39,110 @@
         </button>
       </div>
       <div class="social-networks-page__form-panel-body">
-        <app-social-networks-form-dialog
-          [network]="editingNetwork()"
-          [saving]="facade.saving()"
-          (saved)="closeFormPanel()"
-          (cancelled)="closeFormPanel()">
-        </app-social-networks-form-dialog>
+        <form [formGroup]="form" class="form-content">
+          <div class="form-grid">
+            <!-- Name Field -->
+            <div class="form-field">
+              <label>{{ 'admin.social-networks.form.name' | t }} *</label>
+              <input
+                type="text"
+                formControlName="name"
+                [placeholder]="'admin.social-networks.form.namePlaceholder' | t"
+                [class.error]="isFieldInvalid('name')"
+                matInput
+              />
+              @if (isFieldInvalid('name')) {
+                <span class="error-message">{{ getErrorMessage('name') | t }}</span>
+              }
+            </div>
+
+            <!-- Key Field -->
+            <div class="form-field">
+              <label>{{ 'admin.social-networks.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+              <input
+                type="text"
+                formControlName="key"
+                [placeholder]="'admin.social-networks.form.keyPlaceholder' | t"
+                [class.error]="isFieldInvalid('key')"
+                matInput
+              />
+              @if (isFieldInvalid('key')) {
+                <span class="error-message">{{ getErrorMessage('key') | t }}</span>
+              }
+            </div>
+
+            <!-- URL Field -->
+            <div class="form-field">
+              <label>{{ 'admin.social-networks.form.url' | t }}</label>
+              <input
+                type="text"
+                formControlName="url"
+                [placeholder]="'admin.social-networks.form.urlPlaceholder' | t"
+                matInput
+              />
+              <span class="hint">{{ 'admin.social-networks.form.urlHint' | t }}</span>
+            </div>
+
+            <!-- Sort Order Field -->
+            <div class="form-field">
+              <label>{{ 'admin.social-networks.form.sortOrder' | t }}</label>
+              <input
+                type="number"
+                formControlName="sortOrder"
+                min="0"
+                [placeholder]="'admin.social-networks.form.sortOrderPlaceholder' | t"
+                [class.error]="isFieldInvalid('sortOrder')"
+                matInput
+              />
+              @if (isFieldInvalid('sortOrder')) {
+                <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
+              }
+            </div>
+
+            <!-- Description Field (full width) -->
+            <div class="form-field form-field--full">
+              <label>{{ 'admin.social-networks.form.description' | t }}</label>
+              <input
+                type="text"
+                formControlName="description"
+                [placeholder]="'admin.social-networks.form.descriptionPlaceholder' | t"
+                matInput
+              />
+            </div>
+
+            <!-- Active Status -->
+            <div class="form-field form-field--checkbox">
+              <label>{{ 'admin.social-networks.form.isActive' | t }}</label>
+              <div class="checkbox-group">
+                <input
+                  type="checkbox"
+                  formControlName="isActive"
+                  matCheckbox
+                />
+                <span>{{ 'admin.social-networks.status.active' | t }}</span>
+                <span class="status-badge" [class.active]="form.get('isActive')?.value">
+                  {{ form.get('isActive')?.value ? ('admin.social-networks.status.active' | t) : ('admin.social-networks.status.inactive' | t) }}
+                </span>
+              </div>
+              <span class="hint">{{ 'admin.social-networks.form.isActiveHint' | t }}</span>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" (click)="closeFormPanel()" class="btn-cancel">
+              {{ 'common.cancel' | t }}
+            </button>
+            <app-async-button
+              type="submit"
+              [loading]="facade.saving()"
+              [disabled]="form.invalid"
+              (clicked)="onFormSave()"
+              class="btn-save">
+              {{ (isEditing ? 'common.update' : 'common.create') | t }}
+            </app-async-button>
+          </div>
+        </form>
       </div>
     </div>
   }
@@ -93,8 +194,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-@if (showHelpDialog()) {
-  <app-social-networks-help-dialog (closed)="closeHelp()"></app-social-networks-help-dialog>
 }

@@ -34,27 +34,6 @@
     gap: var(--zh-space-sm);
   }
 
-  &__help-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--zh-radius-full);
-    border: 1px solid var(--zh-border-subtle);
-    background: var(--zh-surface-elevated);
-    color: var(--zh-text-secondary);
-    font-weight: 700;
-    font-size: var(--zh-font-size-sm);
-    cursor: pointer;
-    transition: all var(--zh-transition-fast);
-
-    &:hover {
-      background: var(--zh-surface-muted);
-      color: var(--zh-primary);
-    }
-  }
-
   &__result-count {
     font-size: var(--zh-font-size-sm);
     color: var(--zh-text-secondary);

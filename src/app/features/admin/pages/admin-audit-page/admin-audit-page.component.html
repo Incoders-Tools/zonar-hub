@@ -7,9 +7,7 @@
         <p class="audit-page__subtitle">{{ 'admin.audit.subtitle' | t }}</p>
       </div>
       <div class="audit-page__header-actions">
-        <button class="audit-page__help-btn" (click)="openHelp()" [attr.aria-label]="'common.help' | t">
-          {{ 'common.help' | t }}
-        </button>
+        <app-help-button [titleKey]="'admin.audit.help.title'" [sections]="helpSections"></app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -39,6 +37,9 @@
     [error]="!!facade.error()"
     [selectable]="true"
     [rowActions]="rowActions"
+    [paginated]="true"
+    [pageSize]="10"
+    paginationPosition="both"
     emptyMessageKey="common.noResults"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
@@ -70,9 +71,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-audit-help-dialog (closed)="closeHelp()"></app-audit-help-dialog>
 }

@@ -7,9 +7,7 @@
         <p class="tournament-eligibility-profiles-page__subtitle">{{ 'admin.tournament-eligibility-profiles.subtitle' | t }}</p>
       </div>
       <div class="tournament-eligibility-profiles-page__header-actions">
-        <button class="tournament-eligibility-profiles-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
-          {{ 'admin.help' | t }}
-        </button>
+        <app-help-button [titleKey]="'admin.tournament-eligibility-profiles.help.title'" [sections]="helpSections"></app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -107,9 +105,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-tournament-eligibility-profiles-help-dialog (closed)="closeHelp()"></app-tournament-eligibility-profiles-help-dialog>
 }

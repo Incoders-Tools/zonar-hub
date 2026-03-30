@@ -30,6 +30,15 @@
 
 <footer class="public-footer">
   <div class="public-footer__inner">
-    <span>© 2026 Zonar Hub — {{ 'footer.rights' | t }}</span>
+    <nav class="public-footer__links">
+      <a routerLink="/privacy">{{ 'footer.privacy' | t }}</a>
+      <span class="public-footer__separator">&middot;</span>
+      <a routerLink="/terms">{{ 'footer.terms' | t }}</a>
+      <span class="public-footer__separator">&middot;</span>
+      <a routerLink="/cookies">{{ 'footer.cookies' | t }}</a>
+    </nav>
+    <span>&copy; 2026 Zonar Hub — {{ 'footer.rights' | t }}</span>
   </div>
 </footer>
+
+<app-cookie-consent></app-cookie-consent>

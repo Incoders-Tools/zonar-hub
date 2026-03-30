@@ -1,14 +1,16 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AdminUser } from '../../../../core/models/admin-user.model';
 import { UsersFacadeService, UsersFilters } from './users-facade.service';
-import { UsersFormDialogComponent } from './users-form-dialog/users-form-dialog.component';
-import { UsersHelpDialogComponent } from './users-help-dialog/users-help-dialog.component';
 
 interface UserRow extends Record<string, unknown> {
   id: string;
@@ -26,28 +28,45 @@ interface UserRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
+    MatIcon,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    UsersFormDialogComponent,
-    UsersHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [UsersFacadeService],
   templateUrl: './admin-users-page.component.html',
-  styleUrl: './admin-users-page.component.scss'
+  styleUrl: './admin-users-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminUsersPageComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
   readonly facade = inject(UsersFacadeService);
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly selectedUsers = signal<UserRow[]>([]);
   readonly editingUser = signal<AdminUser | null>(null);
   readonly deletingId = signal<string | null>(null);
+
+  form!: FormGroup;
+  isEditing = false;
+  submitted = false;
 
   readonly columns: DataTableColumn[] = [
     { key: 'email', labelKey: 'admin.users.column.email', sortable: true },
@@ -94,8 +113,48 @@ export class AdminUsersPageComponent implements OnInit {
 
   readonly hasSelection = computed(() => this.selectedUsers().length > 0);
 
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.users.help.description' },
+    { titleKey: 'admin.users.help.roles', items: [
+      'admin.users.help.roleSystemAdmin',
+      'admin.users.help.roleAdmin',
+      'admin.users.help.roleViewer'
+    ]}
+  ];
+
   ngOnInit(): void {
     this.facade.load();
+    this.initializeForm();
+  }
+
+  private initializeForm(): void {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      fullName: ['', [Validators.required]],
+      phone: [''],
+      roleId: [''],
+      isActive: [true]
+    });
+  }
+
+  private populateForm(): void {
+    const user = this.editingUser();
+    if (user) {
+      this.isEditing = true;
+      this.form.patchValue({
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone || '',
+        roleId: user.roleId || '',
+        isActive: user.isActive
+      });
+      this.form.get('email')?.disable();
+    } else {
+      this.isEditing = false;
+      this.form.reset({ email: '', fullName: '', phone: '', roleId: '', isActive: true });
+      this.form.get('email')?.enable();
+    }
+    this.submitted = false;
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -129,20 +188,60 @@ export class AdminUsersPageComponent implements OnInit {
 
   openCreateForm(): void {
     this.editingUser.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
+    this.populateForm();
   }
 
   openEditForm(row: UserRow): void {
     const user = this.facade.users().find(u => u.id === row.id);
     if (user) {
       this.editingUser.set(user);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
+      this.populateForm();
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingUser.set(null);
+    this.submitted = false;
+  }
+
+  async onFormSave(): Promise<void> {
+    this.submitted = true;
+    if (!this.form.valid) return;
+
+    const formValue = this.form.getRawValue();
+
+    if (this.isEditing) {
+      const existingUser = this.editingUser();
+      if (existingUser) {
+        const success = await this.facade.updateUser(existingUser.id, {
+          fullName: formValue.fullName,
+          phone: formValue.phone || undefined,
+          roleId: formValue.roleId || undefined,
+          isActive: formValue.isActive
+        });
+        if (success) {
+          this.closeFormPanel();
+        }
+      }
+    } else {
+      const success = await this.facade.createUser({
+        email: formValue.email,
+        fullName: formValue.fullName,
+        phone: formValue.phone || undefined,
+        roleId: formValue.roleId || ''
+      });
+      if (success) {
+        this.closeFormPanel();
+      }
+    }
+  }
+
+  isFieldInvalid(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    return this.submitted && !!control?.invalid;
   }
 
   confirmDelete(row: UserRow): void {
@@ -186,13 +285,4 @@ export class AdminUsersPageComponent implements OnInit {
     this.selectedUsers.set([]);
   }
 
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
-  }
 }
-
-

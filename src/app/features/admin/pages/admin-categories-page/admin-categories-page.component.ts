@@ -6,7 +6,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { CategoryFacadeService, CategoryFilters } from './category-facade.service';
 import { CategoryFormDialogComponent } from './category-form-dialog/category-form-dialog.component';
-import { CategoryHelpDialogComponent } from './category-help-dialog/category-help-dialog.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Category } from '../../../../core/models';
 
 interface CategoryRow extends Record<string, unknown> {
@@ -30,7 +30,7 @@ interface CategoryRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     CategoryFormDialogComponent,
-    CategoryHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [CategoryFacadeService],
   templateUrl: './admin-categories-page.component.html',
@@ -42,7 +42,6 @@ export class AdminCategoriesPageComponent implements OnInit {
   readonly showFormDialog = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingCategory = signal<Category | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedCategories = signal<CategoryRow[]>([]);
@@ -85,6 +84,12 @@ export class AdminCategoriesPageComponent implements OnInit {
   );
 
   readonly hasSelection = computed(() => this.selectedCategories().length > 0);
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'categories.help.whatTitle', contentKey: 'categories.help.whatDescription' },
+    { titleKey: 'categories.help.impactTitle', contentKey: 'categories.help.impactDescription' },
+    { titleKey: 'categories.help.keyTitle', contentKey: 'categories.help.keyDescription' }
+  ];
 
   ngOnInit(): void {
     this.facade.load();
@@ -170,14 +175,6 @@ export class AdminCategoriesPageComponent implements OnInit {
 
   cancelBulkDelete(): void {
     this.showBulkDeleteDialog.set(false);
-  }
-
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
   }
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

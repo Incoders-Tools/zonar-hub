@@ -6,7 +6,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { GenderFacadeService, GenderFilters } from './gender-facade.service';
 import { GenderFormDialogComponent } from './gender-form-dialog/gender-form-dialog.component';
-import { GenderHelpDialogComponent } from './gender-help-dialog/gender-help-dialog.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Gender } from '../../../../core/models';
 
 interface GenderRow extends Record<string, unknown> {
@@ -28,7 +28,7 @@ interface GenderRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     GenderFormDialogComponent,
-    GenderHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [GenderFacadeService],
   templateUrl: './admin-genders-page.component.html',
@@ -40,7 +40,6 @@ export class AdminGendersPageComponent implements OnInit {
   readonly showFormDialog = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingGender = signal<Gender | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedGenders = signal<GenderRow[]>([]);
@@ -80,6 +79,12 @@ export class AdminGendersPageComponent implements OnInit {
   );
 
   readonly hasSelection = computed(() => this.selectedGenders().length > 0);
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'genders.help.whatTitle', contentKey: 'genders.help.whatDescription' },
+    { titleKey: 'genders.help.impactTitle', contentKey: 'genders.help.impactDescription' },
+    { titleKey: 'genders.help.keyTitle', contentKey: 'genders.help.keyDescription' }
+  ];
 
   ngOnInit(): void {
     this.facade.load();
@@ -165,14 +170,6 @@ export class AdminGendersPageComponent implements OnInit {
 
   cancelBulkDelete(): void {
     this.showBulkDeleteDialog.set(false);
-  }
-
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
   }
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

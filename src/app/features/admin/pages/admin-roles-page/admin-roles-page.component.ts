@@ -1,13 +1,15 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Role, isSystemRole } from '../../../../core/models';
 import { RoleFacadeService, RoleFilters } from './role-facade.service';
-import { RolesFormDialogComponent } from './roles-form-dialog/roles-form-dialog.component';
-import { RolesHelpDialogComponent } from './roles-help-dialog/roles-help-dialog.component';
+import { RolesFormComponent } from './roles-form/roles-form.component';
 
 interface RoleRow extends Record<string, unknown> {
   id: string;
@@ -15,6 +17,7 @@ interface RoleRow extends Record<string, unknown> {
   description: string;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
   isSystem: boolean;
 }
 
@@ -23,24 +26,36 @@ interface RoleRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     TranslatePipe,
+    MatIcon,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    RolesFormDialogComponent,
-    RolesHelpDialogComponent
+    HelpButtonComponent,
+    RolesFormComponent
   ],
   providers: [RoleFacadeService],
   templateUrl: './admin-roles-page.component.html',
-  styleUrl: './admin-roles-page.component.scss'
+  styleUrl: './admin-roles-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminRolesPageComponent implements OnInit {
   readonly facade = inject(RoleFacadeService);
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingRole = signal<Role | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedRoles = signal<RoleRow[]>([]);
@@ -48,13 +63,18 @@ export class AdminRolesPageComponent implements OnInit {
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.roles.column.name', sortable: true },
     { key: 'description', labelKey: 'admin.roles.column.description', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.roles.column.status', sortable: true }
+    { key: 'statusLabel', labelKey: 'admin.roles.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
   readonly roleRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
+
+  readonly roleActionsFilter = (row: RoleRow) => {
+    if (row['isSystem']) return [];
+    return this.roleRowActions;
+  };
 
   readonly filterFields: FilterField[] = [
     { key: 'name', labelKey: 'admin.roles.filter.name', type: 'text' },
@@ -74,11 +94,17 @@ export class AdminRolesPageComponent implements OnInit {
       description: role.description,
       isActive: role.isActive,
       isSystem: isSystemRole(role.name),
-      statusLabel: role.isActive ? 'admin.roles.status.active' : 'admin.roles.status.inactive'
+      statusLabel: role.isActive ? 'admin.roles.status.active' : 'admin.roles.status.inactive',
+      statusVariant: role.isActive ? 'active' : 'inactive'
     }))
   );
 
   readonly hasSelection = computed(() => this.selectedRoles().length > 0);
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.roles.help.description' },
+    { titleKey: 'admin.roles.help.systemRoles', contentKey: 'admin.roles.help.systemRolesDescription' }
+  ];
 
   ngOnInit(): void {
     this.facade.load();
@@ -114,20 +140,31 @@ export class AdminRolesPageComponent implements OnInit {
 
   openCreateForm(): void {
     this.editingRole.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
   }
 
   openEditForm(row: RoleRow): void {
     const role = this.facade.roles().find(r => r.id === row.id);
     if (role && !isSystemRole(role.name)) {
       this.editingRole.set(role);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingRole.set(null);
+  }
+
+  async onFormSubmitted(formData: Partial<Role>): Promise<void> {
+    const existingRole = this.editingRole();
+    if (existingRole) {
+      const success = await this.facade.updateRole(existingRole.id, formData);
+      if (success) { this.closeFormPanel(); }
+    } else {
+      const success = await this.facade.createRole(formData as any);
+      if (success) { this.closeFormPanel(); }
+    }
   }
 
   openBulkDelete(): void {
@@ -172,11 +209,4 @@ export class AdminRolesPageComponent implements OnInit {
     this.showBulkDeleteDialog.set(false);
   }
 
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
-  }
 }

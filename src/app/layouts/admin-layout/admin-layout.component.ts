@@ -39,10 +39,8 @@ export class AdminLayoutComponent {
       icon: '🏆',
       expanded: true,
       items: [
-        { labelKey: 'admin.tournaments', route: '/admin/tournaments', icon: '🏆' },
         { labelKey: 'admin.registrations', route: '/admin/registrations', icon: '📝' },
-        { labelKey: 'admin.drawPlanner', route: '/admin/draw-planner', icon: '🎯' },
-        { labelKey: 'admin.players', route: '/admin/players', icon: '👥' }
+        { labelKey: 'admin.drawPlanner', route: '/admin/draw-planner', icon: '🎯' }
       ]
     },
     {
@@ -57,8 +55,7 @@ export class AdminLayoutComponent {
         { labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks', icon: '📱' },
         { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊' },
         { labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types', icon: '🎾' },
-        { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅' },
-        { labelKey: 'admin.playerConditions', route: '/admin/catalogs/player-conditions', icon: '🩺' }
+        { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅' }
       ]
     },
     {
@@ -71,7 +68,7 @@ export class AdminLayoutComponent {
         { labelKey: 'admin.nav.actions', route: '/admin/system/actions', icon: '⚡' },
         { labelKey: 'admin.audit', route: '/admin/system/audit', icon: '📜' },
         { labelKey: 'admin.appLogs', route: '/admin/system/logs', icon: '📋' },
-        { labelKey: 'admin.processes', route: '/admin/system/processes', icon: '⚙️' },
+
         { labelKey: 'admin.security', route: '/admin/system/security', icon: '🛡️' },
         { labelKey: 'admin.settings', route: '/admin/system/settings', icon: '⚙️' }
       ]

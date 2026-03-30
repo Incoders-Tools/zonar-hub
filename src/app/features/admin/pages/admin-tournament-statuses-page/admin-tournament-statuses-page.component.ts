@@ -1,14 +1,16 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { TournamentStatus } from '../../../../core/models';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentStatusesFacadeService, TournamentStatusFilters } from './tournament-statuses-facade.service';
-import { TournamentStatusesFormDialogComponent } from './tournament-statuses-form-dialog/tournament-statuses-form-dialog.component';
-import { TournamentStatusesHelpDialogComponent } from './tournament-statuses-help-dialog/tournament-statuses-help-dialog.component';
 
 interface TournamentStatusRow extends Record<string, unknown> {
   id: string;
@@ -25,28 +27,45 @@ interface TournamentStatusRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
+    MatIcon,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    TournamentStatusesFormDialogComponent,
-    TournamentStatusesHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [TournamentStatusesFacadeService],
   templateUrl: './admin-tournament-statuses-page.component.html',
-  styleUrl: './admin-tournament-statuses-page.component.scss'
+  styleUrl: './admin-tournament-statuses-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminTournamentStatusesPageComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
   readonly facade = inject(TournamentStatusesFacadeService);
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingStatus = signal<TournamentStatus | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedStatuses = signal<TournamentStatusRow[]>([]);
+
+  form!: FormGroup;
+  isEditing = false;
+  submitted = false;
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.tournament-statuses.column.name', sortable: true },
@@ -86,8 +105,49 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
 
   readonly hasSelection = computed(() => this.selectedStatuses().length > 0);
 
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.tournament-statuses.help.section1Title', contentKey: 'admin.tournament-statuses.help.section1Text' },
+    { titleKey: 'admin.tournament-statuses.help.section2Title', contentKey: 'admin.tournament-statuses.help.section2Text' },
+    { titleKey: 'admin.tournament-statuses.help.section3Title', items: [
+      'admin.tournament-statuses.help.section3Item1',
+      'admin.tournament-statuses.help.section3Item2',
+      'admin.tournament-statuses.help.section3Item3'
+    ] }
+  ];
+
   ngOnInit(): void {
     this.facade.load();
+    this.initializeForm();
+  }
+
+  private initializeForm(): void {
+    this.form = this.fb.group({
+      name: ['', [Validators.required]],
+      key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
+      description: [''],
+      sortOrder: ['', [Validators.min(0)]],
+      isActive: [true]
+    });
+  }
+
+  private populateForm(): void {
+    const status = this.editingStatus();
+    if (status) {
+      this.isEditing = true;
+      this.form.patchValue({
+        name: status.name,
+        key: status.key,
+        description: status.description || '',
+        sortOrder: status.sortOrder || '',
+        isActive: status.isActive
+      });
+      this.form.get('key')?.disable();
+    } else {
+      this.isEditing = false;
+      this.form.reset({ name: '', key: '', description: '', sortOrder: this.facade.getNextSortOrder(), isActive: true });
+      this.form.get('key')?.enable();
+    }
+    this.submitted = false;
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -112,20 +172,58 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
 
   openCreate(): void {
     this.editingStatus.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
+    this.populateForm();
   }
 
   openEdit(row: TournamentStatusRow): void {
     const status = this.facade.filteredStatuses().find(s => s.id === row.id);
     if (status) {
       this.editingStatus.set(status);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
+      this.populateForm();
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingStatus.set(null);
+    this.submitted = false;
+  }
+
+  async onFormSave(): Promise<void> {
+    this.submitted = true;
+    if (!this.form.valid) return;
+
+    const formValue = this.form.getRawValue();
+
+    if (!this.isEditing) {
+      const keyExists = await this.facade.checkKeyExists(formValue.key);
+      if (keyExists) {
+        this.form.get('key')?.setErrors({ keyExists: true });
+        return;
+      }
+    }
+
+    const nameExists = await this.facade.checkNameExists(formValue.name, this.editingStatus()?.id);
+    if (nameExists) {
+      this.form.get('name')?.setErrors({ nameExists: true });
+      return;
+    }
+
+    const payload = this.isEditing
+      ? { ...this.editingStatus(), ...formValue }
+      : formValue;
+
+    const success = await this.facade.saveStatus(payload);
+    if (success) {
+      this.closeFormPanel();
+    }
+  }
+
+  isFieldInvalid(controlName: string): boolean {
+    const control = this.form.get(controlName);
+    return this.submitted && !!control?.invalid;
   }
 
   confirmDelete(row: TournamentStatusRow): void {
@@ -170,14 +268,6 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
 
   cancelBulkDelete(): void {
     this.showBulkDeleteDialog.set(false);
-  }
-
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
   }
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

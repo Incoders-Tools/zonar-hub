@@ -1,0 +1,182 @@
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--zh-space-lg);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-md);
+  background: var(--zh-secondary-soft);
+  color: var(--zh-text-primary);
+  font-weight: 600;
+  font-size: var(--zh-font-size-md);
+  cursor: pointer;
+  transition: background var(--zh-transition-fast);
+
+  &:hover {
+    background: var(--zh-border-subtle);
+  }
+}
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--zh-surface-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--zh-space-md);
+}
+
+.help-dialog {
+  background: var(--zh-surface-elevated);
+  border-radius: var(--zh-radius-lg);
+  box-shadow: var(--zh-elevation-lg);
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--zh-space-md) var(--zh-space-lg);
+    border-bottom: 1px solid var(--zh-border-subtle);
+  }
+
+  &__title {
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+    margin: 0;
+  }
+
+  &__close {
+    border: none;
+    background: transparent;
+    font-size: var(--zh-font-size-xl);
+    color: var(--zh-text-secondary);
+    cursor: pointer;
+    line-height: 1;
+    padding: var(--zh-space-xs);
+    border-radius: var(--zh-radius-sm);
+    transition: color var(--zh-transition-fast), background var(--zh-transition-fast);
+
+    &:hover {
+      color: var(--zh-text-primary);
+      background: var(--zh-surface-muted);
+    }
+  }
+
+  &__body {
+    padding: var(--zh-space-lg);
+    flex: 1;
+    overflow-y: auto;
+
+    p {
+      font-size: var(--zh-font-size-sm);
+      color: var(--zh-text-secondary);
+      line-height: 1.6;
+      margin: 0 0 var(--zh-space-md);
+    }
+
+    h4 {
+      font-size: var(--zh-font-size-sm);
+      font-weight: 700;
+      color: var(--zh-text-primary);
+      margin: var(--zh-space-md) 0 var(--zh-space-xs);
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+
+    ul {
+      margin: 0 0 var(--zh-space-md);
+      padding-left: var(--zh-space-lg);
+
+      li {
+        font-size: var(--zh-font-size-sm);
+        line-height: 1.6;
+        color: var(--zh-text-secondary);
+        margin: var(--zh-space-xs) 0;
+      }
+    }
+  }
+
+  &__tabs {
+    display: flex;
+    gap: var(--zh-space-xs);
+    margin-bottom: var(--zh-space-lg);
+    border-bottom: 1px solid var(--zh-border-subtle);
+  }
+
+  &__tab {
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: color var(--zh-transition-fast), border-color var(--zh-transition-fast);
+
+    &:hover {
+      color: var(--zh-text-primary);
+    }
+
+    &--active {
+      color: var(--zh-primary);
+      border-bottom-color: var(--zh-primary);
+    }
+  }
+
+  &__docs {
+    h4:first-child {
+      margin-top: 0;
+    }
+  }
+
+  &__video {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; // 16:9 aspect ratio
+    height: 0;
+
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: var(--zh-radius-sm);
+    }
+  }
+
+  &__footer {
+    padding: var(--zh-space-md) var(--zh-space-lg);
+    border-top: 1px solid var(--zh-border-subtle);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__ok {
+    padding: var(--zh-space-sm) var(--zh-space-lg);
+    border: none;
+    border-radius: var(--zh-radius-sm);
+    background: var(--zh-primary);
+    color: var(--zh-text-inverse);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}

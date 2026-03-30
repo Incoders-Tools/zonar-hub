@@ -6,9 +6,9 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AppLog } from '../../../../core/models/app-log.model';
 import { AppLogsFacadeService, AppLogFilters } from './app-logs-facade.service';
-import { AppLogsHelpDialogComponent } from './app-logs-help-dialog/app-logs-help-dialog.component';
 
 interface AppLogRow extends Record<string, unknown> {
   id: string;
@@ -32,7 +32,7 @@ interface AppLogRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    AppLogsHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [AppLogsFacadeService],
   templateUrl: './admin-app-logs-page.component.html',
@@ -43,7 +43,6 @@ export class AdminAppLogsPageComponent implements OnInit {
 
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly selectedLogs = signal<AppLogRow[]>([]);
   readonly deletingId = signal<string | null>(null);
   readonly retentionDays = signal(30);
@@ -103,6 +102,23 @@ export class AdminAppLogsPageComponent implements OnInit {
   );
 
   readonly hasSelection = computed(() => this.selectedLogs().length > 0);
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.appLogs.help.description' },
+    { titleKey: 'admin.appLogs.help.levels', items: [
+      'admin.appLogs.help.levelDebug',
+      'admin.appLogs.help.levelInfo',
+      'admin.appLogs.help.levelWarn',
+      'admin.appLogs.help.levelError',
+      'admin.appLogs.help.levelFatal'
+    ]},
+    { titleKey: 'admin.appLogs.help.origins', items: [
+      'admin.appLogs.help.originFrontend',
+      'admin.appLogs.help.originBackend',
+      'admin.appLogs.help.originEdge',
+      'admin.appLogs.help.originSystem'
+    ]}
+  ];
 
   ngOnInit(): void {
     this.facade.load();
@@ -182,12 +198,5 @@ export class AdminAppLogsPageComponent implements OnInit {
     this.facade.cleanupOldLogs(days);
   }
 
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
-  }
 }
 

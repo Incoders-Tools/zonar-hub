@@ -8,9 +8,9 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { TournamentEligibilityProfile } from '../../../../core/models';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentEligibilityProfilesFacadeService, TournamentEligibilityProfileFilters } from './tournament-eligibility-profiles-facade.service';
 import { TournamentEligibilityProfilesFormDialogComponent } from './tournament-eligibility-profiles-form-dialog/tournament-eligibility-profiles-form-dialog.component';
-import { TournamentEligibilityProfilesHelpDialogComponent } from './tournament-eligibility-profiles-help-dialog/tournament-eligibility-profiles-help-dialog.component';
 
 interface TournamentEligibilityProfileRow extends Record<string, unknown> {
   id: string;
@@ -35,7 +35,7 @@ interface TournamentEligibilityProfileRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     TournamentEligibilityProfilesFormDialogComponent,
-    TournamentEligibilityProfilesHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [TournamentEligibilityProfilesFacadeService],
   templateUrl: './admin-tournament-eligibility-profiles-page.component.html',
@@ -59,7 +59,6 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingProfile = signal<TournamentEligibilityProfile | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedProfiles = signal<TournamentEligibilityProfileRow[]>([]);
@@ -190,13 +189,11 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
     this.showBulkDeleteDialog.set(false);
   }
 
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
-  }
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.tournament-eligibility-profiles.help.section1Title', contentKey: 'admin.tournament-eligibility-profiles.help.section1Description' },
+    { titleKey: 'admin.tournament-eligibility-profiles.help.section2Title', contentKey: 'admin.tournament-eligibility-profiles.help.section2Description' },
+    { titleKey: 'admin.tournament-eligibility-profiles.help.section3Title', contentKey: 'admin.tournament-eligibility-profiles.help.section3Description' }
+  ];
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
     this.facade.applySortOption(`${event.key}_${event.direction}`);

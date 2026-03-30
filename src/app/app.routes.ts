@@ -91,24 +91,8 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-dashboard-page/admin-dashboard-page.component').then(m => m.AdminDashboardPageComponent)
       },
       {
-        path: 'tournaments',
-        loadComponent: () => import('./features/admin/pages/admin-tournaments-page/admin-tournaments-page.component').then(m => m.AdminTournamentsPageComponent)
-      },
-      {
-        path: 'tournaments/new',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-form-page/admin-tournament-form-page.component').then(m => m.AdminTournamentFormPageComponent)
-      },
-      {
-        path: 'tournaments/:id',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-form-page/admin-tournament-form-page.component').then(m => m.AdminTournamentFormPageComponent)
-      },
-      {
         path: 'registrations',
         loadComponent: () => import('./features/admin/pages/admin-registrations-page/admin-registrations-page.component').then(m => m.AdminRegistrationsPageComponent)
-      },
-      {
-        path: 'players',
-        loadComponent: () => import('./features/admin/pages/admin-players-page/admin-players-page.component').then(m => m.AdminPlayersPageComponent)
       },
       {
         path: 'users',
@@ -155,10 +139,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-tournament-eligibility-profiles-page/admin-tournament-eligibility-profiles-page.component').then(m => m.AdminTournamentEligibilityProfilesPageComponent)
       },
       {
-        path: 'catalogs/player-conditions',
-        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
-      },
-      {
         path: 'draw-planner',
         loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent)
       },
@@ -183,10 +163,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-app-logs-page/admin-app-logs-page.component').then(m => m.AdminAppLogsPageComponent)
       },
       {
-        path: 'system/processes',
-        loadComponent: () => import('./features/admin/pages/admin-processes-page/admin-processes-page.component').then(m => m.AdminProcessesPageComponent)
-      },
-      {
         path: 'system/security',
         loadComponent: () => import('./features/admin/pages/admin-security-page/admin-security-page.component').then(m => m.AdminSecurityPageComponent)
       },
@@ -197,11 +173,6 @@ export const routes: Routes = [
       {
         path: 'audit',
         redirectTo: 'system/audit',
-        pathMatch: 'full'
-      },
-      {
-        path: 'processes',
-        redirectTo: 'system/processes',
         pathMatch: 'full'
       },
       {

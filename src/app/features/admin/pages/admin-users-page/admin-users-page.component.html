@@ -7,12 +7,7 @@
         <p class="users-page__subtitle">{{ 'admin.users.subtitle' | t }}</p>
       </div>
       <div class="users-page__header-actions">
-        <button class="users-page__help-btn" (click)="openHelp()" [attr.aria-label]="'common.help' | t">
-          {{ 'common.help' | t }}
-        </button>
-        <app-async-button variant="primary" (clicked)="openCreateForm()">
-          {{ 'admin.users.action.create' | t }}
-        </app-async-button>
+        <app-help-button [titleKey]="'admin.users.help.title'" [sections]="helpSections"></app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -21,9 +16,97 @@
             {{ 'admin.users.action.bulkDelete' | t }}
           </app-async-button>
         }
+        @if (!showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreateForm()">
+            {{ 'admin.users.action.create' | t }}
+          </app-async-button>
+        }
       </div>
     </div>
   </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="users-page__form-panel" @slideDown>
+      <div class="users-page__form-panel-header">
+        <h3 class="users-page__form-panel-title">
+          {{ (editingUser() ? 'admin.users.form.edit' : 'admin.users.form.create') | t }}
+        </h3>
+        <button
+          class="users-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="users-page__form-panel-body">
+        <form [formGroup]="form" class="form-content">
+          <div class="form-grid">
+            <!-- Email -->
+            <div class="form-field">
+              <label>{{ 'admin.users.form.email' | t }} *</label>
+              <input type="email" formControlName="email"
+                [placeholder]="'admin.users.form.emailPlaceholder' | t"
+                [class.error]="isFieldInvalid('email')">
+              @if (isFieldInvalid('email')) {
+                <span class="error-message">{{ 'common.required' | t }}</span>
+              }
+            </div>
+
+            <!-- Full Name -->
+            <div class="form-field">
+              <label>{{ 'admin.users.form.fullName' | t }} *</label>
+              <input type="text" formControlName="fullName"
+                [placeholder]="'admin.users.form.fullNamePlaceholder' | t"
+                [class.error]="isFieldInvalid('fullName')">
+              @if (isFieldInvalid('fullName')) {
+                <span class="error-message">{{ 'common.required' | t }}</span>
+              }
+            </div>
+
+            <!-- Phone -->
+            <div class="form-field">
+              <label>{{ 'admin.users.form.phone' | t }}</label>
+              <input type="tel" formControlName="phone"
+                [placeholder]="'admin.users.form.phonePlaceholder' | t">
+            </div>
+
+            <!-- Role -->
+            <div class="form-field">
+              <label>{{ 'admin.users.form.role' | t }}</label>
+              <select formControlName="roleId">
+                <option value="">{{ 'admin.users.form.selectRole' | t }}</option>
+                <option value="role001">{{ 'admin.users.role.systemAdmin' | t }}</option>
+                <option value="role002">{{ 'admin.users.role.admin' | t }}</option>
+                <option value="role003">{{ 'admin.users.role.viewer' | t }}</option>
+              </select>
+            </div>
+
+            <!-- Active -->
+            <div class="form-field form-field--checkbox">
+              <label>
+                <input type="checkbox" formControlName="isActive">
+                {{ 'admin.users.form.isActive' | t }}
+              </label>
+              <span class="hint">{{ 'admin.users.form.isActiveHint' | t }}</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="closeFormPanel()">
+              {{ 'common.cancel' | t }}
+            </button>
+            <app-async-button
+              [loading]="facade.saving()"
+              (clicked)="onFormSave()">
+              {{ (isEditing ? 'common.save' : 'common.create') | t }}
+            </app-async-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
 
   <!-- Filter Panel -->
   <app-filter-panel
@@ -49,14 +132,6 @@
   </app-data-table>
 </div>
 
-<!-- Create/Edit User Dialog -->
-@if (showFormDialog()) {
-  <app-users-form-dialog
-    [editingUser]="editingUser()"
-    (closed)="closeFormDialog()">
-  </app-users-form-dialog>
-}
-
 <!-- Delete Confirmation Dialog -->
 @if (showDeleteDialog()) {
   <app-confirm-dialog
@@ -81,9 +156,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-users-help-dialog (closed)="closeHelp()"></app-users-help-dialog>
 }

@@ -7,9 +7,10 @@
         <p class="genders-page__subtitle">{{ 'genders.subtitle' | t }}</p>
       </div>
       <div class="genders-page__header-actions">
-        <button class="genders-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
-          ?
-        </button>
+        <app-help-button
+          [titleKey]="'genders.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -86,9 +87,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-gender-help-dialog (closed)="closeHelp()"></app-gender-help-dialog>
 }

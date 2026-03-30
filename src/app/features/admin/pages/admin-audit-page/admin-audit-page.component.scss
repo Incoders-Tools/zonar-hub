@@ -1,72 +1,51 @@
-:host {
-  display: block;
-}
-
-.admin-page-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--zh-space-xl);
+.audit-page {
   padding: var(--zh-space-lg);
-}
+  max-width: 1200px;
+  margin: 0 auto;
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--zh-space-lg);
-
-  h1 {
-    font-size: var(--zh-font-size-3xl);
-    font-weight: 800;
-    margin: 0 0 var(--zh-space-xs);
-    color: var(--zh-text-primary);
+  &__header {
+    margin-bottom: var(--zh-space-lg);
   }
 
-  .subtitle {
+  &__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--zh-space-md);
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    font-size: var(--zh-font-size-xl);
+    font-weight: 700;
+    color: var(--zh-text-primary);
     margin: 0;
+  }
+
+  &__subtitle {
     font-size: var(--zh-font-size-sm);
     color: var(--zh-text-secondary);
+    margin: var(--zh-space-xs) 0 0;
   }
 
-  .help-btn {
-    color: var(--zh-text-tertiary);
-  }
-}
-
-.table-wrapper {
-  background: var(--zh-surface-card);
-  border: 1px solid var(--zh-border-subtle);
-  border-radius: var(--zh-radius-lg);
-  overflow: hidden;
-}
-
-.bulk-actions {
-  display: flex;
-  gap: var(--zh-space-md);
-  padding: var(--zh-space-lg);
-  background: var(--zh-surface-card);
-  border: 1px solid var(--zh-border-subtle);
-  border-radius: var(--zh-radius-lg);
-  justify-content: flex-end;
-
-  .bulk-delete-btn {
+  &__header-actions {
     display: flex;
     align-items: center;
     gap: var(--zh-space-sm);
   }
 }
 
-@media (max-width: 768px) {
-  .admin-page-container {
+@media (max-width: 599px) {
+  .audit-page {
     padding: var(--zh-space-md);
-  }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
+    &__title-row {
+      flex-direction: column;
+    }
 
-    h1 {
-      font-size: var(--zh-font-size-2xl);
+    &__header-actions {
+      width: 100%;
+      justify-content: flex-end;
     }
   }
 }

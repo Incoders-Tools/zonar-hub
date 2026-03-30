@@ -37,6 +37,7 @@ export class DataTableComponent<T extends Record<string, unknown>> {
   readonly trackByKey = input('id');
   readonly reorderable = input(false);
   readonly rowActions = input<{ icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[]>([]);
+  readonly rowActionsFilter = input<((row: T) => { icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[]) | null>(null);
 
   readonly rowSelected = output<T>();
   readonly selectionChanged = output<T[]>();
@@ -156,6 +157,11 @@ export class DataTableComponent<T extends Record<string, unknown>> {
 
   onRowAction(action: string, row: T): void {
     this.rowAction.emit({ action, row });
+  }
+
+  getActionsForRow(row: T): { icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[] {
+    const filter = this.rowActionsFilter();
+    return filter ? filter(row) : this.rowActions();
   }
 
   private emitSelection(): void {

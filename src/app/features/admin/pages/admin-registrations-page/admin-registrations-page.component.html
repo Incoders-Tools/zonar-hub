@@ -6,6 +6,11 @@
       <p class="admin-registrations__subtitle">{{ 'registrations.subtitle' | t }}</p>
     </div>
     <div class="admin-registrations__header-actions">
+      <app-help-button
+        [titleKey]="'registrations.help.title'"
+        [sections]="helpSections"
+        [videoUrl]="'https://www.youtube.com/embed/dQw4w9WgXcQ'">
+      </app-help-button>
       @if (activeTab() === 'list') {
         <app-async-button
           [loading]="false"

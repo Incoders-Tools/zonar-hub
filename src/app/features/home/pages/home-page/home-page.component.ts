@@ -22,6 +22,11 @@ interface WorkflowStep {
   descKey: string;
 }
 
+interface FaqItem {
+  questionKey: string;
+  answerKey: string;
+}
+
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -32,6 +37,8 @@ interface WorkflowStep {
 export class HomePageComponent implements OnInit {
   protected readonly tournamentService = inject(TournamentService);
   readonly showTutorial = signal(false);
+  readonly expandedFaq = signal<number | null>(null);
+  readonly billingCycle = signal<'monthly' | 'annual'>('monthly');
 
   readonly sports: SportCard[] = [
     { icon: '🎾', labelKey: 'home.sport.padel' },
@@ -55,7 +62,20 @@ export class HomePageComponent implements OnInit {
     { icon: '🏆', titleKey: 'home.workflow.step5.title', descKey: 'home.workflow.step5.desc' }
   ];
 
+  readonly faqItems: FaqItem[] = [
+    { questionKey: 'home.faq.q1', answerKey: 'home.faq.a1' },
+    { questionKey: 'home.faq.q2', answerKey: 'home.faq.a2' },
+    { questionKey: 'home.faq.q3', answerKey: 'home.faq.a3' },
+    { questionKey: 'home.faq.q4', answerKey: 'home.faq.a4' },
+    { questionKey: 'home.faq.q5', answerKey: 'home.faq.a5' },
+    { questionKey: 'home.faq.q6', answerKey: 'home.faq.a6' }
+  ];
+
   ngOnInit(): void {
     this.tournamentService.loadTournaments();
+  }
+
+  toggleFaq(index: number): void {
+    this.expandedFaq.update(current => current === index ? null : index);
   }
 }

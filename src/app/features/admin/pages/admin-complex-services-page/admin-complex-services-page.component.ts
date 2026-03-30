@@ -10,7 +10,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { ComplexService } from '../../../../core/models';
 import { ComplexServicesFacadeService, ComplexServiceFilters } from './complex-services-facade.service';
 import { ComplexServicesFormDialogComponent } from './complex-services-form-dialog/complex-services-form-dialog.component';
-import { ComplexServicesHelpDialogComponent } from './complex-services-help-dialog/complex-services-help-dialog.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 
 interface ComplexServiceRow extends Record<string, unknown> {
   id: string;
@@ -34,7 +34,7 @@ interface ComplexServiceRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     ComplexServicesFormDialogComponent,
-    ComplexServicesHelpDialogComponent
+    HelpButtonComponent
   ],
   providers: [ComplexServicesFacadeService],
   templateUrl: './admin-complex-services-page.component.html',
@@ -58,7 +58,6 @@ export class AdminComplexServicesPageComponent implements OnInit {
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
-  readonly showHelpDialog = signal(false);
   readonly editingService = signal<ComplexService | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedServices = signal<ComplexServiceRow[]>([]);
@@ -100,6 +99,16 @@ export class AdminComplexServicesPageComponent implements OnInit {
   );
 
   readonly hasSelection = computed(() => this.selectedServices().length > 0);
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'admin.complex-services.help.section1Title', contentKey: 'admin.complex-services.help.section1Text' },
+    { titleKey: 'admin.complex-services.help.section2Title', contentKey: 'admin.complex-services.help.section2Text' },
+    { titleKey: 'admin.complex-services.help.section3Title', items: [
+      'admin.complex-services.help.section3Item1',
+      'admin.complex-services.help.section3Item2',
+      'admin.complex-services.help.section3Item3'
+    ] }
+  ];
 
   ngOnInit(): void {
     this.facade.load();
@@ -185,14 +194,6 @@ export class AdminComplexServicesPageComponent implements OnInit {
 
   cancelBulkDelete(): void {
     this.showBulkDeleteDialog.set(false);
-  }
-
-  openHelp(): void {
-    this.showHelpDialog.set(true);
-  }
-
-  closeHelp(): void {
-    this.showHelpDialog.set(false);
   }
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

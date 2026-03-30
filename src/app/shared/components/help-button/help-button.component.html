@@ -1,0 +1,67 @@
+<button
+  class="help-btn"
+  (click)="open()"
+  [attr.aria-label]="'admin.help' | t">
+  {{ 'admin.help' | t }}
+</button>
+
+@if (isOpen()) {
+  <div class="help-overlay" (click)="close()" role="dialog" [attr.aria-label]="titleKey() | t">
+    <div class="help-dialog" (click)="$event.stopPropagation()">
+      <div class="help-dialog__header">
+        <h3 class="help-dialog__title">{{ titleKey() | t }}</h3>
+        <button class="help-dialog__close" (click)="close()" [attr.aria-label]="'common.close' | t">&times;</button>
+      </div>
+      <div class="help-dialog__body">
+        @if (videoUrl()) {
+          <div class="help-dialog__tabs">
+            <button
+              class="help-dialog__tab"
+              [class.help-dialog__tab--active]="activeTab() === 'docs'"
+              (click)="activeTab.set('docs')">
+              {{ 'admin.help.tab.docs' | t }}
+            </button>
+            <button
+              class="help-dialog__tab"
+              [class.help-dialog__tab--active]="activeTab() === 'video'"
+              (click)="activeTab.set('video')">
+              {{ 'admin.help.tab.video' | t }}
+            </button>
+          </div>
+        }
+
+        @if (!videoUrl() || activeTab() === 'docs') {
+          <div class="help-dialog__docs">
+            @for (section of sections(); track section.titleKey) {
+              <h4>{{ section.titleKey | t }}</h4>
+              @if (section.contentKey) {
+                <p>{{ section.contentKey | t }}</p>
+              }
+              @if (section.items) {
+                <ul>
+                  @for (item of section.items; track item) {
+                    <li>{{ item | t }}</li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        }
+
+        @if (videoUrl() && activeTab() === 'video') {
+          <div class="help-dialog__video">
+            <iframe
+              [src]="safeVideoUrl()"
+              frameborder="0"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+            </iframe>
+          </div>
+        }
+      </div>
+      <div class="help-dialog__footer">
+        <button class="help-dialog__ok" (click)="close()">{{ 'common.close' | t }}</button>
+      </div>
+    </div>
+  </div>
+}

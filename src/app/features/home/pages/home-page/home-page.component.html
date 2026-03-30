@@ -94,6 +94,120 @@
     </app-tutorial-modal>
   }
 
+  <!-- Pricing Section -->
+  <section class="section pricing-section">
+    <h2 class="section__title">{{ 'home.pricing.title' | t }}</h2>
+    <p class="section__subtitle">{{ 'home.pricing.subtitle' | t }}</p>
+
+    <div class="pricing-toggle">
+      <span
+        class="pricing-toggle__label"
+        [class.pricing-toggle__label--active]="billingCycle() === 'monthly'"
+        (click)="billingCycle.set('monthly')">
+        {{ 'home.pricing.monthly' | t }}
+      </span>
+      <button
+        type="button"
+        class="pricing-toggle__switch"
+        [class.pricing-toggle__switch--annual]="billingCycle() === 'annual'"
+        (click)="billingCycle.set(billingCycle() === 'monthly' ? 'annual' : 'monthly')"
+        [attr.aria-label]="'home.pricing.monthly' | t">
+        <span class="pricing-toggle__knob"></span>
+      </button>
+      <span
+        class="pricing-toggle__label"
+        [class.pricing-toggle__label--active]="billingCycle() === 'annual'"
+        (click)="billingCycle.set('annual')">
+        {{ 'home.pricing.annual' | t }}
+      </span>
+      <span class="pricing-toggle__badge">{{ 'home.pricing.save' | t }}</span>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Starter Plan -->
+      <div class="pricing-card">
+        <h3 class="pricing-card__name">{{ 'home.pricing.starter.name' | t }}</h3>
+        <div class="pricing-card__price">
+          @if (billingCycle() === 'monthly') {
+            {{ 'home.pricing.starter.price' | t }}
+          } @else {
+            {{ 'home.pricing.starter.priceAnnual' | t }}
+          }
+        </div>
+        <ul class="pricing-card__features">
+          <li>{{ 'home.pricing.starter.feature1' | t }}</li>
+          <li>{{ 'home.pricing.starter.feature2' | t }}</li>
+          <li>{{ 'home.pricing.starter.feature3' | t }}</li>
+          <li>{{ 'home.pricing.starter.feature4' | t }}</li>
+        </ul>
+        <a class="btn btn--outline pricing-card__cta" routerLink="/register">
+          {{ 'home.pricing.cta.starter' | t }}
+        </a>
+      </div>
+
+      <!-- Pro Plan (highlighted) -->
+      <div class="pricing-card pricing-card--popular">
+        <span class="pricing-card__badge">{{ 'home.pricing.pro.badge' | t }}</span>
+        <h3 class="pricing-card__name">{{ 'home.pricing.pro.name' | t }}</h3>
+        <div class="pricing-card__price">
+          @if (billingCycle() === 'monthly') {
+            {{ 'home.pricing.pro.price' | t }}
+          } @else {
+            {{ 'home.pricing.pro.priceAnnual' | t }}
+          }
+        </div>
+        <ul class="pricing-card__features">
+          <li>{{ 'home.pricing.pro.feature1' | t }}</li>
+          <li>{{ 'home.pricing.pro.feature2' | t }}</li>
+          <li>{{ 'home.pricing.pro.feature3' | t }}</li>
+          <li>{{ 'home.pricing.pro.feature4' | t }}</li>
+          <li>{{ 'home.pricing.pro.feature5' | t }}</li>
+          <li>{{ 'home.pricing.pro.feature6' | t }}</li>
+        </ul>
+        <a class="btn btn--primary pricing-card__cta" routerLink="/register">
+          {{ 'home.pricing.cta.pro' | t }}
+        </a>
+      </div>
+
+      <!-- Enterprise Plan -->
+      <div class="pricing-card">
+        <h3 class="pricing-card__name">{{ 'home.pricing.enterprise.name' | t }}</h3>
+        <div class="pricing-card__price">
+          {{ 'home.pricing.enterprise.price' | t }}
+        </div>
+        <ul class="pricing-card__features">
+          <li>{{ 'home.pricing.enterprise.feature1' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature2' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature3' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature4' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature5' | t }}</li>
+        </ul>
+        <a class="btn btn--outline pricing-card__cta" routerLink="/contact">
+          {{ 'home.pricing.cta.enterprise' | t }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="section faq-section">
+    <h2 class="section__title">{{ 'home.faq.title' | t }}</h2>
+    <p class="section__subtitle">{{ 'home.faq.subtitle' | t }}</p>
+    <div class="faq-list">
+      @for (item of faqItems; track item.questionKey; let i = $index) {
+        <div class="faq-item" [class.faq-item--open]="expandedFaq() === i">
+          <button class="faq-item__question" type="button" (click)="toggleFaq(i)">
+            <span class="faq-item__question-text">{{ item.questionKey | t }}</span>
+            <span class="faq-item__icon">{{ expandedFaq() === i ? '\u2212' : '+' }}</span>
+          </button>
+          <div class="faq-item__answer-wrapper">
+            <p class="faq-item__answer">{{ item.answerKey | t }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
   <!-- CTA Section -->
   <section class="cta-section">
     <h2 class="cta-section__title">{{ 'home.cta.title' | t }}</h2>

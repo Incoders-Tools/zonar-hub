@@ -7,9 +7,7 @@
         <p class="logs-page__subtitle">{{ 'admin.appLogs.subtitle' | t }}</p>
       </div>
       <div class="logs-page__header-actions">
-        <button class="logs-page__help-btn" (click)="openHelp()" [attr.aria-label]="'common.help' | t">
-          {{ 'common.help' | t }}
-        </button>
+        <app-help-button [titleKey]="'admin.appLogs.help.title'" [sections]="helpSections"></app-help-button>
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -58,6 +56,9 @@
     [error]="!!facade.error()"
     [selectable]="true"
     [rowActions]="rowActions"
+    [paginated]="true"
+    [pageSize]="10"
+    paginationPosition="both"
     emptyMessageKey="common.noResults"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
@@ -89,9 +90,4 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
-}
-
-<!-- Help Dialog -->
-@if (showHelpDialog()) {
-  <app-app-logs-help-dialog (closed)="closeHelp()"></app-app-logs-help-dialog>
 }

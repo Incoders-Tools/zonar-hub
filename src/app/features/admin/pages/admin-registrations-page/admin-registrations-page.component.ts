@@ -6,6 +6,7 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { FilterPanelComponent, FilterField, SortOption } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { RegistrationFacadeService, RegistrationFilters } from './registration-facade.service';
 import { Registration, RegistrationToken } from '../../../../core/models';
 
@@ -42,7 +43,8 @@ interface TokenRow extends Record<string, unknown> {
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
-    AsyncButtonComponent
+    AsyncButtonComponent,
+    HelpButtonComponent
   ],
   providers: [RegistrationFacadeService],
   templateUrl: './admin-registrations-page.component.html',
@@ -70,6 +72,16 @@ export class AdminRegistrationsPageComponent implements OnInit {
   readonly showFormPanel = signal(false);
   readonly editingRegistration = signal<Registration | null>(null);
   readonly highlightedRowId = signal<string | null>(null);
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'registrations.help.section1Title', contentKey: 'registrations.help.section1Text' },
+    { titleKey: 'registrations.help.section2Title', contentKey: 'registrations.help.section2Text' },
+    { titleKey: 'registrations.help.section3Title', items: [
+      'registrations.help.section3Item1',
+      'registrations.help.section3Item2',
+      'registrations.help.section3Item3'
+    ] }
+  ];
 
   // List tab
   readonly listColumns: DataTableColumn[] = [

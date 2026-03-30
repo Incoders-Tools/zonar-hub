@@ -17,5 +17,7 @@ export const MOCK_PLAYERS: Player[] = [
   { id: 'p13', firstName: 'Agustín', lastName: 'Herrera', email: 'agustin@test.com', categoryId: 'cat1', categoryName: '1ª', genderId: 'g1', genderLabel: 'Caballeros', ranking: 102, isActive: true, createdAt: '2025-11-10' },
   { id: 'p14', firstName: 'Julieta', lastName: 'Castro', email: 'julieta@test.com', categoryId: 'cat2', categoryName: '2ª', genderId: 'g2', genderLabel: 'Damas', ranking: 155, isActive: true, createdAt: '2025-11-15' },
   { id: 'p15', firstName: 'Mateo', lastName: 'Romero', email: 'mateo@test.com', categoryId: 'cat3', categoryName: '3ª', genderId: 'g1', genderLabel: 'Caballeros', ranking: 65, isActive: true, createdAt: '2025-11-20' },
-  { id: 'p16', firstName: 'Catalina', lastName: 'Morales', email: 'catalina@test.com', phone: '+5491155009006', categoryId: 'cat2', categoryName: '2ª', genderId: 'g2', genderLabel: 'Damas', ranking: 190, isActive: true, createdAt: '2025-11-25' }
+  { id: 'p16', firstName: 'Catalina', lastName: 'Morales', email: 'catalina@test.com', phone: '+5491155009006', categoryId: 'cat2', categoryName: '2ª', genderId: 'g2', genderLabel: 'Damas', ranking: 190, isActive: true, createdAt: '2025-11-25' },
+  { id: 'p17', firstName: 'Juan', lastName: 'Morales', email: 'juan@test.com', phone: '+5491155009006', categoryId: 'cat4', categoryName: '4ª', genderId: 'g1', genderLabel: 'Caballeros', ranking: 191, isActive: true, createdAt: '2025-11-25' },
+  { id: 'p18', firstName: 'Pedro', lastName: 'Portuelo', email: 'pedrop@test.com', phone: '+5491155009006', categoryId: 'cat4', categoryName: '4ª', genderId: 'g1', genderLabel: 'Caballeros', ranking: 193, isActive: true, createdAt: '2025-11-25' }
 ];
