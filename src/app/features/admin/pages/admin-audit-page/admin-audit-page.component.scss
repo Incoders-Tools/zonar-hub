@@ -1,0 +1,72 @@
+:host {
+  display: block;
+}
+
+.admin-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-xl);
+  padding: var(--zh-space-lg);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--zh-space-lg);
+
+  h1 {
+    font-size: var(--zh-font-size-3xl);
+    font-weight: 800;
+    margin: 0 0 var(--zh-space-xs);
+    color: var(--zh-text-primary);
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+
+  .help-btn {
+    color: var(--zh-text-tertiary);
+  }
+}
+
+.table-wrapper {
+  background: var(--zh-surface-card);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-lg);
+  overflow: hidden;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: var(--zh-space-md);
+  padding: var(--zh-space-lg);
+  background: var(--zh-surface-card);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-lg);
+  justify-content: flex-end;
+
+  .bulk-delete-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-page-container {
+    padding: var(--zh-space-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    h1 {
+      font-size: var(--zh-font-size-2xl);
+    }
+  }
+}

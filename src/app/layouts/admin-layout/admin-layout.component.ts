@@ -70,6 +70,7 @@ export class AdminLayoutComponent {
         { labelKey: 'admin.roles', route: '/admin/system/roles', icon: '🛡️' },
         { labelKey: 'admin.nav.actions', route: '/admin/system/actions', icon: '⚡' },
         { labelKey: 'admin.audit', route: '/admin/system/audit', icon: '📜' },
+        { labelKey: 'admin.appLogs', route: '/admin/system/logs', icon: '📋' },
         { labelKey: 'admin.processes', route: '/admin/system/processes', icon: '⚙️' },
         { labelKey: 'admin.security', route: '/admin/system/security', icon: '🛡️' },
         { labelKey: 'admin.settings', route: '/admin/system/settings', icon: '⚙️' }

@@ -1,0 +1,89 @@
+<div class="users-page">
+  <!-- Page Header -->
+  <div class="users-page__header">
+    <div class="users-page__title-row">
+      <div>
+        <h1 class="users-page__title">{{ 'admin.users.title' | t }}</h1>
+        <p class="users-page__subtitle">{{ 'admin.users.subtitle' | t }}</p>
+      </div>
+      <div class="users-page__header-actions">
+        <button class="users-page__help-btn" (click)="openHelp()" [attr.aria-label]="'common.help' | t">
+          {{ 'common.help' | t }}
+        </button>
+        <app-async-button variant="primary" (clicked)="openCreateForm()">
+          {{ 'admin.users.action.create' | t }}
+        </app-async-button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.users.action.bulkDelete' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [rowActions]="rowActions"
+    emptyMessageKey="common.noResults"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Create/Edit User Dialog -->
+@if (showFormDialog()) {
+  <app-users-form-dialog
+    [editingUser]="editingUser()"
+    (closed)="closeFormDialog()">
+  </app-users-form-dialog>
+}
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.users.confirm.deleteTitle"
+    messageKey="admin.users.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.users.confirm.bulkDeleteTitle"
+    messageKey="admin.users.confirm.bulkDeleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-users-help-dialog (closed)="closeHelp()"></app-users-help-dialog>
+}

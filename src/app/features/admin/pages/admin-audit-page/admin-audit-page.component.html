@@ -1,0 +1,78 @@
+<div class="audit-page">
+  <!-- Page Header -->
+  <div class="audit-page__header">
+    <div class="audit-page__title-row">
+      <div>
+        <h1 class="audit-page__title">{{ 'admin.audit.title' | t }}</h1>
+        <p class="audit-page__subtitle">{{ 'admin.audit.subtitle' | t }}</p>
+      </div>
+      <div class="audit-page__header-actions">
+        <button class="audit-page__help-btn" (click)="openHelp()" [attr.aria-label]="'common.help' | t">
+          {{ 'common.help' | t }}
+        </button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.audit.action.bulkDelete' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [rowActions]="rowActions"
+    emptyMessageKey="common.noResults"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.audit.confirm.deleteTitle"
+    messageKey="admin.audit.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.audit.confirm.bulkDeleteTitle"
+    messageKey="admin.audit.confirm.bulkDeleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-audit-help-dialog (closed)="closeHelp()"></app-audit-help-dialog>
+}
