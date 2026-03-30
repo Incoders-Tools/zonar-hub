@@ -1,0 +1,115 @@
+<div class="tournament-eligibility-profiles-page">
+  <!-- Page Header -->
+  <div class="tournament-eligibility-profiles-page__header">
+    <div class="tournament-eligibility-profiles-page__title-row">
+      <div>
+        <h1 class="tournament-eligibility-profiles-page__title">{{ 'admin.tournament-eligibility-profiles.title' | t }}</h1>
+        <p class="tournament-eligibility-profiles-page__subtitle">{{ 'admin.tournament-eligibility-profiles.subtitle' | t }}</p>
+      </div>
+      <div class="tournament-eligibility-profiles-page__header-actions">
+        <button class="tournament-eligibility-profiles-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
+          {{ 'admin.help' | t }}
+        </button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        @if (!showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'admin.tournament-eligibility-profiles.action.create' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="tournament-eligibility-profiles-page__form-panel" @slideDown>
+      <div class="tournament-eligibility-profiles-page__form-panel-header">
+        <h3 class="tournament-eligibility-profiles-page__form-panel-title">
+          {{ (editingProfile() ? 'admin.tournament-eligibility-profiles.edit.title' : 'admin.tournament-eligibility-profiles.create.title') | t }}
+        </h3>
+        <button
+          class="tournament-eligibility-profiles-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="tournament-eligibility-profiles-page__form-panel-body">
+        <app-tournament-eligibility-profiles-form-dialog
+          [profile]="editingProfile()"
+          [saving]="facade.saving()"
+          (saved)="closeFormPanel()"
+          (cancelled)="closeFormPanel()">
+        </app-tournament-eligibility-profiles-form-dialog>
+      </div>
+    </div>
+  }
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [paginated]="true"
+    [pageSize]="10"
+    paginationPosition="both"
+    [reorderable]="true"
+    [rowActions]="profileRowActions"
+    emptyMessageKey="admin.tournament-eligibility-profiles.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.tournament-eligibility-profiles.confirm.deleteTitle"
+    messageKey="admin.tournament-eligibility-profiles.confirm.deleteMessage"
+    warningKey="admin.tournament-eligibility-profiles.confirm.deleteWarning"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.tournament-eligibility-profiles.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    warningKey="admin.tournament-eligibility-profiles.confirm.deleteWarning"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-tournament-eligibility-profiles-help-dialog (closed)="closeHelp()"></app-tournament-eligibility-profiles-help-dialog>
+}

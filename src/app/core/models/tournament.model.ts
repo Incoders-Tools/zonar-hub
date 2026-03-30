@@ -34,12 +34,3 @@ export interface TournamentSlot {
   endTime: string;
   courtId?: string;
 }
-
-export interface TournamentEligibilityProfile {
-  id: string;
-  tournamentId: string;
-  categoryId: string;
-  genderId: string;
-  minRanking?: number;
-  maxRanking?: number;
-}

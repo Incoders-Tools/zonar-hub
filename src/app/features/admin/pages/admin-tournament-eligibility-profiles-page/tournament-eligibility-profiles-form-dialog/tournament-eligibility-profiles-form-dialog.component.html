@@ -1,0 +1,119 @@
+<app-form-shell
+  [titleKey]="isEditing ? 'admin.tournament-eligibility-profiles.edit.title' : 'admin.tournament-eligibility-profiles.create.title'"
+  [descriptionKey]="isEditing ? 'admin.tournament-eligibility-profiles.edit.description' : 'admin.tournament-eligibility-profiles.create.description'">
+
+  <form [formGroup]="form" class="form-content">
+    <!-- Main Fields -->
+    <div class="form-grid">
+      <!-- Name Field -->
+      <div class="form-field">
+        <label>{{ 'admin.tournament-eligibility-profiles.form.name' | t }} *</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="e.g., Standard Profile"
+          [class.error]="isFieldInvalid('name')"
+          matInput
+        />
+        @if (isFieldInvalid('name')) {
+          <span class="error-message">{{ getErrorMessage('name') | t }}</span>
+        }
+      </div>
+
+      <!-- Key Field -->
+      <div class="form-field">
+        <label>{{ 'admin.tournament-eligibility-profiles.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+        <input
+          type="text"
+          formControlName="key"
+          placeholder="e.g., standard_profile"
+          [class.error]="isFieldInvalid('key')"
+          [disabled]="isEditing"
+          matInput
+        />
+        @if (isFieldInvalid('key')) {
+          <span class="error-message">{{ getErrorMessage('key') | t }}</span>
+        }
+      </div>
+
+      <!-- Description Field -->
+      <div class="form-field">
+        <label>{{ 'admin.tournament-eligibility-profiles.form.description' | t }}</label>
+        <input
+          type="text"
+          formControlName="description"
+          placeholder="e.g., Standard eligibility profile for tournaments"
+          matInput
+        />
+      </div>
+
+      <!-- Sort Order Field -->
+      <div class="form-field">
+        <label>{{ 'admin.tournament-eligibility-profiles.form.sortOrder' | t }}</label>
+        <input
+          type="number"
+          formControlName="sortOrder"
+          min="0"
+          placeholder="e.g., 1"
+          [class.error]="isFieldInvalid('sortOrder')"
+          matInput
+        />
+        @if (isFieldInvalid('sortOrder')) {
+          <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
+        }
+        <span class="hint">{{ 'admin.tournament-eligibility-profiles.form.sortOrderHint' | t }}</span>
+      </div>
+
+      <!-- Active Status -->
+      <div class="form-field form-field--checkbox">
+        <label>{{ 'admin.tournament-eligibility-profiles.form.status' | t }}</label>
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            formControlName="isActive"
+            matCheckbox
+          />
+          <span>{{ 'admin.tournament-eligibility-profiles.status.active' | t }}</span>
+          <span class="status-badge" [class.active]="form.get('isActive')?.value">
+            {{ form.get('isActive')?.value ? 'activo' : 'inactivo' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slots Section (Collapsible) -->
+    <div class="slots-section">
+      <button type="button" class="slots-section__toggle" (click)="toggleSlotsSection()">
+        {{ slotsExpanded() ? '▼' : '▶' }}
+        {{ 'admin.tournament-eligibility-profiles.form.slots' | t }}
+        <span class="slots-count">({{ slotsArray.length }})</span>
+      </button>
+
+      @if (slotsExpanded()) {
+        <div class="slots-section__content">
+          <app-slot-editor [slotsArray]="slotsArray" (removeSlot)="removeSlot($event)"></app-slot-editor>
+
+          <button type="button" class="btn-add-slot" (click)="addSlot()">
+            {{ 'admin.tournament-eligibility-profiles.form.addSlot' | t }}
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Form Actions -->
+    <div formActions class="form-actions">
+      <button type="button" (click)="onCancel()" class="btn-cancel">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+        (clicked)="onSave()"
+        class="btn-save">
+        {{ isEditing ? 'common.update' : 'common.create' | t }}
+      </app-async-button>
+    </div>
+  </form>
+
+</app-form-shell>

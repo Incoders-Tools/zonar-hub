@@ -1,0 +1,122 @@
+<form [formGroup]="form()!" (ngSubmit)="onSubmit()" class="roles-form">
+  <div class="form-container">
+    <!-- Form Header -->
+    <div class="form-header">
+      <div class="header-content">
+        <h3 class="form-title">
+          <mat-icon class="title-icon">{{ isEditMode() ? 'edit' : 'add_circle' }}</mat-icon>
+          {{ formTitle() | t }}
+        </h3>
+        <p class="form-subtitle" *ngIf="isSystemRole()">
+          <mat-icon class="warning-icon">info</mat-icon>
+          {{ 'admin.roles.form.systemRoleWarning' | t }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Form Fields Section -->
+    <div class="form-fields">
+      <!-- Name Field -->
+      <mat-form-field appearance="outline" class="full-width field-wrapper">
+        <mat-label>{{ 'admin.roles.field.name' | t }}</mat-label>
+        <input
+          matInput
+          formControlName="name"
+          [placeholder]="'admin.roles.placeholder.name' | t"
+          type="text"
+          [disabled]="isSystemRole()"
+          maxlength="50"
+          (blur)="nameField()?.markAsTouched()"
+        />
+        <mat-hint *ngIf="!hasFieldError('name')" class="hint-text">
+          {{ 'admin.roles.hint.name' | t }}
+        </mat-hint>
+        <mat-error *ngIf="nameFieldTouched() && hasFieldError('name')">
+          <span *ngIf="nameField()?.hasError('required')">
+            {{ 'admin.roles.error.name.required' | t }}
+          </span>
+          <span *ngIf="nameField()?.hasError('minlength')">
+            {{ 'admin.roles.error.name.minlength' | t }}
+          </span>
+          <span *ngIf="nameField()?.hasError('maxlength')">
+            {{ 'admin.roles.error.name.maxlength' | t }}
+          </span>
+          <span *ngIf="nameField()?.hasError('pattern')">
+            {{ 'admin.roles.error.name.pattern' | t }}
+          </span>
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Description Field -->
+      <mat-form-field appearance="outline" class="full-width field-wrapper">
+        <mat-label>{{ 'admin.roles.field.description' | t }}</mat-label>
+        <textarea
+          matInput
+          formControlName="description"
+          [placeholder]="'admin.roles.placeholder.description' | t"
+          rows="4"
+          maxlength="500"
+          (blur)="descriptionField()?.markAsTouched()"
+        ></textarea>
+        <mat-hint *ngIf="!hasFieldError('description')" class="hint-text">
+          {{ 'admin.roles.hint.description' | t }}
+        </mat-hint>
+        <mat-error *ngIf="descriptionFieldTouched() && hasFieldError('description')">
+          <span *ngIf="descriptionField()?.hasError('required')">
+            {{ 'admin.roles.error.description.required' | t }}
+          </span>
+          <span *ngIf="descriptionField()?.hasError('minlength')">
+            {{ 'admin.roles.error.description.minlength' | t }}
+          </span>
+          <span *ngIf="descriptionField()?.hasError('maxlength')">
+            {{ 'admin.roles.error.description.maxlength' | t }}
+          </span>
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Active Checkbox -->
+      <div class="checkbox-field">
+        <mat-checkbox
+          formControlName="isActive"
+          [disabled]="isSystemRole()"
+          color="primary"
+        >
+          <span class="checkbox-label">{{ 'admin.roles.field.isActive' | t }}</span>
+          <span class="checkbox-hint">
+            {{ 'admin.roles.hint.isActive' | t }}
+          </span>
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button
+        type="button"
+        mat-stroked-button
+        (click)="onCancel()"
+        [disabled]="isSubmitting()"
+        class="btn-cancel"
+      >
+        <mat-icon>close</mat-icon>
+        {{ 'common.cancel' | t }}
+      </button>
+
+      <app-async-button
+        (clicked)="onSubmit()"
+        [disabled]="!isFormValid() || isSubmitting()"
+        [loading]="isSubmitting()"
+        variant="primary"
+        icon="save"
+        class="btn-save"
+      >
+        {{ isEditMode() ? ('common.update' | t) : ('common.save' | t) }}
+      </app-async-button>
+    </div>
+  </div>
+
+  <!-- Debug Info (Development Only) -->
+  <div class="form-debug" *ngIf="false">
+    <pre>{{ form() | json }}</pre>
+  </div>
+</form>

@@ -1,0 +1,112 @@
+<div class="tournament-types-page">
+  <!-- Page Header -->
+  <div class="tournament-types-page__header">
+    <div class="tournament-types-page__title-row">
+      <div>
+        <h1 class="tournament-types-page__title">{{ 'admin.tournament-types.title' | t }}</h1>
+        <p class="tournament-types-page__subtitle">{{ 'admin.tournament-types.subtitle' | t }}</p>
+      </div>
+      <div class="tournament-types-page__header-actions">
+        <button class="tournament-types-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
+          {{ 'admin.help' | t }}
+        </button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        @if (!showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'admin.tournament-types.action.create' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="tournament-types-page__form-panel" @slideDown>
+      <div class="tournament-types-page__form-panel-header">
+        <h3 class="tournament-types-page__form-panel-title">
+          {{ (editingType() ? 'admin.tournament-types.edit.title' : 'admin.tournament-types.create.title') | t }}
+        </h3>
+        <button
+          class="tournament-types-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="tournament-types-page__form-panel-body">
+        <app-tournament-types-form-dialog
+          [type]="editingType()"
+          [saving]="facade.saving()"
+          (saved)="closeFormPanel()"
+          (cancelled)="closeFormPanel()">
+        </app-tournament-types-form-dialog>
+      </div>
+    </div>
+  }
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [reorderable]="true"
+    [rowActions]="typeRowActions"
+    emptyMessageKey="admin.tournament-types.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.tournament-types.confirm.deleteTitle"
+    messageKey="admin.tournament-types.confirm.deleteMessage"
+    warningKey="admin.tournament-types.confirm.deleteWarning"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.tournament-types.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    warningKey="admin.tournament-types.confirm.deleteWarning"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-tournament-types-help-dialog (closed)="closeHelp()"></app-tournament-types-help-dialog>
+}

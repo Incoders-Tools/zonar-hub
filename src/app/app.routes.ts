@@ -135,12 +135,24 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-genders-page/admin-genders-page.component').then(m => m.AdminGendersPageComponent)
       },
       {
+        path: 'catalogs/complex-services',
+        loadComponent: () => import('./features/admin/pages/admin-complex-services-page/admin-complex-services-page.component').then(m => m.AdminComplexServicesPageComponent)
+      },
+      {
+        path: 'catalogs/social-networks',
+        loadComponent: () => import('./features/admin/pages/admin-social-networks-page/admin-social-networks-page.component').then(m => m.AdminSocialNetworksPageComponent)
+      },
+      {
         path: 'catalogs/tournament-statuses',
-        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournament-statuses-page/admin-tournament-statuses-page.component').then(m => m.AdminTournamentStatusesPageComponent)
       },
       {
         path: 'catalogs/tournament-types',
-        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournament-types-page/admin-tournament-types-page.component').then(m => m.AdminTournamentTypesPageComponent)
+      },
+      {
+        path: 'catalogs/tournament-eligibility-profiles',
+        loadComponent: () => import('./features/admin/pages/admin-tournament-eligibility-profiles-page/admin-tournament-eligibility-profiles-page.component').then(m => m.AdminTournamentEligibilityProfilesPageComponent)
       },
       {
         path: 'catalogs/player-conditions',
@@ -156,7 +168,7 @@ export const routes: Routes = [
       },
       {
         path: 'system/roles',
-        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-roles-page/admin-roles-page.component').then(m => m.AdminRolesPageComponent)
       },
       {
         path: 'system/actions',

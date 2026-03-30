@@ -1,10 +1,9 @@
 import { Component, input, output } from '@angular/core';
-import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-async-button',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [],
   template: `
     <button
       [type]="type()"

@@ -1,0 +1,91 @@
+<div class="roles-page">
+  <!-- Page Header -->
+  <div class="roles-page__header">
+    <div class="roles-page__title-row">
+      <div>
+        <h1 class="roles-page__title">{{ 'admin.roles.title' | t }}</h1>
+        <p class="roles-page__subtitle">{{ 'admin.roles.subtitle' | t }}</p>
+      </div>
+      <div class="roles-page__header-actions">
+        <button class="roles-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
+          {{ 'admin.help' | t }}
+        </button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        <app-async-button variant="primary" (clicked)="openCreateForm()">
+          {{ 'admin.roles.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [rowActions]="roleRowActions"
+    emptyMessageKey="admin.roles.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.roles.confirm.deleteTitle"
+    messageKey="admin.roles.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.roles.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Create/Edit Role Dialog -->
+@if (showFormDialog()) {
+  <app-roles-form-dialog
+    [role]="editingRole()"
+    [saving]="facade.saving()"
+    (saved)="closeFormDialog()"
+    (cancelled)="closeFormDialog()">
+  </app-roles-form-dialog>
+}
+
+<!-- Help Dialog -->
+@if (showHelpDialog()) {
+  <app-roles-help-dialog (closed)="closeHelp()"></app-roles-help-dialog>
+}

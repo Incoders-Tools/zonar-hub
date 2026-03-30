@@ -8,7 +8,7 @@
       </div>
       <div class="categories-page__header-actions">
         <button class="categories-page__help-btn" (click)="openHelp()" [attr.aria-label]="'admin.help' | t">
-          ?
+          {{ 'admin.help' | t }}
         </button>
         @if (hasSelection()) {
           <app-async-button
@@ -41,9 +41,6 @@
     [loading]="facade.loading()"
     [error]="facade.error()"
     [selectable]="true"
-    [paginated]="true"
-    [pageSize]="10"
-    paginationPosition="both"
     [reorderable]="true"
     [rowActions]="categoryRowActions"
     emptyMessageKey="categories.emptyState"

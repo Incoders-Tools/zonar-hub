@@ -29,33 +29,25 @@ export interface City {
 export interface Role {
   id: string;
   name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface TournamentStatus {
-  id: string;
-  label: string;
-  color: string;
+export const SYSTEM_ROLE_NAMES = ['system_admin', 'admin', 'user', 'viewer'];
+
+export function isSystemRole(name: string): boolean {
+  return SYSTEM_ROLE_NAMES.includes(name.toLowerCase());
 }
 
-export interface TournamentType {
-  id: string;
-  name: string;
-  description?: string;
-}
+export interface RoleFormData extends Omit<Role, 'id' | 'createdAt' | 'updatedAt'> {}
+
+export interface RoleCreatePayload extends Omit<Role, 'id' | 'createdAt' | 'updatedAt'> {}
+
+export interface RoleUpdatePayload extends Partial<Omit<Role, 'id' | 'createdAt' | 'updatedAt'>> {}
 
 export interface PlayerCondition {
   id: string;
   label: string;
-}
-
-export interface SocialNetwork {
-  id: string;
-  name: string;
-  icon: string;
-}
-
-export interface ComplexService {
-  id: string;
-  name: string;
-  icon: string;
 }

@@ -18,18 +18,17 @@ export const MOCK_GENDERS: Gender[] = [
 ];
 
 export const MOCK_TOURNAMENT_STATUSES: TournamentStatus[] = [
-  { id: 'ts1', label: 'Próximo', color: 'upcoming' },
-  { id: 'ts2', label: 'Inscripción abierta', color: 'open' },
-  { id: 'ts3', label: 'En curso', color: 'in-progress' },
-  { id: 'ts4', label: 'Finalizado', color: 'completed' },
-  { id: 'ts5', label: 'Cancelado', color: 'cancelled' },
-  { id: 'ts6', label: 'Borrador', color: 'draft' }
+  { id: 'ts1', name: 'Registration Open', key: 'registration_open', description: 'Active registration', sortOrder: 1, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'ts2', name: 'In Progress', key: 'in_progress', description: 'Tournament running', sortOrder: 2, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'ts3', name: 'Finished', key: 'finished', description: 'Tournament completed', sortOrder: 3, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'ts4', name: 'Cancelled', key: 'cancelled', description: 'Tournament cancelled', sortOrder: 4, isActive: false, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'ts5', name: 'Draft', key: 'draft', description: 'Draft status', sortOrder: 5, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' }
 ];
 
 export const MOCK_TOURNAMENT_TYPES: TournamentType[] = [
-  { id: 'tt1', name: 'Zonas + Eliminación', description: 'Fase de zonas seguida de cuadro eliminatorio.' },
-  { id: 'tt2', name: 'Solo Zonas', description: 'Se juegan solo zonas sin eliminación directa.' },
-  { id: 'tt3', name: 'Eliminación Directa', description: 'Cuadro directo desde el inicio.' }
+  { id: 'tt1', name: 'Zones + Elimination', key: 'zones_elimination', sortOrder: 1, scoresPoints: true, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'tt2', name: 'Zones Only', key: 'zones_only', sortOrder: 2, scoresPoints: true, appliesGender: false, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'tt3', name: 'Direct Elimination', key: 'direct_elimination', sortOrder: 3, scoresPoints: false, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' }
 ];
 
 export const MOCK_CITIES: City[] = [
@@ -39,7 +38,7 @@ export const MOCK_CITIES: City[] = [
 ];
 
 export const MOCK_ROLES: Role[] = [
-  { id: 'role1', name: 'admin' },
-  { id: 'role2', name: 'player' },
-  { id: 'role3', name: 'viewer' }
+  { id: 'role1', name: 'admin', description: 'Administrative user', isActive: true, createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
+  { id: 'role2', name: 'player', description: 'Tournament player', isActive: true, createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') },
+  { id: 'role3', name: 'viewer', description: 'View-only access', isActive: true, createdAt: new Date('2024-01-01'), updatedAt: new Date('2024-01-01') }
 ];
