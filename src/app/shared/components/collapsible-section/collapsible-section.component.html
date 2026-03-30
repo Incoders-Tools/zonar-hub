@@ -1,0 +1,19 @@
+<div class="collapsible-section">
+  <button
+    class="collapsible-section__header"
+    type="button"
+    (click)="toggle()"
+    [attr.aria-expanded]="isExpanded()">
+    <span class="collapsible-section__title">{{ titleKey() | t }}</span>
+    <mat-icon
+      class="collapsible-section__icon"
+      [class.collapsible-section__icon--expanded]="isExpanded()">
+      expand_more
+    </mat-icon>
+  </button>
+  @if (isExpanded()) {
+    <div class="collapsible-section__content" @slideDown>
+      <ng-content></ng-content>
+    </div>
+  }
+</div>

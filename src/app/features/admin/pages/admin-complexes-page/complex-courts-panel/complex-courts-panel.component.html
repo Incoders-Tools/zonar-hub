@@ -1,0 +1,114 @@
+<div class="courts-panel">
+  <div class="courts-panel__header">
+    <h3 class="courts-panel__title">{{ 'admin.complexes.courts.title' | t }}</h3>
+    <div class="courts-panel__actions">
+      @if (!showForm()) {
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'admin.complexes.courts.form.create' | t }}
+        </app-async-button>
+      }
+    </div>
+  </div>
+
+  <!-- Inline Court Form -->
+  @if (showForm()) {
+    <div class="courts-panel__form" @slideDown>
+      <div class="courts-panel__form-header">
+        <h4 class="courts-panel__form-title">
+          {{ (editingCourt() ? 'admin.complexes.courts.form.editTitle' : 'admin.complexes.courts.form.createTitle') | t }}
+        </h4>
+        <button
+          class="courts-panel__form-close"
+          type="button"
+          (click)="closeForm()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="courtForm" class="courts-panel__form-body">
+        <div class="courts-panel__form-grid">
+          <!-- Name -->
+          <div class="courts-panel__form-field">
+            <label>{{ 'admin.complexes.courts.form.name' | t }} *</label>
+            <input
+              type="text"
+              formControlName="name"
+              [class.error]="courtForm.get('name')?.invalid && courtForm.get('name')?.touched"
+            />
+          </div>
+
+          <!-- Surface Type -->
+          <div class="courts-panel__form-field">
+            <label>{{ 'admin.complexes.courts.form.surfaceType' | t }}</label>
+            <select formControlName="surfaceType">
+              @for (surface of surfaceTypes; track surface) {
+                <option [value]="surface">{{ ('admin.complexes.courts.surfaceType.' + surface) | t }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Sport ID (placeholder select) -->
+          <div class="courts-panel__form-field">
+            <label>{{ 'admin.complexes.courts.form.sport' | t }}</label>
+            <input
+              type="text"
+              formControlName="sportId"
+            />
+          </div>
+
+          <!-- Is Indoor -->
+          <div class="courts-panel__form-field courts-panel__form-field--checkbox">
+            <label>
+              <input type="checkbox" formControlName="isIndoor" />
+              {{ 'admin.complexes.courts.form.isIndoor' | t }}
+            </label>
+          </div>
+
+          <!-- Is Active -->
+          <div class="courts-panel__form-field courts-panel__form-field--checkbox">
+            <label>
+              <input type="checkbox" formControlName="isActive" />
+              {{ 'admin.complexes.courts.form.isActive' | t }}
+            </label>
+          </div>
+        </div>
+
+        <div class="courts-panel__form-actions">
+          <button type="button" class="courts-panel__btn-cancel" (click)="closeForm()">
+            {{ 'common.cancel' | t }}
+          </button>
+          <app-async-button
+            [loading]="saving()"
+            [disabled]="courtForm.invalid"
+            (clicked)="saveCourt()">
+            {{ (editingCourt() ? 'common.update' : 'common.create') | t }}
+          </app-async-button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Courts Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData"
+    [loading]="loading()"
+    [rowActions]="courtRowActions"
+    emptyMessageKey="admin.complexes.courts.emptyState"
+    (rowAction)="onRowAction($event)">
+  </app-data-table>
+</div>
+
+<!-- Delete Court Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.complexes.courts.confirm.deleteTitle"
+    messageKey="admin.complexes.courts.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="saving()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}

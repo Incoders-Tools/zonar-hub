@@ -22,10 +22,10 @@
     <h2 class="section__title">{{ 'home.sports.title' | t }}</h2>
     <p class="section__subtitle">{{ 'home.sports.subtitle' | t }}</p>
     <div class="sports-grid">
-      @for (sport of sports; track sport.labelKey) {
+      @for (sport of sportService.activeSports(); track sport.id) {
         <div class="sport-card">
           <span class="sport-card__icon">{{ sport.icon }}</span>
-          <span class="sport-card__label">{{ sport.labelKey | t }}</span>
+          <span class="sport-card__label">{{ 'home.sport.' + sport.key | t }}</span>
         </div>
       }
     </div>
@@ -125,7 +125,12 @@
 
     <div class="pricing-grid">
       <!-- Starter Plan -->
-      <div class="pricing-card">
+      <div class="pricing-card"
+           [class.pricing-card--popular]="selectedPlan() === 'starter'"
+           (click)="selectPlan('starter')">
+        @if (selectedPlan() === 'starter') {
+          <span class="pricing-card__badge">{{ 'home.pricing.pro.badge' | t }}</span>
+        }
         <h3 class="pricing-card__name">{{ 'home.pricing.starter.name' | t }}</h3>
         <div class="pricing-card__price">
           @if (billingCycle() === 'monthly') {
@@ -145,9 +150,13 @@
         </a>
       </div>
 
-      <!-- Pro Plan (highlighted) -->
-      <div class="pricing-card pricing-card--popular">
-        <span class="pricing-card__badge">{{ 'home.pricing.pro.badge' | t }}</span>
+      <!-- Pro Plan -->
+      <div class="pricing-card"
+           [class.pricing-card--popular]="selectedPlan() === 'pro'"
+           (click)="selectPlan('pro')">
+        @if (selectedPlan() === 'pro') {
+          <span class="pricing-card__badge">{{ 'home.pricing.pro.badge' | t }}</span>
+        }
         <h3 class="pricing-card__name">{{ 'home.pricing.pro.name' | t }}</h3>
         <div class="pricing-card__price">
           @if (billingCycle() === 'monthly') {
@@ -170,7 +179,12 @@
       </div>
 
       <!-- Enterprise Plan -->
-      <div class="pricing-card">
+      <div class="pricing-card"
+           [class.pricing-card--popular]="selectedPlan() === 'enterprise'"
+           (click)="selectPlan('enterprise')">
+        @if (selectedPlan() === 'enterprise') {
+          <span class="pricing-card__badge">{{ 'home.pricing.pro.badge' | t }}</span>
+        }
         <h3 class="pricing-card__name">{{ 'home.pricing.enterprise.name' | t }}</h3>
         <div class="pricing-card__price">
           {{ 'home.pricing.enterprise.price' | t }}
@@ -181,6 +195,11 @@
           <li>{{ 'home.pricing.enterprise.feature3' | t }}</li>
           <li>{{ 'home.pricing.enterprise.feature4' | t }}</li>
           <li>{{ 'home.pricing.enterprise.feature5' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature6' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature7' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature8' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature9' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature10' | t }}</li>
         </ul>
         <a class="btn btn--outline pricing-card__cta" routerLink="/contact">
           {{ 'home.pricing.cta.enterprise' | t }}

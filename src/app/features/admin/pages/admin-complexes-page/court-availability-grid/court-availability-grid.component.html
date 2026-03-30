@@ -1,0 +1,62 @@
+<div class="availability-grid">
+  <h4 class="availability-grid__title">{{ 'admin.complexes.availability.title' | t }}</h4>
+
+  <div class="availability-grid__legend">
+    <span class="availability-grid__legend-item">
+      <span class="availability-grid__legend-swatch availability-grid__legend-swatch--available"></span>
+      {{ 'admin.complexes.availability.available' | t }}
+    </span>
+    <span class="availability-grid__legend-item">
+      <span class="availability-grid__legend-swatch availability-grid__legend-swatch--blocked"></span>
+      {{ 'admin.complexes.availability.blocked' | t }}
+    </span>
+    <span class="availability-grid__legend-item">
+      <span class="availability-grid__legend-swatch availability-grid__legend-swatch--partial"></span>
+      {{ 'admin.complexes.availability.partial' | t }}
+    </span>
+  </div>
+
+  <div class="availability-grid__container">
+    <div class="availability-grid__table">
+      <!-- Header row with day names -->
+      <div class="availability-grid__row availability-grid__row--header">
+        <span class="availability-grid__cell availability-grid__cell--time-header"></span>
+        @for (dayKey of dayKeys; track dayKey; let i = $index) {
+          <span class="availability-grid__cell availability-grid__cell--day-header">
+            {{ dayKey | t }}
+          </span>
+        }
+      </div>
+
+      <!-- Time rows -->
+      @for (hour of hours; track hour) {
+        <div class="availability-grid__row">
+          <span class="availability-grid__cell availability-grid__cell--time">
+            {{ formatHour(hour) }}
+          </span>
+          @for (day of days; track day) {
+            @if (getSlot(day, hour); as slot) {
+              <button
+                type="button"
+                class="availability-grid__cell availability-grid__cell--slot"
+                [class.availability-grid__cell--available]="slot.state === 'available'"
+                [class.availability-grid__cell--blocked]="slot.state === 'blocked'"
+                [class.availability-grid__cell--partial]="slot.state === 'partial'"
+                (click)="toggleSlot(day, hour)"
+                [attr.aria-label]="formatHour(hour) + ' - ' + formatHour(hour + 1)">
+              </button>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="availability-grid__actions">
+    <app-async-button
+      [loading]="saving()"
+      (clicked)="save()">
+      {{ 'admin.complexes.availability.save' | t }}
+    </app-async-button>
+  </div>
+</div>

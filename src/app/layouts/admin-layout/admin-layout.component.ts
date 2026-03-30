@@ -50,12 +50,14 @@ export class AdminLayoutComponent {
       items: [
         { labelKey: 'admin.categories', route: '/admin/catalogs/categories', icon: '🏷️' },
         { labelKey: 'admin.genders', route: '/admin/catalogs/genders', icon: '⚧' },
+        { labelKey: 'admin.sports', route: '/admin/catalogs/sports', icon: '🏅' },
         { labelKey: 'admin.complexes', route: '/admin/catalogs/complexes', icon: '🏟️' },
         { labelKey: 'admin.complexServices', route: '/admin/catalogs/complex-services', icon: '🔧' },
         { labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks', icon: '📱' },
         { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊' },
         { labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types', icon: '🎾' },
-        { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅' }
+        { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅' },
+        { labelKey: 'admin.tournamentRuleSets', route: '/admin/catalogs/tournament-rules', icon: '📜' }
       ]
     },
     {

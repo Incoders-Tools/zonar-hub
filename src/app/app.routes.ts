@@ -30,6 +30,18 @@ export const routes: Routes = [
       {
         path: 'tournaments/:id/draw',
         loadComponent: () => import('./features/tournaments/pages/public-draw-page/public-draw-page.component').then(m => m.PublicDrawPageComponent)
+      },
+      {
+        path: 'privacy',
+        loadComponent: () => import('./features/legal/pages/privacy-policy-page/privacy-policy-page.component').then(m => m.PrivacyPolicyPageComponent)
+      },
+      {
+        path: 'terms',
+        loadComponent: () => import('./features/legal/pages/terms-of-use-page/terms-of-use-page.component').then(m => m.TermsOfUsePageComponent)
+      },
+      {
+        path: 'cookies',
+        loadComponent: () => import('./features/legal/pages/cookie-policy-page/cookie-policy-page.component').then(m => m.CookiePolicyPageComponent)
       }
     ]
   },
@@ -137,6 +149,14 @@ export const routes: Routes = [
       {
         path: 'catalogs/tournament-eligibility-profiles',
         loadComponent: () => import('./features/admin/pages/admin-tournament-eligibility-profiles-page/admin-tournament-eligibility-profiles-page.component').then(m => m.AdminTournamentEligibilityProfilesPageComponent)
+      },
+      {
+        path: 'catalogs/sports',
+        loadComponent: () => import('./features/admin/pages/admin-sports-page/admin-sports-page.component').then(m => m.AdminSportsPageComponent)
+      },
+      {
+        path: 'catalogs/tournament-rules',
+        loadComponent: () => import('./features/admin/pages/admin-tournament-rules-page/admin-tournament-rules-page.component').then(m => m.AdminTournamentRulesPageComponent)
       },
       {
         path: 'draw-planner',

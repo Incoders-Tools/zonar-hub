@@ -161,6 +161,7 @@
   gap: var(--zh-space-md);
   max-width: 640px;
   margin: 0 auto;
+  margin-top: var(--zh-space-md);
 }
 
 .sport-card {
@@ -349,6 +350,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--zh-space-sm);
+  margin-top: var(--zh-space-md);
   margin-bottom: var(--zh-space-xl);
 
   &__label {
@@ -422,7 +424,9 @@
   border: 1px solid var(--zh-border-subtle);
   border-radius: var(--zh-radius-xl);
   background: var(--zh-surface-card);
-  transition: box-shadow var(--zh-transition-fast), transform var(--zh-transition-fast);
+  cursor: pointer;
+  transition: box-shadow var(--zh-transition-fast), transform var(--zh-transition-fast),
+              border-color 0.25s ease, border-width 0.25s ease;
 
   &:hover {
     box-shadow: var(--zh-elevation-md);
@@ -510,6 +514,7 @@
 .faq-list {
   display: flex;
   flex-direction: column;
+  margin-top: var(--zh-space-md);
 }
 
 .faq-item {

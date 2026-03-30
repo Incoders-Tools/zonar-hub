@@ -1,0 +1,98 @@
+<app-form-shell
+  [titleKey]="isEditing ? 'admin.sports.edit.title' : 'admin.sports.create.title'"
+  [descriptionKey]="isEditing ? 'admin.sports.edit.description' : 'admin.sports.create.description'">
+
+  <form [formGroup]="form" class="sports-form">
+    <div class="sports-form__grid">
+      <!-- Name Field -->
+      <div class="sports-form__field">
+        <label>{{ 'admin.sports.form.name' | t }} *</label>
+        <input
+          type="text"
+          formControlName="name"
+          [class.error]="isFieldInvalid('name')"
+          matInput
+        />
+        @if (isFieldInvalid('name')) {
+          <span class="sports-form__error">{{ getErrorMessage('name') | t }}</span>
+        }
+      </div>
+
+      <!-- Key Field -->
+      <div class="sports-form__field">
+        <label>{{ 'admin.sports.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+        <input
+          type="text"
+          formControlName="key"
+          [class.error]="isFieldInvalid('key')"
+          [disabled]="isEditing"
+          matInput
+        />
+        @if (isFieldInvalid('key')) {
+          <span class="sports-form__error">{{ getErrorMessage('key') | t }}</span>
+        }
+        <span class="sports-form__hint">{{ 'admin.sports.form.keyHint' | t }}</span>
+      </div>
+
+      <!-- Icon Field -->
+      <div class="sports-form__field">
+        <label>{{ 'admin.sports.form.icon' | t }}</label>
+        <input
+          type="text"
+          formControlName="icon"
+          matInput
+        />
+        <span class="sports-form__hint">{{ 'admin.sports.form.iconHint' | t }}</span>
+      </div>
+
+      <!-- Sort Order Field -->
+      <div class="sports-form__field">
+        <label>{{ 'admin.sports.form.sortOrder' | t }}</label>
+        <input
+          type="number"
+          formControlName="sortOrder"
+          min="0"
+          [class.error]="isFieldInvalid('sortOrder')"
+          matInput
+        />
+        @if (isFieldInvalid('sortOrder')) {
+          <span class="sports-form__error">{{ getErrorMessage('sortOrder') | t }}</span>
+        }
+        <span class="sports-form__hint">{{ 'admin.sports.form.sortOrderHint' | t }}</span>
+      </div>
+
+      <!-- Active Status -->
+      <div class="sports-form__field sports-form__field--checkbox">
+        <label>{{ 'admin.sports.form.isActive' | t }}</label>
+        <div class="sports-form__checkbox-group">
+          <input
+            type="checkbox"
+            formControlName="isActive"
+            matCheckbox
+          />
+          <span>{{ 'admin.sports.status.active' | t }}</span>
+          <span class="sports-form__status-badge" [class.active]="form.get('isActive')?.value">
+            {{ form.get('isActive')?.value ? ('admin.sports.status.active' | t) : ('admin.sports.status.inactive' | t) }}
+          </span>
+        </div>
+        <span class="sports-form__hint">{{ 'admin.sports.form.isActiveHint' | t }}</span>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div formActions class="sports-form__actions">
+      <button type="button" (click)="onCancel()" class="sports-form__btn-cancel">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+        (clicked)="onSave()"
+        class="sports-form__btn-save">
+        {{ isEditing ? 'common.update' : 'common.create' | t }}
+      </app-async-button>
+    </div>
+  </form>
+
+</app-form-shell>

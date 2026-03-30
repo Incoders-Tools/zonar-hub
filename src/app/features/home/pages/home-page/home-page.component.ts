@@ -1,14 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { TournamentService } from '../../../../core/services/tournament.service';
+import { SportService } from '../../../../core/services/sport.service';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
-
-interface SportCard {
-  icon: string;
-  labelKey: string;
-}
 
 interface FeatureCard {
   icon: string;
@@ -36,16 +32,17 @@ interface FaqItem {
 })
 export class HomePageComponent implements OnInit {
   protected readonly tournamentService = inject(TournamentService);
+  protected readonly sportService = inject(SportService);
   readonly showTutorial = signal(false);
   readonly expandedFaq = signal<number | null>(null);
   readonly billingCycle = signal<'monthly' | 'annual'>('monthly');
+  readonly selectedPlan = signal<'starter' | 'pro' | 'enterprise'>('pro');
 
-  readonly sports: SportCard[] = [
-    { icon: '🎾', labelKey: 'home.sport.padel' },
-    { icon: '🎾', labelKey: 'home.sport.tennis' },
-    { icon: '⚽', labelKey: 'home.sport.football' },
-    { icon: '🏐', labelKey: 'home.sport.volleyball' }
-  ];
+  // Pricing constants
+  readonly starterMonthly = 49;
+  readonly proMonthly = 97;
+  readonly starterAnnual = computed(() => Math.round(this.starterMonthly * 12 * 0.8));
+  readonly proAnnual = computed(() => Math.round(this.proMonthly * 12 * 0.8));
 
   readonly features: FeatureCard[] = [
     { icon: '📝', titleKey: 'home.card.one.title', descriptionKey: 'home.card.one.description' },
@@ -73,9 +70,14 @@ export class HomePageComponent implements OnInit {
 
   ngOnInit(): void {
     this.tournamentService.loadTournaments();
+    this.sportService.loadSports();
   }
 
   toggleFaq(index: number): void {
     this.expandedFaq.update(current => current === index ? null : index);
+  }
+
+  selectPlan(plan: 'starter' | 'pro' | 'enterprise'): void {
+    this.selectedPlan.set(plan);
   }
 }

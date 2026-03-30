@@ -1,0 +1,146 @@
+<div class="complexes-page">
+  <!-- Page Header -->
+  <div class="complexes-page__header">
+    <div class="complexes-page__title-row">
+      <div>
+        <h1 class="complexes-page__title">{{ 'admin.complexes.title' | t }}</h1>
+        <p class="complexes-page__subtitle">{{ 'admin.complexes.subtitle' | t }}</p>
+      </div>
+      <div class="complexes-page__header-actions">
+        <app-help-button
+          [titleKey]="'admin.complexes.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        @if (!showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'admin.complexes.action.create' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="complexes-page__form-panel" @slideDown>
+      <div class="complexes-page__form-panel-header">
+        <h3 class="complexes-page__form-panel-title">
+          {{ (editingComplex() ? 'admin.complexes.edit.title' : 'admin.complexes.create.title') | t }}
+        </h3>
+        <button
+          class="complexes-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="complexes-page__form-panel-body">
+        <app-complexes-form-dialog
+          [complex]="editingComplex()"
+          [saving]="facade.saving()"
+          (saved)="closeFormPanel()"
+          (cancelled)="closeFormPanel()">
+        </app-complexes-form-dialog>
+      </div>
+    </div>
+  }
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [reorderable]="true"
+    [rowActions]="complexRowActions"
+    emptyMessageKey="admin.complexes.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+
+  <!-- Courts Panel (shown below table when toggled) -->
+  @if (courtsComplexId()) {
+    <div class="complexes-page__courts-section" @slideDown>
+      <div class="complexes-page__courts-section-header">
+        <h3 class="complexes-page__courts-section-title">
+          {{ 'admin.complexes.courts.title' | t }} - {{ courtsComplexName() }}
+        </h3>
+        <button
+          class="complexes-page__form-panel-close"
+          (click)="closeCourtsPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <app-complex-courts-panel
+        [complexId]="courtsComplexId()!"
+        [courts]="facade.courts()"
+        [loading]="facade.loadingCourts()"
+        [saving]="facade.savingCourt()"
+        (courtSaved)="onCourtSaved($event)"
+        (courtDeleted)="onCourtDeleted($event)"
+        (availabilityRequested)="onAvailabilityRequested($event)">
+      </app-complex-courts-panel>
+
+      <!-- Availability Grid (shown below courts panel) -->
+      @if (availabilityCourtId()) {
+        <div @slideDown>
+          <app-court-availability-grid
+            [courtId]="availabilityCourtId()!"
+            [availability]="facade.availability()"
+            [saving]="facade.savingAvailability()"
+            (availabilitySaved)="onAvailabilitySaved($event)">
+          </app-court-availability-grid>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.complexes.confirm.deleteTitle"
+    messageKey="admin.complexes.confirm.deleteMessage"
+    warningKey="admin.complexes.confirm.deleteWarning"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.complexes.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    warningKey="admin.complexes.confirm.deleteWarning"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
