@@ -53,6 +53,7 @@ export class ComplexCourtsPanelComponent {
   readonly courts = input.required<Court[]>();
   readonly loading = input(false);
   readonly saving = input(false);
+  readonly activeCourtId = input<string | null>(null);
 
   readonly courtSaved = output<Court | Omit<Court, 'id'>>();
   readonly courtDeleted = output<string>();

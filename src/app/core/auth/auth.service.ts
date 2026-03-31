@@ -10,7 +10,8 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this.sessionState() !== null);
   readonly currentUser = computed(() => this.sessionState()?.user ?? null);
   readonly userRole = computed<UserRole | null>(() => this.currentUser()?.role ?? null);
-  readonly isAdmin = computed(() => this.userRole() === 'admin');
+  readonly isSystemAdmin = computed(() => this.userRole() === 'system_admin');
+  readonly isAdmin = computed(() => this.userRole() === 'admin' || this.userRole() === 'system_admin');
   readonly isPlayer = computed(() => this.userRole() === 'player');
 
   async login(request: LoginRequest): Promise<AuthSession> {

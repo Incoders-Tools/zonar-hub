@@ -24,6 +24,18 @@ export interface Tournament {
   rules: string;
   imageUrl?: string;
   createdAt: string;
+  key?: string;
+  sportId?: string;
+  sportName?: string;
+  registrationFeePerPair?: number;
+  prizeMoney?: number;
+  pointsToAward?: number;
+  sumValue?: number;
+  coverImageUrl?: string;
+  observations?: string;
+  updatedAt?: string;
+  isActive?: boolean;
+  selectedCourtIds?: string[];
 }
 
 export interface TournamentSlot {

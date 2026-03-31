@@ -64,7 +64,7 @@
 
   <!-- Data Table -->
   <app-data-table
-    [columns]="columns"
+    [columns]="columns()"
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"

@@ -47,7 +47,8 @@
       <tbody>
         @for (row of paginatedData(); track getRowId(row)) {
           <tr class="data-table__row"
-              [class.data-table__row--selected]="isSelected(row)">
+              [class.data-table__row--selected]="isSelected(row)"
+              [class.data-table__row--active]="isActiveRow(row)">
             @if (selectable()) {
               <td class="data-table__td data-table__td--checkbox">
                 <input

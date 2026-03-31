@@ -53,30 +53,11 @@
               }
             </div>
 
-            <!-- Key -->
-            <div class="form-field">
-              <label>{{ 'admin.tournament-statuses.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
-              <input type="text" formControlName="key"
-                [placeholder]="'admin.tournament-statuses.form.keyPlaceholder' | t"
-                [class.error]="isFieldInvalid('key')">
-              @if (isFieldInvalid('key')) {
-                <span class="error-message">{{ 'common.required' | t }}</span>
-              }
-            </div>
-
             <!-- Description -->
             <div class="form-field form-field--full">
               <label>{{ 'admin.tournament-statuses.form.description' | t }}</label>
               <input type="text" formControlName="description"
                 [placeholder]="'admin.tournament-statuses.form.descriptionPlaceholder' | t">
-            </div>
-
-            <!-- Sort Order -->
-            <div class="form-field">
-              <label>{{ 'admin.tournament-statuses.form.sortOrder' | t }}</label>
-              <input type="number" formControlName="sortOrder" min="0"
-                [placeholder]="'admin.tournament-statuses.form.sortOrderPlaceholder' | t"
-                [class.error]="isFieldInvalid('sortOrder')">
             </div>
 
             <!-- Active -->
@@ -88,6 +69,32 @@
               <span class="hint">{{ 'admin.tournament-statuses.form.isActiveHint' | t }}</span>
             </div>
           </div>
+
+          <!-- Technical Fields (system_admin only) -->
+          @if (isSystemAdmin()) {
+            <app-collapsible-section [titleKey]="'common.technicalFields'">
+              <div class="form-grid">
+                <!-- Key -->
+                <div class="form-field">
+                  <label>{{ 'admin.tournament-statuses.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+                  <input type="text" formControlName="key"
+                    [placeholder]="'admin.tournament-statuses.form.keyPlaceholder' | t"
+                    [class.error]="isFieldInvalid('key')">
+                  @if (isFieldInvalid('key')) {
+                    <span class="error-message">{{ 'common.required' | t }}</span>
+                  }
+                </div>
+
+                <!-- Sort Order -->
+                <div class="form-field">
+                  <label>{{ 'admin.tournament-statuses.form.sortOrder' | t }}</label>
+                  <input type="number" formControlName="sortOrder" min="0"
+                    [placeholder]="'admin.tournament-statuses.form.sortOrderPlaceholder' | t"
+                    [class.error]="isFieldInvalid('sortOrder')">
+                </div>
+              </div>
+            </app-collapsible-section>
+          }
 
           <!-- Actions -->
           <div class="form-actions">
@@ -109,14 +116,14 @@
   <app-filter-panel
     [fields]="filterFields"
     [collapsible]="true"
-    [defaultCollapsed]="false"
+    [defaultCollapsed]="true"
     (filtersApplied)="onFiltersApplied($event)"
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
   <!-- Data Table -->
   <app-data-table
-    [columns]="columns"
+    [columns]="columns()"
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"

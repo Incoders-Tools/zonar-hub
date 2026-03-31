@@ -8,6 +8,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../../core/auth/auth.service';
 import { Complex, ComplexServiceAssignment, ComplexSocialNetwork } from '../../../../../core/models';
 import { ComplexesFacadeService } from '../complexes-facade.service';
 import { MockComplexServiceRepository } from '../../../../../core/repositories/mock/mock-complex-service.repository';
@@ -61,6 +62,8 @@ interface NetworkRow {
 export class ComplexesFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(ComplexesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
   private readonly complexServiceRepo = inject(MockComplexServiceRepository);
   private readonly socialNetworkRepo = inject(MockSocialNetworkRepository);
 

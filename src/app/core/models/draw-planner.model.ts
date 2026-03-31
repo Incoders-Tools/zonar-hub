@@ -37,13 +37,16 @@ export interface PlannerWarning {
 }
 
 export interface DrawPlannerResult {
+  id: string;
+  name: string;
   tournamentId: string;
+  tournamentName: string;
   zones: ZoneGroup[];
   warnings: PlannerWarning[];
   totalPairs: number;
   unassignedPairs: ZoneGroupAssignment[];
   generatedAt: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'active' | 'finished';
 }
 
 export interface TournamentZonePlan {

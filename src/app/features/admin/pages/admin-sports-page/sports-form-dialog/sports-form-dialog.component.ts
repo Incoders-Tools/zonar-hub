@@ -6,6 +6,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
+import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../../core/auth/auth.service';
 import { Sport } from '../../../../../core/models';
 import { SportsFacadeService } from '../sports-facade.service';
 
@@ -19,7 +21,8 @@ import { SportsFacadeService } from '../sports-facade.service';
     MatCheckboxModule,
     TranslatePipe,
     FormShellComponent,
-    AsyncButtonComponent
+    AsyncButtonComponent,
+    CollapsibleSectionComponent
   ],
   templateUrl: './sports-form-dialog.component.html',
   styleUrl: './sports-form-dialog.component.scss'
@@ -27,6 +30,8 @@ import { SportsFacadeService } from '../sports-facade.service';
 export class SportsFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(SportsFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly sport = input<Sport | null>(null);
   readonly saving = input(false);

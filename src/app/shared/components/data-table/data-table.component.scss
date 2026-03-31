@@ -162,6 +162,16 @@
       background: var(--zh-surface-muted);
       color: var(--zh-text-secondary);
     }
+
+    &[data-variant='draft'] {
+      background: color-mix(in srgb, var(--zh-warning) 14%, transparent);
+      color: var(--zh-warning);
+    }
+
+    &[data-variant='finished'] {
+      background: var(--zh-surface-muted);
+      color: var(--zh-text-secondary);
+    }
   }
 
   &__row {
@@ -176,6 +186,15 @@
 
       &:hover {
         background: var(--zh-primary-soft);
+      }
+    }
+
+    &--active {
+      background: color-mix(in srgb, var(--zh-primary) 8%, transparent);
+      border-left: 3px solid var(--zh-primary);
+
+      &:hover {
+        background: color-mix(in srgb, var(--zh-primary) 12%, transparent);
       }
     }
   }

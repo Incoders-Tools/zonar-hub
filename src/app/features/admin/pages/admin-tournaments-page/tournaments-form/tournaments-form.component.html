@@ -1,0 +1,325 @@
+<app-form-shell
+  [titleKey]="isEditing ? 'admin.tournaments.edit.title' : 'admin.tournaments.create.title'"
+  [descriptionKey]="isEditing ? 'admin.tournaments.edit.description' : 'admin.tournaments.create.description'">
+
+  <form [formGroup]="form" class="tournaments-form">
+    <div class="tournaments-form__grid">
+      <!-- Name Field -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.name' | t }} *</label>
+        <input
+          type="text"
+          formControlName="name"
+          [class.error]="isFieldInvalid('name')"
+          matInput
+        />
+        @if (isFieldInvalid('name')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('name') | t }}</span>
+        }
+      </div>
+
+      <!-- Complex Field -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.complexId' | t }} *</label>
+        <select formControlName="complexId" [class.error]="isFieldInvalid('complexId')">
+          <option value="">{{ 'admin.tournaments.form.selectComplex' | t }}</option>
+          @for (option of complexOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (isFieldInvalid('complexId')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('complexId') | t }}</span>
+        }
+      </div>
+
+      <!-- Courts from selected complex (shared child-collection-grid) -->
+      @if (form.get('complexId')?.value) {
+        <div class="tournaments-form__field tournaments-form__field--full">
+          <app-child-collection-grid
+            mode="select"
+            [columns]="courtColumns"
+            [items]="facade.courtsForComplex()"
+            [selectedIds]="selectedCourtIds()"
+            [loading]="facade.loadingCourts()"
+            [titleKey]="'admin.tournaments.courts.title'"
+            [emptyMessageKey]="'admin.tournaments.courts.empty'"
+            [collapsible]="true"
+            [initialExpanded]="true"
+            (selectionChanged)="onCourtsSelectionChanged($event)">
+          </app-child-collection-grid>
+        </div>
+      }
+
+      <!-- Tournament Type Field -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.tournamentTypeId' | t }} *</label>
+        <select formControlName="tournamentTypeId" [class.error]="isFieldInvalid('tournamentTypeId')">
+          <option value="">{{ 'admin.tournaments.form.selectType' | t }}</option>
+          @for (option of tournamentTypeOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (isFieldInvalid('tournamentTypeId')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('tournamentTypeId') | t }}</span>
+        }
+      </div>
+
+      <!-- Start Date -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.startDate' | t }} *</label>
+        <input
+          type="date"
+          formControlName="startDate"
+          [class.error]="isFieldInvalid('startDate')"
+        />
+        @if (isFieldInvalid('startDate')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('startDate') | t }}</span>
+        }
+      </div>
+
+      <!-- End Date -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.endDate' | t }} *</label>
+        <input
+          type="date"
+          formControlName="endDate"
+          [min]="endDateMin()"
+          [class.error]="isFieldInvalid('endDate')"
+        />
+        @if (isFieldInvalid('endDate')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('endDate') | t }}</span>
+        }
+      </div>
+
+      <!-- Computed Status Badge -->
+      @if (computedStatus()) {
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.status' | t }}</label>
+          <div class="tournaments-form__status-display">
+            <span
+              class="tournaments-form__status-badge"
+              [class.tournaments-form__status-badge--upcoming]="computedStatus()?.key === 'upcoming'"
+              [class.tournaments-form__status-badge--in-progress]="computedStatus()?.key === 'in_progress'"
+              [class.tournaments-form__status-badge--finished]="computedStatus()?.key === 'finished'">
+              {{ computedStatus()!.labelKey | t }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- Gender (conditional) -->
+      @if (showGenderField()) {
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.genderId' | t }}</label>
+          <select formControlName="genderId">
+            <option value="">{{ 'admin.tournaments.form.selectGender' | t }}</option>
+            @for (option of genderOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <!-- Category -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.categoryId' | t }}</label>
+        <select formControlName="categoryId">
+          <option value="">{{ 'admin.tournaments.form.selectCategory' | t }}</option>
+          @for (option of categoryOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Max Pairs -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.maxPairs' | t }} *</label>
+        <input
+          type="number"
+          formControlName="maxPairs"
+          min="2"
+          [class.error]="isFieldInvalid('maxPairs')"
+        />
+        @if (isFieldInvalid('maxPairs')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('maxPairs') | t }}</span>
+        }
+      </div>
+
+      <!-- Active Status -->
+      <div class="tournaments-form__field tournaments-form__field--checkbox">
+        <label>{{ 'admin.tournaments.form.isActive' | t }}</label>
+        <div class="tournaments-form__checkbox-group">
+          <input
+            type="checkbox"
+            formControlName="isActive"
+          />
+          <span class="tournaments-form__active-badge" [class.active]="form.get('isActive')?.value">
+            {{ (form.get('isActive')?.value ? 'admin.tournaments.status.active' : 'admin.tournaments.status.inactive') | t }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration Window -->
+    <div class="tournaments-form__section-title">
+      {{ 'admin.tournaments.form.registrationWindow' | t }}
+    </div>
+    <div class="tournaments-form__grid">
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.registrationStartDate' | t }}</label>
+        <input
+          type="date"
+          formControlName="registrationStartDate"
+          [max]="regStartMax()"
+          [class.error]="isFieldInvalid('registrationStartDate')"
+        />
+        @if (!registrationEnabled()) {
+          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.registrationHint' | t }}</span>
+        }
+        @if (isFieldInvalid('registrationStartDate')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('registrationStartDate') | t }}</span>
+        }
+      </div>
+
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.registrationEndDate' | t }}</label>
+        <input
+          type="date"
+          formControlName="registrationEndDate"
+          [min]="regEndMin()"
+          [max]="regEndMax()"
+          [class.error]="isFieldInvalid('registrationEndDate')"
+        />
+        @if (isFieldInvalid('registrationEndDate')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('registrationEndDate') | t }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Optional Fields (Collapsible) -->
+    <app-collapsible-section [titleKey]="'admin.tournaments.form.optionalFields'">
+      <div class="tournaments-form__grid">
+        <!-- Registration Fee -->
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.registrationFeePerPair' | t }}</label>
+          <input
+            type="number"
+            formControlName="registrationFeePerPair"
+            min="0"
+          />
+        </div>
+
+        <!-- Prize Money -->
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.prizeMoney' | t }}</label>
+          <input
+            type="number"
+            formControlName="prizeMoney"
+            min="0"
+          />
+        </div>
+
+        <!-- Points to Award (conditional) -->
+        @if (showPointsField()) {
+          <div class="tournaments-form__field">
+            <label>{{ 'admin.tournaments.form.pointsToAward' | t }}</label>
+            <input
+              type="number"
+              formControlName="pointsToAward"
+              min="0"
+            />
+          </div>
+        }
+
+        <!-- Cover Image URL -->
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.coverImageUrl' | t }}</label>
+          <input
+            type="text"
+            formControlName="coverImageUrl"
+            matInput
+          />
+        </div>
+
+        <!-- Observations -->
+        <div class="tournaments-form__field tournaments-form__field--full">
+          <label>{{ 'admin.tournaments.form.observations' | t }}</label>
+          <textarea
+            formControlName="observations"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Description -->
+        <div class="tournaments-form__field tournaments-form__field--full">
+          <label>{{ 'admin.tournaments.form.description' | t }}</label>
+          <textarea
+            formControlName="description"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Rules -->
+        <div class="tournaments-form__field tournaments-form__field--full">
+          <label>{{ 'admin.tournaments.form.rules' | t }}</label>
+          <textarea
+            formControlName="rules"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+    </app-collapsible-section>
+
+    <!-- Technical Fields (System Admin only, Collapsible) -->
+    @if (isSystemAdmin()) {
+      <app-collapsible-section [titleKey]="'admin.tournaments.form.technicalFields'">
+        <div class="tournaments-form__grid">
+          <!-- Key -->
+          <div class="tournaments-form__field">
+            <label>{{ 'admin.tournaments.form.key' | t }}</label>
+            <input
+              type="text"
+              formControlName="key"
+              [class.error]="isFieldInvalid('key')"
+              matInput
+            />
+            @if (isFieldInvalid('key')) {
+              <span class="tournaments-form__error">{{ getErrorMessage('key') | t }}</span>
+            }
+            <span class="tournaments-form__hint">{{ 'admin.tournaments.form.keyHint' | t }}</span>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="tournaments-form__field">
+            <label>{{ 'admin.tournaments.form.sortOrder' | t }}</label>
+            <input
+              type="number"
+              formControlName="sortOrder"
+              min="0"
+              [class.error]="isFieldInvalid('sortOrder')"
+            />
+            @if (isFieldInvalid('sortOrder')) {
+              <span class="tournaments-form__error">{{ getErrorMessage('sortOrder') | t }}</span>
+            }
+          </div>
+        </div>
+      </app-collapsible-section>
+    }
+
+    <!-- Form Actions -->
+    <div formActions class="tournaments-form__actions">
+      <button type="button" (click)="onCancel()" class="tournaments-form__btn-cancel">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+        (clicked)="onSave()"
+        class="tournaments-form__btn-save">
+        {{ (isEditing ? 'common.update' : 'common.create') | t }}
+      </app-async-button>
+    </div>
+  </form>
+
+</app-form-shell>

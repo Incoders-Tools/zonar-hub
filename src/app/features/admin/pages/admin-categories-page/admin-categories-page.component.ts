@@ -7,6 +7,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { CategoryFacadeService, CategoryFilters } from './category-facade.service';
 import { CategoryFormDialogComponent } from './category-form-dialog/category-form-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { Category } from '../../../../core/models';
 
 interface CategoryRow extends Record<string, unknown> {
@@ -38,6 +39,8 @@ interface CategoryRow extends Record<string, unknown> {
 })
 export class AdminCategoriesPageComponent implements OnInit {
   readonly facade = inject(CategoryFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormDialog = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -46,13 +49,20 @@ export class AdminCategoriesPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly selectedCategories = signal<CategoryRow[]>([]);
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'shortName', labelKey: 'categories.column.shortName', sortable: true },
-    { key: 'name', labelKey: 'categories.column.name', sortable: true },
-    { key: 'level', labelKey: 'categories.column.level', sortable: true },
-    { key: 'statusLabel', labelKey: 'categories.column.status', sortable: true },
-    { key: 'sortOrder', labelKey: 'categories.column.sortOrder', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'shortName', labelKey: 'categories.column.shortName', sortable: true },
+      { key: 'name', labelKey: 'categories.column.name', sortable: true },
+      { key: 'level', labelKey: 'categories.column.level', sortable: true },
+      { key: 'statusLabel', labelKey: 'categories.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'sortOrder', labelKey: 'categories.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly categoryRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

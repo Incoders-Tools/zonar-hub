@@ -6,6 +6,101 @@
     font-weight: 800;
     margin: 0 0 var(--zh-space-xl);
   }
+
+  // --- Preview Panel ---
+  &__preview {
+    background: var(--zh-surface-card);
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    padding: var(--zh-space-lg) var(--zh-space-xl);
+    margin-bottom: var(--zh-space-lg);
+  }
+
+  &__preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--zh-space-md) var(--zh-space-lg);
+  }
+
+  &__preview-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__preview-label {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+    font-weight: 500;
+  }
+
+  &__preview-value {
+    font-weight: 600;
+    font-size: var(--zh-font-size-md);
+    color: var(--zh-text-primary);
+  }
+
+  &__preview-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: var(--zh-radius-full, 999px);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
+    width: fit-content;
+
+    &[data-variant='upcoming'] {
+      background: color-mix(in srgb, var(--zh-info) 14%, transparent);
+      color: var(--zh-info);
+    }
+
+    &[data-variant='in-progress'] {
+      background: color-mix(in srgb, var(--zh-success) 14%, transparent);
+      color: var(--zh-success);
+    }
+
+    &[data-variant='finished'] {
+      background: var(--zh-surface-muted);
+      color: var(--zh-text-secondary);
+    }
+  }
+
+  // --- Tabs ---
+  &__tabs {
+    display: flex;
+    gap: var(--zh-space-xs);
+    border-bottom: 2px solid var(--zh-border-subtle);
+    margin-bottom: var(--zh-space-lg);
+  }
+
+  &__tab {
+    padding: var(--zh-space-sm) var(--zh-space-lg);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+    cursor: pointer;
+    transition:
+      color var(--zh-transition-fast),
+      border-color var(--zh-transition-fast);
+
+    &:hover:not(&--active) {
+      color: var(--zh-text-primary);
+    }
+
+    &--active {
+      color: var(--zh-primary);
+      border-bottom-color: var(--zh-primary);
+    }
+  }
+
+  &__tab-content {
+    min-height: 200px;
+  }
 }
 
 .planner-section {
@@ -71,7 +166,7 @@
 
 .warning-item {
   padding: var(--zh-space-sm) var(--zh-space-md);
-  background: rgba(234, 179, 8, 0.08);
+  background: color-mix(in srgb, var(--zh-warning) 8%, transparent);
   border: 1px solid var(--zh-warning);
   border-radius: var(--zh-radius-md);
   font-size: var(--zh-font-size-sm);

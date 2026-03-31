@@ -14,84 +14,184 @@
     </div>
   </div>
 
-  @if (selectedTournament) {
-    <!-- Tournament Summary -->
-    <div class="planner-section">
-      <h2>{{ 'drawPlanner.inputSummary' | t }}</h2>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <span class="summary-item__label">{{ 'tournaments.name' | t }}</span>
-          <span class="summary-item__value">{{ selectedTournament.name }}</span>
+  <!-- Tournament Preview Panel -->
+  @if (tournamentPreview()) {
+    <div class="draw-planner__preview">
+      <div class="draw-planner__preview-grid">
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.name' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.name }}</span>
         </div>
-        <div class="summary-item">
-          <span class="summary-item__label">{{ 'tournaments.category' | t }}</span>
-          <span class="summary-item__value">{{ selectedTournament.categoryName }}</span>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.type' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.type }}</span>
         </div>
-        <div class="summary-item">
-          <span class="summary-item__label">{{ 'tournaments.maxPairs' | t }}</span>
-          <span class="summary-item__value">{{ selectedTournament.maxPairs }}</span>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.complex' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.complex }}</span>
+        </div>
+        @if (tournamentPreview()!.sport) {
+          <div class="draw-planner__preview-item">
+            <span class="draw-planner__preview-label">{{ 'planner.preview.sport' | t }}</span>
+            <span class="draw-planner__preview-value">{{ tournamentPreview()!.sport }}</span>
+          </div>
+        }
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.maxTeams' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.maxPairs }}</span>
+        </div>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.startDate' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.startDate | formatDate }}</span>
+        </div>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.endDate' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.endDate | formatDate }}</span>
+        </div>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.status' | t }}</span>
+          <span class="draw-planner__preview-badge" [attr.data-variant]="tournamentPreview()!.statusVariant">
+            {{ tournamentPreview()!.statusKey | t }}
+          </span>
+        </div>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.registrationStart' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.registrationStart | formatDate }}</span>
+        </div>
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.registrationEnd' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.registrationEnd | formatDate }}</span>
         </div>
       </div>
     </div>
+  }
 
-    <!-- Configuration -->
-    <div class="planner-section">
-      <h2>{{ 'drawPlanner.configuration' | t }}</h2>
-      <div class="field">
-        <label>{{ 'drawPlanner.pairsPerZone' | t }}</label>
-        <input type="number" min="2" max="8" [ngModel]="pairsPerZone()" (ngModelChange)="pairsPerZone.set($event)" />
-      </div>
-      <button class="btn btn--primary" [disabled]="generating()" (click)="generate()">
-        {{ 'drawPlanner.generate' | t }}
+  <!-- Tabs -->
+  @if (selectedTournament()) {
+    <div class="draw-planner__tabs">
+      <button
+        class="draw-planner__tab"
+        [class.draw-planner__tab--active]="activeTab() === 'generate'"
+        (click)="switchTab('generate')">
+        {{ 'planner.tab.generate' | t }}
+      </button>
+      <button
+        class="draw-planner__tab"
+        [class.draw-planner__tab--active]="activeTab() === 'drafts'"
+        (click)="switchTab('drafts')">
+        {{ 'planner.tab.drafts' | t }}
       </button>
     </div>
 
-    <!-- Progress -->
-    @if (generating()) {
-      <div class="planner-section">
-        <app-progress-bar
-          [progress]="progress()"
-          titleKey="planner.generate"
-          [stageLabel]="currentStageLabel() | t"
-          [showPercentage]="true">
-        </app-progress-bar>
-      </div>
-    }
+    <div class="draw-planner__tab-content">
+      <!-- Tab 1: Generate -->
+      @if (activeTab() === 'generate') {
+        <!-- Configuration -->
+        <div class="planner-section">
+          <h2>{{ 'drawPlanner.configuration' | t }}</h2>
+          <div class="field">
+            <label>{{ 'drawPlanner.pairsPerZone' | t }}</label>
+            <input type="number" min="2" max="8" [ngModel]="pairsPerZone()" (ngModelChange)="pairsPerZone.set($event)" />
+          </div>
+          <app-async-button
+            [loading]="generating()"
+            [disabled]="generating()"
+            (clicked)="generate()">
+            {{ 'drawPlanner.generate' | t }}
+          </app-async-button>
+        </div>
 
-    <!-- Result Preview -->
-    @if (result()) {
-      <div class="planner-section">
-        <h2>{{ 'drawPlanner.result' | t }}</h2>
-
-        @if (result()!.warnings.length > 0) {
-          <div class="warnings">
-            @for (w of result()!.warnings; track w.type) {
-              <div class="warning-item">⚠️ {{ w.message }}</div>
-            }
+        <!-- Progress -->
+        @if (generating()) {
+          <div class="planner-section">
+            <app-progress-bar
+              [progress]="progress()"
+              titleKey="planner.generate"
+              [stageLabel]="currentStageLabel() | t"
+              [showPercentage]="true">
+            </app-progress-bar>
           </div>
         }
 
-        <div class="zones-grid">
-          @for (zone of result()!.zones; track zone.zoneName) {
-            <div class="zone-card">
-              <h3>{{ zone.zoneName }}</h3>
-              <ul>
-                @for (a of zone.pairs; track a.registrationId) {
-                  <li>
-                    {{ a.player1Name }} & {{ a.player2Name }}
-                    @if (a.seedPosition) { <span class="seeded">★ #{{ a.seedPosition }}</span> }
-                  </li>
-                }
-              </ul>
-            </div>
-          }
-        </div>
+        <!-- Result Preview -->
+        @if (result()) {
+          <div class="planner-section">
+            <h2>{{ 'drawPlanner.result' | t }}</h2>
 
-        <div class="result-actions">
-          <button class="btn btn--secondary" (click)="saveDraft()">{{ 'drawPlanner.saveDraft' | t }}</button>
-          <button class="btn btn--primary" (click)="publish()">{{ 'drawPlanner.publish' | t }}</button>
+            @if (result()!.warnings.length > 0) {
+              <div class="warnings">
+                @for (w of result()!.warnings; track w.type) {
+                  <div class="warning-item">{{ w.message }}</div>
+                }
+              </div>
+            }
+
+            <div class="zones-grid">
+              @for (zone of result()!.zones; track zone.zoneName) {
+                <div class="zone-card">
+                  <h3>{{ zone.zoneName }}</h3>
+                  <ul>
+                    @for (a of zone.pairs; track a.registrationId) {
+                      <li>
+                        {{ a.player1Name }} & {{ a.player2Name }}
+                        @if (a.seedPosition) { <span class="seeded">#{{ a.seedPosition }}</span> }
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+
+            <div class="result-actions">
+              <app-async-button
+                variant="secondary"
+                [loading]="savingDraft()"
+                [disabled]="savingDraft() || publishing()"
+                (clicked)="saveDraft()">
+                {{ 'drawPlanner.saveDraft' | t }}
+              </app-async-button>
+              <app-async-button
+                [loading]="publishing()"
+                [disabled]="savingDraft() || publishing()"
+                (clicked)="publish()">
+                {{ 'drawPlanner.publish' | t }}
+              </app-async-button>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Tab 2: Saved Draws -->
+      @if (activeTab() === 'drafts') {
+        <div class="planner-section">
+          <h2>{{ 'planner.tab.drafts' | t }}</h2>
+          <app-data-table
+            [columns]="savedDrawColumns"
+            [data]="savedDrawsTableData()"
+            [loading]="loadingDraws()"
+            [paginated]="true"
+            [pageSize]="10"
+            [rowActions]="savedDrawActions"
+            [rowActionsFilter]="savedDrawActionsFilter"
+            emptyMessageKey="planner.drafts.empty"
+            (rowAction)="onDrawRowAction($event)">
+          </app-data-table>
         </div>
-      </div>
-    }
+      }
+    </div>
+  }
+
+  <!-- Delete Confirmation Dialog -->
+  @if (showDeleteConfirm()) {
+    <app-confirm-dialog
+      titleKey="planner.drafts.deleteTitle"
+      messageKey="planner.drafts.deleteMessage"
+      warningKey="planner.drafts.deleteWarning"
+      confirmLabelKey="common.delete"
+      confirmVariant="danger"
+      [loading]="deletingDraft()"
+      (confirmed)="confirmDelete()"
+      (cancelled)="cancelDelete()">
+    </app-confirm-dialog>
   }
 </div>

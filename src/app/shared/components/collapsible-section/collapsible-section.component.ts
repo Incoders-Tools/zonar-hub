@@ -1,4 +1,4 @@
-import { Component, input, output, signal, OnInit } from '@angular/core';
+import { Component, input, output, signal, effect, OnInit } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../pipes/translate.pipe';
@@ -25,15 +25,34 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 export class CollapsibleSectionComponent implements OnInit {
   readonly titleKey = input.required<string>();
   readonly initialExpanded = input(false);
+  /** External control: parent can drive expanded state via this input. */
+  readonly expanded = input<boolean | undefined>(undefined);
   readonly isExpanded = signal(false);
   readonly expandedChange = output<boolean>();
 
+  constructor() {
+    effect(() => {
+      const ext = this.expanded();
+      if (ext !== undefined) {
+        this.isExpanded.set(ext);
+      }
+    });
+  }
+
   ngOnInit(): void {
-    this.isExpanded.set(this.initialExpanded());
+    if (this.expanded() === undefined) {
+      this.isExpanded.set(this.initialExpanded());
+    }
   }
 
   toggle(): void {
     this.isExpanded.update(v => !v);
     this.expandedChange.emit(this.isExpanded());
+  }
+
+  /** Programmatic control for collapse-all / expand-all via @ViewChildren. */
+  setExpanded(value: boolean): void {
+    this.isExpanded.set(value);
+    this.expandedChange.emit(value);
   }
 }

@@ -46,15 +46,55 @@
               <span class="admin-sidebar__group-chevron" [class.admin-sidebar__group-chevron--open]="group.expanded">▸</span>
             </button>
             @if (group.expanded) {
-              @for (item of group.items; track item.route) {
-                <a
-                  class="admin-sidebar__link admin-sidebar__link--nested"
-                  [routerLink]="item.route"
-                  routerLinkActive="admin-sidebar__link--active"
-                  (click)="mobileSidebarOpen.set(false)">
-                  <span class="admin-sidebar__icon">{{ item.icon }}</span>
-                  <span class="admin-sidebar__label">{{ item.labelKey | t }}</span>
-                </a>
+              @for (item of group.items; track item.route || item.labelKey) {
+                @if (item.isSubMenu) {
+                  <!-- Sub-menu header (collapsible group within a group) -->
+                  <button
+                    class="admin-sidebar__link admin-sidebar__link--nested admin-sidebar__link--submenu-header"
+                    (click)="toggleItemChildren(item)">
+                    <span class="admin-sidebar__icon">{{ item.icon }}</span>
+                    <span class="admin-sidebar__label">{{ item.labelKey | t }}</span>
+                    <span class="admin-sidebar__item-chevron" [class.admin-sidebar__item-chevron--open]="item.expanded">▸</span>
+                  </button>
+                  @if (item.expanded && item.children) {
+                    @for (child of item.children; track child.route) {
+                      <a
+                        class="admin-sidebar__link admin-sidebar__link--nested admin-sidebar__link--submenu-child"
+                        [routerLink]="child.route"
+                        routerLinkActive="admin-sidebar__link--active"
+                        (click)="mobileSidebarOpen.set(false)">
+                        <span class="admin-sidebar__icon">{{ child.icon }}</span>
+                        <span class="admin-sidebar__label">{{ child.labelKey | t }}</span>
+                      </a>
+                    }
+                  }
+                } @else {
+                  <!-- Regular nav item -->
+                  <a
+                    class="admin-sidebar__link admin-sidebar__link--nested"
+                    [routerLink]="item.route"
+                    routerLinkActive="admin-sidebar__link--active"
+                    (click)="mobileSidebarOpen.set(false)">
+                    <span class="admin-sidebar__icon">{{ item.icon }}</span>
+                    <span class="admin-sidebar__label">{{ item.labelKey | t }}</span>
+                    @if (item.children) {
+                      <span class="admin-sidebar__item-chevron" [class.admin-sidebar__item-chevron--open]="item.expanded"
+                            (click)="$event.preventDefault(); $event.stopPropagation(); toggleItemChildren(item)">▸</span>
+                    }
+                  </a>
+                  @if (item.children && item.expanded) {
+                    @for (child of item.children; track child.route) {
+                      <a
+                        class="admin-sidebar__link admin-sidebar__link--nested nav-child"
+                        [routerLink]="child.route"
+                        routerLinkActive="admin-sidebar__link--active"
+                        (click)="mobileSidebarOpen.set(false)">
+                        <span class="admin-sidebar__icon">{{ child.icon }}</span>
+                        <span class="admin-sidebar__label">{{ child.labelKey | t }}</span>
+                      </a>
+                    }
+                  }
+                }
               }
             }
           }

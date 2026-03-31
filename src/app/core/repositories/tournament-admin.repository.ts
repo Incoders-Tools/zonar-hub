@@ -1,5 +1,14 @@
 import { Injectable } from '@angular/core';
-import { TournamentType, TournamentEligibilityProfile } from '../models';
+import { Tournament, TournamentType, TournamentEligibilityProfile } from '../models';
+
+export interface TournamentAdminRepository {
+  getAll(): Promise<Tournament[]>;
+  getById(id: string): Promise<Tournament | undefined>;
+  create(tournament: Omit<Tournament, 'id' | 'createdAt'>): Promise<Tournament>;
+  update(id: string, tournament: Partial<Tournament>): Promise<Tournament>;
+  delete(id: string): Promise<void>;
+  getExistingKeys(): Promise<string[]>;
+}
 
 export interface TournamentTypeRepository {
   getAll(): Promise<TournamentType[]>;

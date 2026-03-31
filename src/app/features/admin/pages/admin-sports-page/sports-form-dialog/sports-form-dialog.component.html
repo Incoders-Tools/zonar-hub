@@ -18,22 +18,6 @@
         }
       </div>
 
-      <!-- Key Field -->
-      <div class="sports-form__field">
-        <label>{{ 'admin.sports.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
-        <input
-          type="text"
-          formControlName="key"
-          [class.error]="isFieldInvalid('key')"
-          [disabled]="isEditing"
-          matInput
-        />
-        @if (isFieldInvalid('key')) {
-          <span class="sports-form__error">{{ getErrorMessage('key') | t }}</span>
-        }
-        <span class="sports-form__hint">{{ 'admin.sports.form.keyHint' | t }}</span>
-      </div>
-
       <!-- Icon Field -->
       <div class="sports-form__field">
         <label>{{ 'admin.sports.form.icon' | t }}</label>
@@ -43,22 +27,6 @@
           matInput
         />
         <span class="sports-form__hint">{{ 'admin.sports.form.iconHint' | t }}</span>
-      </div>
-
-      <!-- Sort Order Field -->
-      <div class="sports-form__field">
-        <label>{{ 'admin.sports.form.sortOrder' | t }}</label>
-        <input
-          type="number"
-          formControlName="sortOrder"
-          min="0"
-          [class.error]="isFieldInvalid('sortOrder')"
-          matInput
-        />
-        @if (isFieldInvalid('sortOrder')) {
-          <span class="sports-form__error">{{ getErrorMessage('sortOrder') | t }}</span>
-        }
-        <span class="sports-form__hint">{{ 'admin.sports.form.sortOrderHint' | t }}</span>
       </div>
 
       <!-- Active Status -->
@@ -78,6 +46,45 @@
         <span class="sports-form__hint">{{ 'admin.sports.form.isActiveHint' | t }}</span>
       </div>
     </div>
+
+    <!-- Technical Fields (system_admin only) -->
+    @if (isSystemAdmin()) {
+      <app-collapsible-section [titleKey]="'common.technicalFields'">
+        <div class="sports-form__grid">
+          <!-- Key Field -->
+          <div class="sports-form__field">
+            <label>{{ 'admin.sports.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+            <input
+              type="text"
+              formControlName="key"
+              [class.error]="isFieldInvalid('key')"
+              [disabled]="isEditing"
+              matInput
+            />
+            @if (isFieldInvalid('key')) {
+              <span class="sports-form__error">{{ getErrorMessage('key') | t }}</span>
+            }
+            <span class="sports-form__hint">{{ 'admin.sports.form.keyHint' | t }}</span>
+          </div>
+
+          <!-- Sort Order Field -->
+          <div class="sports-form__field">
+            <label>{{ 'admin.sports.form.sortOrder' | t }}</label>
+            <input
+              type="number"
+              formControlName="sortOrder"
+              min="0"
+              [class.error]="isFieldInvalid('sortOrder')"
+              matInput
+            />
+            @if (isFieldInvalid('sortOrder')) {
+              <span class="sports-form__error">{{ getErrorMessage('sortOrder') | t }}</span>
+            }
+            <span class="sports-form__hint">{{ 'admin.sports.form.sortOrderHint' | t }}</span>
+          </div>
+        </div>
+      </app-collapsible-section>
+    }
 
     <!-- Form Actions -->
     <div formActions class="sports-form__actions">

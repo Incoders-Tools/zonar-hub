@@ -8,6 +8,7 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { Sport } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { SportsFacadeService, SportFilters } from './sports-facade.service';
 import { SportsFormDialogComponent } from './sports-form-dialog/sports-form-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
@@ -54,6 +55,8 @@ interface SportRow extends Record<string, unknown> {
 })
 export class AdminSportsPageComponent implements OnInit {
   readonly facade = inject(SportsFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -63,13 +66,20 @@ export class AdminSportsPageComponent implements OnInit {
   readonly selectedSports = signal<SportRow[]>([]);
   readonly highlightedRowId = signal<string | null>(null);
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.sports.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.sports.column.key', sortable: true },
-    { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false },
-    { key: 'sortOrder', labelKey: 'admin.sports.column.sortOrder', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.sports.column.status', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.sports.column.name', sortable: true },
+      { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.sports.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.sports.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.sports.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly sportRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

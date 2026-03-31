@@ -7,6 +7,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { GenderFacadeService, GenderFilters } from './gender-facade.service';
 import { GenderFormDialogComponent } from './gender-form-dialog/gender-form-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { Gender } from '../../../../core/models';
 
 interface GenderRow extends Record<string, unknown> {
@@ -36,6 +37,8 @@ interface GenderRow extends Record<string, unknown> {
 })
 export class AdminGendersPageComponent implements OnInit {
   readonly facade = inject(GenderFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormDialog = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -44,12 +47,19 @@ export class AdminGendersPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly selectedGenders = signal<GenderRow[]>([]);
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'genders.column.name', sortable: true },
-    { key: 'key', labelKey: 'genders.column.key', sortable: true },
-    { key: 'statusLabel', labelKey: 'genders.column.status', sortable: true },
-    { key: 'sortOrder', labelKey: 'genders.column.sortOrder', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'genders.column.name', sortable: true },
+      { key: 'statusLabel', labelKey: 'genders.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'genders.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'genders.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly genderRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

@@ -79,6 +79,12 @@
   }
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--zh-space-sm);
+}
+
 @media (max-width: 599px) {
   .social-networks-page {
     padding: var(--zh-space-md);

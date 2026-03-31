@@ -8,6 +8,7 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ComplexService } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ComplexServicesFacadeService, ComplexServiceFilters } from './complex-services-facade.service';
 import { ComplexServicesFormDialogComponent } from './complex-services-form-dialog/complex-services-form-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
@@ -54,6 +55,8 @@ interface ComplexServiceRow extends Record<string, unknown> {
 })
 export class AdminComplexServicesPageComponent implements OnInit {
   readonly facade = inject(ComplexServicesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -62,13 +65,20 @@ export class AdminComplexServicesPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly selectedServices = signal<ComplexServiceRow[]>([]);
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.complex-services.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.complex-services.column.key', sortable: true },
-    { key: 'faIcon', labelKey: 'admin.complex-services.column.icon', sortable: false },
-    { key: 'sortOrder', labelKey: 'admin.complex-services.column.sortOrder', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.complex-services.column.status', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.complex-services.column.name', sortable: true },
+      { key: 'faIcon', labelKey: 'admin.complex-services.column.icon', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.complex-services.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.complex-services.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.complex-services.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly serviceRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

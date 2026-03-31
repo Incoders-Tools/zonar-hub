@@ -94,6 +94,7 @@
     [columns]="columns"
     [data]="tableData"
     [loading]="loading()"
+    [activeRowId]="activeCourtId()"
     [rowActions]="courtRowActions"
     emptyMessageKey="admin.complexes.courts.emptyState"
     (rowAction)="onRowAction($event)">

@@ -103,6 +103,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-dashboard-page/admin-dashboard-page.component').then(m => m.AdminDashboardPageComponent)
       },
       {
+        path: 'tournaments',
+        loadComponent: () => import('./features/admin/pages/admin-tournaments-page/admin-tournaments-page.component').then(m => m.AdminTournamentsPageComponent)
+      },
+      {
         path: 'registrations',
         loadComponent: () => import('./features/admin/pages/admin-registrations-page/admin-registrations-page.component').then(m => m.AdminRegistrationsPageComponent)
       },

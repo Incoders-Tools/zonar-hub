@@ -1,0 +1,54 @@
+<div class="image-upload"
+  [class.image-upload--disabled]="disabled()"
+  [class.image-upload--drag-over]="isDragOver()">
+
+  @if (displayUrl()) {
+    <div class="image-upload__preview">
+      <img [src]="displayUrl()" [alt]="'imageUpload.preview' | t" class="image-upload__image" />
+      <div class="image-upload__overlay">
+        <button
+          type="button"
+          class="image-upload__action"
+          (click)="fileInput.click()"
+          [disabled]="disabled()">
+          <mat-icon>swap_horiz</mat-icon>
+          <span>{{ 'imageUpload.replace' | t }}</span>
+        </button>
+        <button
+          type="button"
+          class="image-upload__action image-upload__action--danger"
+          (click)="removeImage()"
+          [disabled]="disabled()">
+          <mat-icon>delete</mat-icon>
+          <span>{{ 'imageUpload.delete' | t }}</span>
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="image-upload__dropzone"
+      (click)="fileInput.click()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)">
+      @if (uploading() || optimizing()) {
+        <mat-icon class="image-upload__spinner">hourglass_empty</mat-icon>
+        <span>{{ (optimizing() ? 'imageUpload.optimizing' : 'imageUpload.uploading') | t }}</span>
+      } @else {
+        <mat-icon class="image-upload__icon">cloud_upload</mat-icon>
+        <span class="image-upload__label">{{ 'imageUpload.dragDrop' | t }}</span>
+        <span class="image-upload__hint">{{ 'imageUpload.maxSize' | t }}</span>
+      }
+    </div>
+  }
+
+  @if (error()) {
+    <div class="image-upload__error">{{ error()! | t }}</div>
+  }
+
+  <input
+    #fileInput
+    type="file"
+    [accept]="accept()"
+    (change)="onFileSelected($event)"
+    class="image-upload__input" />
+</div>

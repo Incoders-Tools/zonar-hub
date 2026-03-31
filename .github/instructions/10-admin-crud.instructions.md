@@ -8,6 +8,7 @@ They define:
 - what actions and panels are required
 - how admin navigation must be modularized
 - how mock-first CRUDs must be implemented when APIs do not exist yet
+- how master-detail forms and child collections must be handled in reusable form
 
 If any implementation conflicts with these rules, these rules take precedence.
 
@@ -166,18 +167,28 @@ Sysadmin-only functionality:
 
 ### Catalogs
 Satellite/reference entities:
-- Categories, Genders, Cities
-- Tournament Statuses, Tournament Types
-- Teaching Levels, Player Conditions
-- Social Networks, Complex Services
+- Categories
+- Genders
+- Cities
+- Tournament Statuses
+- Tournament Types
+- Teaching Levels
+- Player Conditions
+- Social Networks
+- Complex Services
 - Eligibility Profiles
 
 ### Business module (Circuit Operations)
 Tournament-operational features:
-- Tournaments, Registrations, Players
-- Complexes, Sponsors
-- Draw Planner, Confirmed Pairs
-- News, Courts/scheduling assets
+- Tournaments
+- Registrations
+- Players
+- Complexes
+- Sponsors
+- Draw Planner
+- Confirmed Pairs
+- News
+- Courts/scheduling assets
 
 Navigation must feel modular and ready for future modules.
 
@@ -185,7 +196,7 @@ It must feel like a real homepage composition tool, not a flat table.
 
 ---
 
-## 9. Admin navigation modularization
+## 10. Admin navigation modularization
 
 Admin navigation must be grouped and modular.
 
@@ -225,7 +236,7 @@ The first major module should group the tournament planning / operational domain
 
 ---
 
-## 10. Completeness rule for shared and reusable admin components
+## 11. Completeness rule for shared and reusable admin components
 
 Whenever a non-trivial reusable admin primitive is created or refactored, it must include:
 - `.component.ts`
@@ -236,11 +247,92 @@ Whenever a non-trivial reusable admin primitive is created or refactored, it mus
 
 Do not leave reusable admin primitives half-built.
 
+---
 
-## 11. Catalogs and composition ordering rule
+## 12. Catalogs and composition ordering rule
 
 If an admin entity is orderable:
 - use shared drag-and-drop behavior
 - persist through `sort_order`
 - use `preponderance` when the entity also requires weighted business prominence
 - do not create feature-specific reorder conventions
+
+---
+
+## 13. Master-detail CRUD rule
+
+If an admin form includes:
+- a header plus editable items
+- a parent entity with one or more child collections
+- one-to-many related rows edited inside the same workflow
+- tabs with child entities
+- FK-backed detail rows
+- nested orderable items
+
+then the implementation MUST default to the shared master-detail child-collection pattern.
+
+Do not create a one-off child table component for each feature when the interaction model is equivalent.
+
+The reusable shared pattern must support:
+- integration with Reactive Forms
+- `FormArray` or equivalent reusable adapter strategy
+- add row
+- remove row
+- drag and drop
+- reorder
+- configurable columns
+- row validation
+- translated labels and helper text
+- optional tabbed mode when multiple child collections exist
+- optional collapsible mode
+- optional collapse-all / expand-all controls when the UX requires grouped child rows
+
+The parent page/form should own:
+- aggregate loading
+- aggregate save
+- orchestration across tabs/collections
+- repository/service interaction
+
+The shared child-collection component should own:
+- row rendering
+- row interactions
+- child collection editing UX
+- reorder behavior
+- child-level validation display
+
+---
+
+## 14. Date-range safety rule for CRUDs and filters
+
+Whenever an admin screen contains date ranges such as:
+- `start_date` / `end_date`
+- `from` / `to`
+- tournament ranges
+- validity windows
+- scheduling ranges
+
+the implementation must include all of the following:
+- UI-level prevention of invalid ranges where possible
+- cross-field validation in Reactive Forms
+- disabled primary action while invalid
+- translated validation/error messaging
+- consistent behavior in create and edit mode
+- reusable shared validation logic instead of feature-local duplication
+
+This applies to:
+- create forms
+- edit forms
+- filter panels
+- search panels
+- scheduling-related flows
+
+---
+
+## 15. Reuse-first correction rule
+
+If an existing feature is partially broken but already points toward a reusable pattern:
+- do not patch it with an ad-hoc local fix first
+- stabilize it by moving the repeated behavior into the appropriate shared primitive
+- then refactor the feature to consume that shared primitive
+
+Broken local implementations are not a valid excuse to bypass shared architecture.

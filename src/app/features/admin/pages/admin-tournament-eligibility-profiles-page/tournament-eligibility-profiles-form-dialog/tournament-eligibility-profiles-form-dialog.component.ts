@@ -7,6 +7,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
+import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../../core/auth/auth.service';
 import { TournamentEligibilityProfile } from '../../../../../core/models';
 import { TournamentEligibilityProfilesFacadeService } from '../tournament-eligibility-profiles-facade.service';
 import { SlotEditorComponent } from '../slot-editor/slot-editor.component';
@@ -23,6 +25,7 @@ import { SlotEditorComponent } from '../slot-editor/slot-editor.component';
     TranslatePipe,
     FormShellComponent,
     AsyncButtonComponent,
+    CollapsibleSectionComponent,
     SlotEditorComponent
   ],
   templateUrl: './tournament-eligibility-profiles-form-dialog.component.html',
@@ -31,6 +34,8 @@ import { SlotEditorComponent } from '../slot-editor/slot-editor.component';
 export class TournamentEligibilityProfilesFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(TournamentEligibilityProfilesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly profile = input<TournamentEligibilityProfile | null>(null);
   readonly saving = input(false);

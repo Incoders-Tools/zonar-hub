@@ -5,8 +5,11 @@ import { AuthService } from '../../core/auth/auth.service';
 
 interface AdminNavItem {
   labelKey: string;
-  route: string;
+  route?: string;
   icon: string;
+  children?: AdminNavItem[];
+  isSubMenu?: boolean;
+  expanded?: boolean;
 }
 
 interface AdminNavGroup {
@@ -39,25 +42,39 @@ export class AdminLayoutComponent {
       icon: '🏆',
       expanded: true,
       items: [
+        {
+          labelKey: 'admin.tournaments', route: '/admin/tournaments', icon: '🏆',
+          expanded: true,
+          children: [
+            { labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types', icon: '🎾' },
+            { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅' },
+            { labelKey: 'admin.tournamentRuleSets', route: '/admin/catalogs/tournament-rules', icon: '📜' }
+          ]
+        },
         { labelKey: 'admin.registrations', route: '/admin/registrations', icon: '📝' },
         { labelKey: 'admin.drawPlanner', route: '/admin/draw-planner', icon: '🎯' }
       ]
     },
     {
-      labelKey: 'admin.nav.catalogs',
+      labelKey: 'admin.nav.catalog',
       icon: '📋',
       expanded: false,
       items: [
-        { labelKey: 'admin.categories', route: '/admin/catalogs/categories', icon: '🏷️' },
-        { labelKey: 'admin.genders', route: '/admin/catalogs/genders', icon: '⚧' },
-        { labelKey: 'admin.sports', route: '/admin/catalogs/sports', icon: '🏅' },
         { labelKey: 'admin.complexes', route: '/admin/catalogs/complexes', icon: '🏟️' },
-        { labelKey: 'admin.complexServices', route: '/admin/catalogs/complex-services', icon: '🔧' },
-        { labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks', icon: '📱' },
-        { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊' },
-        { labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types', icon: '🎾' },
-        { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅' },
-        { labelKey: 'admin.tournamentRuleSets', route: '/admin/catalogs/tournament-rules', icon: '📜' }
+        {
+          labelKey: 'admin.nav.auxiliaryEntities',
+          icon: '📂',
+          isSubMenu: true,
+          expanded: false,
+          children: [
+            { labelKey: 'admin.categories', route: '/admin/catalogs/categories', icon: '🏷️' },
+            { labelKey: 'admin.genders', route: '/admin/catalogs/genders', icon: '⚧' },
+            { labelKey: 'admin.sports', route: '/admin/catalogs/sports', icon: '🏅' },
+            { labelKey: 'admin.complexServices', route: '/admin/catalogs/complex-services', icon: '🔧' },
+            { labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks', icon: '📱' },
+            { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊' }
+          ]
+        }
       ]
     },
     {
@@ -87,6 +104,10 @@ export class AdminLayoutComponent {
 
   toggleGroup(group: AdminNavGroup): void {
     group.expanded = !group.expanded;
+  }
+
+  toggleItemChildren(item: AdminNavItem): void {
+    item.expanded = !item.expanded;
   }
 
   logout(): void {

@@ -8,6 +8,8 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { CollapsibleSectionComponent } from '../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { TournamentType } from '../../../../core/models';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentTypesFacadeService, TournamentTypeFilters } from './tournament-types-facade.service';
@@ -37,6 +39,7 @@ interface TournamentTypeRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
+    CollapsibleSectionComponent,
     HelpButtonComponent
   ],
   providers: [TournamentTypesFacadeService],
@@ -58,6 +61,8 @@ interface TournamentTypeRow extends Record<string, unknown> {
 export class AdminTournamentTypesPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly facade = inject(TournamentTypesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -70,14 +75,21 @@ export class AdminTournamentTypesPageComponent implements OnInit {
   isEditing = false;
   submitted = false;
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.tournament-types.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.tournament-types.column.key', sortable: true },
-    { key: 'sortOrder', labelKey: 'admin.tournament-types.column.sortOrder', sortable: true },
-    { key: 'scoresPointsLabel', labelKey: 'admin.tournament-types.column.scoresPoints', sortable: false },
-    { key: 'appliesGenderLabel', labelKey: 'admin.tournament-types.column.appliesGender', sortable: false },
-    { key: 'statusLabel', labelKey: 'admin.tournament-types.column.status', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.tournament-types.column.name', sortable: true },
+      { key: 'scoresPointsLabel', labelKey: 'admin.tournament-types.column.scoresPoints', sortable: false },
+      { key: 'appliesGenderLabel', labelKey: 'admin.tournament-types.column.appliesGender', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.tournament-types.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.tournament-types.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.tournament-types.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly typeRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

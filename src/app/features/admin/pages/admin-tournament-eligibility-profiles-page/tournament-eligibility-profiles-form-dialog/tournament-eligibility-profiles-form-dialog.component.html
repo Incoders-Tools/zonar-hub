@@ -20,22 +20,6 @@
         }
       </div>
 
-      <!-- Key Field -->
-      <div class="form-field">
-        <label>{{ 'admin.tournament-eligibility-profiles.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
-        <input
-          type="text"
-          formControlName="key"
-          placeholder="e.g., standard_profile"
-          [class.error]="isFieldInvalid('key')"
-          [disabled]="isEditing"
-          matInput
-        />
-        @if (isFieldInvalid('key')) {
-          <span class="error-message">{{ getErrorMessage('key') | t }}</span>
-        }
-      </div>
-
       <!-- Description Field -->
       <div class="form-field">
         <label>{{ 'admin.tournament-eligibility-profiles.form.description' | t }}</label>
@@ -45,23 +29,6 @@
           placeholder="e.g., Standard eligibility profile for tournaments"
           matInput
         />
-      </div>
-
-      <!-- Sort Order Field -->
-      <div class="form-field">
-        <label>{{ 'admin.tournament-eligibility-profiles.form.sortOrder' | t }}</label>
-        <input
-          type="number"
-          formControlName="sortOrder"
-          min="0"
-          placeholder="e.g., 1"
-          [class.error]="isFieldInvalid('sortOrder')"
-          matInput
-        />
-        @if (isFieldInvalid('sortOrder')) {
-          <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
-        }
-        <span class="hint">{{ 'admin.tournament-eligibility-profiles.form.sortOrderHint' | t }}</span>
       </div>
 
       <!-- Active Status -->
@@ -80,6 +47,46 @@
         </div>
       </div>
     </div>
+
+    <!-- Technical Fields (system_admin only) -->
+    @if (isSystemAdmin()) {
+      <app-collapsible-section [titleKey]="'common.technicalFields'">
+        <div class="form-grid">
+          <!-- Key Field -->
+          <div class="form-field">
+            <label>{{ 'admin.tournament-eligibility-profiles.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+            <input
+              type="text"
+              formControlName="key"
+              placeholder="e.g., standard_profile"
+              [class.error]="isFieldInvalid('key')"
+              [disabled]="isEditing"
+              matInput
+            />
+            @if (isFieldInvalid('key')) {
+              <span class="error-message">{{ getErrorMessage('key') | t }}</span>
+            }
+          </div>
+
+          <!-- Sort Order Field -->
+          <div class="form-field">
+            <label>{{ 'admin.tournament-eligibility-profiles.form.sortOrder' | t }}</label>
+            <input
+              type="number"
+              formControlName="sortOrder"
+              min="0"
+              placeholder="e.g., 1"
+              [class.error]="isFieldInvalid('sortOrder')"
+              matInput
+            />
+            @if (isFieldInvalid('sortOrder')) {
+              <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
+            }
+            <span class="hint">{{ 'admin.tournament-eligibility-profiles.form.sortOrderHint' | t }}</span>
+          </div>
+        </div>
+      </app-collapsible-section>
+    }
 
     <!-- Slots Section (Collapsible) -->
     <div class="slots-section">

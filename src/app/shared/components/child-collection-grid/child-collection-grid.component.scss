@@ -1,0 +1,217 @@
+:host {
+  display: block;
+}
+
+.child-grid {
+  &__header {
+    margin-bottom: var(--zh-space-sm);
+  }
+
+  &__title {
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+    margin: 0 0 var(--zh-space-xs);
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--zh-space-sm);
+    margin-bottom: var(--zh-space-sm);
+  }
+
+  &__btn-link {
+    background: none;
+    border: none;
+    color: var(--zh-primary);
+    cursor: pointer;
+    font-size: var(--zh-font-size-sm);
+    padding: 0;
+    text-decoration: underline;
+    transition: opacity var(--zh-transition-fast);
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__th {
+    text-align: left;
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+    border-bottom: 2px solid var(--zh-border-subtle);
+    white-space: nowrap;
+
+    &--checkbox,
+    &--drag {
+      width: 40px;
+      text-align: center;
+    }
+
+    &--actions {
+      width: 48px;
+    }
+  }
+
+  &__required {
+    color: var(--zh-error);
+    margin-left: 2px;
+  }
+
+  &__row {
+    border-bottom: 1px solid var(--zh-border-subtle);
+    transition: background var(--zh-transition-fast);
+
+    &:hover {
+      background: var(--zh-surface-muted);
+    }
+
+    &--selected {
+      background: var(--zh-primary-soft);
+
+      &:hover {
+        background: var(--zh-primary-soft);
+      }
+    }
+
+    &--invalid {
+      background: color-mix(in srgb, var(--zh-error) 8%, transparent);
+    }
+  }
+
+  &__td {
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    vertical-align: middle;
+
+    &--checkbox,
+    &--drag {
+      text-align: center;
+      width: 40px;
+    }
+
+    &--actions {
+      text-align: center;
+      width: 48px;
+    }
+  }
+
+  &__input,
+  &__select {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-sm);
+    font-size: var(--zh-font-size-sm);
+    background: var(--zh-surface-bg);
+    color: var(--zh-text-primary);
+    transition: border-color var(--zh-transition-fast);
+
+    &:focus {
+      outline: none;
+      border-color: var(--zh-border-focus);
+    }
+
+    &--error {
+      border-color: var(--zh-error);
+    }
+  }
+
+  &__drag-handle {
+    cursor: grab;
+    color: var(--zh-text-muted);
+    font-size: 18px;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__btn-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--zh-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--zh-radius-sm);
+    transition: color var(--zh-transition-fast), background var(--zh-transition-fast);
+
+    &:hover {
+      color: var(--zh-error);
+      background: color-mix(in srgb, var(--zh-error) 10%, transparent);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__footer {
+    padding: var(--zh-space-sm) 0;
+  }
+
+  &__btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    background: none;
+    border: 1px dashed var(--zh-border-subtle);
+    color: var(--zh-primary);
+    cursor: pointer;
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    border-radius: var(--zh-radius-sm);
+    font-size: var(--zh-font-size-sm);
+    transition: border-color var(--zh-transition-fast), background var(--zh-transition-fast);
+
+    &:hover {
+      border-color: var(--zh-primary);
+      background: var(--zh-primary-soft);
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// CDK drag-drop styles
+.cdk-drag-preview {
+  background: var(--zh-surface-elevated);
+  box-shadow: var(--zh-elevation-md);
+  border-radius: var(--zh-radius-sm);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}

@@ -464,12 +464,27 @@
   }
 
   &__price {
-    margin-bottom: var(--zh-space-lg);
+    margin-bottom: var(--zh-space-sm);
     font-size: clamp(1.75rem, 3vw, 2.25rem);
     font-weight: 800;
     color: var(--zh-text-primary);
     text-align: center;
     line-height: 1.2;
+  }
+
+  &__scope {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--zh-space-xs);
+    margin-bottom: var(--zh-space-lg);
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+
+    span + span::before {
+      content: '\00B7';
+      margin-right: var(--zh-space-xs);
+    }
   }
 
   &__features {

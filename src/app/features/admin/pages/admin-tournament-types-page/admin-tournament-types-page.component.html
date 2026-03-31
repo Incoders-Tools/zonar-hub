@@ -53,25 +53,6 @@
               }
             </div>
 
-            <!-- Key -->
-            <div class="form-field">
-              <label>{{ 'admin.tournament-types.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
-              <input type="text" formControlName="key"
-                [placeholder]="'admin.tournament-types.form.keyPlaceholder' | t"
-                [class.error]="isFieldInvalid('key')">
-              @if (isFieldInvalid('key')) {
-                <span class="error-message">{{ 'common.required' | t }}</span>
-              }
-            </div>
-
-            <!-- Sort Order -->
-            <div class="form-field">
-              <label>{{ 'admin.tournament-types.form.sortOrder' | t }}</label>
-              <input type="number" formControlName="sortOrder" min="0"
-                [placeholder]="'admin.tournament-types.form.sortOrderPlaceholder' | t"
-                [class.error]="isFieldInvalid('sortOrder')">
-            </div>
-
             <!-- Scores Points -->
             <div class="form-field form-field--checkbox">
               <label>
@@ -100,6 +81,32 @@
             </div>
           </div>
 
+          <!-- Technical Fields (system_admin only) -->
+          @if (isSystemAdmin()) {
+            <app-collapsible-section [titleKey]="'common.technicalFields'">
+              <div class="form-grid">
+                <!-- Key -->
+                <div class="form-field">
+                  <label>{{ 'admin.tournament-types.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+                  <input type="text" formControlName="key"
+                    [placeholder]="'admin.tournament-types.form.keyPlaceholder' | t"
+                    [class.error]="isFieldInvalid('key')">
+                  @if (isFieldInvalid('key')) {
+                    <span class="error-message">{{ 'common.required' | t }}</span>
+                  }
+                </div>
+
+                <!-- Sort Order -->
+                <div class="form-field">
+                  <label>{{ 'admin.tournament-types.form.sortOrder' | t }}</label>
+                  <input type="number" formControlName="sortOrder" min="0"
+                    [placeholder]="'admin.tournament-types.form.sortOrderPlaceholder' | t"
+                    [class.error]="isFieldInvalid('sortOrder')">
+                </div>
+              </div>
+            </app-collapsible-section>
+          }
+
           <!-- Actions -->
           <div class="form-actions">
             <button type="button" class="btn-cancel" (click)="closeFormPanel()">
@@ -120,14 +127,14 @@
   <app-filter-panel
     [fields]="filterFields"
     [collapsible]="true"
-    [defaultCollapsed]="false"
+    [defaultCollapsed]="true"
     (filtersApplied)="onFiltersApplied($event)"
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
   <!-- Data Table -->
   <app-data-table
-    [columns]="columns"
+    [columns]="columns()"
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"

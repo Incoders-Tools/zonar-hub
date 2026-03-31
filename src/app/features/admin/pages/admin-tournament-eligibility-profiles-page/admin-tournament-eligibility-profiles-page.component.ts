@@ -8,6 +8,7 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { TournamentEligibilityProfile } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentEligibilityProfilesFacadeService, TournamentEligibilityProfileFilters } from './tournament-eligibility-profiles-facade.service';
 import { TournamentEligibilityProfilesFormDialogComponent } from './tournament-eligibility-profiles-form-dialog/tournament-eligibility-profiles-form-dialog.component';
@@ -55,6 +56,8 @@ interface TournamentEligibilityProfileRow extends Record<string, unknown> {
 })
 export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
   readonly facade = inject(TournamentEligibilityProfilesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -63,14 +66,21 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly selectedProfiles = signal<TournamentEligibilityProfileRow[]>([]);
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.tournament-eligibility-profiles.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.tournament-eligibility-profiles.column.key', sortable: true },
-    { key: 'description', labelKey: 'admin.tournament-eligibility-profiles.column.description', sortable: false },
-    { key: 'slotCount', labelKey: 'admin.tournament-eligibility-profiles.column.slots', sortable: false },
-    { key: 'sortOrder', labelKey: 'admin.tournament-eligibility-profiles.column.sortOrder', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.tournament-eligibility-profiles.column.status', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.tournament-eligibility-profiles.column.name', sortable: true },
+      { key: 'description', labelKey: 'admin.tournament-eligibility-profiles.column.description', sortable: false },
+      { key: 'slotCount', labelKey: 'admin.tournament-eligibility-profiles.column.slots', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.tournament-eligibility-profiles.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.tournament-eligibility-profiles.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.tournament-eligibility-profiles.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly profileRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

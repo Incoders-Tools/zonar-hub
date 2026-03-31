@@ -9,6 +9,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Complex } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ComplexesFacadeService, ComplexFilters } from './complexes-facade.service';
 import { ComplexesFormDialogComponent } from './complexes-form-dialog/complexes-form-dialog.component';
 import { ComplexCourtsPanelComponent } from './complex-courts-panel/complex-courts-panel.component';
@@ -60,6 +61,8 @@ interface ComplexRow extends Record<string, unknown> {
 })
 export class AdminComplexesPageComponent implements OnInit {
   readonly facade = inject(ComplexesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -75,15 +78,22 @@ export class AdminComplexesPageComponent implements OnInit {
   // Availability grid state
   readonly availabilityCourtId = signal<string | null>(null);
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.complexes.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.complexes.column.key', sortable: true },
-    { key: 'location', labelKey: 'admin.complexes.column.location', sortable: false },
-    { key: 'sortOrder', labelKey: 'admin.complexes.column.sortOrder', sortable: true },
-    { key: 'preponderance', labelKey: 'admin.complexes.column.preponderance', sortable: true },
-    { key: 'courtsCount', labelKey: 'admin.complexes.column.courtsCount', sortable: false },
-    { key: 'statusLabel', labelKey: 'admin.complexes.column.status', sortable: true, renderType: 'pill', translate: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.complexes.column.name', sortable: true },
+      { key: 'location', labelKey: 'admin.complexes.column.location', sortable: false },
+      { key: 'courtsCount', labelKey: 'admin.complexes.column.courtsCount', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.complexes.column.status', sortable: true, renderType: 'pill', translate: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.complexes.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.complexes.column.sortOrder', sortable: true },
+        { key: 'preponderance', labelKey: 'admin.complexes.column.preponderance', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly complexRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

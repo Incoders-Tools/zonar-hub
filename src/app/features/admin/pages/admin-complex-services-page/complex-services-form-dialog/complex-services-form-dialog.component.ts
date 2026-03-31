@@ -6,6 +6,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
+import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../../core/auth/auth.service';
 import { ComplexService } from '../../../../../core/models';
 import { ComplexServicesFacadeService } from '../complex-services-facade.service';
 
@@ -19,7 +21,8 @@ import { ComplexServicesFacadeService } from '../complex-services-facade.service
     MatCheckboxModule,
     TranslatePipe,
     FormShellComponent,
-    AsyncButtonComponent
+    AsyncButtonComponent,
+    CollapsibleSectionComponent
   ],
   templateUrl: './complex-services-form-dialog.component.html',
   styleUrl: './complex-services-form-dialog.component.scss'
@@ -27,6 +30,8 @@ import { ComplexServicesFacadeService } from '../complex-services-facade.service
 export class ComplexServicesFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(ComplexServicesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly service = input<ComplexService | null>(null);
   readonly saving = input(false);

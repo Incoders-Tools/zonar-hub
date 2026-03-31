@@ -38,6 +38,7 @@ export class DataTableComponent<T extends Record<string, unknown>> {
   readonly reorderable = input(false);
   readonly rowActions = input<{ icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[]>([]);
   readonly rowActionsFilter = input<((row: T) => { icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[]) | null>(null);
+  readonly activeRowId = input<string | null>(null);
 
   readonly rowSelected = output<T>();
   readonly selectionChanged = output<T[]>();
@@ -86,6 +87,11 @@ export class DataTableComponent<T extends Record<string, unknown>> {
 
   isSelected(row: T): boolean {
     return this.selectedIds().has(this.getRowId(row));
+  }
+
+  isActiveRow(row: T): boolean {
+    const activeId = this.activeRowId();
+    return activeId != null && this.getRowId(row) === activeId;
   }
 
   toggleRow(row: T): void {

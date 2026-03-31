@@ -47,20 +47,6 @@
           }
         </div>
 
-        <!-- Key Field -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
-          <input
-            type="text"
-            formControlName="key"
-            [class.error]="isFieldInvalid('key')"
-            matInput
-          />
-          @if (isFieldInvalid('key')) {
-            <span class="error-message">{{ getErrorMessage('key') | t }}</span>
-          }
-        </div>
-
         <!-- Location Field -->
         <div class="form-field">
           <label>{{ 'admin.complexes.form.location' | t }}</label>
@@ -79,36 +65,6 @@
             formControlName="address"
             matInput
           />
-        </div>
-
-        <!-- Sort Order Field -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.sortOrder' | t }}</label>
-          <input
-            type="number"
-            formControlName="sortOrder"
-            min="0"
-            [class.error]="isFieldInvalid('sortOrder')"
-            matInput
-          />
-          @if (isFieldInvalid('sortOrder')) {
-            <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
-          }
-        </div>
-
-        <!-- Preponderance Field -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.preponderance' | t }}</label>
-          <input
-            type="number"
-            formControlName="preponderance"
-            min="0"
-            [class.error]="isFieldInvalid('preponderance')"
-            matInput
-          />
-          @if (isFieldInvalid('preponderance')) {
-            <span class="error-message">{{ getErrorMessage('preponderance') | t }}</span>
-          }
         </div>
 
         <!-- Description Field -->
@@ -140,6 +96,57 @@
           </div>
         </div>
       </div>
+
+      <!-- Technical Fields (system_admin only) -->
+      @if (isSystemAdmin()) {
+        <app-collapsible-section [titleKey]="'common.technicalFields'">
+          <div class="form-grid">
+            <!-- Key Field -->
+            <div class="form-field">
+              <label>{{ 'admin.complexes.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+              <input
+                type="text"
+                formControlName="key"
+                [class.error]="isFieldInvalid('key')"
+                matInput
+              />
+              @if (isFieldInvalid('key')) {
+                <span class="error-message">{{ getErrorMessage('key') | t }}</span>
+              }
+            </div>
+
+            <!-- Sort Order Field -->
+            <div class="form-field">
+              <label>{{ 'admin.complexes.form.sortOrder' | t }}</label>
+              <input
+                type="number"
+                formControlName="sortOrder"
+                min="0"
+                [class.error]="isFieldInvalid('sortOrder')"
+                matInput
+              />
+              @if (isFieldInvalid('sortOrder')) {
+                <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
+              }
+            </div>
+
+            <!-- Preponderance Field -->
+            <div class="form-field">
+              <label>{{ 'admin.complexes.form.preponderance' | t }}</label>
+              <input
+                type="number"
+                formControlName="preponderance"
+                min="0"
+                [class.error]="isFieldInvalid('preponderance')"
+                matInput
+              />
+              @if (isFieldInvalid('preponderance')) {
+                <span class="error-message">{{ getErrorMessage('preponderance') | t }}</span>
+              }
+            </div>
+          </div>
+        </app-collapsible-section>
+      }
 
       <!-- Collapsible optional section -->
       <app-collapsible-section [titleKey]="'admin.complexes.form.optional.title'">

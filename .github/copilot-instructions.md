@@ -37,4 +37,59 @@ When generating code:
 - Keep code testable and documented.
 - When migrating from React, preserve behavior and UX while translating idiomatically to Angular.
 
+## Global semantic date-range rule
+
+Whenever a request, feature, screen, filter, form, model, DTO, or query includes a semantic range pair such as:
+- `start` / `end`
+- `from` / `to`
+- `date_from` / `date_to`
+- `valid_from` / `valid_to`
+- `tournament_start_date` / `tournament_end_date`
+
+you MUST treat it as a protected date-range scenario.
+
+Mandatory behavior:
+- block inconsistent selection in the UI when technically possible
+- add cross-field form validation
+- prevent primary submit actions when the range is invalid
+- show a clear translated validation message
+- preserve the same rule in create and edit flows
+- do not rely only on UI constraints; enforce validation again in the appropriate business/data boundary
+
+Do not leave date consistency as an implicit assumption.
+
+## Global master-detail and child-collections rule
+
+Whenever a request describes:
+- header + items
+- parent form + child table
+- nested rows
+- subtable
+- detail lines
+- one-to-many editable collections
+- tabs with related collections
+- drag/reorder child items inside a form
+
+you MUST first evaluate whether the feature matches the shared master-detail child-collection pattern.
+
+Default rule:
+- do not create a feature-specific child-table component if the behavior matches the shared pattern
+- prefer a shared reusable child-grid / child-collection component
+- parent forms should orchestrate the aggregate
+- shared child components should own row-level UX and collection interaction
+- add/remove/reorder/drag-drop logic must be reusable rather than duplicated per feature
+
+Expected shared pattern capabilities:
+- Reactive Forms integration
+- `FormArray` or equivalent adapter strategy
+- add row
+- remove row
+- reorder rows
+- drag and drop
+- row-level validation
+- configurable columns
+- optional tabs for multiple child collections
+- optional collapsible groups or collapse-all behavior
+- compatibility with FK-backed persistence
+
 If any instruction conflicts with `AGENTS.md`, `AGENTS.md` takes precedence.

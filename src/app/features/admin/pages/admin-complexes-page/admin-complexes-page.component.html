@@ -57,14 +57,14 @@
   <app-filter-panel
     [fields]="filterFields"
     [collapsible]="true"
-    [defaultCollapsed]="false"
+    [defaultCollapsed]="true"
     (filtersApplied)="onFiltersApplied($event)"
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
   <!-- Data Table -->
   <app-data-table
-    [columns]="columns"
+    [columns]="columns()"
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
@@ -97,6 +97,7 @@
         [courts]="facade.courts()"
         [loading]="facade.loadingCourts()"
         [saving]="facade.savingCourt()"
+        [activeCourtId]="availabilityCourtId()"
         (courtSaved)="onCourtSaved($event)"
         (courtDeleted)="onCourtDeleted($event)"
         (availabilityRequested)="onAvailabilityRequested($event)">

@@ -8,6 +8,8 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { CollapsibleSectionComponent } from '../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { TournamentStatus } from '../../../../core/models';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentStatusesFacadeService, TournamentStatusFilters } from './tournament-statuses-facade.service';
@@ -34,6 +36,7 @@ interface TournamentStatusRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
+    CollapsibleSectionComponent,
     HelpButtonComponent
   ],
   providers: [TournamentStatusesFacadeService],
@@ -55,6 +58,8 @@ interface TournamentStatusRow extends Record<string, unknown> {
 export class AdminTournamentStatusesPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly facade = inject(TournamentStatusesFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -67,13 +72,20 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
   isEditing = false;
   submitted = false;
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.tournament-statuses.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.tournament-statuses.column.key', sortable: true },
-    { key: 'description', labelKey: 'admin.tournament-statuses.column.description', sortable: false },
-    { key: 'sortOrder', labelKey: 'admin.tournament-statuses.column.sortOrder', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.tournament-statuses.column.status', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.tournament-statuses.column.name', sortable: true },
+      { key: 'description', labelKey: 'admin.tournament-statuses.column.description', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.tournament-statuses.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.tournament-statuses.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.tournament-statuses.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly statusRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },

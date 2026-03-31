@@ -1,0 +1,165 @@
+@if (collapsible() && titleKey()) {
+  <app-collapsible-section [titleKey]="titleKey()" [initialExpanded]="initialExpanded()">
+    <ng-container *ngTemplateOutlet="gridContent"></ng-container>
+  </app-collapsible-section>
+} @else {
+  @if (titleKey()) {
+    <div class="child-grid__header">
+      <h4 class="child-grid__title">{{ titleKey() | t }}</h4>
+    </div>
+  }
+  <ng-container *ngTemplateOutlet="gridContent"></ng-container>
+}
+
+<ng-template #gridContent>
+  @if (loading()) {
+    <app-loading-state></app-loading-state>
+  } @else if (mode() === 'select') {
+    <!-- Select Mode -->
+    @if (items().length === 0) {
+      <app-empty-state [message]="emptyMessageKey()"></app-empty-state>
+    } @else {
+      <div class="child-grid__actions">
+        <button type="button" class="child-grid__btn-link" (click)="selectAll()" [disabled]="disabled()">
+          {{ selectAllLabelKey() | t }}
+        </button>
+        <button type="button" class="child-grid__btn-link" (click)="deselectAll()" [disabled]="disabled()">
+          {{ deselectAllLabelKey() | t }}
+        </button>
+      </div>
+      <table class="child-grid__table">
+        <thead>
+          <tr>
+            <th class="child-grid__th child-grid__th--checkbox"></th>
+            @for (col of columns(); track col.key) {
+              <th class="child-grid__th" [style.width]="col.width || 'auto'">{{ col.labelKey | t }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track getItemId(item)) {
+            <tr class="child-grid__row"
+                [class.child-grid__row--selected]="isItemSelected(item)"
+                (click)="toggleItem(item)">
+              <td class="child-grid__td child-grid__td--checkbox">
+                <input type="checkbox"
+                  [checked]="isItemSelected(item)"
+                  [disabled]="disabled()"
+                  (click)="$event.stopPropagation()"
+                  (change)="toggleItem(item)">
+              </td>
+              @for (col of columns(); track col.key) {
+                <td class="child-grid__td">
+                  @if (col.type === 'checkbox') {
+                    {{ getCellValue(item, col) ? '✓' : '✗' }}
+                  } @else {
+                    {{ getCellValue(item, col) }}
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  } @else {
+    <!-- Edit Mode (FormArray) -->
+    @if (formArray(); as fa) {
+      @if (fa.length === 0) {
+        <app-empty-state [message]="emptyMessageKey()"></app-empty-state>
+      } @else {
+        <div class="child-grid__table-wrapper"
+             cdkDropList
+             [cdkDropListDisabled]="!reorderable() || disabled()"
+             (cdkDropListDropped)="onDrop($event)">
+          <table class="child-grid__table">
+            <thead>
+              <tr>
+                @if (reorderable()) {
+                  <th class="child-grid__th child-grid__th--drag"></th>
+                }
+                @for (col of columns(); track col.key) {
+                  <th class="child-grid__th" [style.width]="col.width || 'auto'">
+                    {{ col.labelKey | t }}
+                    @if (col.required) {
+                      <span class="child-grid__required">*</span>
+                    }
+                  </th>
+                }
+                <th class="child-grid__th child-grid__th--actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (control of fa.controls; track $index; let i = $index) {
+                <tr class="child-grid__row"
+                    [class.child-grid__row--invalid]="isRowInvalid(i)"
+                    cdkDrag
+                    [cdkDragDisabled]="!reorderable() || disabled()">
+                  @if (reorderable()) {
+                    <td class="child-grid__td child-grid__td--drag" cdkDragHandle>
+                      <mat-icon class="child-grid__drag-handle">drag_indicator</mat-icon>
+                    </td>
+                  }
+                  @for (col of columns(); track col.key) {
+                    <td class="child-grid__td" [formGroup]="getFormGroup(i)">
+                      @switch (col.type) {
+                        @case ('text') {
+                          <input type="text" [formControlName]="col.key"
+                            class="child-grid__input"
+                            [class.child-grid__input--error]="getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched">
+                        }
+                        @case ('number') {
+                          <input type="number" [formControlName]="col.key"
+                            class="child-grid__input"
+                            [class.child-grid__input--error]="getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched">
+                        }
+                        @case ('date') {
+                          <input type="date" [formControlName]="col.key"
+                            class="child-grid__input"
+                            [class.child-grid__input--error]="getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched">
+                        }
+                        @case ('select') {
+                          <select [formControlName]="col.key"
+                            class="child-grid__select"
+                            [class.child-grid__select--error]="getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched">
+                            <option value="">--</option>
+                            @for (opt of col.options; track opt.value) {
+                              <option [value]="opt.value">{{ opt.label }}</option>
+                            }
+                          </select>
+                        }
+                        @case ('checkbox') {
+                          <input type="checkbox" [formControlName]="col.key">
+                        }
+                        @case ('display') {
+                          <span>{{ getFormGroup(i).get(col.key)?.value }}</span>
+                        }
+                      }
+                    </td>
+                  }
+                  <td class="child-grid__td child-grid__td--actions">
+                    <button type="button"
+                      class="child-grid__btn-remove"
+                      [disabled]="disabled()"
+                      (click)="removeRow(i)"
+                      [title]="removeLabelKey() | t">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @if (canAddRow() && !disabled()) {
+        <div class="child-grid__footer">
+          <button type="button" class="child-grid__btn-add" (click)="addRow()">
+            <mat-icon>add</mat-icon>
+            {{ addLabelKey() | t }}
+          </button>
+        </div>
+      }
+    }
+  }
+</ng-template>

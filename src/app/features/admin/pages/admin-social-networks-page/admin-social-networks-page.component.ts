@@ -10,6 +10,9 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
+import { CollapsibleSectionComponent } from '../../../../shared/components/collapsible-section/collapsible-section.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { SocialNetwork } from '../../../../core/models';
 import { SocialNetworksFacadeService, SocialNetworkFilters } from './social-networks-facade.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
@@ -39,6 +42,8 @@ interface SocialNetworkRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
+    FormShellComponent,
+    CollapsibleSectionComponent,
     HelpButtonComponent
   ],
   providers: [SocialNetworksFacadeService],
@@ -60,6 +65,8 @@ interface SocialNetworkRow extends Record<string, unknown> {
 export class AdminSocialNetworksPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly facade = inject(SocialNetworksFacadeService);
+  private readonly auth = inject(AuthService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -72,14 +79,21 @@ export class AdminSocialNetworksPageComponent implements OnInit {
   isEditing = false;
   submitted = false;
 
-  readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.social-networks.column.name', sortable: true },
-    { key: 'key', labelKey: 'admin.social-networks.column.key', sortable: true },
-    { key: 'url', labelKey: 'admin.social-networks.column.url', sortable: false },
-    { key: 'faIcon', labelKey: 'admin.social-networks.column.icon', sortable: false },
-    { key: 'sortOrder', labelKey: 'admin.social-networks.column.sortOrder', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.social-networks.column.status', sortable: true }
-  ];
+  readonly columns = computed<DataTableColumn[]>(() => {
+    const base: DataTableColumn[] = [
+      { key: 'name', labelKey: 'admin.social-networks.column.name', sortable: true },
+      { key: 'url', labelKey: 'admin.social-networks.column.url', sortable: false },
+      { key: 'faIcon', labelKey: 'admin.social-networks.column.icon', sortable: false },
+      { key: 'statusLabel', labelKey: 'admin.social-networks.column.status', sortable: true }
+    ];
+    if (this.isSystemAdmin()) {
+      base.push(
+        { key: 'key', labelKey: 'admin.social-networks.column.key', sortable: true },
+        { key: 'sortOrder', labelKey: 'admin.social-networks.column.sortOrder', sortable: true }
+      );
+    }
+    return base;
+  });
 
   readonly networkRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
@@ -132,9 +146,25 @@ export class AdminSocialNetworksPageComponent implements OnInit {
       name: ['', [Validators.required]],
       key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
       url: [''],
+      faIcon: [''],
       description: [''],
       sortOrder: ['', [Validators.min(0)]],
       isActive: [true]
+    });
+
+    // Auto-generate key from name
+    this.form.get('name')?.valueChanges.subscribe((name: string) => {
+      if (!this.isEditing && name) {
+        const generatedKey = name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s]/g, '')
+          .replace(/\s+/g, '_')
+          .replace(/_+/g, '_')
+          .replace(/^_|_$/g, '');
+        this.form.get('key')?.setValue(generatedKey, { emitEvent: false });
+      }
     });
   }
 
@@ -147,6 +177,7 @@ export class AdminSocialNetworksPageComponent implements OnInit {
         name: network.name,
         key: network.key,
         url: network.url || '',
+        faIcon: network.faIcon || '',
         description: network.description || '',
         sortOrder: network.sortOrder || '',
         isActive: network.isActive

@@ -1,0 +1,189 @@
+.tournaments-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  &__section-title {
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+    margin-top: var(--zh-space-md);
+    padding-bottom: var(--zh-space-xs);
+    border-bottom: 1px solid var(--zh-border-subtle);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--zh-text-primary);
+    }
+
+    input,
+    select,
+    textarea {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--zh-border-subtle);
+      border-radius: var(--zh-radius-sm);
+      font-size: 0.875rem;
+      background-color: var(--zh-surface-elevated);
+      color: var(--zh-text-primary);
+      transition: border-color var(--zh-transition-fast);
+
+      &:focus {
+        outline: none;
+        border-color: var(--zh-color-primary);
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      }
+
+      &.error {
+        border-color: var(--zh-color-danger);
+      }
+
+      &:disabled {
+        background-color: var(--zh-surface-muted);
+        color: var(--zh-text-secondary);
+        cursor: not-allowed;
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    &--checkbox {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+
+      label {
+        margin: 0;
+      }
+    }
+  }
+
+  &__checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    input[type="checkbox"] {
+      width: auto;
+    }
+  }
+
+  &__status-display {
+    display: flex;
+    align-items: center;
+  }
+
+  &__status-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: var(--zh-surface-muted);
+    color: var(--zh-text-secondary);
+
+    &--upcoming {
+      background-color: var(--zh-status-info-bg, #e3f2fd);
+      color: var(--zh-status-info-text, #1565c0);
+    }
+
+    &--in-progress {
+      background-color: var(--zh-status-success-bg, #e8f5e9);
+      color: var(--zh-status-success-text, #2e7d32);
+    }
+
+    &--finished {
+      background-color: var(--zh-status-neutral-bg, #f5f5f5);
+      color: var(--zh-status-neutral-text, #616161);
+    }
+  }
+
+  &__active-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background-color: var(--zh-surface-muted);
+    color: var(--zh-text-secondary);
+
+    &.active {
+      background-color: var(--zh-status-success-bg, #e8f5e9);
+      color: var(--zh-status-success-text, #2e7d32);
+    }
+  }
+
+  &__error {
+    font-size: 0.75rem;
+    color: var(--zh-color-danger);
+    margin-top: 0.25rem;
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: var(--zh-text-secondary);
+    margin-top: 0.25rem;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--zh-border-subtle);
+
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: var(--zh-radius-sm);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color var(--zh-transition-fast), color var(--zh-transition-fast);
+    }
+  }
+
+  &__btn-cancel {
+    background-color: var(--zh-surface-muted);
+    color: var(--zh-text-primary);
+    border: 1px solid var(--zh-border-subtle);
+
+    &:hover {
+      background-color: var(--zh-surface-elevated);
+    }
+  }
+
+  &__btn-save {
+    background-color: var(--zh-color-primary);
+    color: white;
+    border: none;
+
+    &:hover:not(:disabled) {
+      background-color: var(--zh-color-primary-hover);
+    }
+
+    &:disabled {
+      background-color: var(--zh-surface-muted);
+      cursor: not-allowed;
+    }
+  }
+}
