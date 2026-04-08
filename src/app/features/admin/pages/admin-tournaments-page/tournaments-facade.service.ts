@@ -128,6 +128,11 @@ export class TournamentsFacadeService {
     return this.categoriesState().find(c => c.id === categoryId)?.name || '';
   }
 
+  getSportForType(typeId: string): { sportId: string; sportName: string } {
+    const type = this.tournamentTypesState().find(t => t.id === typeId);
+    return { sportId: type?.sportId || '', sportName: type?.sportName || '' };
+  }
+
   async load(): Promise<void> {
     try {
       this.loadingState.set(true);

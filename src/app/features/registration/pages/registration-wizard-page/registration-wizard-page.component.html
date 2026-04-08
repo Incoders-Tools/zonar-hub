@@ -1,14 +1,14 @@
 <div class="rw">
-  @if (loading()) {
+  @if (facade.loading()) {
     <div class="rw__loading">
-      <span class="spinner"></span> {{ 'states.loading' | t }}
+      <span class="rw__spinner"></span> {{ 'common.loading' | t }}
     </div>
-  } @else if (!tournament()) {
+  } @else if (!facade.tournament()) {
     <div class="rw__error">
-      <h2>{{ 'states.notFound' | t }}</h2>
+      <h2>{{ 'common.noResults' | t }}</h2>
     </div>
   } @else {
-    @let t = tournament()!;
+    @let t = facade.tournament()!;
 
     <!-- Header -->
     <div class="rw__header">
@@ -16,7 +16,11 @@
       <h1 class="rw__title">{{ 'registration.title' | t }}</h1>
       <p class="rw__tournament-name">{{ t.name }}</p>
       <p class="rw__tournament-meta">{{ t.complexName }} · {{ t.startDate | formatDate }} — {{ t.endDate | formatDate }}</p>
-      <button class="rw__tutorial-btn" (click)="showTutorial.set(true)" [title]="'registration.tutorial.open' | t">
+      <button
+        class="rw__tutorial-btn"
+        type="button"
+        (click)="showTutorial.set(true)"
+        [attr.aria-label]="'registration.tutorial.open' | t">
         {{ 'registration.tutorial.open' | t }}
       </button>
     </div>
@@ -29,30 +33,14 @@
       </app-tutorial-modal>
     }
 
-    <!-- Stepper -->
-    <nav class="rw-stepper" aria-label="Registration steps">
-      @for (step of steps(); track step.labelKey; let i = $index) {
-        <div class="rw-stepper__item"
-             [class.rw-stepper__item--active]="i === currentStep()"
-             [class.rw-stepper__item--completed]="step.completed"
-             [class.rw-stepper__item--upcoming]="i > currentStep() && !step.completed">
-          <div class="rw-stepper__circle">
-            @if (step.completed) {
-              <span class="rw-stepper__check">✓</span>
-            } @else {
-              <span>{{ i + 1 }}</span>
-            }
-          </div>
-          <span class="rw-stepper__label">{{ step.labelKey | t }}</span>
-        </div>
-        @if (i < steps().length - 1) {
-          <div class="rw-stepper__connector"
-               [class.rw-stepper__connector--completed]="step.completed"></div>
-        }
-      }
-    </nav>
+    <!-- Shared Stepper -->
+    <app-stepper
+      [steps]="steps()"
+      [activeIndex]="currentStep()"
+      (stepChanged)="onStepChanged($event)">
+    </app-stepper>
 
-    <!-- Step 0: Players -->
+    <!-- Step 0: Participants (dynamic slots) -->
     @if (currentStep() === 0) {
       <div class="rw-card">
         <div class="rw-card__header">
@@ -61,132 +49,38 @@
         </div>
 
         <div class="rw-card__body">
-          <!-- Player 1 -->
-          <div class="rw-player-slot">
-            <div class="rw-player-slot__label">
-              <span class="rw-player-slot__number">1</span>
-              {{ 'registration.player1' | t }}
-            </div>
-            @if (selectedPlayer1(); as p) {
-              <div class="rw-player-chip">
-                <div class="rw-player-chip__avatar">{{ p.firstName.charAt(0) }}{{ p.lastName.charAt(0) }}</div>
-                <div class="rw-player-chip__info">
-                  <span class="rw-player-chip__name">{{ p.firstName }} {{ p.lastName }}</span>
-                  <span class="rw-player-chip__meta">{{ p.categoryName }} · {{ 'registration.ranking' | t }}: {{ p.ranking }}</span>
-                </div>
-                <button class="rw-player-chip__remove" (click)="selectedPlayer1.set(null)" [attr.aria-label]="'common.remove' | t">✕</button>
-              </div>
-            } @else {
-              <div class="rw-search">
-                <div class="rw-search__input-wrapper">
-                  <span class="rw-search__icon">🔍</span>
-                  <input
-                    type="text"
-                    class="rw-search__input"
-                    [placeholder]="'registration.searchPlayer' | t"
-                    [ngModel]="player1Search()"
-                    (ngModelChange)="player1Search.set($event)"
-                    (input)="searchPlayersForSlot(1)" />
-                </div>
-                @if (searching1()) {
-                  <div class="rw-search__progress">
-                    <div class="rw-search__progress-bar"></div>
-                  </div>
-                }
-                @if (search1Results().length > 0) {
-                  <ul class="rw-search__results">
-                    @for (player of search1Results(); track player.id) {
-                      <li class="rw-search__result"
-                          [class.rw-search__result--blocked]="player.isRegistered"
-                          (click)="selectPlayer(player, 1)"
-                          [attr.aria-disabled]="player.isRegistered">
-                        <div class="rw-search__result-avatar">{{ player.firstName.charAt(0) }}{{ player.lastName.charAt(0) }}</div>
-                        <div class="rw-search__result-info">
-                          <span class="rw-search__result-name">{{ player.firstName }} {{ player.lastName }}</span>
-                          <span class="rw-search__result-meta">{{ player.email }} · {{ player.categoryName }}</span>
-                          @if (player.isRegistered) {
-                            <span class="rw-search__result-status">{{ 'registration.alreadyRegistered' | t }}</span>
-                          }
-                        </div>
-                        @if (player.ranking) {
-                          <span class="rw-search__result-ranking">#{{ player.ranking }}</span>
-                        }
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Player 2 -->
-          <div class="rw-player-slot">
-            <div class="rw-player-slot__label">
-              <span class="rw-player-slot__number">2</span>
-              {{ 'registration.player2' | t }}
-            </div>
-            @if (selectedPlayer2(); as p) {
-              <div class="rw-player-chip">
-                <div class="rw-player-chip__avatar">{{ p.firstName.charAt(0) }}{{ p.lastName.charAt(0) }}</div>
-                <div class="rw-player-chip__info">
-                  <span class="rw-player-chip__name">{{ p.firstName }} {{ p.lastName }}</span>
-                  <span class="rw-player-chip__meta">{{ p.categoryName }} · {{ 'registration.ranking' | t }}: {{ p.ranking }}</span>
-                </div>
-                <button class="rw-player-chip__remove" (click)="selectedPlayer2.set(null)" [attr.aria-label]="'common.remove' | t">✕</button>
-              </div>
-            } @else {
-              <div class="rw-search">
-                <div class="rw-search__input-wrapper">
-                  <span class="rw-search__icon">🔍</span>
-                  <input
-                    type="text"
-                    class="rw-search__input"
-                    [placeholder]="'registration.searchPlayer' | t"
-                    [ngModel]="player2Search()"
-                    (ngModelChange)="player2Search.set($event)"
-                    (input)="searchPlayersForSlot(2)" />
-                </div>
-                @if (searching2()) {
-                  <div class="rw-search__progress">
-                    <div class="rw-search__progress-bar"></div>
-                  </div>
-                }
-                @if (search2Results().length > 0) {
-                  <ul class="rw-search__results">
-                    @for (player of search2Results(); track player.id) {
-                      <li class="rw-search__result"
-                          [class.rw-search__result--blocked]="player.isRegistered"
-                          (click)="selectPlayer(player, 2)"
-                          [attr.aria-disabled]="player.isRegistered">
-                        <div class="rw-search__result-avatar">{{ player.firstName.charAt(0) }}{{ player.lastName.charAt(0) }}</div>
-                        <div class="rw-search__result-info">
-                          <span class="rw-search__result-name">{{ player.firstName }} {{ player.lastName }}</span>
-                          <span class="rw-search__result-meta">{{ player.email }} · {{ player.categoryName }}</span>
-                          @if (player.isRegistered) {
-                            <span class="rw-search__result-status">{{ 'registration.alreadyRegistered' | t }}</span>
-                          }
-                        </div>
-                        @if (player.ranking) {
-                          <span class="rw-search__result-ranking">#{{ player.ranking }}</span>
-                        }
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
+          <div class="rw__participants">
+            @for (slot of facade.slots(); track slot.slotNumber) {
+              <app-participant-search
+                [slotNumber]="slot.slotNumber"
+                [slotLabel]="slot.label || ''"
+                [tournamentId]="t.id"
+                [sportId]="t.sportId"
+                [config]="facade.config()!"
+                [eligibilitySlot]="facade.getEligibilitySlotForSlotNumber(slot.slotNumber)"
+                [existingRegistrations]="facade.existingRegistrations()"
+                [selectedPlayerIds]="facade.getOtherSelectedPlayerIds(slot.slotNumber)"
+                [categories]="facade.categories()"
+                [habitualPartnerSuggestion]="slot.slotNumber > 1 ? facade.habitualPartnerSuggestion() : null"
+                (playerSelected)="facade.selectParticipant($event.slotNumber, $event.player)"
+                (playerCleared)="facade.clearParticipant($event)">
+              </app-participant-search>
             }
           </div>
         </div>
 
         <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--primary" [disabled]="!playersValid()" (click)="nextStep()">
-            {{ 'common.next' | t }} →
-          </button>
+          <span></span>
+          <app-async-button
+            [disabled]="!facade.allSlotsValid()"
+            (clicked)="nextStep()">
+            {{ 'common.next' | t }}
+          </app-async-button>
         </div>
       </div>
     }
 
-    <!-- Step 1: Availability -->
+    <!-- Step 1: Availability (reactive form) -->
     @if (currentStep() === 1) {
       <div class="rw-card">
         <div class="rw-card__header">
@@ -195,56 +89,45 @@
         </div>
 
         <div class="rw-card__body">
-          <div class="rw-availability">
+          <div class="rw-availability" [formGroup]="availabilityForm">
             <h3 class="rw-availability__section-title">{{ 'registration.availableDays' | t }}</h3>
             <div class="rw-availability__days">
-              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availability().friday">
-                <input type="checkbox" [ngModel]="availability().friday"
-                  (ngModelChange)="updateAvailability('friday', $event)" />
+              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availabilityForm.value.friday">
+                <input type="checkbox" formControlName="friday" />
                 <span class="rw-day-toggle__label">{{ 'registration.friday' | t }}</span>
               </label>
-              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availability().saturday">
-                <input type="checkbox" [ngModel]="availability().saturday"
-                  (ngModelChange)="updateAvailability('saturday', $event)" />
+              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availabilityForm.value.saturday">
+                <input type="checkbox" formControlName="saturday" />
                 <span class="rw-day-toggle__label">{{ 'registration.saturday' | t }}</span>
               </label>
-              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availability().sunday">
-                <input type="checkbox" [ngModel]="availability().sunday"
-                  (ngModelChange)="updateAvailability('sunday', $event)" />
+              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availabilityForm.value.sunday">
+                <input type="checkbox" formControlName="sunday" />
                 <span class="rw-day-toggle__label">{{ 'registration.sunday' | t }}</span>
               </label>
             </div>
 
             <h3 class="rw-availability__section-title">{{ 'registration.preferredTime' | t }}</h3>
             <div class="rw-availability__times">
-              <label class="rw-time-option" [class.rw-time-option--active]="availability().preferredTime === 'morning'">
-                <input type="radio" name="preferredTime" value="morning"
-                  [ngModel]="availability().preferredTime"
-                  (ngModelChange)="updateAvailability('preferredTime', $event)" />
-                <span class="rw-time-option__icon">🌅</span>
+              <label class="rw-time-option" [class.rw-time-option--active]="availabilityForm.value.preferredTime === 'morning'">
+                <input type="radio" formControlName="preferredTime" value="morning" />
                 <span class="rw-time-option__label">{{ 'registration.morning' | t }}</span>
               </label>
-              <label class="rw-time-option" [class.rw-time-option--active]="availability().preferredTime === 'afternoon'">
-                <input type="radio" name="preferredTime" value="afternoon"
-                  [ngModel]="availability().preferredTime"
-                  (ngModelChange)="updateAvailability('preferredTime', $event)" />
-                <span class="rw-time-option__icon">☀️</span>
+              <label class="rw-time-option" [class.rw-time-option--active]="availabilityForm.value.preferredTime === 'afternoon'">
+                <input type="radio" formControlName="preferredTime" value="afternoon" />
                 <span class="rw-time-option__label">{{ 'registration.afternoon' | t }}</span>
               </label>
-              <label class="rw-time-option" [class.rw-time-option--active]="availability().preferredTime === 'evening'">
-                <input type="radio" name="preferredTime" value="evening"
-                  [ngModel]="availability().preferredTime"
-                  (ngModelChange)="updateAvailability('preferredTime', $event)" />
-                <span class="rw-time-option__icon">🌙</span>
+              <label class="rw-time-option" [class.rw-time-option--active]="availabilityForm.value.preferredTime === 'evening'">
+                <input type="radio" formControlName="preferredTime" value="evening" />
                 <span class="rw-time-option__label">{{ 'registration.evening' | t }}</span>
               </label>
             </div>
 
             <div class="rw-field">
-              <label class="rw-field__label">{{ 'registration.notes' | t }}</label>
-              <textarea class="rw-field__textarea"
-                [ngModel]="availability().notes"
-                (ngModelChange)="updateAvailability('notes', $event)"
+              <label class="rw-field__label" for="wizard-notes">{{ 'registration.notes' | t }}</label>
+              <textarea
+                id="wizard-notes"
+                class="rw-field__textarea"
+                formControlName="notes"
                 [placeholder]="'registration.notesPlaceholder' | t"
                 rows="3">
               </textarea>
@@ -253,8 +136,12 @@
         </div>
 
         <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--ghost" (click)="prevStep()">← {{ 'common.back' | t }}</button>
-          <button class="rw-btn rw-btn--primary" (click)="nextStep()">{{ 'common.next' | t }} →</button>
+          <button class="rw-btn rw-btn--ghost" type="button" (click)="prevStep()">
+            {{ 'common.back' | t }}
+          </button>
+          <app-async-button (clicked)="nextStep()">
+            {{ 'common.next' | t }}
+          </app-async-button>
         </div>
       </div>
     }
@@ -271,29 +158,30 @@
           <div class="rw-verification">
             @if (!codeSent()) {
               <div class="rw-verification__prompt">
-                <span class="rw-verification__icon">📧</span>
                 <p>{{ 'registration.verificationPrompt' | t }}</p>
-                <button class="rw-btn rw-btn--primary" (click)="sendCode()">
+                <app-async-button (clicked)="sendCode()">
                   {{ 'registration.sendCode' | t }}
-                </button>
+                </app-async-button>
               </div>
             } @else if (!codeVerified()) {
               <div class="rw-verification__code-entry">
-                <label class="rw-field__label">{{ 'registration.enterCode' | t }}</label>
+                <label class="rw-field__label" for="wizard-code">{{ 'registration.enterCode' | t }}</label>
                 <input
+                  id="wizard-code"
                   type="text"
                   class="rw-verification__input"
                   maxlength="6"
-                  [ngModel]="verificationCode()"
-                  (ngModelChange)="verificationCode.set($event)"
+                  [formControl]="verificationCode"
                   [placeholder]="'registration.codePlaceholder' | t" />
-                <button class="rw-btn rw-btn--primary" [disabled]="verificationCode().length !== 6" (click)="verifyCode()">
+                <app-async-button
+                  [disabled]="(verificationCode.value?.length ?? 0) !== 6"
+                  (clicked)="verifyCode()">
                   {{ 'registration.verifyCode' | t }}
-                </button>
+                </app-async-button>
               </div>
             } @else {
               <div class="rw-verification__success">
-                <span class="rw-verification__success-icon">✓</span>
+                <span class="rw-verification__success-icon" aria-hidden="true">&#10003;</span>
                 <p>{{ 'registration.codeVerified' | t }}</p>
               </div>
             }
@@ -301,8 +189,14 @@
         </div>
 
         <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--ghost" (click)="prevStep()">← {{ 'common.back' | t }}</button>
-          <button class="rw-btn rw-btn--primary" [disabled]="!codeVerified()" (click)="nextStep()">{{ 'common.next' | t }} →</button>
+          <button class="rw-btn rw-btn--ghost" type="button" (click)="prevStep()">
+            {{ 'common.back' | t }}
+          </button>
+          <app-async-button
+            [disabled]="!codeVerified()"
+            (clicked)="nextStep()">
+            {{ 'common.next' | t }}
+          </app-async-button>
         </div>
       </div>
     }
@@ -338,28 +232,23 @@
               </div>
             </div>
 
-            <!-- Players -->
+            <!-- Participants -->
             <div class="rw-summary__section">
               <h3 class="rw-summary__section-title">{{ 'registration.pairTitle' | t }}</h3>
               <div class="rw-summary__players">
-                @if (selectedPlayer1(); as p1) {
-                  <div class="rw-summary__player-card">
-                    <div class="rw-player-chip__avatar">{{ p1.firstName.charAt(0) }}{{ p1.lastName.charAt(0) }}</div>
-                    <div>
-                      <div class="rw-summary__player-name">{{ p1.firstName }} {{ p1.lastName }}</div>
-                      <div class="rw-summary__player-meta">{{ p1.categoryName }} · #{{ p1.ranking }}</div>
+                @for (entry of facade.slots(); track entry.slotNumber; let i = $index) {
+                  @if (facade.participants().get(entry.slotNumber); as player) {
+                    @if (i > 0) {
+                      <span class="rw-summary__pair-divider">&amp;</span>
+                    }
+                    <div class="rw-summary__player-card">
+                      <div class="rw-summary__player-avatar">{{ player.firstName.charAt(0) }}{{ player.lastName.charAt(0) }}</div>
+                      <div>
+                        <div class="rw-summary__player-name">{{ player.firstName }} {{ player.lastName }}</div>
+                        <div class="rw-summary__player-meta">{{ player.categoryName }} · #{{ player.ranking }}</div>
+                      </div>
                     </div>
-                  </div>
-                }
-                <span class="rw-summary__pair-divider">&</span>
-                @if (selectedPlayer2(); as p2) {
-                  <div class="rw-summary__player-card">
-                    <div class="rw-player-chip__avatar">{{ p2.firstName.charAt(0) }}{{ p2.lastName.charAt(0) }}</div>
-                    <div>
-                      <div class="rw-summary__player-name">{{ p2.firstName }} {{ p2.lastName }}</div>
-                      <div class="rw-summary__player-meta">{{ p2.categoryName }} · #{{ p2.ranking }}</div>
-                    </div>
-                  </div>
+                  }
                 }
               </div>
             </div>
@@ -370,27 +259,29 @@
               <div class="rw-summary__row">
                 <span class="rw-summary__label">{{ 'registration.availableDays' | t }}</span>
                 <span class="rw-summary__value">
-                  @if (availability().friday) { {{ 'registration.friday' | t }} }
-                  @if (availability().saturday) { {{ 'registration.saturday' | t }} }
-                  @if (availability().sunday) { {{ 'registration.sunday' | t }} }
+                  @if (availabilityForm.value.friday) { {{ 'registration.friday' | t }} }
+                  @if (availabilityForm.value.saturday) { {{ 'registration.saturday' | t }} }
+                  @if (availabilityForm.value.sunday) { {{ 'registration.sunday' | t }} }
                 </span>
               </div>
               <div class="rw-summary__row">
                 <span class="rw-summary__label">{{ 'registration.preferredTime' | t }}</span>
-                <span class="rw-summary__value">{{ 'registration.' + availability().preferredTime | t }}</span>
+                <span class="rw-summary__value">{{ 'registration.' + availabilityForm.value.preferredTime | t }}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--ghost" (click)="prevStep()">← {{ 'common.back' | t }}</button>
-          <button class="rw-btn rw-btn--primary rw-btn--submit" [disabled]="submitting()" (click)="submitRegistration()">
-            @if (submitting()) {
-              <span class="spinner spinner--sm"></span>
-            }
-            {{ 'registration.submit' | t }}
+          <button class="rw-btn rw-btn--ghost" type="button" (click)="prevStep()">
+            {{ 'common.back' | t }}
           </button>
+          <app-async-button
+            [loading]="facade.submitting()"
+            [disabled]="facade.submitting()"
+            (clicked)="submitRegistration()">
+            {{ 'registration.submit' | t }}
+          </app-async-button>
         </div>
       </div>
     }

@@ -52,6 +52,7 @@ export class AdminLayoutComponent {
           ]
         },
         { labelKey: 'admin.registrations', route: '/admin/registrations', icon: '📝' },
+        { labelKey: 'admin.players', route: '/admin/players', icon: '👤' },
         { labelKey: 'admin.drawPlanner', route: '/admin/draw-planner', icon: '🎯' }
       ]
     },

@@ -163,6 +163,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-tournament-rules-page/admin-tournament-rules-page.component').then(m => m.AdminTournamentRulesPageComponent)
       },
       {
+        path: 'players',
+        loadComponent: () => import('./features/admin/pages/admin-players-page/admin-players-page.component').then(m => m.AdminPlayersPageComponent)
+      },
+      {
         path: 'draw-planner',
         loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent)
       },

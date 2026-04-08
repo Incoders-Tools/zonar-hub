@@ -1,0 +1,92 @@
+<div class="players-page">
+  <!-- Page Header -->
+  <div class="players-page__header">
+    <div class="players-page__title-row">
+      <div>
+        <h1 class="players-page__title">{{ 'admin.players.title' | t }}</h1>
+        <p class="players-page__subtitle">{{ 'admin.players.subtitle' | t }}</p>
+      </div>
+      <div class="players-page__header-actions">
+        <app-help-button
+          [titleKey]="'admin.players.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'admin.players.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <app-player-form-dialog
+      [player]="editingPlayer()"
+      [saving]="facade.saving()"
+      [categories]="facade.categories()"
+      [genders]="facade.genders()"
+      [sports]="facade.sports()"
+      (saved)="closeFormPanel()"
+      (cancelled)="closeFormPanel()">
+    </app-player-form-dialog>
+  }
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields()"
+    [collapsible]="true"
+    [defaultCollapsed]="true"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="facade.error()"
+    [selectable]="true"
+    [rowActions]="playerRowActions"
+    emptyMessageKey="admin.players.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.players.confirm.deleteTitle"
+    messageKey="admin.players.confirm.deleteMessage"
+    warningKey="admin.players.confirm.deleteWarning"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.players.confirm.bulkDeleteTitle"
+    messageKey="admin.players.confirm.bulkDeleteMessage"
+    warningKey="admin.players.confirm.deleteWarning"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}

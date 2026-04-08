@@ -26,9 +26,9 @@ export const MOCK_TOURNAMENT_STATUSES: TournamentStatus[] = [
 ];
 
 export const MOCK_TOURNAMENT_TYPES: TournamentType[] = [
-  { id: 'tt1', name: 'Zones + Elimination', key: 'zones_elimination', sortOrder: 1, scoresPoints: true, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 'tt2', name: 'Zones Only', key: 'zones_only', sortOrder: 2, scoresPoints: true, appliesGender: false, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 'tt3', name: 'Direct Elimination', key: 'direct_elimination', sortOrder: 3, scoresPoints: false, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' }
+  { id: 'tt1', name: 'Zones + Elimination', key: 'zones_elimination', sportId: 'sp1', sportName: 'Padel', sortOrder: 1, scoresPoints: true, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'tt2', name: 'Zones Only', key: 'zones_only', sportId: 'sp1', sportName: 'Padel', sortOrder: 2, scoresPoints: true, appliesGender: false, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'tt3', name: 'Direct Elimination', key: 'direct_elimination', sportId: 'sp1', sportName: 'Padel', sortOrder: 3, scoresPoints: false, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' }
 ];
 
 export const MOCK_CITIES: City[] = [

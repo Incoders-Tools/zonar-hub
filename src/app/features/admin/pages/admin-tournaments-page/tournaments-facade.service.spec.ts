@@ -19,6 +19,8 @@ describe('TournamentsFacadeService', () => {
     genderLabel: 'Masculino',
     tournamentTypeId: 'tt1',
     tournamentTypeName: 'Zonas + Eliminación',
+    sportId: 'sp1',
+    sportName: 'Padel',
     statusId: 'ts1',
     statusLabel: 'Próximo',
     startDate: '2027-06-01',

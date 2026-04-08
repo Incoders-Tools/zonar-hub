@@ -79,9 +79,12 @@
             </button>
           </div>
           <div class="admin-registrations__form-panel-body">
-            <p class="admin-registrations__form-panel-placeholder">
-              {{ 'registrations.formPlaceholder' | t }}
-            </p>
+            <app-registration-form-panel
+              [registration]="editingRegistration()"
+              [saving]="facade.saving()"
+              (saved)="onFormSaved()"
+              (cancelled)="closeForm()">
+            </app-registration-form-panel>
           </div>
         </div>
       }

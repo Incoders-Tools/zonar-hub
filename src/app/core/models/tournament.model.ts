@@ -13,6 +13,10 @@ export interface Tournament {
   genderLabel: string;
   tournamentTypeId: string;
   tournamentTypeName: string;
+  sportId: string;
+  sportName: string;
+  eligibilityProfileId?: string;
+  eligibilityProfileName?: string;
   statusId: string;
   statusLabel: string;
   startDate: string;
@@ -25,8 +29,6 @@ export interface Tournament {
   imageUrl?: string;
   createdAt: string;
   key?: string;
-  sportId?: string;
-  sportName?: string;
   registrationFeePerPair?: number;
   prizeMoney?: number;
   pointsToAward?: number;

@@ -8,6 +8,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { RegistrationFacadeService, RegistrationFilters } from './registration-facade.service';
+import { RegistrationFormPanelComponent } from './registration-form-panel/registration-form-panel.component';
 import { Registration, RegistrationToken } from '../../../../core/models';
 
 export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens';
@@ -44,7 +45,8 @@ interface TokenRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    RegistrationFormPanelComponent
   ],
   providers: [RegistrationFacadeService],
   templateUrl: './admin-registrations-page.component.html',
@@ -237,6 +239,10 @@ export class AdminRegistrationsPageComponent implements OnInit {
   closeForm(): void {
     this.showFormPanel.set(false);
     this.editingRegistration.set(null);
+  }
+
+  onFormSaved(): void {
+    this.closeForm();
   }
 
   confirmDelete(row: RegistrationRow): void {

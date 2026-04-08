@@ -25,6 +25,8 @@ describe('TournamentsFormComponent', () => {
     genderLabel: 'Masculino',
     tournamentTypeId: 'tt1',
     tournamentTypeName: 'Zonas + Eliminación',
+    sportId: 'sp1',
+    sportName: 'Padel',
     statusId: 'ts2',
     statusLabel: 'Inscripción abierta',
     startDate: '2026-04-15',

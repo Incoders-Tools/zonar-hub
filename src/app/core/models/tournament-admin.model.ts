@@ -2,6 +2,8 @@ export interface TournamentType {
   id: string;
   name: string;
   key: string;
+  sportId: string;
+  sportName?: string;
   sortOrder: number | null;
   scoresPoints: boolean;
   appliesGender: boolean;
@@ -27,8 +29,11 @@ export interface TournamentEligibilitySlot {
   profileId?: string;
   slotNumber: number;
   genderId: string | null;
+  genderName?: string;
   categoryId: string | null;
+  categoryName?: string;
   minAge: number | null;
   maxAge: number | null;
   label: string | null;
+  required: boolean;
 }

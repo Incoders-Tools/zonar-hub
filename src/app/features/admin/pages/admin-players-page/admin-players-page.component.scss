@@ -1,0 +1,67 @@
+.players-page {
+  padding: var(--zh-space-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+
+  &__header {
+    margin-bottom: var(--zh-space-lg);
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--zh-space-md);
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    font-size: var(--zh-font-size-xl);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+    margin: 0;
+  }
+
+  &__subtitle {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    margin: var(--zh-space-xs) 0 0;
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+  }
+
+  &__result-count {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    padding: var(--zh-space-sm) 0;
+  }
+
+  &__row-actions-legend {
+    padding: var(--zh-space-sm) 0;
+  }
+
+  &__legend-hint {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+    font-style: italic;
+  }
+}
+
+@media (max-width: 599px) {
+  .players-page {
+    padding: var(--zh-space-md);
+
+    &__title-row {
+      flex-direction: column;
+    }
+
+    &__header-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+}

@@ -287,11 +287,14 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     }
 
     const status = this.facade.computeStatus(formValue.startDate, formValue.endDate);
+    const sport = this.facade.getSportForType(formValue.tournamentTypeId);
 
     const payload: Partial<Tournament> = {
       ...formValue,
       complexName: this.facade.getComplexName(formValue.complexId),
       tournamentTypeName: this.facade.getTournamentTypeName(formValue.tournamentTypeId),
+      sportId: sport.sportId,
+      sportName: sport.sportName,
       genderLabel: this.facade.getGenderLabel(formValue.genderId),
       categoryName: this.facade.getCategoryName(formValue.categoryId),
       statusLabel: status.labelKey,

@@ -1,0 +1,159 @@
+// ── Registration Form Panel ──
+
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-lg);
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xs);
+  }
+
+  &__label {
+    font-weight: 600;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
+  }
+
+  &__select,
+  &__input,
+  &__textarea {
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-md);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
+    background: var(--zh-surface-default);
+    transition:
+      border-color var(--zh-transition-fast),
+      box-shadow var(--zh-transition-fast);
+
+    &:focus {
+      outline: none;
+      border-color: var(--zh-primary);
+      box-shadow: 0 0 0 3px rgba(var(--zh-primary-rgb, 0, 123, 255), 0.1);
+    }
+
+    &--error {
+      border-color: var(--zh-danger);
+    }
+
+    &--readonly {
+      background: var(--zh-surface-subtle);
+      color: var(--zh-text-secondary);
+      cursor: not-allowed;
+    }
+  }
+
+  &__textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+  }
+
+  &__error {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-danger);
+    margin-top: var(--zh-space-2xs);
+  }
+
+  // ── Loading ──
+  &__loading {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    padding: var(--zh-space-md);
+    justify-content: center;
+  }
+
+  &__spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--zh-border-subtle);
+    border-top-color: var(--zh-primary);
+    border-radius: 50%;
+    animation: registration-spin 0.6s linear infinite;
+  }
+
+  &__loading-text {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+
+  // ── Participants ──
+  &__participants {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-md);
+  }
+
+  &__slot {
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-md);
+    padding: var(--zh-space-md);
+    background: var(--zh-surface-default);
+    transition: border-color var(--zh-transition-fast);
+
+    &--error {
+      border-color: var(--zh-danger);
+    }
+  }
+
+  &__slot-errors {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-2xs);
+    margin-top: var(--zh-space-xs);
+  }
+
+  // ── Actions ──
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--zh-space-sm);
+    margin-top: var(--zh-space-md);
+    padding-top: var(--zh-space-md);
+    border-top: 1px solid var(--zh-border-subtle);
+  }
+
+  &__btn-cancel {
+    padding: var(--zh-space-sm) var(--zh-space-lg);
+    border-radius: var(--zh-radius-md);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--zh-surface-subtle);
+    color: var(--zh-text-primary);
+    border: 1px solid var(--zh-border-subtle);
+    transition:
+      background var(--zh-transition-fast),
+      color var(--zh-transition-fast);
+
+    &:hover {
+      background: var(--zh-surface-hover);
+    }
+  }
+}
+
+@keyframes registration-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ── Responsive ──
+@media (max-width: 768px) {
+  .registration-form {
+    &__actions {
+      flex-direction: column-reverse;
+
+      app-async-button,
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

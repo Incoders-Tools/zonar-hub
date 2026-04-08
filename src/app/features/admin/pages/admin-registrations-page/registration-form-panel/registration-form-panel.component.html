@@ -1,0 +1,108 @@
+<app-form-shell>
+  <form [formGroup]="form" class="registration-form">
+    <!-- Tournament selection -->
+    <div class="registration-form__field">
+      <label class="registration-form__label">
+        {{ 'registrations.form.tournament' | t }} *
+      </label>
+      <select
+        class="registration-form__select"
+        formControlName="tournamentId"
+        [class.registration-form__select--error]="submitted() && form.get('tournamentId')?.invalid">
+        <option value="">{{ 'registrations.form.selectTournament' | t }}</option>
+        @for (t of tournaments(); track t.id) {
+          <option [value]="t.id">{{ t.name }} — {{ t.categoryName }} · {{ t.genderLabel }}</option>
+        }
+      </select>
+      @if (submitted() && form.get('tournamentId')?.hasError('required')) {
+        <span class="registration-form__error">{{ 'registrations.form.tournamentRequired' | t }}</span>
+      }
+    </div>
+
+    <!-- Loading indicator for tournament data -->
+    @if (loadingTournament()) {
+      <div class="registration-form__loading">
+        <span class="registration-form__spinner"></span>
+        <span class="registration-form__loading-text">{{ 'common.loading' | t }}</span>
+      </div>
+    }
+
+    <!-- Dynamic participant slots -->
+    @if (selectedTournament() && !loadingTournament()) {
+      <app-collapsible-section
+        [titleKey]="'registrations.form.participantsSection'"
+        [initialExpanded]="true">
+        <div class="registration-form__participants">
+          @for (slot of slots(); track slot.slotNumber) {
+            <div class="registration-form__slot" [class.registration-form__slot--error]="hasValidationError(slot.slotNumber)">
+              <app-participant-search
+                [slotNumber]="slot.slotNumber"
+                [slotLabel]="slot.label || ''"
+                [tournamentId]="selectedTournament()!.id"
+                [sportId]="selectedTournament()!.sportId"
+                [config]="config()!"
+                [eligibilitySlot]="slot"
+                [existingRegistrations]="existingRegistrations()"
+                [selectedPlayerIds]="selectedPlayerIds()"
+                [categories]="categories()"
+                (playerSelected)="onParticipantSelected($event)"
+                (playerCleared)="onParticipantCleared($event)">
+              </app-participant-search>
+
+              @if (hasValidationError(slot.slotNumber)) {
+                <div class="registration-form__slot-errors">
+                  @for (err of getValidationErrors(slot.slotNumber); track err) {
+                    <span class="registration-form__error">{{ err | t }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </app-collapsible-section>
+
+      <!-- Observations -->
+      <div class="registration-form__field">
+        <label class="registration-form__label">
+          {{ 'registrations.form.observations' | t }}
+        </label>
+        <textarea
+          class="registration-form__textarea"
+          formControlName="observations"
+          [placeholder]="'registrations.form.observationsPlaceholder' | t"
+          rows="3">
+        </textarea>
+      </div>
+
+      <!-- Source (read-only for admin) -->
+      <div class="registration-form__field">
+        <label class="registration-form__label">
+          {{ 'registrations.form.source' | t }}
+        </label>
+        <input
+          type="text"
+          class="registration-form__input registration-form__input--readonly"
+          [value]="'registrations.source.admin' | t"
+          readonly
+        />
+      </div>
+    }
+
+    <!-- Form actions -->
+    <div formActions class="registration-form__actions">
+      <button
+        type="button"
+        class="registration-form__btn-cancel"
+        (click)="onCancel()">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="!canSave()"
+        (clicked)="onSave()">
+        {{ (isEditing() ? 'common.update' : 'common.create') | t }}
+      </app-async-button>
+    </div>
+  </form>
+</app-form-shell>

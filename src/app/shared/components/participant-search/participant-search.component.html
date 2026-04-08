@@ -1,0 +1,83 @@
+<div class="participant-search" [class.participant-search--disabled]="disabled()">
+  <!-- Slot label -->
+  <div class="participant-search__header">
+    <span class="participant-search__slot-label">
+      {{ slotLabel() || ('participantSearch.slot.player' | t) }} {{ slotNumber() }}
+    </span>
+  </div>
+
+  <!-- Habitual partner suggestion -->
+  @if (habitualPartnerSuggestion() && !selectedPlayer() && !partnerDismissed()) {
+    <div class="participant-search__partner-suggestion">
+      <span class="participant-search__partner-text">
+        {{ 'participantSearch.habitualPartner.suggestion' | t }}:
+        <strong>{{ habitualPartnerSuggestion()!.firstName }} {{ habitualPartnerSuggestion()!.lastName }}</strong>
+      </span>
+      <div class="participant-search__partner-actions">
+        <button type="button" class="participant-search__partner-btn participant-search__partner-btn--accept" (click)="acceptPartnerSuggestion()">
+          {{ 'participantSearch.habitualPartner.accept' | t }}
+        </button>
+        <button type="button" class="participant-search__partner-btn participant-search__partner-btn--dismiss" (click)="dismissPartner()">
+          {{ 'participantSearch.habitualPartner.dismiss' | t }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Selected player display -->
+  @if (selectedPlayer(); as player) {
+    <div class="participant-search__selected">
+      <div class="participant-search__selected-info">
+        <span class="participant-search__selected-name">{{ player.firstName }} {{ player.lastName }}</span>
+        <span class="participant-search__selected-detail">{{ player.categoryName }} · {{ player.genderLabel }}</span>
+      </div>
+      <button type="button" class="participant-search__clear-btn" (click)="clearSelection()" [disabled]="disabled()">
+        {{ 'participantSearch.clear' | t }}
+      </button>
+    </div>
+  } @else {
+    <!-- Search input -->
+    <div class="participant-search__input-wrapper">
+      <input
+        type="text"
+        class="participant-search__input"
+        [formControl]="searchControl"
+        [placeholder]="'participantSearch.placeholder' | t"
+        [attr.disabled]="disabled() ? '' : null"
+      />
+      @if (searching()) {
+        <span class="participant-search__spinner"></span>
+      }
+    </div>
+
+    <!-- Search results dropdown -->
+    @if (showResults() && !searching()) {
+      <div class="participant-search__results">
+        @if (searchResults().length === 0) {
+          <div class="participant-search__no-results">
+            {{ 'participantSearch.noResults' | t }}
+          </div>
+        } @else {
+          @for (result of searchResults(); track result.id) {
+            <div
+              class="participant-search__result"
+              [class.participant-search__result--disabled]="!isAvailable(result.availabilityState)"
+              (click)="selectPlayer(result)">
+              <div class="participant-search__result-info">
+                <span class="participant-search__result-name">{{ result.firstName }} {{ result.lastName }}</span>
+                <span class="participant-search__result-detail">{{ result.categoryName }} · {{ result.genderLabel }}</span>
+              </div>
+              <span
+                class="participant-search__state-badge"
+                [class.participant-search__state-badge--available]="result.availabilityState === 'available'"
+                [class.participant-search__state-badge--registered]="result.availabilityState === 'alreadyRegistered'"
+                [class.participant-search__state-badge--incompatible]="result.availabilityState === 'incompatibleGender' || result.availabilityState === 'incompatibleCategory' || result.availabilityState === 'incompatibleAge'">
+                {{ 'participantSearch.state.' + result.availabilityState | t }}
+              </span>
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+</div>
