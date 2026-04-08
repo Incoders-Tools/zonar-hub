@@ -21,6 +21,7 @@ interface ComplexServiceRow extends Record<string, unknown> {
   sortOrder: number | null;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -69,7 +70,7 @@ export class AdminComplexServicesPageComponent implements OnInit {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.complex-services.column.name', sortable: true },
       { key: 'faIcon', labelKey: 'admin.complex-services.column.icon', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.complex-services.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'admin.complex-services.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -104,7 +105,8 @@ export class AdminComplexServicesPageComponent implements OnInit {
       faIcon: s.faIcon,
       sortOrder: s.sortOrder,
       isActive: s.isActive,
-      statusLabel: s.isActive ? 'admin.complex-services.status.active' : 'admin.complex-services.status.inactive'
+      statusLabel: s.isActive ? 'admin.complex-services.status.active' : 'admin.complex-services.status.inactive',
+      statusVariant: s.isActive ? 'active' : 'inactive'
     }))
   );
 

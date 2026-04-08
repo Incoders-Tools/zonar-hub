@@ -115,6 +115,36 @@
         cursor: pointer;
       }
     }
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__sport-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zh-space-sm);
+  }
+
+  &__sport-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-sm);
+    font-size: var(--zh-font-size-sm);
+    cursor: pointer;
+    transition: all var(--zh-transition-fast);
+
+    &:hover {
+      background: var(--zh-surface-muted);
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--zh-primary);
+    }
   }
 
   &__form-actions {

@@ -48,13 +48,20 @@
             </select>
           </div>
 
-          <!-- Sport ID (placeholder select) -->
-          <div class="courts-panel__form-field">
+          <!-- Sports (multiselect) -->
+          <div class="courts-panel__form-field courts-panel__form-field--full">
             <label>{{ 'admin.complexes.courts.form.sport' | t }}</label>
-            <input
-              type="text"
-              formControlName="sportId"
-            />
+            <div class="courts-panel__sport-checkboxes">
+              @for (sport of sports(); track sport.id) {
+                <label class="courts-panel__sport-option">
+                  <input
+                    type="checkbox"
+                    [checked]="isSportSelected(sport.id)"
+                    (change)="toggleSport(sport.id)" />
+                  {{ sport.name }}
+                </label>
+              }
+            </div>
           </div>
 
           <!-- Is Indoor -->

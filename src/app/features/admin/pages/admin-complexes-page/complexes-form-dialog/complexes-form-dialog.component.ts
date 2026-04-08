@@ -2,8 +2,10 @@ import { Component, inject, input, output, signal, OnInit } from '@angular/core'
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
@@ -39,6 +41,8 @@ interface NetworkRow {
     ReactiveFormsModule,
     MatInputModule,
     MatCheckboxModule,
+    MatIcon,
+    DragDropModule,
     TranslatePipe,
     FormShellComponent,
     AsyncButtonComponent,
@@ -90,11 +94,8 @@ export class ComplexesFormDialogComponent implements OnInit {
   ngOnInit(): void {
     this.initializeForm();
     this.populateForm();
-
-    if (this.isEditing) {
-      this.loadServicesTab();
-      this.loadNetworksTab();
-    }
+    this.loadServicesTab();
+    this.loadNetworksTab();
   }
 
   private initializeForm(): void {
@@ -162,48 +163,62 @@ export class ComplexesFormDialogComponent implements OnInit {
 
   private async loadServicesTab(): Promise<void> {
     const complex = this.complex();
-    if (!complex) return;
-
-    const [services, assignments] = await Promise.all([
-      this.complexServiceRepo.getAll(),
-      this.facade.loadServiceAssignments(complex.id).then(() => this.facade.serviceAssignments())
-    ]);
-
+    const services = await this.complexServiceRepo.getAll();
     this.allServices.set(services);
-    this.serviceRows.set(
-      services.map(s => {
-        const assignment = assignments.find(a => a.serviceId === s.id);
-        return {
+
+    if (complex) {
+      const assignments = await this.facade.loadServiceAssignments(complex.id).then(() => this.facade.serviceAssignments());
+      this.serviceRows.set(
+        services.map(s => {
+          const assignment = assignments.find(a => a.serviceId === s.id);
+          return {
+            serviceId: s.id,
+            name: s.name,
+            isActive: assignment?.isActive ?? false,
+            sortOrder: assignment?.sortOrder ?? 0
+          };
+        })
+      );
+    } else {
+      this.serviceRows.set(
+        services.map(s => ({
           serviceId: s.id,
           name: s.name,
-          isActive: assignment?.isActive ?? false,
-          sortOrder: assignment?.sortOrder ?? 0
-        };
-      })
-    );
+          isActive: false,
+          sortOrder: 0
+        }))
+      );
+    }
   }
 
   private async loadNetworksTab(): Promise<void> {
     const complex = this.complex();
-    if (!complex) return;
-
-    const [networks, existing] = await Promise.all([
-      this.socialNetworkRepo.getAll(),
-      this.facade.loadSocialNetworks(complex.id).then(() => this.facade.socialNetworks())
-    ]);
-
+    const networks = await this.socialNetworkRepo.getAll();
     this.allNetworks.set(networks);
-    this.networkRows.set(
-      networks.map(n => {
-        const assignment = existing.find(e => e.socialNetworkId === n.id);
-        return {
+
+    if (complex) {
+      const existing = await this.facade.loadSocialNetworks(complex.id).then(() => this.facade.socialNetworks());
+      this.networkRows.set(
+        networks.map(n => {
+          const assignment = existing.find(e => e.socialNetworkId === n.id);
+          return {
+            socialNetworkId: n.id,
+            name: n.name,
+            isActive: assignment?.isActive ?? false,
+            profileUrl: assignment?.profileUrl ?? ''
+          };
+        })
+      );
+    } else {
+      this.networkRows.set(
+        networks.map(n => ({
           socialNetworkId: n.id,
           name: n.name,
-          isActive: assignment?.isActive ?? false,
-          profileUrl: assignment?.profileUrl ?? ''
-        };
-      })
-    );
+          isActive: false,
+          profileUrl: ''
+        }))
+      );
+    }
   }
 
   setActiveTab(tab: FormTab): void {
@@ -228,6 +243,14 @@ export class ComplexesFormDialogComponent implements OnInit {
     });
   }
 
+  onServiceDrop(event: CdkDragDrop<ServiceRow[]>): void {
+    this.serviceRows.update(rows => {
+      const updated = [...rows];
+      moveItemInArray(updated, event.previousIndex, event.currentIndex);
+      return updated.map((row, i) => ({ ...row, sortOrder: i + 1 }));
+    });
+  }
+
   // --- Network rows ---
 
   toggleNetworkActive(index: number): void {
@@ -242,6 +265,14 @@ export class ComplexesFormDialogComponent implements OnInit {
     this.networkRows.update(rows => {
       const updated = [...rows];
       updated[index] = { ...updated[index], profileUrl: url };
+      return updated;
+    });
+  }
+
+  onNetworkDrop(event: CdkDragDrop<NetworkRow[]>): void {
+    this.networkRows.update(rows => {
+      const updated = [...rows];
+      moveItemInArray(updated, event.previousIndex, event.currentIndex);
       return updated;
     });
   }
@@ -298,31 +329,34 @@ export class ComplexesFormDialogComponent implements OnInit {
 
     const success = await this.facade.saveComplex(payload);
 
-    if (success && this.isEditing) {
-      const complexId = this.complex()!.id;
-
-      // Save service assignments
-      const activeAssignments: ComplexServiceAssignment[] = this.serviceRows()
-        .filter(r => r.isActive)
-        .map(r => ({
-          serviceId: r.serviceId,
-          isActive: r.isActive,
-          sortOrder: r.sortOrder
-        }));
-      await this.facade.saveServiceAssignments(complexId, activeAssignments);
-
-      // Save social networks
-      const activeNetworks: ComplexSocialNetwork[] = this.networkRows()
-        .filter(r => r.isActive && r.profileUrl.trim())
-        .map(r => ({
-          socialNetworkId: r.socialNetworkId,
-          profileUrl: r.profileUrl,
-          isActive: r.isActive
-        }));
-      await this.facade.saveSocialNetworks(complexId, activeNetworks);
-    }
-
     if (success) {
+      // Determine complex ID for saving assignments
+      const complexId = this.isEditing
+        ? this.complex()!.id
+        : this.facade.entities().at(-1)?.id;
+
+      if (complexId) {
+        // Save service assignments
+        const activeAssignments: ComplexServiceAssignment[] = this.serviceRows()
+          .filter(r => r.isActive)
+          .map(r => ({
+            serviceId: r.serviceId,
+            isActive: r.isActive,
+            sortOrder: r.sortOrder
+          }));
+        await this.facade.saveServiceAssignments(complexId, activeAssignments);
+
+        // Save social networks
+        const activeNetworks: ComplexSocialNetwork[] = this.networkRows()
+          .filter(r => r.isActive && r.profileUrl.trim())
+          .map(r => ({
+            socialNetworkId: r.socialNetworkId,
+            profileUrl: r.profileUrl,
+            isActive: r.isActive
+          }));
+        await this.facade.saveSocialNetworks(complexId, activeNetworks);
+      }
+
       this.saved.emit();
     }
   }

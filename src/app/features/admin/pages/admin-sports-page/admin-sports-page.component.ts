@@ -21,6 +21,7 @@ interface SportRow extends Record<string, unknown> {
   sortOrder: number;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -70,7 +71,7 @@ export class AdminSportsPageComponent implements OnInit {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.sports.column.name', sortable: true },
       { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.sports.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'admin.sports.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -105,7 +106,8 @@ export class AdminSportsPageComponent implements OnInit {
       icon: s.icon,
       sortOrder: s.sortOrder,
       isActive: s.isActive,
-      statusLabel: s.isActive ? 'admin.sports.status.active' : 'admin.sports.status.inactive'
+      statusLabel: s.isActive ? 'admin.sports.status.active' : 'admin.sports.status.inactive',
+      statusVariant: s.isActive ? 'active' : 'inactive'
     }))
   );
 

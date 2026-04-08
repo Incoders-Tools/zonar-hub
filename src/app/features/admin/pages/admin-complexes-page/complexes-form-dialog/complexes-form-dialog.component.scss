@@ -87,6 +87,13 @@
     font-size: var(--zh-font-size-sm);
     color: var(--zh-text-primary);
 
+    &--drag {
+      flex: 0 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     &--check {
       flex: 0 0 40px;
       display: flex;
@@ -106,6 +113,16 @@
     &--url {
       flex: 2;
       min-width: 200px;
+    }
+  }
+
+  &__drag-handle {
+    cursor: grab;
+    color: var(--zh-text-muted);
+    font-size: 18px;
+
+    &:active {
+      cursor: grabbing;
     }
   }
 
@@ -255,6 +272,25 @@
       background-color: var(--zh-surface-elevated);
     }
   }
+}
+
+// CDK DragDrop
+.cdk-drag-preview {
+  background: var(--zh-surface-elevated);
+  box-shadow: var(--zh-elevation-md);
+  border-radius: var(--zh-radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--zh-space-sm);
+  padding: var(--zh-space-xs) var(--zh-space-sm);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
 }
 
 @media (max-width: 599px) {

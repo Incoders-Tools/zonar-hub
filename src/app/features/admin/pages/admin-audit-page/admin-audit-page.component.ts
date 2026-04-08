@@ -44,7 +44,7 @@ export class AdminAuditPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
 
   readonly columns: DataTableColumn[] = [
-    { key: 'timestamp', labelKey: 'admin.audit.column.timestamp', sortable: true },
+    { key: 'timestamp', labelKey: 'admin.audit.column.timestamp', sortable: true, renderType: 'date' },
     { key: 'userId', labelKey: 'admin.audit.column.user', sortable: true },
     { key: 'action', labelKey: 'admin.audit.column.action', sortable: true },
     { key: 'entityType', labelKey: 'admin.audit.column.entity', sortable: true },
@@ -73,7 +73,7 @@ export class AdminAuditPageComponent implements OnInit {
   readonly tableData = computed<AuditRow[]>(() =>
     this.facade.filteredLogs().map(log => ({
       id: log.id,
-      timestamp: new Date(log.timestamp).toLocaleString(),
+      timestamp: log.timestamp,
       userId: log.userId,
       action: log.action,
       entityType: log.entityType,

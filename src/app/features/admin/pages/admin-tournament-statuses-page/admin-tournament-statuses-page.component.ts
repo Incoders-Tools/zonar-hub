@@ -22,6 +22,7 @@ interface TournamentStatusRow extends Record<string, unknown> {
   sortOrder: number | null;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -76,7 +77,7 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.tournament-statuses.column.name', sortable: true },
       { key: 'description', labelKey: 'admin.tournament-statuses.column.description', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.tournament-statuses.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'admin.tournament-statuses.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -111,7 +112,8 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
       description: s.description,
       sortOrder: s.sortOrder,
       isActive: s.isActive,
-      statusLabel: s.isActive ? 'admin.tournament-statuses.status.active' : 'admin.tournament-statuses.status.inactive'
+      statusLabel: s.isActive ? 'admin.tournament-statuses.status.active' : 'admin.tournament-statuses.status.inactive',
+      statusVariant: s.isActive ? 'active' : 'inactive'
     }))
   );
 

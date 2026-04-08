@@ -22,6 +22,7 @@ interface TournamentEligibilityProfileRow extends Record<string, unknown> {
   isActive: boolean;
   slotCount: number;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -71,7 +72,7 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
       { key: 'name', labelKey: 'admin.tournament-eligibility-profiles.column.name', sortable: true },
       { key: 'description', labelKey: 'admin.tournament-eligibility-profiles.column.description', sortable: false },
       { key: 'slotCount', labelKey: 'admin.tournament-eligibility-profiles.column.slots', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.tournament-eligibility-profiles.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'admin.tournament-eligibility-profiles.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -107,7 +108,8 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
       sortOrder: p.sortOrder,
       isActive: p.isActive,
       slotCount: p.slots?.length ?? 0,
-      statusLabel: p.isActive ? 'admin.tournament-eligibility-profiles.status.active' : 'admin.tournament-eligibility-profiles.status.inactive'
+      statusLabel: p.isActive ? 'admin.tournament-eligibility-profiles.status.active' : 'admin.tournament-eligibility-profiles.status.inactive',
+      statusVariant: p.isActive ? 'active' : 'inactive'
     }))
   );
 

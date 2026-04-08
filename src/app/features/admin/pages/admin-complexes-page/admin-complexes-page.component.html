@@ -98,6 +98,7 @@
         [loading]="facade.loadingCourts()"
         [saving]="facade.savingCourt()"
         [activeCourtId]="availabilityCourtId()"
+        [sports]="facade.sports()"
         (courtSaved)="onCourtSaved($event)"
         (courtDeleted)="onCourtDeleted($event)"
         (availabilityRequested)="onAvailabilityRequested($event)">

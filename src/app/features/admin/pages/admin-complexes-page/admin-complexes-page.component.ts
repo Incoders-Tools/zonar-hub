@@ -24,6 +24,7 @@ interface ComplexRow extends Record<string, unknown> {
   preponderance: number;
   courtsCount: number;
   statusLabel: string;
+  statusVariant: string;
   isActive: boolean;
 }
 
@@ -83,7 +84,7 @@ export class AdminComplexesPageComponent implements OnInit {
       { key: 'name', labelKey: 'admin.complexes.column.name', sortable: true },
       { key: 'location', labelKey: 'admin.complexes.column.location', sortable: false },
       { key: 'courtsCount', labelKey: 'admin.complexes.column.courtsCount', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.complexes.column.status', sortable: true, renderType: 'pill', translate: true }
+      { key: 'statusLabel', labelKey: 'admin.complexes.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -122,7 +123,8 @@ export class AdminComplexesPageComponent implements OnInit {
       preponderance: c.preponderance,
       courtsCount: c.courtsCount,
       isActive: c.isActive,
-      statusLabel: c.isActive ? 'admin.complexes.status.active' : 'admin.complexes.status.inactive'
+      statusLabel: c.isActive ? 'admin.complexes.status.active' : 'admin.complexes.status.inactive',
+      statusVariant: c.isActive ? 'active' : 'inactive'
     }))
   );
 

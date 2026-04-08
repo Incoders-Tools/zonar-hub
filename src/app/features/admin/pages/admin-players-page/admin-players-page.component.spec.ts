@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { AdminPlayersPageComponent } from './admin-players-page.component';
 import { PlayerFacadeService } from './player-facade.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -27,7 +28,7 @@ describe('AdminPlayersPageComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [AdminPlayersPageComponent],
-      providers: [I18nService]
+      providers: [I18nService, provideNoopAnimations()]
     })
     .overrideComponent(AdminPlayersPageComponent, {
       set: {

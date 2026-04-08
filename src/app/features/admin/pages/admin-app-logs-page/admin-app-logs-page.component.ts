@@ -48,7 +48,7 @@ export class AdminAppLogsPageComponent implements OnInit {
   readonly retentionDays = signal(30);
 
   readonly columns: DataTableColumn[] = [
-    { key: 'createdAt', labelKey: 'admin.appLogs.column.timestamp', sortable: true },
+    { key: 'createdAt', labelKey: 'admin.appLogs.column.timestamp', sortable: true, renderType: 'date' },
     { key: 'level', labelKey: 'admin.appLogs.column.level', sortable: true },
     { key: 'origin', labelKey: 'admin.appLogs.column.origin', sortable: true },
     { key: 'category', labelKey: 'admin.appLogs.column.category', sortable: true },
@@ -91,7 +91,7 @@ export class AdminAppLogsPageComponent implements OnInit {
   readonly tableData = computed<AppLogRow[]>(() =>
     this.facade.filteredLogs().map(log => ({
       id: log.id,
-      createdAt: new Date(log.createdAt).toLocaleString(),
+      createdAt: log.createdAt,
       level: log.level,
       origin: log.origin,
       category: log.category,

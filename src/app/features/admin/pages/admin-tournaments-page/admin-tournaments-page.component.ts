@@ -68,8 +68,8 @@ export class AdminTournamentsPageComponent implements OnInit {
     { key: 'name', labelKey: 'admin.tournaments.column.name', sortable: true },
     { key: 'tournamentTypeName', labelKey: 'admin.tournaments.column.type', sortable: false },
     { key: 'complexName', labelKey: 'admin.tournaments.column.complex', sortable: false },
-    { key: 'startDate', labelKey: 'admin.tournaments.column.startDate', sortable: true },
-    { key: 'endDate', labelKey: 'admin.tournaments.column.endDate', sortable: true },
+    { key: 'startDate', labelKey: 'admin.tournaments.column.startDate', sortable: true, renderType: 'date' },
+    { key: 'endDate', labelKey: 'admin.tournaments.column.endDate', sortable: true, renderType: 'date' },
     { key: 'statusLabel', labelKey: 'admin.tournaments.column.status', sortable: true, renderType: 'pill', translate: true },
     { key: 'maxPairs', labelKey: 'admin.tournaments.column.maxPairs', sortable: false }
   ];

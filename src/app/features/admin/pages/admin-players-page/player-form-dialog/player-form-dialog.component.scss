@@ -1,25 +1,3 @@
-.form-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--zh-surface-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: var(--zh-space-md);
-}
-
-.form-dialog {
-  background: var(--zh-surface-elevated);
-  border-radius: var(--zh-radius-lg);
-  box-shadow: var(--zh-elevation-lg);
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: var(--zh-space-lg);
-}
-
 .form-field {
   margin-bottom: var(--zh-space-md);
 

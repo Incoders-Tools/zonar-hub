@@ -8,8 +8,8 @@ describe('ComplexCourtsPanelComponent', () => {
   let fixture: ComponentFixture<ComplexCourtsPanelComponent>;
 
   const mockCourts: Court[] = [
-    { id: 'ct1', complexId: 'cx1', name: 'Cancha 1', sportId: 'sp1', surfaceType: 'sintético', isIndoor: false, isActive: true },
-    { id: 'ct2', complexId: 'cx1', name: 'Cancha 2', sportId: 'sp1', surfaceType: 'cemento', isIndoor: true, isActive: true }
+    { id: 'ct1', complexId: 'cx1', name: 'Cancha 1', sportIds: ['sp1'], surfaceType: 'sintético', isIndoor: false, isActive: true },
+    { id: 'ct2', complexId: 'cx1', name: 'Cancha 2', sportIds: ['sp1', 'sp2'], surfaceType: 'cemento', isIndoor: true, isActive: true }
   ];
 
   beforeEach(async () => {

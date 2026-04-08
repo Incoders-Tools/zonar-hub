@@ -76,7 +76,7 @@ export class AdminTournamentRulesPageComponent implements OnInit {
   readonly columns: DataTableColumn[] = [
     { key: 'tournamentTypeName', labelKey: 'admin.tournament-rules.column.tournamentType', sortable: true },
     { key: 'statusLabel', labelKey: 'admin.tournament-rules.column.status', sortable: true },
-    { key: 'createdAt', labelKey: 'admin.tournament-rules.column.createdAt', sortable: true }
+    { key: 'createdAt', labelKey: 'admin.tournament-rules.column.createdAt', sortable: true, renderType: 'date' }
   ];
 
   readonly ruleSetRowActions = [

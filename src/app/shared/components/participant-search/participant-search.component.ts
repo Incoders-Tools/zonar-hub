@@ -2,6 +2,7 @@ import { Component, input, output, signal, inject, DestroyRef, OnInit } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { Player } from '../../../core/models/player.model';
 import { Registration, ParticipantAvailabilityState, ParticipantSearchResult } from '../../../core/models/registration.model';
@@ -14,7 +15,7 @@ import { EligibilityValidationService } from '../../../core/services/eligibility
 @Component({
   selector: 'app-participant-search',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, MatIcon, TranslatePipe],
   templateUrl: './participant-search.component.html',
   styleUrl: './participant-search.component.scss'
 })

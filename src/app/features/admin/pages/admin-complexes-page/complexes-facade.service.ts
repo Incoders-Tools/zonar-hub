@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork } from '../../../../core/models';
+import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork, Sport } from '../../../../core/models';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
+import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
 
 export interface ComplexFilters {
   name?: string;
@@ -10,6 +11,7 @@ export interface ComplexFilters {
 @Injectable()
 export class ComplexesFacadeService {
   private readonly repository = inject(MockComplexRepository);
+  private readonly sportRepository = inject(MockSportRepository);
 
   // State signals
   private readonly entitiesState = signal<Complex[]>([]);
@@ -41,6 +43,9 @@ export class ComplexesFacadeService {
   private readonly loadingNetworksState = signal(false);
   private readonly savingNetworksState = signal(false);
 
+  // Sports state
+  private readonly sportsState = signal<Sport[]>([]);
+
   // Public computed properties
   readonly entities = this.entitiesState;
   readonly loading = this.loadingState;
@@ -64,6 +69,8 @@ export class ComplexesFacadeService {
   readonly socialNetworks = this.socialNetworksState;
   readonly loadingNetworks = this.loadingNetworksState;
   readonly savingNetworks = this.savingNetworksState;
+
+  readonly sports = this.sportsState;
 
   readonly filteredComplexes = computed(() => {
     const complexes = this.entitiesState();
@@ -108,8 +115,12 @@ export class ComplexesFacadeService {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
-      const complexes = await this.repository.getAll();
+      const [complexes, sports] = await Promise.all([
+        this.repository.getAll(),
+        this.sportRepository.getAll()
+      ]);
       this.entitiesState.set(complexes);
+      this.sportsState.set(sports.filter(s => s.isActive));
     } catch (error) {
       this.errorState.set((error as Error).message);
     } finally {

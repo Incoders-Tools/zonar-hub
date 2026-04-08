@@ -2,10 +2,9 @@
   [titleKey]="isEditing ? 'admin.complexes.edit.title' : 'admin.complexes.create.title'"
   [descriptionKey]="isEditing ? 'admin.complexes.edit.description' : 'admin.complexes.create.description'">
 
-  <!-- Tab Navigation (only show tabs when editing) -->
-  @if (isEditing) {
-    <div class="complexes-form__tabs">
-      <button
+  <!-- Tab Navigation -->
+  <div class="complexes-form__tabs">
+    <button
         type="button"
         class="complexes-form__tab"
         [class.complexes-form__tab--active]="activeFormTab() === 'datos'"
@@ -27,7 +26,6 @@
         {{ 'admin.complexes.form.tabs.redes' | t }}
       </button>
     </div>
-  }
 
   <!-- TAB: Datos -->
   @if (activeFormTab() === 'datos') {
@@ -204,21 +202,25 @@
   }
 
   <!-- TAB: Servicios -->
-  @if (activeFormTab() === 'servicios' && isEditing) {
+  @if (activeFormTab() === 'servicios') {
     <div class="complexes-form__tab-content" @slideDown>
       <p class="complexes-form__tab-description">{{ 'admin.complexes.form.servicios.description' | t }}</p>
 
       @if (serviceRows().length === 0) {
         <p class="complexes-form__empty">{{ 'admin.complexes.form.servicios.empty' | t }}</p>
       } @else {
-        <div class="complexes-form__assignment-table">
+        <div class="complexes-form__assignment-table" cdkDropList (cdkDropListDropped)="onServiceDrop($event)">
           <div class="complexes-form__assignment-header">
+            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag"></span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">{{ 'admin.complexes.form.servicios.assigned' | t }}</span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ 'admin.complexes.form.servicios.service' | t }}</span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">{{ 'admin.complexes.form.servicios.sortOrder' | t }}</span>
           </div>
           @for (row of serviceRows(); track row.serviceId; let i = $index) {
-            <div class="complexes-form__assignment-row">
+            <div class="complexes-form__assignment-row" cdkDrag>
+              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag" cdkDragHandle>
+                <mat-icon class="complexes-form__drag-handle">drag_indicator</mat-icon>
+              </span>
               <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">
                 <input type="checkbox" [checked]="row.isActive" (change)="toggleServiceActive(i)" />
               </span>
@@ -252,21 +254,25 @@
   }
 
   <!-- TAB: Redes Sociales -->
-  @if (activeFormTab() === 'redes' && isEditing) {
+  @if (activeFormTab() === 'redes') {
     <div class="complexes-form__tab-content" @slideDown>
       <p class="complexes-form__tab-description">{{ 'admin.complexes.form.redes.description' | t }}</p>
 
       @if (networkRows().length === 0) {
         <p class="complexes-form__empty">{{ 'admin.complexes.form.redes.empty' | t }}</p>
       } @else {
-        <div class="complexes-form__assignment-table">
+        <div class="complexes-form__assignment-table" cdkDropList (cdkDropListDropped)="onNetworkDrop($event)">
           <div class="complexes-form__assignment-header">
+            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag"></span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">{{ 'admin.complexes.form.redes.assigned' | t }}</span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ 'admin.complexes.form.redes.network' | t }}</span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--url">{{ 'admin.complexes.form.redes.profileUrl' | t }}</span>
           </div>
           @for (row of networkRows(); track row.socialNetworkId; let i = $index) {
-            <div class="complexes-form__assignment-row">
+            <div class="complexes-form__assignment-row" cdkDrag>
+              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag" cdkDragHandle>
+                <mat-icon class="complexes-form__drag-handle">drag_indicator</mat-icon>
+              </span>
               <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">
                 <input type="checkbox" [checked]="row.isActive" (change)="toggleNetworkActive(i)" />
               </span>

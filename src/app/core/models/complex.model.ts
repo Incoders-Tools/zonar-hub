@@ -26,7 +26,7 @@ export interface Court {
   id: string;
   complexId: string;
   name: string;
-  sportId?: string;
+  sportIds: string[];
   surfaceType: string;
   isIndoor: boolean;
   isActive: boolean;

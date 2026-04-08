@@ -8,6 +8,7 @@ import { DataTableComponent, DataTableColumn } from '../../../../../shared/compo
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { Court } from '../../../../../core/models';
+import { Sport } from '../../../../../core/models';
 
 interface CourtRow extends Record<string, unknown> {
   id: string;
@@ -54,6 +55,7 @@ export class ComplexCourtsPanelComponent {
   readonly loading = input(false);
   readonly saving = input(false);
   readonly activeCourtId = input<string | null>(null);
+  readonly sports = input<Sport[]>([]);
 
   readonly courtSaved = output<Court | Omit<Court, 'id'>>();
   readonly courtDeleted = output<string>();
@@ -116,11 +118,24 @@ export class ComplexCourtsPanelComponent {
   private initForm(court?: Court): void {
     this.courtForm = this.fb.group({
       name: [court?.name || '', [Validators.required]],
-      sportId: [court?.sportId || ''],
+      sportIds: [court?.sportIds || []],
       surfaceType: [court?.surfaceType || 'sintético'],
       isIndoor: [court?.isIndoor ?? false],
       isActive: [court?.isActive ?? true]
     });
+  }
+
+  toggleSport(sportId: string): void {
+    const current: string[] = this.courtForm.get('sportIds')?.value || [];
+    const updated = current.includes(sportId)
+      ? current.filter(id => id !== sportId)
+      : [...current, sportId];
+    this.courtForm.get('sportIds')?.setValue(updated);
+  }
+
+  isSportSelected(sportId: string): boolean {
+    const current: string[] = this.courtForm.get('sportIds')?.value || [];
+    return current.includes(sportId);
   }
 
   saveCourt(): void {
