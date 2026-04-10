@@ -1,0 +1,100 @@
+<div class="flyer-backgrounds">
+  <div class="flyer-backgrounds__header">
+    <div>
+      <h1 class="flyer-backgrounds__title">{{ 'flyers.title' | t }}</h1>
+      <p class="flyer-backgrounds__subtitle">{{ 'flyers.subtitle' | t }}</p>
+    </div>
+    <button class="btn btn--primary" (click)="openCreate()">
+      {{ 'flyers.addBackground' | t }}
+    </button>
+  </div>
+
+  @if (showForm()) {
+    <div class="flyer-backgrounds__form-panel">
+      <app-form-shell
+        [titleKey]="editing() ? 'flyers.form.editTitle' : 'flyers.form.createTitle'"
+        [descriptionKey]="'flyers.form.description'">
+        <form [formGroup]="form" class="flyer-backgrounds__form">
+          <div class="flyer-backgrounds__form-grid">
+            <div class="flyer-backgrounds__field">
+              <label>{{ 'flyers.form.name' | t }} *</label>
+              <input type="text" formControlName="name" />
+            </div>
+            <div class="flyer-backgrounds__field">
+              <label>{{ 'flyers.form.imageUrl' | t }} *</label>
+              <input type="text" formControlName="imageUrl" />
+            </div>
+            <div class="flyer-backgrounds__field">
+              <label>{{ 'flyers.form.category' | t }}</label>
+              <select formControlName="category">
+                @for (opt of categoryOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+                }
+              </select>
+            </div>
+            <div class="flyer-backgrounds__field">
+              <label>{{ 'flyers.form.sortOrder' | t }}</label>
+              <input type="number" formControlName="sortOrder" min="0" />
+            </div>
+            <div class="flyer-backgrounds__field flyer-backgrounds__field--checkbox">
+              <label>
+                <input type="checkbox" formControlName="isActive" />
+                {{ 'flyers.form.isActive' | t }}
+              </label>
+            </div>
+          </div>
+          <div class="flyer-backgrounds__form-actions">
+            <button type="button" (click)="cancelForm()" class="btn btn--secondary">
+              {{ 'common.cancel' | t }}
+            </button>
+            <app-async-button
+              [loading]="saving()"
+              [disabled]="form.invalid"
+              (clicked)="save()">
+              {{ (editing() ? 'common.update' : 'common.create') | t }}
+            </app-async-button>
+          </div>
+        </form>
+      </app-form-shell>
+    </div>
+  }
+
+  @if (backgrounds().length === 0) {
+    <div class="flyer-backgrounds__empty">
+      {{ 'flyers.empty' | t }}
+    </div>
+  } @else {
+    <div class="flyer-backgrounds__grid">
+      @for (bg of backgrounds(); track bg.id) {
+        <div class="flyer-backgrounds__card" [class.flyer-backgrounds__card--inactive]="!bg.isActive">
+          <div class="flyer-backgrounds__preview"
+               [style.backgroundImage]="'url(' + bg.thumbnailUrl + ')'"
+               [style.backgroundColor]="'var(--zh-surface-card)'">
+            <span class="flyer-backgrounds__category-badge">{{ 'flyers.category.' + bg.category | t }}</span>
+          </div>
+          <div class="flyer-backgrounds__info">
+            <h3>{{ bg.name }}</h3>
+            <span class="flyer-backgrounds__key">{{ bg.key }}</span>
+            <span class="flyer-backgrounds__status" [class.active]="bg.isActive">
+              {{ (bg.isActive ? 'common.active' : 'common.inactive') | t }}
+            </span>
+          </div>
+          <div class="flyer-backgrounds__actions">
+            <button (click)="openEdit(bg)" class="flyer-backgrounds__action-btn">✏️</button>
+            <button (click)="requestDelete(bg.id)" class="flyer-backgrounds__action-btn flyer-backgrounds__action-btn--danger">🗑️</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (confirmDeleteId()) {
+  <app-confirm-dialog
+    [titleKey]="'flyers.confirm.deleteTitle'"
+    [messageKey]="'flyers.confirm.deleteMessage'"
+    [loading]="deleting()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}

@@ -18,6 +18,7 @@ interface CourtRow extends Record<string, unknown> {
   isActive: boolean;
   indoorLabel: string;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -72,7 +73,7 @@ export class ComplexCourtsPanelComponent {
     { key: 'name', labelKey: 'admin.complexes.courts.column.name', sortable: true },
     { key: 'surfaceType', labelKey: 'admin.complexes.courts.column.surfaceType', sortable: true },
     { key: 'indoorLabel', labelKey: 'admin.complexes.courts.column.isIndoor', sortable: false },
-    { key: 'statusLabel', labelKey: 'admin.complexes.courts.column.status', sortable: true }
+    { key: 'statusLabel', labelKey: 'admin.complexes.courts.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
   readonly courtRowActions = [
@@ -91,7 +92,8 @@ export class ComplexCourtsPanelComponent {
       isIndoor: ct.isIndoor,
       isActive: ct.isActive,
       indoorLabel: ct.isIndoor ? 'admin.complexes.courts.indoor' : 'admin.complexes.courts.outdoor',
-      statusLabel: ct.isActive ? 'admin.complexes.status.active' : 'admin.complexes.status.inactive'
+      statusLabel: ct.isActive ? 'admin.complexes.status.active' : 'admin.complexes.status.inactive',
+      statusVariant: ct.isActive ? 'active' : 'inactive'
     }));
   }
 

@@ -1,0 +1,55 @@
+<div class="plans-page">
+  <div class="plans-page__header">
+    <div class="plans-page__title-row">
+      <div>
+        <h1 class="plans-page__title">{{ 'admin.plans.title' | t }}</h1>
+        <p class="plans-page__subtitle">{{ 'admin.plans.subtitle' | t }}</p>
+      </div>
+      <div class="plans-page__header-actions">
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'admin.plans.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="true"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [rowActions]="rowActions"
+    emptyMessageKey="admin.plans.emptyState"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+@if (showFormDialog()) {
+  <app-plan-form-dialog
+    [plan]="editingPlan()"
+    [saving]="facade.saving()"
+    (submitted)="onFormSubmitted($event)"
+    (cancelled)="closeFormDialog()">
+  </app-plan-form-dialog>
+}
+
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.plans.confirm.deleteTitle"
+    messageKey="admin.plans.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}

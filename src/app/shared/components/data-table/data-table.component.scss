@@ -163,14 +163,34 @@
       color: var(--zh-text-secondary);
     }
 
+    &[data-variant='info'],
+    &[data-variant='upcoming'] {
+      background: color-mix(in srgb, var(--zh-info) 14%, transparent);
+      color: var(--zh-info);
+    }
+
+    &[data-variant='warning'],
+    &[data-variant='in-progress'],
+    &[data-variant='pending'] {
+      background: color-mix(in srgb, var(--zh-warning) 14%, transparent);
+      color: var(--zh-warning);
+    }
+
     &[data-variant='draft'] {
       background: color-mix(in srgb, var(--zh-warning) 14%, transparent);
       color: var(--zh-warning);
     }
 
-    &[data-variant='finished'] {
+    &[data-variant='finished'],
+    &[data-variant='completed'] {
       background: var(--zh-surface-muted);
       color: var(--zh-text-secondary);
+    }
+
+    &[data-variant='danger'],
+    &[data-variant='cancelled'] {
+      background: color-mix(in srgb, var(--zh-danger) 14%, transparent);
+      color: var(--zh-danger);
     }
   }
 

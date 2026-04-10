@@ -1,5 +1,12 @@
 <div class="draw-planner">
-  <h1>{{ 'admin.drawPlanner' | t }}</h1>
+  <div class="draw-planner__header-row">
+    <h1>{{ 'admin.drawPlanner' | t }}</h1>
+    <app-help-button
+      [titleKey]="'drawPlanner.help.title'"
+      [sections]="helpSections"
+      [videoUrl]="helpVideoUrl">
+    </app-help-button>
+  </div>
 
   <!-- Tournament Selection -->
   <div class="planner-section">

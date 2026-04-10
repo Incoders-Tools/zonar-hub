@@ -6,6 +6,7 @@ import { ProgressBarComponent } from '../../../../shared/components/progress-bar
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { DrawPlannerService } from '../../../../core/services/draw-planner.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -35,7 +36,8 @@ const PLANNER_STAGES: PlannerStage[] = [
     ProgressBarComponent,
     DataTableComponent,
     AsyncButtonComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    HelpButtonComponent
   ],
   templateUrl: './admin-draw-planner-page.component.html',
   styleUrl: './admin-draw-planner-page.component.scss'
@@ -47,6 +49,25 @@ export class AdminDrawPlannerPageComponent {
 
   // --- Tab state ---
   readonly activeTab = signal<'generate' | 'drafts'>('generate');
+
+  // --- Help sections ---
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'drawPlanner.help.overview.title', contentKey: 'drawPlanner.help.overview.content' },
+    {
+      titleKey: 'drawPlanner.help.steps.title',
+      items: [
+        'drawPlanner.help.steps.step1',
+        'drawPlanner.help.steps.step2',
+        'drawPlanner.help.steps.step3',
+        'drawPlanner.help.steps.step4',
+        'drawPlanner.help.steps.step5'
+      ]
+    },
+    { titleKey: 'drawPlanner.help.zones.title', contentKey: 'drawPlanner.help.zones.content' },
+    { titleKey: 'drawPlanner.help.drafts.title', contentKey: 'drawPlanner.help.drafts.content' },
+    { titleKey: 'drawPlanner.help.tips.title', contentKey: 'drawPlanner.help.tips.content' }
+  ];
+  readonly helpVideoUrl = 'https://www.youtube.com/embed/PLACEHOLDER_DRAW_VIDEO';
 
   // --- Generate tab state ---
   readonly selectedTournamentId = signal('');

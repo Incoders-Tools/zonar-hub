@@ -23,6 +23,7 @@ interface TournamentTypeRow extends Record<string, unknown> {
   scoresPoints: boolean;
   appliesGender: boolean;
   statusLabel: string;
+  statusVariant: string;
   scoresPointsLabel: string;
   appliesGenderLabel: string;
 }
@@ -80,7 +81,7 @@ export class AdminTournamentTypesPageComponent implements OnInit {
       { key: 'name', labelKey: 'admin.tournament-types.column.name', sortable: true },
       { key: 'scoresPointsLabel', labelKey: 'admin.tournament-types.column.scoresPoints', sortable: false },
       { key: 'appliesGenderLabel', labelKey: 'admin.tournament-types.column.appliesGender', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.tournament-types.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'admin.tournament-types.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -117,6 +118,7 @@ export class AdminTournamentTypesPageComponent implements OnInit {
       scoresPoints: t.scoresPoints,
       appliesGender: t.appliesGender,
       statusLabel: t.isActive ? 'admin.tournament-types.status.active' : 'admin.tournament-types.status.inactive',
+      statusVariant: t.isActive ? 'active' : 'inactive',
       scoresPointsLabel: t.scoresPoints ? 'common.yes' : 'common.no',
       appliesGenderLabel: t.appliesGender ? 'common.yes' : 'common.no'
     }))

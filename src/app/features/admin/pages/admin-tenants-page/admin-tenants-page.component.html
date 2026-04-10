@@ -1,0 +1,77 @@
+<div class="tenants-page">
+  <div class="tenants-page__header">
+    <div class="tenants-page__title-row">
+      <div>
+        <h1 class="tenants-page__title">{{ 'admin.tenants.title' | t }}</h1>
+        <p class="tenants-page__subtitle">{{ 'admin.tenants.subtitle' | t }}</p>
+      </div>
+      <div class="tenants-page__header-actions">
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'admin.tenants.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [rowActions]="rowActions"
+    emptyMessageKey="admin.tenants.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+@if (showFormDialog()) {
+  <app-tenant-form-dialog
+    [tenant]="editingTenant()"
+    [saving]="facade.saving()"
+    (submitted)="onFormSubmitted($event)"
+    (cancelled)="closeFormDialog()">
+  </app-tenant-form-dialog>
+}
+
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.tenants.confirm.deleteTitle"
+    messageKey="admin.tenants.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.tenants.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}

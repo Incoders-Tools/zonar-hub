@@ -1,0 +1,55 @@
+.social-share {
+  display: flex;
+  align-items: center;
+  gap: var(--zh-space-md);
+
+  &__label {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+  }
+
+  &__buttons {
+    display: flex;
+    gap: var(--zh-space-xs);
+  }
+
+  &__btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-surface-card);
+    cursor: pointer;
+    font-size: var(--zh-font-size-md);
+    transition: all 0.2s;
+
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: var(--zh-shadow-sm);
+    }
+
+    &--whatsapp:hover {
+      border-color: #25d366;
+      background: rgba(37, 211, 102, 0.1);
+    }
+
+    &--twitter:hover {
+      border-color: #1da1f2;
+      background: rgba(29, 161, 242, 0.1);
+    }
+
+    &--facebook:hover {
+      border-color: #1877f2;
+      background: rgba(24, 119, 242, 0.1);
+    }
+
+    &--copy:hover {
+      border-color: var(--zh-primary);
+      background: rgba(var(--zh-primary-rgb, 33, 150, 243), 0.1);
+    }
+  }
+}

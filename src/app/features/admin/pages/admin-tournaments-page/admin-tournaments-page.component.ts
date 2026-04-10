@@ -20,6 +20,7 @@ interface TournamentRow extends Record<string, unknown> {
   startDate: string;
   endDate: string;
   statusLabel: string;
+  statusVariant: string;
   maxPairs: number;
 }
 
@@ -70,7 +71,7 @@ export class AdminTournamentsPageComponent implements OnInit {
     { key: 'complexName', labelKey: 'admin.tournaments.column.complex', sortable: false },
     { key: 'startDate', labelKey: 'admin.tournaments.column.startDate', sortable: true, renderType: 'date' },
     { key: 'endDate', labelKey: 'admin.tournaments.column.endDate', sortable: true, renderType: 'date' },
-    { key: 'statusLabel', labelKey: 'admin.tournaments.column.status', sortable: true, renderType: 'pill', translate: true },
+    { key: 'statusLabel', labelKey: 'admin.tournaments.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' },
     { key: 'maxPairs', labelKey: 'admin.tournaments.column.maxPairs', sortable: false }
   ];
 
@@ -102,6 +103,7 @@ export class AdminTournamentsPageComponent implements OnInit {
         startDate: t.startDate,
         endDate: t.endDate,
         statusLabel: status.labelKey,
+        statusVariant: status.key === 'upcoming' ? 'info' : status.key === 'in_progress' ? 'warning' : 'finished',
         maxPairs: t.maxPairs
       };
     })

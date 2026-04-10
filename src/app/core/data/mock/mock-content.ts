@@ -2,9 +2,9 @@ import { Complex } from '../../models';
 import { NewsArticle, HomeSection } from '../../models';
 
 export const MOCK_COMPLEXES: Complex[] = [
-  { id: 'cx1', name: 'Club Padel Norte', address: 'Av. Libertador 5000', cityId: 'city1', cityName: 'Buenos Aires', phone: '+5491140001111', courtsCount: 8, isActive: true, createdAt: '2025-01-01' },
-  { id: 'cx2', name: 'Arena Padel Sur', address: 'Calle Sur 1234', cityId: 'city1', cityName: 'Buenos Aires', courtsCount: 6, isActive: true, createdAt: '2025-02-01' },
-  { id: 'cx3', name: 'Padel Center', address: 'Av. Colón 800', cityId: 'city2', cityName: 'Córdoba', courtsCount: 10, isActive: true, createdAt: '2025-03-01' }
+  { id: 'cx1', name: 'Club Padel Norte', key: 'club-padel-norte', address: 'Av. Libertador 5000', cityId: 'city1', cityName: 'Buenos Aires', phone: '+5491140001111', courtsCount: 8, isActive: true, createdAt: '2025-01-01', sortOrder: 1, preponderance: 1, sportsSupported: ['padel'] },
+  { id: 'cx2', name: 'Arena Padel Sur', key: 'arena-padel-sur', address: 'Calle Sur 1234', cityId: 'city1', cityName: 'Buenos Aires', courtsCount: 6, isActive: true, createdAt: '2025-02-01', sortOrder: 2, preponderance: 2, sportsSupported: ['padel'] },
+  { id: 'cx3', name: 'Padel Center', key: 'padel-center', address: 'Av. Colón 800', cityId: 'city2', cityName: 'Córdoba', courtsCount: 10, isActive: true, createdAt: '2025-03-01', sortOrder: 3, preponderance: 3, sportsSupported: ['padel'] }
 ];
 
 export const MOCK_NEWS: NewsArticle[] = [

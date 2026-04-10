@@ -1,6 +1,18 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { AuthSession, LoginRequest, RegisterRequest, User, UserRole } from '../models';
+import { AuthSession, LoginRequest, RegisterRequest, Tenant, User, UserRole } from '../models';
 import { MOCK_USERS } from '../data/mock/mock-users';
+
+const MOCK_TENANT: Tenant = {
+  id: 'tenant-1',
+  name: 'Club Padel Barcelona',
+  key: 'club_padel_bcn',
+  contactEmail: 'info@clubpadelbcn.com',
+  contactPhone: '+34 93 123 4567',
+  planId: 'plan-2',
+  planType: 'pro',
+  isActive: true,
+  createdAt: '2025-01-15'
+};
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -23,7 +35,8 @@ export class AuthService {
     const session: AuthSession = {
       user,
       token: 'mock-jwt-token-' + Date.now(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      tenant: user.tenantId ? MOCK_TENANT : undefined
     };
     this.sessionState.set(session);
     return session;
@@ -37,18 +50,40 @@ export class AuthService {
       fullName: request.fullName,
       phone: request.phone,
       birthDate: request.birthDate,
-      role: 'player',
-      roleId: 'role2',
+      role: 'admin',
+      roleId: 'role1',
       isActive: true,
       createdAt: new Date().toISOString()
     };
+    // Persist registered user in localStorage for mock persistence
+    this.persistRegisteredUser(newUser);
     const session: AuthSession = {
       user: newUser,
       token: 'mock-jwt-token-' + Date.now(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      tenant: {
+        ...MOCK_TENANT,
+        id: 'tenant-' + Date.now(),
+        name: request.fullName + ' Circuit',
+        planType: 'starter',
+        isActive: true
+      }
     };
     this.sessionState.set(session);
     return session;
+  }
+
+  async checkEmailExists(email: string): Promise<boolean> {
+    await this.delay(300);
+    const registered = this.getRegisteredUsers();
+    return MOCK_USERS.some(u => u.email === email) || registered.some((u: User) => u.email === email);
+  }
+
+  async checkPhoneExists(phone: string): Promise<boolean> {
+    await this.delay(300);
+    const normalized = phone.replace(/[\s\-()]/g, '');
+    const registered = this.getRegisteredUsers();
+    return registered.some((u: User) => u.phone?.replace(/[\s\-()]/g, '') === normalized);
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -65,5 +100,24 @@ export class AuthService {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private persistRegisteredUser(user: User): void {
+    try {
+      const existing = this.getRegisteredUsers();
+      existing.push(user);
+      localStorage.setItem('zh_registered_users', JSON.stringify(existing));
+    } catch {
+      // storage unavailable
+    }
+  }
+
+  private getRegisteredUsers(): User[] {
+    try {
+      const raw = localStorage.getItem('zh_registered_users');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
   }
 }

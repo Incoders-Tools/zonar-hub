@@ -18,3 +18,15 @@ export interface HomeSection {
   isActive: boolean;
   config?: Record<string, unknown>;
 }
+
+export interface FlyerBackground {
+  id: string;
+  name: string;
+  key: string;
+  imageUrl: string;
+  thumbnailUrl: string;
+  category: 'tournament' | 'registration' | 'ranking' | 'general';
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+}

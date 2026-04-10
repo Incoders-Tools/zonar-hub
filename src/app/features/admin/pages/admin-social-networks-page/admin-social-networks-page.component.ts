@@ -26,6 +26,7 @@ interface SocialNetworkRow extends Record<string, unknown> {
   sortOrder: number | null;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -84,7 +85,7 @@ export class AdminSocialNetworksPageComponent implements OnInit {
       { key: 'name', labelKey: 'admin.social-networks.column.name', sortable: true },
       { key: 'url', labelKey: 'admin.social-networks.column.url', sortable: false },
       { key: 'faIcon', labelKey: 'admin.social-networks.column.icon', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.social-networks.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'admin.social-networks.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -120,7 +121,8 @@ export class AdminSocialNetworksPageComponent implements OnInit {
       faIcon: n.faIcon,
       sortOrder: n.sortOrder,
       isActive: n.isActive,
-      statusLabel: n.isActive ? 'admin.social-networks.status.active' : 'admin.social-networks.status.inactive'
+      statusLabel: n.isActive ? 'admin.social-networks.status.active' : 'admin.social-networks.status.inactive',
+      statusVariant: n.isActive ? 'active' : 'inactive'
     }))
   );
 

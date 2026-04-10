@@ -1,10 +1,11 @@
-import { Component, inject, signal, DestroyRef } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, inject, signal, DestroyRef, OnInit } from '@angular/core';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -25,6 +26,12 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     <div class="auth-card">
       <h1>{{ 'auth.register' | t }}</h1>
       <p class="auth-card__desc">{{ 'auth.registerDesc' | t }}</p>
+
+      @if (selectedPlan()) {
+        <div class="auth-card__plan-badge">
+          {{ 'home.pricing.' + selectedPlan() + '.name' | t }}
+        </div>
+      }
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
         <div class="field">
@@ -47,6 +54,25 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
           @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
             <span class="field__error">{{ 'common.invalidEmail' | t }}</span>
           }
+          @if (emailTaken()) {
+            <span class="field__error">{{ 'auth.emailAlreadyInUse' | t }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="reg-phone">{{ 'auth.phone' | t }}</label>
+          <input id="reg-phone" type="tel" formControlName="phone" autocomplete="tel"
+            [placeholder]="'auth.phonePlaceholder' | t" />
+          @if (form.get('phone')?.hasError('required') && form.get('phone')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('phone')?.hasError('pattern') && form.get('phone')?.touched) {
+            <span class="field__error">{{ 'auth.invalidPhone' | t }}</span>
+          }
+          @if (phoneTaken()) {
+            <span class="field__error">{{ 'auth.phoneAlreadyInUse' | t }}</span>
+          }
+          <span class="field__hint">{{ 'auth.phoneHint' | t }}</span>
         </div>
 
         <div class="field">
@@ -132,11 +158,13 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   `,
   styleUrl: '../login-page/login-page.component.scss'
 })
-export class RegisterPageComponent {
+export class RegisterPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
+  private readonly onboarding = inject(OnboardingStateService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -145,10 +173,14 @@ export class RegisterPageComponent {
   readonly submitting = signal(false);
   readonly error = signal('');
   readonly formValid = signal(false);
+  readonly selectedPlan = signal<string | null>(null);
+  readonly emailTaken = signal(false);
+  readonly phoneTaken = signal(false);
 
   readonly form = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-()]{7,20}$/)]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', [Validators.required]],
     acceptTerms: [false, [Validators.requiredTrue]]
@@ -158,6 +190,13 @@ export class RegisterPageComponent {
     this.form.statusChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(status => this.formValid.set(status === 'VALID'));
+  }
+
+  ngOnInit(): void {
+    const plan = this.route.snapshot.queryParamMap.get('plan');
+    if (plan && ['starter', 'pro', 'enterprise', 'single_use', 'singleUse'].includes(plan)) {
+      this.selectedPlan.set(plan === 'single_use' ? 'singleUse' : plan);
+    }
   }
 
   togglePassword(): void {
@@ -184,18 +223,44 @@ export class RegisterPageComponent {
   async onSubmit(): Promise<void> {
     if (!this.formValid() || this.submitting()) return;
     this.form.markAllAsTouched();
+    this.emailTaken.set(false);
+    this.phoneTaken.set(false);
 
     this.submitting.set(true);
     this.error.set('');
 
     try {
-      await this.auth.register({
+      // Mock uniqueness check
+      const email = this.form.value.email ?? '';
+      const phone = this.form.value.phone ?? '';
+      const isEmailUsed = await this.auth.checkEmailExists(email);
+      if (isEmailUsed) {
+        this.emailTaken.set(true);
+        return;
+      }
+      const isPhoneUsed = await this.auth.checkPhoneExists(phone);
+      if (isPhoneUsed) {
+        this.phoneTaken.set(true);
+        return;
+      }
+
+      const session = await this.auth.register({
         fullName: this.form.value.fullName ?? '',
-        email: this.form.value.email ?? '',
-        password: this.form.value.password ?? ''
+        email,
+        password: this.form.value.password ?? '',
+        phone
       });
+
+      // Init onboarding state for the new user
+      this.onboarding.initForUser(session.user.id);
+
       this.notifications.success(this.i18n.translate('auth.registerSuccess'));
-      this.router.navigate(['/login']);
+
+      // Redirect to onboarding wizard
+      const target = session.user.role === 'admin' || session.user.role === 'system_admin'
+        ? '/admin/onboarding'
+        : '/player';
+      this.router.navigate([target]);
     } catch {
       this.error.set('auth.registerError');
     } finally {

@@ -1,0 +1,49 @@
+@if (visible()) {
+  <div class="guided-tour__overlay" (click)="cancel()">
+    <!-- Highlight cutout -->
+    @if (targetRect(); as rect) {
+      <div
+        class="guided-tour__highlight"
+        [style.top.px]="rect.top - 8"
+        [style.left.px]="rect.left - 8"
+        [style.width.px]="rect.width + 16"
+        [style.height.px]="rect.height + 16">
+      </div>
+    }
+  </div>
+
+  @if (activeStep(); as step) {
+    <div
+      class="guided-tour__tooltip"
+      [class.guided-tour__tooltip--top]="step.position === 'top'"
+      [class.guided-tour__tooltip--bottom]="step.position === 'bottom' || !step.position"
+      [class.guided-tour__tooltip--left]="step.position === 'left'"
+      [class.guided-tour__tooltip--right]="step.position === 'right'"
+      [style.top.px]="getTooltipTop()"
+      [style.left.px]="getTooltipLeft()"
+      (click)="$event.stopPropagation()">
+
+      <div class="guided-tour__header">
+        <span class="guided-tour__step-counter">{{ stepLabel() }}</span>
+        <button class="guided-tour__close" type="button" (click)="cancel()" [attr.aria-label]="'common.close' | t">✕</button>
+      </div>
+
+      <h3 class="guided-tour__title">{{ step.titleKey | t }}</h3>
+      <p class="guided-tour__desc">{{ step.descriptionKey | t }}</p>
+
+      <div class="guided-tour__actions">
+        @if (!isFirst()) {
+          <button type="button" class="guided-tour__btn guided-tour__btn--back" (click)="prev()">
+            {{ 'common.back' | t }}
+          </button>
+        }
+        <button type="button" class="guided-tour__btn guided-tour__btn--skip" (click)="cancel()">
+          {{ 'tour.skip' | t }}
+        </button>
+        <button type="button" class="guided-tour__btn guided-tour__btn--next" (click)="next()">
+          {{ isLast() ? ('tour.finish' | t) : ('common.next' | t) }}
+        </button>
+      </div>
+    </div>
+  }
+}

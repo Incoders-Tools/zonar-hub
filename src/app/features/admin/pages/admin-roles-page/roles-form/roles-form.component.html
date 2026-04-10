@@ -1,122 +1,85 @@
-<form [formGroup]="form()!" (ngSubmit)="onSubmit()" class="roles-form">
-  <div class="form-container">
-    <!-- Form Header -->
-    <div class="form-header">
-      <div class="header-content">
-        <h3 class="form-title">
-          <mat-icon class="title-icon">{{ isEditMode() ? 'edit' : 'add_circle' }}</mat-icon>
-          {{ formTitle() | t }}
-        </h3>
-        <p class="form-subtitle" *ngIf="isSystemRole()">
-          <mat-icon class="warning-icon">info</mat-icon>
-          {{ 'admin.roles.form.systemRoleWarning' | t }}
-        </p>
+<app-form-shell [titleKey]="formTitle()">
+  <form [formGroup]="form()!" (ngSubmit)="onSubmit()">
+    <!-- System role warning -->
+    @if (isSystemRole()) {
+      <div class="roles-form__warning">
+        <span class="roles-form__warning-icon">⚠️</span>
+        <span>{{ 'admin.roles.form.systemRoleWarning' | t }}</span>
       </div>
+    }
+
+    <!-- Name Field -->
+    <div class="form-field">
+      <label class="form-field__label" for="role-name">{{ 'admin.roles.field.name' | t }} *</label>
+      <input
+        class="form-field__input form-field__input--mono"
+        id="role-name"
+        type="text"
+        formControlName="name"
+        [placeholder]="'admin.roles.placeholder.name' | t"
+        maxlength="50" />
+      @if (nameField()?.hasError('required') && nameField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.name.required' | t }}</span>
+      }
+      @if (nameField()?.hasError('minlength') && nameField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.name.minlength' | t }}</span>
+      }
+      @if (nameField()?.hasError('maxlength') && nameField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.name.maxlength' | t }}</span>
+      }
+      @if (nameField()?.hasError('pattern') && nameField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.name.pattern' | t }}</span>
+      }
+      @if (!nameField()?.invalid || !nameField()?.touched) {
+        <span class="form-field__hint">{{ 'admin.roles.hint.name' | t }}</span>
+      }
     </div>
 
-    <!-- Form Fields Section -->
-    <div class="form-fields">
-      <!-- Name Field -->
-      <mat-form-field appearance="outline" class="full-width field-wrapper">
-        <mat-label>{{ 'admin.roles.field.name' | t }}</mat-label>
-        <input
-          matInput
-          formControlName="name"
-          [placeholder]="'admin.roles.placeholder.name' | t"
-          type="text"
-          [disabled]="isSystemRole()"
-          maxlength="50"
-          (blur)="nameField()?.markAsTouched()"
-        />
-        <mat-hint *ngIf="!hasFieldError('name')" class="hint-text">
-          {{ 'admin.roles.hint.name' | t }}
-        </mat-hint>
-        <mat-error *ngIf="nameFieldTouched() && hasFieldError('name')">
-          <span *ngIf="nameField()?.hasError('required')">
-            {{ 'admin.roles.error.name.required' | t }}
-          </span>
-          <span *ngIf="nameField()?.hasError('minlength')">
-            {{ 'admin.roles.error.name.minlength' | t }}
-          </span>
-          <span *ngIf="nameField()?.hasError('maxlength')">
-            {{ 'admin.roles.error.name.maxlength' | t }}
-          </span>
-          <span *ngIf="nameField()?.hasError('pattern')">
-            {{ 'admin.roles.error.name.pattern' | t }}
-          </span>
-        </mat-error>
-      </mat-form-field>
-
-      <!-- Description Field -->
-      <mat-form-field appearance="outline" class="full-width field-wrapper">
-        <mat-label>{{ 'admin.roles.field.description' | t }}</mat-label>
-        <textarea
-          matInput
-          formControlName="description"
-          [placeholder]="'admin.roles.placeholder.description' | t"
-          rows="4"
-          maxlength="500"
-          (blur)="descriptionField()?.markAsTouched()"
-        ></textarea>
-        <mat-hint *ngIf="!hasFieldError('description')" class="hint-text">
-          {{ 'admin.roles.hint.description' | t }}
-        </mat-hint>
-        <mat-error *ngIf="descriptionFieldTouched() && hasFieldError('description')">
-          <span *ngIf="descriptionField()?.hasError('required')">
-            {{ 'admin.roles.error.description.required' | t }}
-          </span>
-          <span *ngIf="descriptionField()?.hasError('minlength')">
-            {{ 'admin.roles.error.description.minlength' | t }}
-          </span>
-          <span *ngIf="descriptionField()?.hasError('maxlength')">
-            {{ 'admin.roles.error.description.maxlength' | t }}
-          </span>
-        </mat-error>
-      </mat-form-field>
-
-      <!-- Active Checkbox -->
-      <div class="checkbox-field">
-        <mat-checkbox
-          formControlName="isActive"
-          [disabled]="isSystemRole()"
-          color="primary"
-        >
-          <span class="checkbox-label">{{ 'admin.roles.field.isActive' | t }}</span>
-          <span class="checkbox-hint">
-            {{ 'admin.roles.hint.isActive' | t }}
-          </span>
-        </mat-checkbox>
-      </div>
+    <!-- Description Field -->
+    <div class="form-field">
+      <label class="form-field__label" for="role-description">{{ 'admin.roles.field.description' | t }} *</label>
+      <textarea
+        class="form-field__input"
+        id="role-description"
+        formControlName="description"
+        [placeholder]="'admin.roles.placeholder.description' | t"
+        rows="4"
+        maxlength="500"></textarea>
+      @if (descriptionField()?.hasError('required') && descriptionField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.description.required' | t }}</span>
+      }
+      @if (descriptionField()?.hasError('minlength') && descriptionField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.description.minlength' | t }}</span>
+      }
+      @if (descriptionField()?.hasError('maxlength') && descriptionField()?.touched) {
+        <span class="form-field__error">{{ 'admin.roles.error.description.maxlength' | t }}</span>
+      }
+      @if (!descriptionField()?.invalid || !descriptionField()?.touched) {
+        <span class="form-field__hint">{{ 'admin.roles.hint.description' | t }}</span>
+      }
     </div>
 
-    <!-- Form Actions -->
-    <div class="form-actions">
-      <button
-        type="button"
-        mat-stroked-button
-        (click)="onCancel()"
-        [disabled]="isSubmitting()"
-        class="btn-cancel"
-      >
-        <mat-icon>close</mat-icon>
+    <!-- Active Toggle -->
+    <div class="form-field form-field--inline">
+      <label class="form-field__toggle">
+        <input type="checkbox" formControlName="isActive" />
+        <span class="form-field__toggle-text">{{ 'admin.roles.field.isActive' | t }}</span>
+      </label>
+      <span class="form-field__hint">{{ 'admin.roles.hint.isActive' | t }}</span>
+    </div>
+
+    <!-- Actions -->
+    <div formActions class="form-actions">
+      <button type="button" class="form-actions__cancel" (click)="onCancel()">
         {{ 'common.cancel' | t }}
       </button>
-
       <app-async-button
-        (clicked)="onSubmit()"
-        [disabled]="!isFormValid() || isSubmitting()"
-        [loading]="isSubmitting()"
+        type="submit"
         variant="primary"
-        icon="save"
-        class="btn-save"
-      >
+        [disabled]="submitButtonDisabled()"
+        [loading]="isSubmitting()">
         {{ isEditMode() ? ('common.update' | t) : ('common.save' | t) }}
       </app-async-button>
     </div>
-  </div>
-
-  <!-- Debug Info (Development Only) -->
-  <div class="form-debug" *ngIf="false">
-    <pre>{{ form() | json }}</pre>
-  </div>
-</form>
+  </form>
+</app-form-shell>

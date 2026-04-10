@@ -103,6 +103,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-dashboard-page/admin-dashboard-page.component').then(m => m.AdminDashboardPageComponent)
       },
       {
+        path: 'profile',
+        loadComponent: () => import('./features/admin/pages/admin-profile-page/admin-profile-page.component').then(m => m.AdminProfilePageComponent)
+      },
+      {
+        path: 'onboarding',
+        loadComponent: () => import('./features/admin/pages/admin-onboarding-page/admin-onboarding-page.component').then(m => m.AdminOnboardingPageComponent)
+      },
+      {
         path: 'tournaments',
         loadComponent: () => import('./features/admin/pages/admin-tournaments-page/admin-tournaments-page.component').then(m => m.AdminTournamentsPageComponent)
       },
@@ -179,6 +187,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-roles-page/admin-roles-page.component').then(m => m.AdminRolesPageComponent)
       },
       {
+        path: 'system/tenants',
+        loadComponent: () => import('./features/admin/pages/admin-tenants-page/admin-tenants-page.component').then(m => m.AdminTenantsPageComponent)
+      },
+      {
+        path: 'system/plans',
+        loadComponent: () => import('./features/admin/pages/admin-plans-page/admin-plans-page.component').then(m => m.AdminPlansPageComponent)
+      },
+      {
         path: 'system/actions',
         loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
       },
@@ -197,6 +213,14 @@ export const routes: Routes = [
       {
         path: 'system/settings',
         loadComponent: () => import('./features/admin/pages/admin-settings-page/admin-settings-page.component').then(m => m.AdminSettingsPageComponent)
+      },
+      {
+        path: 'billing',
+        loadComponent: () => import('./features/admin/pages/admin-billing-page/admin-billing-page.component').then(m => m.AdminBillingPageComponent)
+      },
+      {
+        path: 'flyer-backgrounds',
+        loadComponent: () => import('./features/admin/pages/admin-flyer-backgrounds-page/admin-flyer-backgrounds-page.component').then(m => m.AdminFlyerBackgroundsPageComponent)
       },
       {
         path: 'audit',

@@ -1,0 +1,109 @@
+<div class="profile-page">
+  <div class="profile-page__header">
+    <h1 class="profile-page__title">{{ 'admin.profile.title' | t }}</h1>
+    <p class="profile-page__subtitle">{{ 'admin.profile.subtitle' | t }}</p>
+  </div>
+
+  <div class="profile-page__content">
+    <!-- Avatar Card -->
+    <div class="profile-card">
+      <div class="profile-card__avatar">
+        @if (user()?.avatarUrl) {
+          <img [src]="user()!.avatarUrl" [alt]="user()!.fullName" class="profile-card__avatar-img" />
+        } @else {
+          <span class="profile-card__avatar-initials">{{ initials() }}</span>
+        }
+      </div>
+      <div class="profile-card__info">
+        <h2 class="profile-card__name">{{ user()?.fullName }}</h2>
+        <span class="profile-card__role">{{ roleLabelKey() | t }}</span>
+        <span class="profile-card__email">{{ user()?.email }}</span>
+      </div>
+    </div>
+
+    <!-- Profile Form -->
+    <div class="profile-form-container">
+      <app-form-shell [titleKey]="'admin.profile.form.title'">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <!-- Full Name -->
+          <div class="form-field">
+            <label class="form-field__label" for="profile-fullName">{{ 'admin.profile.field.fullName' | t }} *</label>
+            <input
+              class="form-field__input"
+              id="profile-fullName"
+              type="text"
+              formControlName="fullName"
+              [placeholder]="'admin.profile.placeholder.fullName' | t" />
+            @if (form.get('fullName')?.hasError('required') && form.get('fullName')?.touched) {
+              <span class="form-field__error">{{ 'common.required' | t }}</span>
+            }
+            @if (form.get('fullName')?.hasError('minlength') && form.get('fullName')?.touched) {
+              <span class="form-field__error">{{ 'admin.profile.error.fullNameMinLength' | t }}</span>
+            }
+          </div>
+
+          <!-- Email (read-only) -->
+          <div class="form-field">
+            <label class="form-field__label" for="profile-email">{{ 'admin.profile.field.email' | t }}</label>
+            <input
+              class="form-field__input form-field__input--disabled"
+              id="profile-email"
+              type="email"
+              formControlName="email" />
+            <span class="form-field__hint">{{ 'admin.profile.hint.emailReadOnly' | t }}</span>
+          </div>
+
+          <!-- Phone -->
+          <div class="form-field">
+            <label class="form-field__label" for="profile-phone">{{ 'admin.profile.field.phone' | t }}</label>
+            <input
+              class="form-field__input"
+              id="profile-phone"
+              type="tel"
+              formControlName="phone"
+              [placeholder]="'admin.profile.placeholder.phone' | t" />
+          </div>
+
+          <!-- Locale -->
+          <div class="form-field">
+            <label class="form-field__label" for="profile-locale">{{ 'admin.profile.field.locale' | t }}</label>
+            <select
+              class="form-field__select"
+              id="profile-locale"
+              formControlName="locale">
+              @for (opt of localeOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+              }
+            </select>
+            <span class="form-field__hint">{{ 'admin.profile.hint.locale' | t }}</span>
+          </div>
+
+          <!-- Date Format -->
+          <div class="form-field">
+            <label class="form-field__label" for="profile-dateFormat">{{ 'admin.profile.field.dateFormat' | t }}</label>
+            <select
+              class="form-field__select"
+              id="profile-dateFormat"
+              formControlName="dateFormat">
+              @for (opt of dateFormatOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+            <span class="form-field__hint">{{ 'admin.profile.hint.dateFormat' | t }}</span>
+          </div>
+
+          <!-- Actions -->
+          <div formActions class="form-actions">
+            <app-async-button
+              type="submit"
+              variant="primary"
+              [disabled]="!canSubmit()"
+              [loading]="saving()">
+              {{ 'common.save' | t }}
+            </app-async-button>
+          </div>
+        </form>
+      </app-form-shell>
+    </div>
+  </div>
+</div>

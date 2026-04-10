@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { StepperComponent, StepperStep } from '../../../../shared/components/stepper/stepper.component';
 import { ParticipantSearchComponent } from '../../../../shared/components/participant-search/participant-search.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { AvailabilitySelectorComponent, AvailabilitySelection } from '../../../../shared/components/availability-selector/availability-selector.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
@@ -18,6 +19,7 @@ import { WizardFacadeService } from './wizard-facade.service';
     StepperComponent,
     ParticipantSearchComponent,
     AsyncButtonComponent,
+    AvailabilitySelectorComponent,
     TranslatePipe,
     FormatDatePipe,
     TutorialModalComponent
@@ -36,6 +38,7 @@ export class RegistrationWizardPageComponent implements OnInit {
   readonly showTutorial = signal(false);
   readonly codeSent = signal(false);
   readonly codeVerified = signal(false);
+  readonly availabilitySelection = signal<AvailabilitySelection | null>(null);
 
   readonly steps = computed<StepperStep[]>(() => {
     const step = this.currentStep();
@@ -66,6 +69,10 @@ export class RegistrationWizardPageComponent implements OnInit {
 
   onStepChanged(step: number): void {
     this.currentStep.set(step);
+  }
+
+  onAvailabilityChanged(selection: AvailabilitySelection): void {
+    this.availabilitySelection.set(selection);
   }
 
   nextStep(): void {

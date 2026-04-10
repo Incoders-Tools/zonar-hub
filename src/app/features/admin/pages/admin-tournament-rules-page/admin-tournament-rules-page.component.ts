@@ -21,6 +21,7 @@ interface TournamentRuleSetRow extends Record<string, unknown> {
   tournamentTypeName: string;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
   createdAt: string;
 }
 
@@ -75,7 +76,7 @@ export class AdminTournamentRulesPageComponent implements OnInit {
 
   readonly columns: DataTableColumn[] = [
     { key: 'tournamentTypeName', labelKey: 'admin.tournament-rules.column.tournamentType', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.tournament-rules.column.status', sortable: true },
+    { key: 'statusLabel', labelKey: 'admin.tournament-rules.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' },
     { key: 'createdAt', labelKey: 'admin.tournament-rules.column.createdAt', sortable: true, renderType: 'date' }
   ];
 
@@ -101,6 +102,7 @@ export class AdminTournamentRulesPageComponent implements OnInit {
       tournamentTypeName: r.tournamentTypeName,
       isActive: r.isActive,
       statusLabel: r.isActive ? 'admin.tournament-rules.status.active' : 'admin.tournament-rules.status.inactive',
+      statusVariant: r.isActive ? 'active' : 'inactive',
       createdAt: r.createdAt
     }))
   );

@@ -103,6 +103,15 @@
     </nav>
 
     <div class="admin-sidebar__footer">
+      <a class="admin-sidebar__user" routerLink="/admin/profile" (click)="mobileSidebarOpen.set(false)">
+        <span class="admin-sidebar__user-avatar">{{ userInitials() }}</span>
+        @if (!sidebarCollapsed()) {
+          <span class="admin-sidebar__user-info">
+            <span class="admin-sidebar__user-name">{{ auth.currentUser()?.fullName }}</span>
+            <span class="admin-sidebar__user-email">{{ auth.currentUser()?.email }}</span>
+          </span>
+        }
+      </a>
       <button class="admin-sidebar__logout" (click)="logout()">
         <span class="admin-sidebar__icon">🚪</span>
         @if (!sidebarCollapsed()) {
@@ -121,4 +130,13 @@
   <main class="admin-main">
     <router-outlet></router-outlet>
   </main>
+
+  <!-- Guided Tour -->
+  @if (showTour()) {
+    <app-guided-tour
+      [steps]="tourSteps"
+      (completed)="onTourCompleted()"
+      (cancelled)="onTourCancelled()">
+    </app-guided-tour>
+  }
 </div>

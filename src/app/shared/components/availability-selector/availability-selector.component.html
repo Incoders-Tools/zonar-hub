@@ -1,0 +1,46 @@
+<div class="availability">
+  <h3 class="availability__title">{{ 'registration.availableDays' | t }}</h3>
+  <p class="availability__desc">{{ 'registration.availabilityDesc' | t }}</p>
+
+  <div class="availability__grid">
+    <!-- Header row -->
+    <div class="availability__header-cell"></div>
+    @for (time of timeSlots; track time.key) {
+      <div class="availability__header-cell">
+        <span class="availability__time-icon">{{ time.icon }}</span>
+        <span class="availability__time-label">{{ time.labelKey | t }}</span>
+      </div>
+    }
+
+    <!-- Day rows -->
+    @for (slot of slots(); track slot.day; let i = $index) {
+      <div class="availability__day-cell">
+        <span class="availability__day-label">{{ slot.dayKey | t }}</span>
+      </div>
+      @for (time of timeSlots; track time.key) {
+        <button
+          type="button"
+          class="availability__toggle"
+          [class.availability__toggle--active]="isSlotActive(i, time.key)"
+          (click)="toggleSlot(i, time.key)"
+          [attr.aria-label]="(slot.dayKey | t) + ' ' + (time.labelKey | t)">
+          @if (isSlotActive(i, time.key)) { ✓ }
+        </button>
+      }
+    }
+  </div>
+
+  @if (showNotes()) {
+    <div class="availability__notes">
+      <label class="availability__notes-label" for="avail-notes">{{ 'registration.notes' | t }}</label>
+      <textarea
+        id="avail-notes"
+        class="availability__notes-input"
+        [formControl]="notesControl"
+        [placeholder]="notesPlaceholderKey() | t"
+        rows="3"
+        (input)="onNotesChange()">
+      </textarea>
+    </div>
+  }
+</div>

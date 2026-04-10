@@ -91,14 +91,12 @@
   }
 
   &__slot {
-    border: 1px solid var(--zh-border-subtle);
-    border-radius: var(--zh-radius-md);
-    padding: var(--zh-space-md);
-    background: var(--zh-surface-default);
     transition: border-color var(--zh-transition-fast);
 
     &--error {
-      border-color: var(--zh-danger);
+      .participant-search {
+        border-color: var(--zh-danger);
+      }
     }
   }
 

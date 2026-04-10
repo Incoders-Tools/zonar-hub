@@ -19,6 +19,7 @@ interface CategoryRow extends Record<string, unknown> {
   isActive: boolean;
   sortOrder: number;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -54,7 +55,7 @@ export class AdminCategoriesPageComponent implements OnInit {
       { key: 'shortName', labelKey: 'categories.column.shortName', sortable: true },
       { key: 'name', labelKey: 'categories.column.name', sortable: true },
       { key: 'level', labelKey: 'categories.column.level', sortable: true },
-      { key: 'statusLabel', labelKey: 'categories.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'categories.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -89,7 +90,8 @@ export class AdminCategoriesPageComponent implements OnInit {
       level: c.level,
       isActive: c.isActive,
       sortOrder: c.sortOrder,
-      statusLabel: c.isActive ? 'categories.status.active' : 'categories.status.inactive'
+      statusLabel: c.isActive ? 'categories.status.active' : 'categories.status.inactive',
+      statusVariant: c.isActive ? 'active' : 'inactive'
     }))
   );
 

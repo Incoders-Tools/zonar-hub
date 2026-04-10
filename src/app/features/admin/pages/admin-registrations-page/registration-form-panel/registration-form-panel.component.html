@@ -61,6 +61,17 @@
         </div>
       </app-collapsible-section>
 
+      <!-- Availability Schedule -->
+      <app-collapsible-section
+        [titleKey]="'registrations.form.availabilitySection'"
+        [initialExpanded]="true">
+        <app-availability-selector
+          [showNotes]="true"
+          [notesPlaceholderKey]="'registration.availability.notesPlaceholder'"
+          (changed)="onAvailabilityChanged($event)">
+        </app-availability-selector>
+      </app-collapsible-section>
+
       <!-- Observations -->
       <div class="registration-form__field">
         <label class="registration-form__label">

@@ -17,6 +17,7 @@ interface GenderRow extends Record<string, unknown> {
   isActive: boolean;
   sortOrder: number;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -50,7 +51,7 @@ export class AdminGendersPageComponent implements OnInit {
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'genders.column.name', sortable: true },
-      { key: 'statusLabel', labelKey: 'genders.column.status', sortable: true }
+      { key: 'statusLabel', labelKey: 'genders.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -84,7 +85,8 @@ export class AdminGendersPageComponent implements OnInit {
       key: g.key,
       isActive: g.isActive,
       sortOrder: g.sortOrder,
-      statusLabel: g.isActive ? 'genders.status.active' : 'genders.status.inactive'
+      statusLabel: g.isActive ? 'genders.status.active' : 'genders.status.inactive',
+      statusVariant: g.isActive ? 'active' : 'inactive'
     }))
   );
 

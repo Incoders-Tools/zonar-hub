@@ -10,6 +10,7 @@ import { CollapsibleSectionComponent } from '../../../../../shared/components/co
 import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../../shared/components/child-collection-grid/child-collection-grid.component';
 import { Tournament } from '../../../../../core/models';
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { DateFormatService } from '../../../../../core/services/date-format.service';
 import { TournamentsFacadeService } from '../tournaments-facade.service';
 import { dateRangeValidator } from '../../../../../shared/validators/date-range.validator';
 
@@ -34,12 +35,14 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   private readonly auth = inject(AuthService);
   readonly facade = inject(TournamentsFacadeService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dateFormatService = inject(DateFormatService);
 
   readonly tournament = input<Tournament | null>(null);
   readonly saving = input(false);
   readonly saved = output<Partial<Tournament>>();
   readonly cancelled = output<void>();
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+  readonly dateFormatPlaceholder = this.dateFormatService.format;
 
   form!: FormGroup;
   isEditing = false;
@@ -62,6 +65,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   readonly showGenderField = signal(true);
   readonly showPointsField = signal(true);
   readonly registrationEnabled = signal(false);
+  readonly derivedSport = signal<{ sportId: string; sportName: string } | null>(null);
 
   // Courts selection
   readonly selectedCourtIds = signal<Set<string>>(new Set());
@@ -155,6 +159,8 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       if (!this.facade.typeScoresPoints(typeId)) {
         this.form.get('pointsToAward')?.setValue('');
       }
+      const sport = typeId ? this.facade.getSportForType(typeId) : null;
+      this.derivedSport.set(sport?.sportId ? sport : null);
     });
 
     // Complex changes: load courts for selected complex
@@ -221,6 +227,9 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       this.showGenderField.set(this.facade.typeAppliesGender(tournament.tournamentTypeId));
       this.showPointsField.set(this.facade.typeScoresPoints(tournament.tournamentTypeId));
       this.updateRegistrationFieldsState();
+
+      const sport = tournament.tournamentTypeId ? this.facade.getSportForType(tournament.tournamentTypeId) : null;
+      this.derivedSport.set(sport?.sportId ? sport : null);
 
       // Load courts and restore selection
       if (tournament.complexId) {

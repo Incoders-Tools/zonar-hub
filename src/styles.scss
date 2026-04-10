@@ -67,3 +67,37 @@ h1, h2, h3, h4, h5, h6, p {
   --on-accent: var(--zh-on-primary);
   --elevation-hero: var(--zh-elevation-hero);
 }
+
+// ── Global select modernization ──
+select {
+  appearance: none;
+  font-family: inherit;
+  font-size: var(--zh-font-size-sm);
+  color: var(--zh-text-primary);
+  background-color: var(--zh-surface-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a6349' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-sm);
+  padding: 0 32px 0 var(--zh-space-sm);
+  height: 40px;
+  cursor: pointer;
+  transition: border-color var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+
+  &:focus {
+    outline: none;
+    border-color: var(--zh-border-focus);
+    box-shadow: 0 0 0 3px var(--zh-primary-soft);
+  }
+
+  &:hover {
+    border-color: var(--zh-border-strong);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

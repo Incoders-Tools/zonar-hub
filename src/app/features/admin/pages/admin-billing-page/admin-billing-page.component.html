@@ -1,0 +1,130 @@
+<div class="billing-page">
+  <div class="billing-page__header">
+    <h1 class="billing-page__title">{{ 'billing.title' | t }}</h1>
+    <p class="billing-page__subtitle">{{ 'billing.subtitle' | t }}</p>
+  </div>
+
+  <!-- Trial Banner -->
+  @if (isTrialActive()) {
+    <div class="billing-page__trial-banner">
+      <div class="billing-page__trial-content">
+        <span class="billing-page__trial-icon">⏳</span>
+        <div>
+          <h3 class="billing-page__trial-title">{{ 'billing.trial.title' | t }}</h3>
+          <p class="billing-page__trial-desc">{{ 'billing.trial.daysLeft' | t }} {{ trialDaysLeft() }} {{ 'billing.trial.days' | t }}</p>
+        </div>
+      </div>
+      <app-async-button variant="primary" (clicked)="showUpgradeDialog.set(true)">
+        {{ 'billing.trial.upgrade' | t }}
+      </app-async-button>
+    </div>
+  }
+
+  <!-- Current Plan Card -->
+  <div class="billing-page__plan-card">
+    <div class="billing-page__plan-header">
+      <h2 class="billing-page__plan-name">{{ 'billing.currentPlan' | t }}</h2>
+      @if (tenantContext.planType(); as plan) {
+        <span class="billing-page__plan-badge" [attr.data-plan]="plan">
+          {{ 'admin.plans.key.' + plan | t }}
+        </span>
+      }
+    </div>
+
+    <div class="billing-page__plan-details">
+      <div class="billing-page__plan-info">
+        <span class="billing-page__plan-label">{{ 'billing.organization' | t }}</span>
+        <span class="billing-page__plan-value">{{ tenantContext.tenantName() }}</span>
+      </div>
+      <div class="billing-page__plan-info">
+        <span class="billing-page__plan-label">{{ 'billing.status' | t }}</span>
+        <span class="billing-page__plan-value billing-page__plan-value--active" [class.billing-page__plan-value--inactive]="!tenantContext.isActive()">
+          {{ (tenantContext.isActive() ? 'admin.plans.status.active' : 'admin.plans.status.inactive') | t }}
+        </span>
+      </div>
+    </div>
+
+    <h3 class="billing-page__features-title">{{ 'billing.includedFeatures' | t }}</h3>
+    <ul class="billing-page__features-list">
+      @for (feature of currentPlanFeatures(); track feature) {
+        <li>✓ {{ feature | t }}</li>
+      }
+    </ul>
+  </div>
+
+  <!-- Upgrade Options -->
+  @if (tenantContext.planType() !== 'enterprise') {
+    <div class="billing-page__upgrade-section">
+      <h2 class="billing-page__upgrade-title">{{ 'billing.upgradeTitle' | t }}</h2>
+      <div class="billing-page__upgrade-grid">
+        @if (tenantContext.planType() === 'starter' || tenantContext.planType() === 'single_use') {
+          <div class="billing-page__upgrade-card">
+            <h3>Pro</h3>
+            <p class="billing-page__upgrade-price">$49<span>/{{ 'billing.perMonth' | t }}</span></p>
+            <ul>
+              <li>{{ 'billing.feature.tournaments20' | t }}</li>
+              <li>{{ 'billing.feature.admins5' | t }}</li>
+              <li>{{ 'billing.feature.drawPlanner' | t }}</li>
+            </ul>
+            <app-async-button
+              variant="primary"
+              [loading]="upgrading()"
+              (clicked)="upgradePlan('pro')">
+              {{ 'billing.upgradeTo' | t }} Pro
+            </app-async-button>
+          </div>
+        }
+        <div class="billing-page__upgrade-card billing-page__upgrade-card--enterprise">
+          <h3>Enterprise</h3>
+          <p class="billing-page__upgrade-price">{{ 'billing.contactSales' | t }}</p>
+          <ul>
+            <li>{{ 'billing.feature.tournamentsUnlimited' | t }}</li>
+            <li>{{ 'billing.feature.dedicatedServer' | t }}</li>
+            <li>{{ 'billing.feature.dedicatedDB' | t }}</li>
+            <li>{{ 'billing.feature.dedicatedAI' | t }}</li>
+          </ul>
+          <app-async-button variant="primary" (clicked)="upgradePlan('enterprise')">
+            {{ 'billing.contactSalesAction' | t }}
+          </app-async-button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Payment Method -->
+  <div class="billing-page__payment-section">
+    <h2 class="billing-page__payment-title">{{ 'billing.paymentMethod' | t }}</h2>
+
+    @if (savedCard(); as card) {
+      <div class="billing-page__card-wrapper">
+        <div class="billing-page__credit-card" [class.billing-page__credit-card--flipped]="cardFlipped()" (click)="toggleCardFlip()">
+          <div class="billing-page__credit-card-front">
+            <span class="billing-page__card-brand">{{ card.brand }}</span>
+            <span class="billing-page__card-number">•••• •••• •••• {{ card.last4 }}</span>
+            <div class="billing-page__card-bottom">
+              <span class="billing-page__card-holder">{{ tenantContext.tenantName() }}</span>
+              <span class="billing-page__card-expiry">{{ card.expMonth }}/{{ card.expYear }}</span>
+            </div>
+          </div>
+          <div class="billing-page__credit-card-back">
+            <div class="billing-page__card-stripe"></div>
+            <span class="billing-page__card-cvv">•••</span>
+          </div>
+        </div>
+        <div class="billing-page__card-actions">
+          <button class="billing-page__card-action" (click)="toggleCardFlip()">
+            {{ 'billing.flipCard' | t }}
+          </button>
+          <button class="billing-page__card-action billing-page__card-action--danger" (click)="removeCard()">
+            {{ 'billing.removeCard' | t }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="billing-page__no-card">
+        <p>{{ 'billing.noPaymentMethod' | t }}</p>
+        <button class="btn btn--primary">{{ 'billing.addCard' | t }}</button>
+      </div>
+    }
+  </div>
+</div>

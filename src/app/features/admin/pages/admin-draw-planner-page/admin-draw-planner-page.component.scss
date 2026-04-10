@@ -1,10 +1,17 @@
 .draw-planner {
   max-width: 1000px;
 
+  &__header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--zh-space-lg);
+  }
+
   h1 {
     font-size: var(--zh-font-size-2xl);
     font-weight: 800;
-    margin: 0 0 var(--zh-space-xl);
+    margin: 0;
   }
 
   // --- Preview Panel ---

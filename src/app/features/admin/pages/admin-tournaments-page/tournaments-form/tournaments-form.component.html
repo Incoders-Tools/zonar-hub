@@ -64,14 +64,31 @@
         }
       </div>
 
+      <!-- Derived Sport (read-only) -->
+      @if (derivedSport()) {
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.sport' | t }}</label>
+          <input
+            type="text"
+            [value]="derivedSport()!.sportName"
+            disabled
+            class="tournaments-form__readonly"
+          />
+          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.sportHint' | t }}</span>
+        </div>
+      }
+
       <!-- Start Date -->
       <div class="tournaments-form__field">
         <label>{{ 'admin.tournaments.form.startDate' | t }} *</label>
         <input
           type="date"
           formControlName="startDate"
+          [placeholder]="dateFormatPlaceholder()"
+          [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('startDate')"
         />
+        <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         @if (isFieldInvalid('startDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('startDate') | t }}</span>
         }
@@ -84,8 +101,11 @@
           type="date"
           formControlName="endDate"
           [min]="endDateMin()"
+          [placeholder]="dateFormatPlaceholder()"
+          [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('endDate')"
         />
+        <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         @if (isFieldInvalid('endDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('endDate') | t }}</span>
         }
@@ -171,10 +191,14 @@
           type="date"
           formControlName="registrationStartDate"
           [max]="regStartMax()"
+          [placeholder]="dateFormatPlaceholder()"
+          [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('registrationStartDate')"
         />
         @if (!registrationEnabled()) {
           <span class="tournaments-form__hint">{{ 'admin.tournaments.form.registrationHint' | t }}</span>
+        } @else {
+          <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         }
         @if (isFieldInvalid('registrationStartDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('registrationStartDate') | t }}</span>
@@ -188,8 +212,11 @@
           formControlName="registrationEndDate"
           [min]="regEndMin()"
           [max]="regEndMax()"
+          [placeholder]="dateFormatPlaceholder()"
+          [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('registrationEndDate')"
         />
+        <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         @if (isFieldInvalid('registrationEndDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('registrationEndDate') | t }}</span>
         }

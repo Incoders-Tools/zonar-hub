@@ -150,7 +150,7 @@
           <li>{{ 'home.pricing.starter.feature3' | t }}</li>
           <li>{{ 'home.pricing.starter.feature4' | t }}</li>
         </ul>
-        <a class="btn btn--outline pricing-card__cta" routerLink="/register">
+        <a class="btn btn--outline pricing-card__cta" routerLink="/register" [queryParams]="{plan: 'starter'}">
           {{ 'home.pricing.cta.starter' | t }}
         </a>
       </div>
@@ -182,7 +182,7 @@
           <li>{{ 'home.pricing.pro.feature5' | t }}</li>
           <li>{{ 'home.pricing.pro.feature6' | t }}</li>
         </ul>
-        <a class="btn btn--primary pricing-card__cta" routerLink="/register">
+        <a class="btn btn--primary pricing-card__cta" routerLink="/register" [queryParams]="{plan: 'pro'}">
           {{ 'home.pricing.cta.pro' | t }}
         </a>
       </div>
@@ -215,9 +215,33 @@
           <li>{{ 'home.pricing.enterprise.feature8' | t }}</li>
           <li>{{ 'home.pricing.enterprise.feature9' | t }}</li>
           <li>{{ 'home.pricing.enterprise.feature10' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature11' | t }}</li>
+          <li>{{ 'home.pricing.enterprise.feature12' | t }}</li>
         </ul>
         <a class="btn btn--outline pricing-card__cta" routerLink="/contact">
           {{ 'home.pricing.cta.enterprise' | t }}
+        </a>
+      </div>
+
+      <!-- Single Use Plan -->
+      <div class="pricing-card pricing-card--single-use">
+        <h3 class="pricing-card__name">{{ 'home.pricing.singleUse.name' | t }}</h3>
+        <div class="pricing-card__price">
+          {{ 'home.pricing.singleUse.price' | t }}
+          <span class="pricing-card__price-desc">{{ 'home.pricing.singleUse.priceDesc' | t }}</span>
+        </div>
+        <div class="pricing-card__scope">
+          <span>{{ 'home.pricing.singleUse.scope1' | t }}</span>
+          <span>{{ 'home.pricing.singleUse.scope2' | t }}</span>
+        </div>
+        <ul class="pricing-card__features">
+          <li>{{ 'home.pricing.singleUse.feature1' | t }}</li>
+          <li>{{ 'home.pricing.singleUse.feature2' | t }}</li>
+          <li>{{ 'home.pricing.singleUse.feature3' | t }}</li>
+          <li>{{ 'home.pricing.singleUse.feature4' | t }}</li>
+        </ul>
+        <a class="btn btn--outline pricing-card__cta" routerLink="/register" [queryParams]="{plan: 'single_use'}">
+          {{ 'home.pricing.cta.singleUse' | t }}
         </a>
       </div>
     </div>

@@ -21,6 +21,7 @@ interface UserRow extends Record<string, unknown> {
   complexName?: string;
   isActive: boolean;
   status: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -73,7 +74,7 @@ export class AdminUsersPageComponent implements OnInit {
     { key: 'fullName', labelKey: 'admin.users.column.name', sortable: true },
     { key: 'roleName', labelKey: 'admin.users.column.role', sortable: true },
     { key: 'complexName', labelKey: 'admin.users.column.complex', sortable: true },
-    { key: 'status', labelKey: 'admin.users.column.status', sortable: true }
+    { key: 'status', labelKey: 'admin.users.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
   readonly rowActions = [
@@ -107,7 +108,8 @@ export class AdminUsersPageComponent implements OnInit {
       roleName: user.roleName,
       complexName: user.complexName,
       isActive: user.isActive,
-      status: user.isActive ? 'Active' : 'Inactive'
+      status: user.isActive ? 'admin.users.status.active' : 'admin.users.status.inactive',
+      statusVariant: user.isActive ? 'active' : 'inactive'
     }))
   );
 

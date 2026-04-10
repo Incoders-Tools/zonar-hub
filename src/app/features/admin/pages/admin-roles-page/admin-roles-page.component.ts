@@ -1,6 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
@@ -26,7 +25,6 @@ interface RoleRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     TranslatePipe,
-    MatIcon,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,

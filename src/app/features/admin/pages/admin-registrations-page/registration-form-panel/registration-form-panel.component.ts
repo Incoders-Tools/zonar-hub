@@ -1,11 +1,13 @@
 import { Component, inject, input, output, signal, computed, OnInit, DestroyRef, effect } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { merge } from 'rxjs';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { ParticipantSearchComponent } from '../../../../../shared/components/participant-search/participant-search.component';
+import { AvailabilitySelectorComponent, AvailabilitySelection } from '../../../../../shared/components/availability-selector/availability-selector.component';
 import { RegistrationStrategyService } from '../../../../../core/services/registration-strategy.service';
 import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
 import { MockEligibilityProfileRepository } from '../../../../../core/repositories/mock/mock-eligibility-profile.repository';
@@ -29,7 +31,8 @@ import { SportParticipantConfig, ParticipantValidationResult } from '../../../..
     FormShellComponent,
     AsyncButtonComponent,
     CollapsibleSectionComponent,
-    ParticipantSearchComponent
+    ParticipantSearchComponent,
+    AvailabilitySelectorComponent
   ],
   templateUrl: './registration-form-panel.component.html',
   styleUrl: './registration-form-panel.component.scss'
@@ -71,6 +74,8 @@ export class RegistrationFormPanelComponent implements OnInit {
   readonly validationErrors = signal<ParticipantValidationResult[]>([]);
   readonly submitted = signal(false);
   readonly loadingTournament = signal(false);
+  readonly formValid = signal(false);
+  readonly availabilitySelection = signal<AvailabilitySelection | null>(null);
 
   readonly isEditing = computed(() => !!this.registration());
 
@@ -93,7 +98,7 @@ export class RegistrationFormPanelComponent implements OnInit {
   });
 
   readonly canSave = computed(() => {
-    return this.form.valid && this.allSlotsFilledAndValid() && !this.saving();
+    return this.formValid() && this.allSlotsFilledAndValid() && !this.saving();
   });
 
   constructor() {
@@ -108,6 +113,12 @@ export class RegistrationFormPanelComponent implements OnInit {
   ngOnInit(): void {
     this.loadTournaments();
     this.loadCategories();
+
+    merge(this.form.statusChanges, this.form.valueChanges)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.formValid.set(this.form.valid);
+      });
 
     this.form.get('tournamentId')!.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -306,6 +317,10 @@ export class RegistrationFormPanelComponent implements OnInit {
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  onAvailabilityChanged(selection: AvailabilitySelection): void {
+    this.availabilitySelection.set(selection);
   }
 
   hasValidationError(slotNumber: number): boolean {

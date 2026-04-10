@@ -20,6 +20,7 @@ interface PlayerRow extends Record<string, unknown> {
   ranking: number | undefined;
   isActive: boolean;
   statusLabel: string;
+  statusVariant: string;
 }
 
 @Component({
@@ -57,7 +58,7 @@ export class AdminPlayersPageComponent implements OnInit {
     { key: 'genderLabel', labelKey: 'admin.players.column.gender', sortable: true },
     { key: 'sportName', labelKey: 'admin.players.column.sport', sortable: true },
     { key: 'ranking', labelKey: 'admin.players.column.ranking', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.players.column.status', sortable: true }
+    { key: 'statusLabel', labelKey: 'admin.players.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
   readonly playerRowActions = [
@@ -110,7 +111,8 @@ export class AdminPlayersPageComponent implements OnInit {
       sportName: p.sportName ?? '',
       ranking: p.ranking,
       isActive: p.isActive,
-      statusLabel: p.isActive ? 'admin.players.status.active' : 'admin.players.status.inactive'
+      statusLabel: p.isActive ? 'admin.players.status.active' : 'admin.players.status.inactive',
+      statusVariant: p.isActive ? 'active' : 'inactive'
     }))
   );
 

@@ -80,7 +80,7 @@
       </div>
     }
 
-    <!-- Step 1: Availability (reactive form) -->
+    <!-- Step 1: Availability (shared component) -->
     @if (currentStep() === 1) {
       <div class="rw-card">
         <div class="rw-card__header">
@@ -89,50 +89,10 @@
         </div>
 
         <div class="rw-card__body">
-          <div class="rw-availability" [formGroup]="availabilityForm">
-            <h3 class="rw-availability__section-title">{{ 'registration.availableDays' | t }}</h3>
-            <div class="rw-availability__days">
-              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availabilityForm.value.friday">
-                <input type="checkbox" formControlName="friday" />
-                <span class="rw-day-toggle__label">{{ 'registration.friday' | t }}</span>
-              </label>
-              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availabilityForm.value.saturday">
-                <input type="checkbox" formControlName="saturday" />
-                <span class="rw-day-toggle__label">{{ 'registration.saturday' | t }}</span>
-              </label>
-              <label class="rw-day-toggle" [class.rw-day-toggle--active]="availabilityForm.value.sunday">
-                <input type="checkbox" formControlName="sunday" />
-                <span class="rw-day-toggle__label">{{ 'registration.sunday' | t }}</span>
-              </label>
-            </div>
-
-            <h3 class="rw-availability__section-title">{{ 'registration.preferredTime' | t }}</h3>
-            <div class="rw-availability__times">
-              <label class="rw-time-option" [class.rw-time-option--active]="availabilityForm.value.preferredTime === 'morning'">
-                <input type="radio" formControlName="preferredTime" value="morning" />
-                <span class="rw-time-option__label">{{ 'registration.morning' | t }}</span>
-              </label>
-              <label class="rw-time-option" [class.rw-time-option--active]="availabilityForm.value.preferredTime === 'afternoon'">
-                <input type="radio" formControlName="preferredTime" value="afternoon" />
-                <span class="rw-time-option__label">{{ 'registration.afternoon' | t }}</span>
-              </label>
-              <label class="rw-time-option" [class.rw-time-option--active]="availabilityForm.value.preferredTime === 'evening'">
-                <input type="radio" formControlName="preferredTime" value="evening" />
-                <span class="rw-time-option__label">{{ 'registration.evening' | t }}</span>
-              </label>
-            </div>
-
-            <div class="rw-field">
-              <label class="rw-field__label" for="wizard-notes">{{ 'registration.notes' | t }}</label>
-              <textarea
-                id="wizard-notes"
-                class="rw-field__textarea"
-                formControlName="notes"
-                [placeholder]="'registration.notesPlaceholder' | t"
-                rows="3">
-              </textarea>
-            </div>
-          </div>
+          <app-availability-selector
+            [value]="availabilitySelection()"
+            (changed)="onAvailabilityChanged($event)">
+          </app-availability-selector>
         </div>
 
         <div class="rw-card__footer">

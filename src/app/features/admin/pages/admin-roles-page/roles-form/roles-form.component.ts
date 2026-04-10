@@ -8,24 +8,16 @@ import {
   OnInit,
   OnDestroy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
   Validators,
-  ReactiveFormsModule,
-  AbstractControl
+  ReactiveFormsModule
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Role, isSystemRole } from '../../../../../core/models';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
+import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -33,17 +25,10 @@ import { takeUntil } from 'rxjs/operators';
   selector: 'app-roles-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCheckboxModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
-    MatIconModule,
     TranslatePipe,
-    AsyncButtonComponent
+    AsyncButtonComponent,
+    FormShellComponent
   ],
   templateUrl: './roles-form.component.html',
   styleUrl: './roles-form.component.scss'

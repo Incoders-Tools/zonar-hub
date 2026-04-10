@@ -49,6 +49,13 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
           @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
             <span class="field__error">{{ 'auth.passwordMinLength' | t }}</span>
           }
+
+          @if (form.get('password')?.value) {
+            <div class="field__password-strength">
+              <div class="field__password-strength-bar" [class]="'field__password-strength-bar--' + getPasswordStrength()"></div>
+              <span class="field__password-strength-label">{{ 'auth.passwordStrength.' + getPasswordStrength() | t }}</span>
+            </div>
+          }
         </div>
 
         <div class="field">
@@ -126,6 +133,19 @@ export class ResetPasswordPageComponent {
 
   toggleConfirm(): void {
     this.showConfirm.update(v => !v);
+  }
+
+  getPasswordStrength(): string {
+    const pwd = this.form.get('password')?.value ?? '';
+    if (pwd.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasLower = /[a-z]/.test(pwd);
+    const hasNumber = /[0-9]/.test(pwd);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+    const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 4 && pwd.length >= 12) return 'strong';
+    if (score >= 3) return 'medium';
+    return 'weak';
   }
 
   async onSubmit(): Promise<void> {

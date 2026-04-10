@@ -1,5 +1,38 @@
 export type UserRole = 'system_admin' | 'admin' | 'player' | 'viewer';
 
+export type PlanType = 'starter' | 'pro' | 'enterprise' | 'single_use';
+
+export interface Tenant {
+  id: string;
+  name: string;
+  key: string;
+  contactEmail: string;
+  contactPhone?: string;
+  planId: string;
+  planType: PlanType;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  key: PlanType;
+  priceMonthly: number | null;
+  priceAnnual: number | null;
+  priceSingleUse: number | null;
+  maxTournaments: number | null;
+  maxAdmins: number;
+  maxComplexes: number;
+  maxCourts: number;
+  features: string[];
+  dedicatedServer: boolean;
+  dedicatedDatabase: boolean;
+  dedicatedAI: boolean;
+  isActive: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -10,6 +43,9 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   avatarUrl?: string;
+  tenantId?: string;
+  locale?: string;
+  dateFormat?: string;
   createdAt: string;
 }
 
@@ -17,6 +53,7 @@ export interface AuthSession {
   user: User;
   token: string;
   expiresAt: string;
+  tenant?: Tenant;
 }
 
 export interface LoginRequest {
