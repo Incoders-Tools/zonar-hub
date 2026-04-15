@@ -10,7 +10,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { Sport } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { SportsFacadeService, SportFilters } from './sports-facade.service';
-import { SportsFormDialogComponent } from './sports-form-dialog/sports-form-dialog.component';
+import { SportsFormPanelComponent } from './sports-form-panel/sports-form-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 
 interface SportRow extends Record<string, unknown> {
@@ -35,7 +35,7 @@ interface SportRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    SportsFormDialogComponent,
+    SportsFormPanelComponent,
     HelpButtonComponent
   ],
   providers: [SportsFacadeService],
@@ -82,10 +82,18 @@ export class AdminSportsPageComponent implements OnInit {
     return base;
   });
 
-  readonly sportRowActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
-  ];
+  readonly sportRowActions = computed(() => {
+    if (this.isSystemAdmin()) {
+      return [
+        { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+        { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
+      ];
+    }
+    return [
+      { icon: 'toggle_on', labelKey: 'admin.sports.action.toggleActive', action: 'toggleActive', variant: 'default' as const },
+      { icon: 'visibility', labelKey: 'common.view', action: 'view', variant: 'primary' as const }
+    ];
+  });
 
   readonly filterFields: FilterField[] = [
     { key: 'name', labelKey: 'admin.sports.filter.name', type: 'text' },
@@ -144,6 +152,10 @@ export class AdminSportsPageComponent implements OnInit {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
+    } else if (event.action === 'toggleActive') {
+      this.toggleSportActive(event.row);
+    } else if (event.action === 'view') {
+      this.openEdit(event.row);
     }
   }
 
@@ -163,6 +175,13 @@ export class AdminSportsPageComponent implements OnInit {
   closeFormPanel(): void {
     this.showFormPanel.set(false);
     this.editingSport.set(null);
+  }
+
+  async toggleSportActive(row: SportRow): Promise<void> {
+    const sport = this.facade.filteredSports().find(s => s.id === row.id);
+    if (sport) {
+      await this.facade.saveSport({ ...sport, isActive: !sport.isActive });
+    }
   }
 
   confirmDelete(row: SportRow): void {

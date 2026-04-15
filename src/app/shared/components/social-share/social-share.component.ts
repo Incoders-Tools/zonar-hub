@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 export interface ShareConfig {
@@ -34,6 +34,14 @@ export interface ShareConfig {
           [attr.aria-label]="'share.facebook' | t">
           📘
         </button>
+        @if (showInstagram()) {
+          <button
+            class="social-share__btn social-share__btn--instagram"
+            (click)="instagramRequested.emit()"
+            [attr.aria-label]="'share.instagram' | t">
+            📸
+          </button>
+        }
         <button
           class="social-share__btn social-share__btn--copy"
           (click)="copyLink()"
@@ -47,7 +55,11 @@ export interface ShareConfig {
 })
 export class SocialShareComponent {
   readonly config = input.required<ShareConfig>();
+  readonly showInstagram = input(false);
   readonly copied = signal(false);
+
+  /** Emitted when the user clicks the Instagram button (opens preview dialog externally) */
+  readonly instagramRequested = output<void>();
 
   shareWhatsApp(): void {
     const c = this.config();

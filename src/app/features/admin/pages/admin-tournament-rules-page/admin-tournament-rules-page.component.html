@@ -67,18 +67,12 @@
               </div>
 
               <!-- Active Status -->
-              <div class="tournament-rules-page__form-field tournament-rules-page__form-field--checkbox">
-                <label>{{ 'admin.tournament-rules.form.isActive' | t }}</label>
-                <div class="tournament-rules-page__checkbox-group">
-                  <input
-                    type="checkbox"
-                    formControlName="isActive"
-                  />
-                  <span>{{ 'admin.tournament-rules.status.active' | t }}</span>
-                  <span class="tournament-rules-page__status-badge" [class.tournament-rules-page__status-badge--active]="form.get('isActive')?.value">
-                    {{ (form.get('isActive')?.value ? 'admin.tournament-rules.status.active' : 'admin.tournament-rules.status.inactive') | t }}
-                  </span>
-                </div>
+              <div class="tournament-rules-page__form-field">
+                <app-active-toggle
+                  [value]="form.get('isActive')!.value"
+                  mode="toggle"
+                  (toggled)="form.get('isActive')!.setValue($event)">
+                </app-active-toggle>
               </div>
 
               <!-- Rules JSON Textarea (full width) -->

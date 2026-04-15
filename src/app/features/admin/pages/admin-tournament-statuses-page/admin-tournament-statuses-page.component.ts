@@ -13,6 +13,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { TournamentStatus } from '../../../../core/models';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentStatusesFacadeService, TournamentStatusFilters } from './tournament-statuses-facade.service';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 
 interface TournamentStatusRow extends Record<string, unknown> {
   id: string;
@@ -38,7 +39,8 @@ interface TournamentStatusRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     CollapsibleSectionComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ActiveToggleComponent
   ],
   providers: [TournamentStatusesFacadeService],
   templateUrl: './admin-tournament-statuses-page.component.html',

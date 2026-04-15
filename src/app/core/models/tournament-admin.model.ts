@@ -3,6 +3,7 @@ export interface TournamentType {
   name: string;
   key: string;
   sportId: string;
+  sportIds?: string[];
   sportName?: string;
   sortOrder: number | null;
   scoresPoints: boolean;

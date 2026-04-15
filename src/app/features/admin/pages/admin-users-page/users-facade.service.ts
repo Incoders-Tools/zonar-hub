@@ -1,6 +1,9 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../../../core/models/admin-user.model';
+import { Tenant } from '../../../../core/models/user.model';
 import { MockAdminUserRepository } from '../../../../core/repositories/mock/mock-admin-user.repository';
+import { MockTenantRepository } from '../../../../core/repositories/mock/mock-tenant.repository';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 export interface UsersFilters {
   search?: string;
@@ -12,8 +15,11 @@ export interface UsersFilters {
 @Injectable()
 export class UsersFacadeService {
   private readonly repository = inject(MockAdminUserRepository);
+  private readonly tenantRepository = inject(MockTenantRepository);
+  private readonly auth = inject(AuthService);
 
   readonly users = signal<AdminUser[]>([]);
+  readonly tenants = signal<Tenant[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saving = signal(false);
@@ -28,6 +34,10 @@ export class UsersFacadeService {
     const appliedFilters = this.filters();
 
     let result = allUsers.filter(user => {
+      // Non-sysadmin users cannot see sysadmin accounts
+      if (!this.auth.isSystemAdmin() && user.role === 'system_admin') {
+        return false;
+      }
       if (appliedFilters.search) {
         const search = appliedFilters.search.toLowerCase();
         const match = user.email.toLowerCase().includes(search) ||
@@ -82,6 +92,8 @@ export class UsersFacadeService {
       this.error.set(null);
       const data = await this.repository.getAll();
       this.users.set(data);
+      const tenants = await this.tenantRepository.getAll();
+      this.tenants.set(tenants);
     } catch (err) {
       this.error.set(err instanceof Error ? err.message : 'Failed to load users');
     } finally {

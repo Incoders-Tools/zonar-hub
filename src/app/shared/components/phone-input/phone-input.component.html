@@ -1,0 +1,25 @@
+<div class="phone-input" [class.phone-input--disabled]="isDisabled()" [class.phone-input--invalid]="showError()">
+  <select
+    class="phone-input__country"
+    [value]="selectedCountry()"
+    (change)="onCountryChange($event)"
+    [disabled]="isDisabled()"
+    [attr.aria-label]="'phone.countryCode' | t">
+    @for (cc of countries; track cc.iso) {
+      <option [value]="cc.dialCode">{{ cc.iso }} {{ cc.dialCode }}</option>
+    }
+  </select>
+  <input
+    class="phone-input__number"
+    type="tel"
+    [value]="phoneNumber()"
+    (input)="onNumberInput($event)"
+    (blur)="onTouched()"
+    [disabled]="isDisabled()"
+    [placeholder]="resolvedPlaceholder()"
+    [attr.aria-label]="'phone.number' | t"
+    autocomplete="tel" />
+</div>
+@if (showError()) {
+  <span class="phone-input__error">{{ 'phone.invalidFormat' | t }}</span>
+}

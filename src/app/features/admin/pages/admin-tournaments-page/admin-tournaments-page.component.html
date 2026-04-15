@@ -55,11 +55,14 @@
 
   <!-- Filter Panel -->
   <app-filter-panel
-    [fields]="filterFields"
+    [fields]="filterFields()"
+    [sortFields]="sortFields"
+    [defaultSortRules]="defaultSortRules"
     [collapsible]="true"
     [defaultCollapsed]="true"
     (filtersApplied)="onFiltersApplied($event)"
-    (filtersCleared)="onFiltersCleared()">
+    (filtersCleared)="onFiltersCleared()"
+    (sortRulesChanged)="onSortRulesChanged($event)">
   </app-filter-panel>
 
   <!-- Data Table -->
@@ -102,4 +105,12 @@
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
   </app-confirm-dialog>
+}
+
+<!-- Social Share Preview -->
+@if (sharePayload()) {
+  <app-social-share-preview
+    [payload]="sharePayload()!"
+    (closed)="closeSharePreview()">
+  </app-social-share-preview>
 }

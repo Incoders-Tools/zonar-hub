@@ -18,6 +18,20 @@
         }
       </div>
 
+      <!-- Tournament Type Field -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.tournamentTypeId' | t }} *</label>
+        <select formControlName="tournamentTypeId" [class.error]="isFieldInvalid('tournamentTypeId')">
+          <option value="">{{ 'admin.tournaments.form.selectType' | t }}</option>
+          @for (option of tournamentTypeOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (isFieldInvalid('tournamentTypeId')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('tournamentTypeId') | t }}</span>
+        }
+      </div>
+
       <!-- Complex Field -->
       <div class="tournaments-form__field">
         <label>{{ 'admin.tournaments.form.complexId' | t }} *</label>
@@ -32,7 +46,7 @@
         }
       </div>
 
-      <!-- Courts from selected complex (shared child-collection-grid) -->
+      <!-- Courts from selected complex (collapsed by default) -->
       @if (form.get('complexId')?.value) {
         <div class="tournaments-form__field tournaments-form__field--full">
           <app-child-collection-grid
@@ -44,25 +58,11 @@
             [titleKey]="'admin.tournaments.courts.title'"
             [emptyMessageKey]="'admin.tournaments.courts.empty'"
             [collapsible]="true"
-            [initialExpanded]="true"
+            [initialExpanded]="false"
             (selectionChanged)="onCourtsSelectionChanged($event)">
           </app-child-collection-grid>
         </div>
       }
-
-      <!-- Tournament Type Field -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.tournamentTypeId' | t }} *</label>
-        <select formControlName="tournamentTypeId" [class.error]="isFieldInvalid('tournamentTypeId')">
-          <option value="">{{ 'admin.tournaments.form.selectType' | t }}</option>
-          @for (option of tournamentTypeOptions(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-        @if (isFieldInvalid('tournamentTypeId')) {
-          <span class="tournaments-form__error">{{ getErrorMessage('tournamentTypeId') | t }}</span>
-        }
-      </div>
 
       <!-- Derived Sport (read-only) -->
       @if (derivedSport()) {
@@ -84,11 +84,11 @@
         <input
           type="date"
           formControlName="startDate"
+          [min]="todayDate()"
           [placeholder]="dateFormatPlaceholder()"
           [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('startDate')"
         />
-        <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         @if (isFieldInvalid('startDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('startDate') | t }}</span>
         }
@@ -105,7 +105,6 @@
           [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('endDate')"
         />
-        <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         @if (isFieldInvalid('endDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('endDate') | t }}</span>
         }
@@ -166,17 +165,12 @@
       </div>
 
       <!-- Active Status -->
-      <div class="tournaments-form__field tournaments-form__field--checkbox">
-        <label>{{ 'admin.tournaments.form.isActive' | t }}</label>
-        <div class="tournaments-form__checkbox-group">
-          <input
-            type="checkbox"
-            formControlName="isActive"
-          />
-          <span class="tournaments-form__active-badge" [class.active]="form.get('isActive')?.value">
-            {{ (form.get('isActive')?.value ? 'admin.tournaments.status.active' : 'admin.tournaments.status.inactive') | t }}
-          </span>
-        </div>
+      <div class="tournaments-form__field">
+        <app-active-toggle
+          [value]="form.get('isActive')!.value"
+          mode="toggle"
+          (toggled)="form.get('isActive')!.setValue($event)">
+        </app-active-toggle>
       </div>
     </div>
 

@@ -10,7 +10,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { ComplexService } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ComplexServicesFacadeService, ComplexServiceFilters } from './complex-services-facade.service';
-import { ComplexServicesFormDialogComponent } from './complex-services-form-dialog/complex-services-form-dialog.component';
+import { ComplexServicesFormPanelComponent } from './complex-services-form-panel/complex-services-form-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 
 interface ComplexServiceRow extends Record<string, unknown> {
@@ -35,7 +35,7 @@ interface ComplexServiceRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    ComplexServicesFormDialogComponent,
+    ComplexServicesFormPanelComponent,
     HelpButtonComponent
   ],
   providers: [ComplexServicesFacadeService],

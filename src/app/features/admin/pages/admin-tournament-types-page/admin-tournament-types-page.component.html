@@ -72,14 +72,27 @@
             </div>
 
             <!-- Active -->
-            <div class="form-field form-field--checkbox">
-              <label>
-                <input type="checkbox" formControlName="isActive">
-                {{ 'admin.tournament-types.form.isActive' | t }}
-              </label>
+            <div class="form-field">
+              <app-active-toggle
+                [value]="form.get('isActive')!.value"
+                mode="toggle"
+                (toggled)="form.get('isActive')!.setValue($event)">
+              </app-active-toggle>
               <span class="hint">{{ 'admin.tournament-types.form.isActiveHint' | t }}</span>
             </div>
           </div>
+
+          <!-- Sports Selection -->
+          <app-child-collection-grid
+            mode="select"
+            [titleKey]="'admin.tournament-types.form.sports'"
+            [columns]="sportColumns"
+            [items]="sportItems()"
+            [selectedIds]="selectedSportIds()"
+            [collapsible]="true"
+            [initialExpanded]="true"
+            (selectionChanged)="onSportSelectionChanged($event)">
+          </app-child-collection-grid>
 
           <!-- Technical Fields (system_admin only) -->
           @if (isSystemAdmin()) {

@@ -64,6 +64,11 @@
       text-align: center;
     }
 
+    &--order {
+      width: 60px;
+      text-align: center;
+    }
+
     &--actions {
       width: 48px;
     }
@@ -109,6 +114,26 @@
       text-align: center;
       width: 48px;
     }
+
+    &--order {
+      text-align: center;
+      width: 60px;
+      font-weight: 600;
+      color: var(--zh-text-secondary);
+    }
+  }
+
+  &__primary-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: var(--zh-radius-full, 999px);
+    background: var(--zh-primary);
+    color: var(--zh-on-primary, #fff);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.4;
   }
 
   &__input,

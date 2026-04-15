@@ -13,8 +13,71 @@
     (stepChanged)="onStepChanged($event)">
   </app-stepper>
 
-  <!-- Step 0: Complex -->
+  <!-- Step 0: Organization -->
   @if (currentStep() === 0) {
+    <div class="onboarding__card">
+      <app-form-shell [titleKey]="'onboarding.step.organization'">
+        <form [formGroup]="orgForm">
+          <div class="form-field">
+            <label class="form-field__label" for="ob-org-name">{{ 'onboarding.organization.displayName' | t }} *</label>
+            <input class="form-field__input" id="ob-org-name" type="text" formControlName="displayName"
+              [placeholder]="'onboarding.organization.displayNamePlaceholder' | t" />
+            @if (orgForm.get('displayName')?.hasError('required') && orgForm.get('displayName')?.touched) {
+              <span class="form-field__error">{{ 'common.required' | t }}</span>
+            }
+            <span class="form-field__hint">{{ 'onboarding.organization.hint' | t }}</span>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="ob-org-description">{{ 'onboarding.organization.description' | t }}</label>
+            <textarea class="form-field__input" id="ob-org-description" formControlName="description" rows="2"
+              [placeholder]="'onboarding.organization.descriptionPlaceholder' | t"></textarea>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="ob-org-type">{{ 'onboarding.organization.type' | t }} *</label>
+            <select class="form-field__select" id="ob-org-type" formControlName="type">
+              @for (opt of orgTypeOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+              }
+            </select>
+          </div>
+        </form>
+      </app-form-shell>
+      <div class="onboarding__actions">
+        <span></span>
+        <app-async-button [disabled]="!canProceed()" (clicked)="nextStep()">
+          {{ 'common.next' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  }
+
+  <!-- Step 1: Company -->
+  @if (currentStep() === 1) {
+    <div class="onboarding__card">
+      <app-form-shell [titleKey]="'onboarding.step.company'">
+        <form [formGroup]="companyForm">
+          <div class="form-field">
+            <label class="form-field__label" for="ob-company-name">{{ 'onboarding.company.name' | t }} *</label>
+            <input class="form-field__input" id="ob-company-name" type="text" formControlName="name"
+              [placeholder]="'onboarding.company.namePlaceholder' | t" />
+            @if (companyForm.get('name')?.hasError('required') && companyForm.get('name')?.touched) {
+              <span class="form-field__error">{{ 'common.required' | t }}</span>
+            }
+            <span class="form-field__hint">{{ 'onboarding.company.hint' | t }}</span>
+          </div>
+        </form>
+      </app-form-shell>
+      <div class="onboarding__actions">
+        <button class="onboarding__back" type="button" (click)="prevStep()">{{ 'common.back' | t }}</button>
+        <app-async-button [disabled]="!canProceed()" (clicked)="nextStep()">
+          {{ 'common.next' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  }
+
+  <!-- Step 2: Complex -->
+  @if (currentStep() === 2) {
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.complex'">
         <form [formGroup]="complexForm">
@@ -38,15 +101,14 @@
                 [placeholder]="'onboarding.complex.cityPlaceholder' | t" />
             </div>
             <div class="form-field">
-              <label class="form-field__label" for="ob-complex-phone">{{ 'onboarding.complex.phone' | t }}</label>
-              <input class="form-field__input" id="ob-complex-phone" type="tel" formControlName="phone"
-                [placeholder]="'onboarding.complex.phonePlaceholder' | t" />
+              <label class="form-field__label">{{ 'onboarding.complex.phone' | t }}</label>
+              <app-phone-input formControlName="phone"></app-phone-input>
             </div>
           </div>
         </form>
       </app-form-shell>
       <div class="onboarding__actions">
-        <span></span>
+        <button class="onboarding__back" type="button" (click)="prevStep()">{{ 'common.back' | t }}</button>
         <app-async-button [disabled]="!canProceed()" (clicked)="nextStep()">
           {{ 'common.next' | t }}
         </app-async-button>
@@ -54,8 +116,8 @@
     </div>
   }
 
-  <!-- Step 1: Courts -->
-  @if (currentStep() === 1) {
+  <!-- Step 3: Courts -->
+  @if (currentStep() === 3) {
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.courts'">
         <form [formGroup]="courtsForm">
@@ -83,18 +145,20 @@
     </div>
   }
 
-  <!-- Step 2: Sport -->
-  @if (currentStep() === 2) {
+  <!-- Step 4: Sport -->
+  @if (currentStep() === 4) {
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.sport'">
         <form [formGroup]="sportForm">
           <div class="form-field">
             <label class="form-field__label">{{ 'onboarding.sport.select' | t }} *</label>
+            <span class="form-field__hint">{{ 'onboarding.sport.multiHint' | t }}</span>
             <div class="onboarding__sport-grid">
               @for (opt of sportOptions; track opt.value) {
                 <label class="onboarding__sport-option"
-                  [class.onboarding__sport-option--active]="sportForm.value.sport === opt.value">
-                  <input type="radio" formControlName="sport" [value]="opt.value" />
+                  [class.onboarding__sport-option--active]="isSportSelected(opt.value)"
+                  (click)="toggleSport(opt.value)">
+                  <input type="checkbox" [checked]="isSportSelected(opt.value)" />
                   <span class="onboarding__sport-label">{{ opt.labelKey | t }}</span>
                 </label>
               }
@@ -111,8 +175,8 @@
     </div>
   }
 
-  <!-- Step 3: Tournament -->
-  @if (currentStep() === 3) {
+  <!-- Step 5: Tournament -->
+  @if (currentStep() === 5) {
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.tournament'">
         <form [formGroup]="tournamentForm">
@@ -132,20 +196,28 @@
             </div>
             <div class="form-field">
               <label class="form-field__label" for="ob-tournament-end">{{ 'onboarding.tournament.endDate' | t }} *</label>
-              <input class="form-field__input" id="ob-tournament-end" type="date" formControlName="endDate" />
+              <input class="form-field__input" id="ob-tournament-end" type="date" formControlName="endDate" [min]="tournamentEndDateMin" />
             </div>
           </div>
+          @if (tournamentForm.hasError('dateRangeInvalid')) {
+            <span class="form-field__error">{{ 'common.dateRangeInvalid' | t }}</span>
+          }
         </form>
       </app-form-shell>
       <div class="onboarding__actions">
         <button class="onboarding__back" type="button" (click)="prevStep()">{{ 'common.back' | t }}</button>
-        <app-async-button
-          variant="primary"
-          [disabled]="!canProceed()"
-          [loading]="saving()"
-          (clicked)="finishSetup()">
-          {{ 'onboarding.finish' | t }}
-        </app-async-button>
+        <div class="onboarding__actions-right">
+          <button class="onboarding__skip-step" type="button" (click)="skipTournamentStep()">
+            {{ 'onboarding.tournament.skip' | t }}
+          </button>
+          <app-async-button
+            variant="primary"
+            [disabled]="!canProceed()"
+            [loading]="saving()"
+            (clicked)="finishSetup()">
+            {{ 'onboarding.finish' | t }}
+          </app-async-button>
+        </div>
       </div>
     </div>
   }

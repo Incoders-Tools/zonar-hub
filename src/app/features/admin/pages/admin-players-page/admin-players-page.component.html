@@ -28,24 +28,42 @@
 
   <!-- Inline Form Panel -->
   @if (showFormPanel()) {
-    <app-player-form-dialog
-      [player]="editingPlayer()"
-      [saving]="facade.saving()"
-      [categories]="facade.categories()"
-      [genders]="facade.genders()"
-      [sports]="facade.sports()"
-      (saved)="closeFormPanel()"
-      (cancelled)="closeFormPanel()">
-    </app-player-form-dialog>
+    <div class="players-page__form-panel" @slideDown #formPanel>
+      <div class="players-page__form-panel-header">
+        <h3 class="players-page__form-panel-title">
+          {{ (editingPlayer() ? 'admin.players.form.editTitle' : 'admin.players.form.createTitle') | t }}
+        </h3>
+        <button
+          class="players-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="players-page__form-panel-body">
+        <app-player-form-panel
+          [player]="editingPlayer()"
+          [saving]="facade.saving()"
+          [categories]="facade.categories()"
+          [genders]="facade.genders()"
+          [sports]="facade.sports()"
+          (saved)="closeFormPanel()"
+          (cancelled)="closeFormPanel()">
+        </app-player-form-panel>
+      </div>
+    </div>
   }
 
   <!-- Filter Panel -->
   <app-filter-panel
     [fields]="filterFields()"
+    [sortFields]="sortFields"
+    [defaultSortRules]="defaultSortRules"
     [collapsible]="true"
     [defaultCollapsed]="true"
     (filtersApplied)="onFiltersApplied($event)"
-    (filtersCleared)="onFiltersCleared()">
+    (filtersCleared)="onFiltersCleared()"
+    (sortRulesChanged)="onSortRulesChanged($event)">
   </app-filter-panel>
 
   <!-- Data Table -->

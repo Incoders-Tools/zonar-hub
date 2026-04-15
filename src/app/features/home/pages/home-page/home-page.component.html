@@ -45,6 +45,21 @@
     </div>
   </section>
 
+  <!-- Multi-Origin / Organization Section -->
+  <section class="section origins-section">
+    <h2 class="section__title">{{ 'home.origins.title' | t }}</h2>
+    <p class="section__subtitle">{{ 'home.origins.subtitle' | t }}</p>
+    <div class="origins-grid">
+      @for (origin of originTypes; track origin.titleKey) {
+        <div class="origin-card">
+          <span class="origin-card__icon">{{ origin.icon }}</span>
+          <h3 class="origin-card__title">{{ origin.titleKey | t }}</h3>
+          <p class="origin-card__description">{{ origin.descriptionKey | t }}</p>
+        </div>
+      }
+    </div>
+  </section>
+
   <!-- Upcoming Tournaments -->
   @if (tournamentService.upcomingTournaments().length > 0) {
     <section class="section tournaments-section">
@@ -273,3 +288,5 @@
     <a class="btn btn--primary btn--lg" routerLink="/register">{{ 'home.cta.action' | t }}</a>
   </section>
 </div>
+
+<app-chatbot-bubble></app-chatbot-bubble>

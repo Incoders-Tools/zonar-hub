@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, playerGuard, guestGuard } from './core/auth/auth.guards';
+import { authGuard, adminGuard, adminOrUserGuard, toolGuard, playerGuard, guestGuard, systemAdminGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
   // ─── Public routes (with public layout) ───
@@ -92,15 +92,16 @@ export const routes: Routes = [
     ]
   },
 
-  // ─── Admin routes (auth required, admin role) ───
+  // ─── Admin routes (auth required, admin/user role + tool permissions) ───
   {
     path: 'admin',
     loadComponent: () => import('./layouts/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
-    canActivate: [authGuard, adminGuard],
+    canActivate: [authGuard, adminOrUserGuard],
     children: [
       {
         path: '',
-        loadComponent: () => import('./features/admin/pages/admin-dashboard-page/admin-dashboard-page.component').then(m => m.AdminDashboardPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-dashboard-page/admin-dashboard-page.component').then(m => m.AdminDashboardPageComponent),
+        data: { toolKey: 'dashboard' }, canActivate: [toolGuard]
       },
       {
         path: 'profile',
@@ -112,15 +113,18 @@ export const routes: Routes = [
       },
       {
         path: 'tournaments',
-        loadComponent: () => import('./features/admin/pages/admin-tournaments-page/admin-tournaments-page.component').then(m => m.AdminTournamentsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournaments-page/admin-tournaments-page.component').then(m => m.AdminTournamentsPageComponent),
+        data: { toolKey: 'tournaments' }, canActivate: [toolGuard]
       },
       {
         path: 'registrations',
-        loadComponent: () => import('./features/admin/pages/admin-registrations-page/admin-registrations-page.component').then(m => m.AdminRegistrationsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-registrations-page/admin-registrations-page.component').then(m => m.AdminRegistrationsPageComponent),
+        data: { toolKey: 'registrations' }, canActivate: [toolGuard]
       },
       {
         path: 'users',
-        loadComponent: () => import('./features/admin/pages/admin-users-page/admin-users-page.component').then(m => m.AdminUsersPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-users-page/admin-users-page.component').then(m => m.AdminUsersPageComponent),
+        data: { toolKey: 'users' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs',
@@ -128,99 +132,128 @@ export const routes: Routes = [
       },
       {
         path: 'complexes',
-        loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent),
+        data: { toolKey: 'complexes' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/complexes',
-        loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent),
+        data: { toolKey: 'complexes' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/categories',
-        loadComponent: () => import('./features/admin/pages/admin-categories-page/admin-categories-page.component').then(m => m.AdminCategoriesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-categories-page/admin-categories-page.component').then(m => m.AdminCategoriesPageComponent),
+        data: { toolKey: 'categories' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/genders',
-        loadComponent: () => import('./features/admin/pages/admin-genders-page/admin-genders-page.component').then(m => m.AdminGendersPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-genders-page/admin-genders-page.component').then(m => m.AdminGendersPageComponent),
+        data: { toolKey: 'genders' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/complex-services',
-        loadComponent: () => import('./features/admin/pages/admin-complex-services-page/admin-complex-services-page.component').then(m => m.AdminComplexServicesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-complex-services-page/admin-complex-services-page.component').then(m => m.AdminComplexServicesPageComponent),
+        data: { toolKey: 'complex-services' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/social-networks',
-        loadComponent: () => import('./features/admin/pages/admin-social-networks-page/admin-social-networks-page.component').then(m => m.AdminSocialNetworksPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-social-networks-page/admin-social-networks-page.component').then(m => m.AdminSocialNetworksPageComponent),
+        data: { toolKey: 'social-networks' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/tournament-statuses',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-statuses-page/admin-tournament-statuses-page.component').then(m => m.AdminTournamentStatusesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournament-statuses-page/admin-tournament-statuses-page.component').then(m => m.AdminTournamentStatusesPageComponent),
+        data: { toolKey: 'tournament-statuses' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/tournament-types',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-types-page/admin-tournament-types-page.component').then(m => m.AdminTournamentTypesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournament-types-page/admin-tournament-types-page.component').then(m => m.AdminTournamentTypesPageComponent),
+        data: { toolKey: 'tournament-types' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/tournament-eligibility-profiles',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-eligibility-profiles-page/admin-tournament-eligibility-profiles-page.component').then(m => m.AdminTournamentEligibilityProfilesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournament-eligibility-profiles-page/admin-tournament-eligibility-profiles-page.component').then(m => m.AdminTournamentEligibilityProfilesPageComponent),
+        data: { toolKey: 'tournament-eligibility-profiles' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/sports',
-        loadComponent: () => import('./features/admin/pages/admin-sports-page/admin-sports-page.component').then(m => m.AdminSportsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-sports-page/admin-sports-page.component').then(m => m.AdminSportsPageComponent),
+        data: { toolKey: 'sports' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/tournament-rules',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-rules-page/admin-tournament-rules-page.component').then(m => m.AdminTournamentRulesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tournament-rules-page/admin-tournament-rules-page.component').then(m => m.AdminTournamentRulesPageComponent),
+        data: { toolKey: 'tournament-rules' }, canActivate: [toolGuard]
       },
       {
         path: 'players',
-        loadComponent: () => import('./features/admin/pages/admin-players-page/admin-players-page.component').then(m => m.AdminPlayersPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-players-page/admin-players-page.component').then(m => m.AdminPlayersPageComponent),
+        data: { toolKey: 'players' }, canActivate: [toolGuard]
       },
       {
         path: 'draw-planner',
-        loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent),
+        data: { toolKey: 'draw-planner' }, canActivate: [toolGuard]
       },
       {
         path: 'system/users',
-        loadComponent: () => import('./features/admin/pages/admin-users-page/admin-users-page.component').then(m => m.AdminUsersPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-users-page/admin-users-page.component').then(m => m.AdminUsersPageComponent),
+        data: { toolKey: 'users' }, canActivate: [toolGuard]
       },
       {
         path: 'system/roles',
-        loadComponent: () => import('./features/admin/pages/admin-roles-page/admin-roles-page.component').then(m => m.AdminRolesPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-roles-page/admin-roles-page.component').then(m => m.AdminRolesPageComponent),
+        data: { toolKey: 'roles' }, canActivate: [toolGuard]
       },
       {
         path: 'system/tenants',
-        loadComponent: () => import('./features/admin/pages/admin-tenants-page/admin-tenants-page.component').then(m => m.AdminTenantsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-tenants-page/admin-tenants-page.component').then(m => m.AdminTenantsPageComponent),
+        data: { toolKey: 'tenants' }, canActivate: [toolGuard]
+      },
+      {
+        path: 'system/organizations',
+        loadComponent: () => import('./features/admin/pages/admin-organizations-page/admin-organizations-page.component').then(m => m.AdminOrganizationsPageComponent),
+        data: { toolKey: 'organizations' }, canActivate: [toolGuard]
       },
       {
         path: 'system/plans',
-        loadComponent: () => import('./features/admin/pages/admin-plans-page/admin-plans-page.component').then(m => m.AdminPlansPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-plans-page/admin-plans-page.component').then(m => m.AdminPlansPageComponent),
+        data: { toolKey: 'plans' }, canActivate: [toolGuard]
       },
       {
         path: 'system/actions',
-        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-catalogs-page/admin-catalogs-page.component').then(m => m.AdminCatalogsPageComponent),
+        data: { toolKey: 'actions' }, canActivate: [toolGuard]
       },
       {
         path: 'system/audit',
-        loadComponent: () => import('./features/admin/pages/admin-audit-page/admin-audit-page.component').then(m => m.AdminAuditPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-audit-page/admin-audit-page.component').then(m => m.AdminAuditPageComponent),
+        data: { toolKey: 'audit' }, canActivate: [toolGuard]
       },
       {
         path: 'system/logs',
-        loadComponent: () => import('./features/admin/pages/admin-app-logs-page/admin-app-logs-page.component').then(m => m.AdminAppLogsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-app-logs-page/admin-app-logs-page.component').then(m => m.AdminAppLogsPageComponent),
+        data: { toolKey: 'app-logs' }, canActivate: [toolGuard]
       },
       {
         path: 'system/security',
-        loadComponent: () => import('./features/admin/pages/admin-security-page/admin-security-page.component').then(m => m.AdminSecurityPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-security-page/admin-security-page.component').then(m => m.AdminSecurityPageComponent),
+        data: { toolKey: 'security' }, canActivate: [toolGuard]
       },
       {
         path: 'system/settings',
-        loadComponent: () => import('./features/admin/pages/admin-settings-page/admin-settings-page.component').then(m => m.AdminSettingsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-settings-page/admin-settings-page.component').then(m => m.AdminSettingsPageComponent),
+        data: { toolKey: 'settings' }, canActivate: [toolGuard]
       },
       {
         path: 'billing',
-        loadComponent: () => import('./features/admin/pages/admin-billing-page/admin-billing-page.component').then(m => m.AdminBillingPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-billing-page/admin-billing-page.component').then(m => m.AdminBillingPageComponent),
+        data: { toolKey: 'billing' }, canActivate: [toolGuard]
       },
       {
         path: 'flyer-backgrounds',
-        loadComponent: () => import('./features/admin/pages/admin-flyer-backgrounds-page/admin-flyer-backgrounds-page.component').then(m => m.AdminFlyerBackgroundsPageComponent)
+        loadComponent: () => import('./features/admin/pages/admin-flyer-backgrounds-page/admin-flyer-backgrounds-page.component').then(m => m.AdminFlyerBackgroundsPageComponent),
+        data: { toolKey: 'flyer-backgrounds' }, canActivate: [toolGuard]
       },
       {
         path: 'audit',

@@ -6,7 +6,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { Tenant } from '../../../../core/models';
 import { TenantFacadeService, TenantFilters } from './tenant-facade.service';
-import { TenantFormDialogComponent } from './tenant-form-dialog/tenant-form-dialog.component';
+import { TenantFormPanelComponent } from './tenant-form-panel/tenant-form-panel.component';
 
 interface TenantRow extends Record<string, unknown> {
   id: string;
@@ -28,7 +28,7 @@ interface TenantRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    TenantFormDialogComponent
+    TenantFormPanelComponent
   ],
   providers: [TenantFacadeService],
   templateUrl: './admin-tenants-page.component.html',
@@ -37,7 +37,7 @@ interface TenantRow extends Record<string, unknown> {
 export class AdminTenantsPageComponent implements OnInit {
   readonly facade = inject(TenantFacadeService);
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingTenant = signal<Tenant | null>(null);
@@ -136,19 +136,19 @@ export class AdminTenantsPageComponent implements OnInit {
 
   openCreate(): void {
     this.editingTenant.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
   }
 
   openEdit(row: TenantRow): void {
     const tenant = this.facade.tenants().find(t => t.id === row.id);
     if (tenant) {
       this.editingTenant.set(tenant);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingTenant.set(null);
   }
 
@@ -160,7 +160,7 @@ export class AdminTenantsPageComponent implements OnInit {
     } else {
       success = await this.facade.createTenant(data as Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>);
     }
-    if (success) this.closeFormDialog();
+    if (success) this.closeFormPanel();
   }
 
   confirmDelete(row: TenantRow): void {

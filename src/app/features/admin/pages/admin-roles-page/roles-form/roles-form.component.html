@@ -60,11 +60,12 @@
     </div>
 
     <!-- Active Toggle -->
-    <div class="form-field form-field--inline">
-      <label class="form-field__toggle">
-        <input type="checkbox" formControlName="isActive" />
-        <span class="form-field__toggle-text">{{ 'admin.roles.field.isActive' | t }}</span>
-      </label>
+    <div class="form-field">
+      <app-active-toggle
+        [value]="form()?.get('isActive')?.value ?? true"
+        mode="toggle"
+        (toggled)="form()?.get('isActive')?.setValue($event)">
+      </app-active-toggle>
       <span class="form-field__hint">{{ 'admin.roles.hint.isActive' | t }}</span>
     </div>
 

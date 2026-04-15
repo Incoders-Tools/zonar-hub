@@ -1,11 +1,12 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { GenderFacadeService, GenderFilters } from './gender-facade.service';
-import { GenderFormDialogComponent } from './gender-form-dialog/gender-form-dialog.component';
+import { GenderFormPanelComponent } from './gender-form-panel/gender-form-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Gender } from '../../../../core/models';
@@ -29,19 +30,31 @@ interface GenderRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    GenderFormDialogComponent,
+    GenderFormPanelComponent,
     HelpButtonComponent
   ],
   providers: [GenderFacadeService],
   templateUrl: './admin-genders-page.component.html',
-  styleUrl: './admin-genders-page.component.scss'
+  styleUrl: './admin-genders-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminGendersPageComponent implements OnInit {
   readonly facade = inject(GenderFacadeService);
   private readonly auth = inject(AuthService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingGender = signal<Gender | null>(null);
@@ -124,19 +137,19 @@ export class AdminGendersPageComponent implements OnInit {
 
   openCreate(): void {
     this.editingGender.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
   }
 
   openEdit(row: GenderRow): void {
     const gender = this.facade.filteredGenders().find(g => g.id === row.id);
     if (gender) {
       this.editingGender.set(gender);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingGender.set(null);
   }
 

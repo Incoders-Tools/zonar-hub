@@ -4,6 +4,8 @@
 
 export interface Tournament {
   id: string;
+  organizationId?: string;
+  organizationName?: string;
   name: string;
   complexId: string;
   complexName: string;

@@ -139,7 +139,7 @@
   margin-top: var(--zh-space-3xl);
 
   &__title {
-    margin: 0 0 var(--zh-space-sm);
+    margin: 0 0 var(--zh-space-md);
     font-size: var(--zh-font-size-xl);
     font-weight: 700;
     color: var(--zh-text-primary);
@@ -147,7 +147,7 @@
   }
 
   &__subtitle {
-    margin: 0 0 var(--zh-space-lg);
+    margin: 0 0 var(--zh-space-xl);
     text-align: center;
     color: var(--zh-text-secondary);
     font-size: var(--zh-font-size-md);
@@ -223,6 +223,46 @@
   }
 }
 
+// ---- Origins / Multi-Origin Grid ----
+.origins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--zh-space-md);
+}
+
+.origin-card {
+  padding: var(--zh-space-lg);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-lg);
+  background: var(--zh-surface-card);
+  transition: box-shadow var(--zh-transition-fast), transform var(--zh-transition-fast);
+
+  &:hover {
+    box-shadow: var(--zh-elevation-md);
+    transform: translateY(-2px);
+  }
+
+  &__icon {
+    display: inline-flex;
+    font-size: 1.75rem;
+    margin-bottom: var(--zh-space-sm);
+  }
+
+  &__title {
+    margin: 0 0 var(--zh-space-xs);
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--zh-text-secondary);
+    line-height: 1.5;
+    font-size: var(--zh-font-size-sm);
+  }
+}
+
 // ---- Card Grid (tournaments, news) ----
 .card-grid {
   display: grid;
@@ -252,6 +292,26 @@
     border-radius: var(--zh-radius-sm);
     background: var(--zh-surface-muted);
     margin-bottom: var(--zh-space-sm);
+
+    &[data-status="ts1"] {
+      background: var(--zh-info-soft, rgba(59, 130, 246, 0.12));
+      color: var(--zh-info, #3b82f6);
+    }
+
+    &[data-status="ts2"] {
+      background: var(--zh-success-soft, rgba(34, 197, 94, 0.12));
+      color: var(--zh-success, #16a34a);
+    }
+
+    &[data-status="ts3"] {
+      background: var(--zh-warning-soft, rgba(245, 158, 11, 0.12));
+      color: var(--zh-warning, #d97706);
+    }
+
+    &[data-status="ts4"] {
+      background: var(--zh-surface-muted);
+      color: var(--zh-text-muted);
+    }
   }
 
   &__name {

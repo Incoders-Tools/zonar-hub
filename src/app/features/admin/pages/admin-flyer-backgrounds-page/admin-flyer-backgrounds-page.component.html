@@ -1,30 +1,57 @@
 <div class="flyer-backgrounds">
+  <!-- Page Header -->
   <div class="flyer-backgrounds__header">
-    <div>
-      <h1 class="flyer-backgrounds__title">{{ 'flyers.title' | t }}</h1>
-      <p class="flyer-backgrounds__subtitle">{{ 'flyers.subtitle' | t }}</p>
+    <div class="flyer-backgrounds__title-row">
+      <div>
+        <h1 class="flyer-backgrounds__title">{{ 'flyers.title' | t }}</h1>
+        <p class="flyer-backgrounds__subtitle">{{ 'flyers.subtitle' | t }}</p>
+      </div>
+      <div class="flyer-backgrounds__header-actions">
+        <app-help-button
+          [titleKey]="'flyers.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+        @if (!showForm()) {
+          <app-async-button [loading]="false" (clicked)="openCreate()">
+            {{ 'flyers.addBackground' | t }}
+          </app-async-button>
+        }
+      </div>
     </div>
-    <button class="btn btn--primary" (click)="openCreate()">
-      {{ 'flyers.addBackground' | t }}
-    </button>
   </div>
 
+  <!-- Inline form panel -->
   @if (showForm()) {
-    <div class="flyer-backgrounds__form-panel">
-      <app-form-shell
-        [titleKey]="editing() ? 'flyers.form.editTitle' : 'flyers.form.createTitle'"
-        [descriptionKey]="'flyers.form.description'">
-        <form [formGroup]="form" class="flyer-backgrounds__form">
-          <div class="flyer-backgrounds__form-grid">
-            <div class="flyer-backgrounds__field">
+    <div class="flyer-backgrounds__form-panel" @slideDown>
+      <div class="flyer-backgrounds__form-panel-header">
+        <h3 class="flyer-backgrounds__form-panel-title">
+          {{ (editing() ? 'flyers.form.editTitle' : 'flyers.form.createTitle') | t }}
+        </h3>
+        <button
+          class="flyer-backgrounds__form-panel-close"
+          (click)="cancelForm()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <app-form-shell [descriptionKey]="'flyers.form.description'">
+        <form [formGroup]="form">
+          <div class="form-grid">
+            <div class="form-field">
               <label>{{ 'flyers.form.name' | t }} *</label>
-              <input type="text" formControlName="name" />
+              <input type="text" formControlName="name" matInput />
+              @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                <span class="error-message">{{ 'common.required' | t }}</span>
+              }
             </div>
-            <div class="flyer-backgrounds__field">
+            <div class="form-field">
               <label>{{ 'flyers.form.imageUrl' | t }} *</label>
-              <input type="text" formControlName="imageUrl" />
+              <input type="text" formControlName="imageUrl" matInput />
+              @if (form.get('imageUrl')?.invalid && form.get('imageUrl')?.touched) {
+                <span class="error-message">{{ 'common.required' | t }}</span>
+              }
             </div>
-            <div class="flyer-backgrounds__field">
+            <div class="form-field">
               <label>{{ 'flyers.form.category' | t }}</label>
               <select formControlName="category">
                 @for (opt of categoryOptions; track opt.value) {
@@ -32,19 +59,20 @@
                 }
               </select>
             </div>
-            <div class="flyer-backgrounds__field">
+            <div class="form-field">
               <label>{{ 'flyers.form.sortOrder' | t }}</label>
-              <input type="number" formControlName="sortOrder" min="0" />
+              <input type="number" formControlName="sortOrder" min="0" matInput />
             </div>
-            <div class="flyer-backgrounds__field flyer-backgrounds__field--checkbox">
-              <label>
-                <input type="checkbox" formControlName="isActive" />
-                {{ 'flyers.form.isActive' | t }}
-              </label>
+            <div class="form-field">
+              <app-active-toggle
+                [value]="form.value.isActive ?? true"
+                [mode]="'toggle'"
+                (toggled)="form.patchValue({ isActive: $event })">
+              </app-active-toggle>
             </div>
           </div>
-          <div class="flyer-backgrounds__form-actions">
-            <button type="button" (click)="cancelForm()" class="btn btn--secondary">
+          <div formActions class="form-actions">
+            <button type="button" (click)="cancelForm()" class="btn-cancel">
               {{ 'common.cancel' | t }}
             </button>
             <app-async-button
@@ -59,34 +87,25 @@
     </div>
   }
 
-  @if (backgrounds().length === 0) {
-    <div class="flyer-backgrounds__empty">
-      {{ 'flyers.empty' | t }}
-    </div>
-  } @else {
-    <div class="flyer-backgrounds__grid">
-      @for (bg of backgrounds(); track bg.id) {
-        <div class="flyer-backgrounds__card" [class.flyer-backgrounds__card--inactive]="!bg.isActive">
-          <div class="flyer-backgrounds__preview"
-               [style.backgroundImage]="'url(' + bg.thumbnailUrl + ')'"
-               [style.backgroundColor]="'var(--zh-surface-card)'">
-            <span class="flyer-backgrounds__category-badge">{{ 'flyers.category.' + bg.category | t }}</span>
-          </div>
-          <div class="flyer-backgrounds__info">
-            <h3>{{ bg.name }}</h3>
-            <span class="flyer-backgrounds__key">{{ bg.key }}</span>
-            <span class="flyer-backgrounds__status" [class.active]="bg.isActive">
-              {{ (bg.isActive ? 'common.active' : 'common.inactive') | t }}
-            </span>
-          </div>
-          <div class="flyer-backgrounds__actions">
-            <button (click)="openEdit(bg)" class="flyer-backgrounds__action-btn">✏️</button>
-            <button (click)="requestDelete(bg.id)" class="flyer-backgrounds__action-btn flyer-backgrounds__action-btn--danger">🗑️</button>
-          </div>
-        </div>
-      }
-    </div>
-  }
+  <!-- Filter panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data table -->
+  <app-data-table
+    [columns]="columns()"
+    [data]="tableData()"
+    [loading]="false"
+    [error]="false"
+    [paginated]="true"
+    [pageSize]="25"
+    [rowActions]="rowActions"
+    (rowAction)="onRowAction($event)">
+  </app-data-table>
 </div>
 
 @if (confirmDeleteId()) {

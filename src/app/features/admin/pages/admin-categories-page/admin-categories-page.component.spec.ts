@@ -48,7 +48,7 @@ describe('AdminCategoriesPageComponent', () => {
 
   it('should open create dialog', () => {
     component.openCreate();
-    expect(component.showFormDialog()).toBe(true);
+    expect(component.showFormPanel()).toBe(true);
     expect(component.editingCategory()).toBeNull();
   });
 

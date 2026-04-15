@@ -26,6 +26,29 @@
     </div>
   </div>
 
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="genders-page__form-panel" @slideDown>
+      <div class="genders-page__form-panel-header">
+        <h3 class="genders-page__form-panel-title">
+          {{ (editingGender() ? 'genders.form.editTitle' : 'genders.form.createTitle') | t }}
+        </h3>
+        <button
+          class="genders-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          ✕
+        </button>
+      </div>
+      <app-gender-form-panel
+        [gender]="editingGender()"
+        [saving]="facade.saving()"
+        (saved)="closeFormPanel()"
+        (cancelled)="closeFormPanel()">
+      </app-gender-form-panel>
+    </div>
+  }
+
   <!-- Filter Panel -->
   <app-filter-panel
     [fields]="filterFields"
@@ -50,16 +73,6 @@
     (rowAction)="onRowActionClicked($event)">
   </app-data-table>
 </div>
-
-<!-- Gender Form Dialog -->
-@if (showFormDialog()) {
-  <app-gender-form-dialog
-    [gender]="editingGender()"
-    [saving]="facade.saving()"
-    (saved)="closeFormDialog()"
-    (cancelled)="closeFormDialog()">
-  </app-gender-form-dialog>
-}
 
 <!-- Delete Confirmation Dialog -->
 @if (showDeleteDialog()) {

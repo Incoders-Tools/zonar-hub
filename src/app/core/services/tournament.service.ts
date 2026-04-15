@@ -38,7 +38,7 @@ export class TournamentService {
   }
 
   isRegistrationOpen(tournament: Tournament): boolean {
-    const now = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString().slice(0, 10);
     return now >= tournament.registrationStartDate && now <= tournament.registrationEndDate;
   }
 

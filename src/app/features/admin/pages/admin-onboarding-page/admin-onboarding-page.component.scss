@@ -1,5 +1,5 @@
 .onboarding {
-  max-width: 720px;
+  max-width: 860px;
   margin: 0 auto;
   padding: var(--zh-space-xl) var(--zh-space-md);
 
@@ -56,6 +56,26 @@
     border-top: 1px solid var(--zh-border-subtle);
   }
 
+  &__actions-right {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-md);
+  }
+
+  &__skip-step {
+    background: none;
+    border: none;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: var(--zh-space-xs);
+
+    &:hover {
+      color: var(--zh-text-secondary);
+    }
+  }
+
   &__back {
     background: none;
     border: 1px solid var(--zh-border-default);
@@ -87,7 +107,8 @@
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
 
-    input[type='radio'] {
+    input[type='radio'],
+    input[type='checkbox'] {
       display: none;
     }
 

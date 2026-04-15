@@ -13,6 +13,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { TournamentType } from '../../../../core/models';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentTypesFacadeService, TournamentTypeFilters } from './tournament-types-facade.service';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
+import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../shared/components/child-collection-grid/child-collection-grid.component';
 
 interface TournamentTypeRow extends Record<string, unknown> {
   id: string;
@@ -41,7 +43,9 @@ interface TournamentTypeRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     CollapsibleSectionComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ActiveToggleComponent,
+    ChildCollectionGridComponent
   ],
   providers: [TournamentTypesFacadeService],
   templateUrl: './admin-tournament-types-page.component.html',
@@ -76,11 +80,22 @@ export class AdminTournamentTypesPageComponent implements OnInit {
   isEditing = false;
   submitted = false;
 
+  readonly selectedSportIds = signal<Set<string>>(new Set());
+
+  readonly sportColumns: ChildGridColumn[] = [
+    { key: 'name', labelKey: 'admin.sports.column.name', type: 'display' },
+    { key: 'icon', labelKey: 'admin.sports.column.icon', type: 'display' }
+  ];
+
+  readonly sportItems = computed(() =>
+    this.facade.sports().filter(s => s.isActive)
+  );
+
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.tournament-types.column.name', sortable: true },
-      { key: 'scoresPointsLabel', labelKey: 'admin.tournament-types.column.scoresPoints', sortable: false },
-      { key: 'appliesGenderLabel', labelKey: 'admin.tournament-types.column.appliesGender', sortable: false },
+      { key: 'scoresPointsLabel', labelKey: 'admin.tournament-types.column.scoresPoints', sortable: false, translate: true },
+      { key: 'appliesGenderLabel', labelKey: 'admin.tournament-types.column.appliesGender', sortable: false, translate: true },
       { key: 'statusLabel', labelKey: 'admin.tournament-types.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {
@@ -165,10 +180,13 @@ export class AdminTournamentTypesPageComponent implements OnInit {
         isActive: type.isActive
       });
       this.form.get('key')?.disable();
+      // Load sport selections
+      this.selectedSportIds.set(new Set(type.sportIds ?? (type.sportId ? [type.sportId] : [])));
     } else {
       this.isEditing = false;
       this.form.reset({ name: '', key: '', sortOrder: this.facade.getNextSortOrder(), scoresPoints: false, appliesGender: false, isActive: true });
       this.form.get('key')?.enable();
+      this.selectedSportIds.set(new Set());
     }
     this.submitted = false;
   }
@@ -235,8 +253,8 @@ export class AdminTournamentTypesPageComponent implements OnInit {
     }
 
     const payload = this.isEditing
-      ? { ...this.editingType(), ...formValue }
-      : formValue;
+      ? { ...this.editingType(), ...formValue, sportIds: [...this.selectedSportIds()] }
+      : { ...formValue, sportIds: [...this.selectedSportIds()] };
 
     const success = await this.facade.saveType(payload);
     if (success) {
@@ -295,5 +313,9 @@ export class AdminTournamentTypesPageComponent implements OnInit {
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
     this.facade.applySortOption(`${event.key}_${event.direction}`);
+  }
+
+  onSportSelectionChanged(ids: Set<string>): void {
+    this.selectedSportIds.set(ids);
   }
 }

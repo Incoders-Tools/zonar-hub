@@ -1,0 +1,118 @@
+<div class="form-overlay" (click)="onCancel()" role="dialog" [attr.aria-label]="titleKey() | t">
+  <div class="form-panel" (click)="$event.stopPropagation()">
+    <app-form-shell [titleKey]="titleKey()">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Name -->
+        <div class="form-field">
+          <label class="form-field__label" for="plan-name">{{ 'admin.plans.field.name' | t }} *</label>
+          <input
+            class="form-field__input"
+            id="plan-name"
+            type="text"
+            formControlName="name"
+            [placeholder]="'admin.plans.placeholder.name' | t" />
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <span class="form-field__error">{{ 'common.required' | t }}</span>
+          }
+        </div>
+
+        <!-- Key -->
+        <div class="form-field">
+          <label class="form-field__label" for="plan-key">{{ 'admin.plans.field.key' | t }} *</label>
+          <select
+            class="form-field__select"
+            id="plan-key"
+            formControlName="key">
+            @for (opt of keyOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Pricing -->
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-field__label" for="plan-priceMonthly">{{ 'admin.plans.field.priceMonthly' | t }}</label>
+            <input class="form-field__input" id="plan-priceMonthly" type="number" formControlName="priceMonthly" min="0" />
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="plan-priceAnnual">{{ 'admin.plans.field.priceAnnual' | t }}</label>
+            <input class="form-field__input" id="plan-priceAnnual" type="number" formControlName="priceAnnual" min="0" />
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="plan-priceSingleUse">{{ 'admin.plans.field.priceSingleUse' | t }}</label>
+            <input class="form-field__input" id="plan-priceSingleUse" type="number" formControlName="priceSingleUse" min="0" />
+            <span class="form-field__hint">{{ 'admin.plans.hint.singleUse' | t }}</span>
+          </div>
+        </div>
+
+        <!-- Limits -->
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-field__label" for="plan-maxTournaments">{{ 'admin.plans.field.maxTournaments' | t }}</label>
+            <input class="form-field__input" id="plan-maxTournaments" type="number" formControlName="maxTournaments" min="0" />
+            <span class="form-field__hint">{{ 'admin.plans.hint.nullUnlimited' | t }}</span>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="plan-maxAdmins">{{ 'admin.plans.field.maxAdmins' | t }} *</label>
+            <input class="form-field__input" id="plan-maxAdmins" type="number" formControlName="maxAdmins" min="1" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-field__label" for="plan-maxComplexes">{{ 'admin.plans.field.maxComplexes' | t }} *</label>
+            <input class="form-field__input" id="plan-maxComplexes" type="number" formControlName="maxComplexes" min="1" />
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="plan-maxCourts">{{ 'admin.plans.field.maxCourts' | t }} *</label>
+            <input class="form-field__input" id="plan-maxCourts" type="number" formControlName="maxCourts" min="1" />
+          </div>
+        </div>
+
+        <!-- Dedicated toggles -->
+        <div class="form-field form-field--inline">
+          <label class="form-field__toggle">
+            <input type="checkbox" formControlName="dedicatedServer" />
+            <span class="form-field__toggle-text">{{ 'admin.plans.field.dedicatedServer' | t }}</span>
+          </label>
+        </div>
+        <div class="form-field form-field--inline">
+          <label class="form-field__toggle">
+            <input type="checkbox" formControlName="dedicatedDatabase" />
+            <span class="form-field__toggle-text">{{ 'admin.plans.field.dedicatedDatabase' | t }}</span>
+          </label>
+        </div>
+        <div class="form-field form-field--inline">
+          <label class="form-field__toggle">
+            <input type="checkbox" formControlName="dedicatedAI" />
+            <span class="form-field__toggle-text">{{ 'admin.plans.field.dedicatedAI' | t }}</span>
+          </label>
+        </div>
+
+        <!-- Active -->
+        <div class="form-field">
+          <app-active-toggle
+            [value]="form.get('isActive')!.value"
+            mode="toggle"
+            (toggled)="form.get('isActive')!.setValue($event)">
+          </app-active-toggle>
+        </div>
+
+        <!-- Actions -->
+        <div formActions class="form-actions">
+          <button type="button" class="form-actions__cancel" (click)="onCancel()">
+            {{ 'common.cancel' | t }}
+          </button>
+          <app-async-button
+            type="submit"
+            variant="primary"
+            [disabled]="!canSubmit()"
+            [loading]="saving()">
+            {{ (isEditing() ? 'common.save' : 'common.create') | t }}
+          </app-async-button>
+        </div>
+      </form>
+    </app-form-shell>
+  </div>
+</div>

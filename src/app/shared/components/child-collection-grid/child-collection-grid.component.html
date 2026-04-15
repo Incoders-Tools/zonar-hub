@@ -27,6 +27,63 @@
           {{ deselectAllLabelKey() | t }}
         </button>
       </div>
+
+      <!-- Reorderable selected items -->
+      @if (reorderable() && orderedSelectedItems().length > 0) {
+        <div class="child-grid__table-wrapper"
+             cdkDropList
+             [cdkDropListDisabled]="disabled()"
+             (cdkDropListDropped)="onSelectDrop($event)">
+          <table class="child-grid__table">
+            <thead>
+              <tr>
+                <th class="child-grid__th child-grid__th--drag"></th>
+                <th class="child-grid__th child-grid__th--order">#</th>
+                @for (col of columns(); track col.key) {
+                  <th class="child-grid__th" [style.width]="col.width || 'auto'">{{ col.labelKey | t }}</th>
+                }
+                <th class="child-grid__th child-grid__th--actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of orderedSelectedItems(); track getItemId(item); let i = $index) {
+                <tr class="child-grid__row child-grid__row--selected" cdkDrag>
+                  <td class="child-grid__td child-grid__td--drag" cdkDragHandle>
+                    <mat-icon class="child-grid__drag-handle">drag_indicator</mat-icon>
+                  </td>
+                  <td class="child-grid__td child-grid__td--order">
+                    @if (i === 0) {
+                      <span class="child-grid__primary-pill">{{ 'childGrid.primary' | t }}</span>
+                    } @else {
+                      {{ i + 1 }}
+                    }
+                  </td>
+                  @for (col of columns(); track col.key) {
+                    <td class="child-grid__td">
+                      @if (col.type === 'checkbox') {
+                        {{ getCellValue(item, col) ? '✓' : '✗' }}
+                      } @else {
+                        {{ getCellValue(item, col) }}
+                      }
+                    </td>
+                  }
+                  <td class="child-grid__td child-grid__td--actions">
+                    <button type="button"
+                      class="child-grid__btn-remove"
+                      [disabled]="disabled()"
+                      (click)="toggleItem(item)"
+                      [title]="removeLabelKey() | t">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- Unselected items for picking -->
       <table class="child-grid__table">
         <thead>
           <tr>
@@ -38,26 +95,27 @@
         </thead>
         <tbody>
           @for (item of items(); track getItemId(item)) {
-            <tr class="child-grid__row"
-                [class.child-grid__row--selected]="isItemSelected(item)"
-                (click)="toggleItem(item)">
-              <td class="child-grid__td child-grid__td--checkbox">
-                <input type="checkbox"
-                  [checked]="isItemSelected(item)"
-                  [disabled]="disabled()"
-                  (click)="$event.stopPropagation()"
-                  (change)="toggleItem(item)">
-              </td>
-              @for (col of columns(); track col.key) {
-                <td class="child-grid__td">
-                  @if (col.type === 'checkbox') {
-                    {{ getCellValue(item, col) ? '✓' : '✗' }}
-                  } @else {
-                    {{ getCellValue(item, col) }}
-                  }
+            @if (!isItemSelected(item)) {
+              <tr class="child-grid__row"
+                  (click)="toggleItem(item)">
+                <td class="child-grid__td child-grid__td--checkbox">
+                  <input type="checkbox"
+                    [checked]="false"
+                    [disabled]="disabled()"
+                    (click)="$event.stopPropagation()"
+                    (change)="toggleItem(item)">
                 </td>
-              }
-            </tr>
+                @for (col of columns(); track col.key) {
+                  <td class="child-grid__td">
+                    @if (col.type === 'checkbox') {
+                      {{ getCellValue(item, col) ? '✓' : '✗' }}
+                    } @else {
+                      {{ getCellValue(item, col) }}
+                    }
+                  </td>
+                }
+              </tr>
+            }
           }
         </tbody>
       </table>

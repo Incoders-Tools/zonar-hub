@@ -1,5 +1,7 @@
 export interface Complex {
   id: string;
+  organizationId?: string;
+  organizationName?: string;
   name: string;
   key: string;
   address: string;

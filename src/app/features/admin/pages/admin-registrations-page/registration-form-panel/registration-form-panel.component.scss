@@ -134,6 +134,49 @@
       background: var(--zh-surface-hover);
     }
   }
+  // ── Tournament details card ──
+  &__tournament-card {
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-elevated);
+    overflow: hidden;
+  }
+
+  &__tournament-card-title {
+    margin: 0;
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+    background: var(--zh-surface-muted);
+    border-bottom: 1px solid var(--zh-border-subtle);
+  }
+
+  &__tournament-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-md);
+  }
+
+  &__tournament-card-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--zh-space-sm);
+  }
+
+  &__tournament-card-label {
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+    min-width: 120px;
+    flex-shrink: 0;
+  }
+
+  &__tournament-card-value {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
+  }
 }
 
 @keyframes registration-spin {

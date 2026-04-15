@@ -20,6 +20,7 @@ import { AsyncButtonComponent } from '../../../../../shared/components/async-but
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 
 @Component({
   selector: 'app-roles-form',
@@ -28,7 +29,8 @@ import { takeUntil } from 'rxjs/operators';
     ReactiveFormsModule,
     TranslatePipe,
     AsyncButtonComponent,
-    FormShellComponent
+    FormShellComponent,
+    ActiveToggleComponent
   ],
   templateUrl: './roles-form.component.html',
   styleUrl: './roles-form.component.scss'

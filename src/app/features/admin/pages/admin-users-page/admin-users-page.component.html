@@ -67,8 +67,7 @@
             <!-- Phone -->
             <div class="form-field">
               <label>{{ 'admin.users.form.phone' | t }}</label>
-              <input type="tel" formControlName="phone"
-                [placeholder]="'admin.users.form.phonePlaceholder' | t">
+              <app-phone-input formControlName="phone"></app-phone-input>
             </div>
 
             <!-- Role -->
@@ -76,21 +75,50 @@
               <label>{{ 'admin.users.form.role' | t }}</label>
               <select formControlName="roleId">
                 <option value="">{{ 'admin.users.form.selectRole' | t }}</option>
-                <option value="role001">{{ 'admin.users.role.systemAdmin' | t }}</option>
+                @if (isSystemAdmin()) {
+                  <option value="role001">{{ 'admin.users.role.systemAdmin' | t }}</option>
+                }
                 <option value="role002">{{ 'admin.users.role.admin' | t }}</option>
                 <option value="role003">{{ 'admin.users.role.viewer' | t }}</option>
               </select>
             </div>
 
             <!-- Active -->
-            <div class="form-field form-field--checkbox">
-              <label>
-                <input type="checkbox" formControlName="isActive">
-                {{ 'admin.users.form.isActive' | t }}
-              </label>
+            <div class="form-field">
+              <app-active-toggle
+                [value]="form.get('isActive')!.value"
+                mode="toggle"
+                (toggled)="form.get('isActive')!.setValue($event)">
+              </app-active-toggle>
               <span class="hint">{{ 'admin.users.form.isActiveHint' | t }}</span>
             </div>
           </div>
+
+          <!-- Permissions -->
+          <app-collapsible-section
+            [titleKey]="'admin.users.form.permissions'"
+            [initialExpanded]="false">
+            <p class="users-page__permissions-hint">{{ 'admin.users.form.permissionsHint' | t }}</p>
+            <app-permission-matrix
+              [value]="userPermissions()"
+              (changed)="onPermissionsChanged($event)">
+            </app-permission-matrix>
+          </app-collapsible-section>
+
+          <!-- Company Assignment -->
+          <app-child-collection-grid
+            mode="select"
+            [titleKey]="'admin.users.company.title'"
+            [columns]="tenantColumns"
+            [items]="tenantItems()"
+            [selectedIds]="userTenantIds()"
+            [emptyMessageKey]="'admin.users.company.empty'"
+            [selectAllLabelKey]="'childGrid.selectAll'"
+            [deselectAllLabelKey]="'childGrid.deselectAll'"
+            [collapsible]="true"
+            [initialExpanded]="false"
+            (selectionChanged)="onTenantSelectionChanged($event)">
+          </app-child-collection-grid>
 
           <!-- Actions -->
           <div class="form-actions">
@@ -110,7 +138,7 @@
 
   <!-- Filter Panel -->
   <app-filter-panel
-    [fields]="filterFields"
+    [fields]="filterFields()"
     [collapsible]="true"
     [defaultCollapsed]="false"
     (filtersApplied)="onFiltersApplied($event)"
@@ -125,6 +153,7 @@
     [error]="!!facade.error()"
     [selectable]="true"
     [rowActions]="rowActions"
+    [rowActionsFilter]="userRowActionsFilter"
     emptyMessageKey="common.noResults"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"

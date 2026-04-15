@@ -1,14 +1,17 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, ElementRef, viewChild } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
-import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
+import { FilterPanelComponent, FilterField, SortOption, SortRule } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { PlayerFacadeService, PlayerFilters } from './player-facade.service';
-import { PlayerFormDialogComponent } from './player-form-dialog/player-form-dialog.component';
+import { PlayerFormPanelComponent } from './player-form-panel/player-form-panel.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Player } from '../../../../core/models';
+import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
 
 interface PlayerRow extends Record<string, unknown> {
   id: string;
@@ -28,20 +31,34 @@ interface PlayerRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     TranslatePipe,
+    MatIcon,
     DataTableComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    PlayerFormDialogComponent,
+    PlayerFormPanelComponent,
     HelpButtonComponent
   ],
   providers: [PlayerFacadeService],
   templateUrl: './admin-players-page.component.html',
-  styleUrl: './admin-players-page.component.scss'
+  styleUrl: './admin-players-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminPlayersPageComponent implements OnInit {
   readonly facade = inject(PlayerFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly tenantFilter = inject(TenantFilterService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
@@ -50,6 +67,7 @@ export class AdminPlayersPageComponent implements OnInit {
   readonly editingPlayer = signal<Player | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedPlayers = signal<PlayerRow[]>([]);
+  readonly formPanelRef = viewChild<ElementRef>('formPanel');
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.players.column.name', sortable: true },
@@ -57,6 +75,7 @@ export class AdminPlayersPageComponent implements OnInit {
     { key: 'categoryName', labelKey: 'admin.players.column.category', sortable: true },
     { key: 'genderLabel', labelKey: 'admin.players.column.gender', sortable: true },
     { key: 'sportName', labelKey: 'admin.players.column.sport', sortable: true },
+    { key: 'birthDate', labelKey: 'admin.players.column.birthDate', sortable: true, renderType: 'date' },
     { key: 'ranking', labelKey: 'admin.players.column.ranking', sortable: true },
     { key: 'statusLabel', labelKey: 'admin.players.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
@@ -77,7 +96,7 @@ export class AdminPlayersPageComponent implements OnInit {
       .filter(s => s.isActive)
       .map(s => ({ value: s.id, labelKey: s.name }));
 
-    return [
+    const fields: FilterField[] = [
       { key: 'search', labelKey: 'admin.players.filter.search', type: 'text' as const },
       {
         key: 'genderId', labelKey: 'admin.players.filter.gender', type: 'select' as const,
@@ -99,6 +118,8 @@ export class AdminPlayersPageComponent implements OnInit {
         ]
       }
     ];
+    const tf = this.tenantFilter.tenantFilterField();
+    return tf ? [tf, ...fields] : fields;
   });
 
   readonly tableData = computed<PlayerRow[]>(() =>
@@ -122,6 +143,17 @@ export class AdminPlayersPageComponent implements OnInit {
     { titleKey: 'admin.players.help.whatTitle', contentKey: 'admin.players.help.whatDescription' },
     { titleKey: 'admin.players.help.fieldsTitle', contentKey: 'admin.players.help.fieldsDescription' },
     { titleKey: 'admin.players.help.managementTitle', contentKey: 'admin.players.help.managementDescription' }
+  ];
+
+  readonly sortFields: SortOption[] = [
+    { key: 'lastName', labelKey: 'admin.players.column.name' },
+    { key: 'email', labelKey: 'admin.players.column.email' },
+    { key: 'categoryName', labelKey: 'admin.players.column.category' },
+    { key: 'ranking', labelKey: 'admin.players.column.ranking' }
+  ];
+
+  readonly defaultSortRules: SortRule[] = [
+    { field: 'lastName', dir: 'asc' }
   ];
 
   ngOnInit(): void {
@@ -154,6 +186,7 @@ export class AdminPlayersPageComponent implements OnInit {
   openCreate(): void {
     this.editingPlayer.set(null);
     this.showFormPanel.set(true);
+    this.scrollToFormPanel();
   }
 
   openEdit(row: PlayerRow): void {
@@ -161,7 +194,14 @@ export class AdminPlayersPageComponent implements OnInit {
     if (player) {
       this.editingPlayer.set(player);
       this.showFormPanel.set(true);
+      this.scrollToFormPanel();
     }
+  }
+
+  private scrollToFormPanel(): void {
+    setTimeout(() => {
+      this.formPanelRef()?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   closeFormPanel(): void {
@@ -215,6 +255,10 @@ export class AdminPlayersPageComponent implements OnInit {
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
     this.facade.applySortOption(`${event.key}_${event.direction}`);
+  }
+
+  onSortRulesChanged(rules: SortRule[]): void {
+    this.facade.applySortRules(rules);
   }
 
   getStatusForRow(row: PlayerRow): string {

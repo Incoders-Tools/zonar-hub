@@ -1,8 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ThemeService, AppTheme } from '../../../../core/theme/theme.service';
 import { DateFormatService } from '../../../../core/services/date-format.service';
+import { UserPreferencesService } from '../../../../core/services/user-preferences.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AppLocale } from '../../../../core/i18n/i18n.types';
 
 interface TimezoneOption {
@@ -18,7 +21,7 @@ interface DateFormatOption {
 @Component({
   selector: 'app-admin-settings-page',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, HelpButtonComponent],
   templateUrl: './admin-settings-page.component.html',
   styleUrl: './admin-settings-page.component.scss'
 })
@@ -26,6 +29,20 @@ export class AdminSettingsPageComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly themeService = inject(ThemeService);
   protected readonly dateFormatService = inject(DateFormatService);
+  protected readonly userPrefs = inject(UserPreferencesService);
+  private readonly notifications = inject(NotificationService);
+
+  /** Read system defaults for button highlight (not effective/runtime values) */
+  readonly systemLocale = computed(() => this.userPrefs.getSystemDefaults().locale);
+  readonly systemTheme = computed(() => this.userPrefs.getSystemDefaults().theme);
+  readonly systemTimezone = computed(() => this.userPrefs.getSystemDefaults().timezone);
+  readonly systemDateFormat = computed(() => this.userPrefs.getSystemDefaults().dateFormat);
+
+  /** Whether current user has personal preferences that override system defaults */
+  readonly hasUserOverride = computed(() => {
+    const prefs = this.userPrefs.currentUserPrefs();
+    return prefs !== null && (prefs.locale !== null || prefs.theme !== null || prefs.dateFormat !== null || prefs.timezone !== null);
+  });
 
   readonly locales: { value: AppLocale; labelKey: string }[] = [
     { value: 'es', labelKey: 'settings.language.es' },
@@ -64,28 +81,32 @@ export class AdminSettingsPageComponent {
     { value: 'dd.MM.yyyy', example: '25.01.2025' }
   ];
 
-  readonly selectedTimezone = signal<string>(
-    localStorage.getItem('zh-timezone') ?? 'America/Argentina/Buenos_Aires'
-  );
-
-  get selectedDateFormat() {
-    return this.dateFormatService.format;
-  }
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'settings.help.section1Title', contentKey: 'settings.help.section1Text' },
+    { titleKey: 'settings.help.section2Title', contentKey: 'settings.help.section2Text' }
+  ];
 
   onLocaleChange(locale: string): void {
-    this.i18n.setLocale(locale as AppLocale);
+    this.userPrefs.updateSystemDefaults({ locale: locale as AppLocale });
+    this.userPrefs.applyEffectiveSettings();
+    this.notifications.success('settings.saved');
   }
 
   onThemeChange(theme: string): void {
-    this.themeService.setTheme(theme as AppTheme);
+    this.userPrefs.updateSystemDefaults({ theme: theme as AppTheme });
+    this.userPrefs.applyEffectiveSettings();
+    this.notifications.success('settings.saved');
   }
 
   onTimezoneChange(tz: string): void {
-    this.selectedTimezone.set(tz);
-    localStorage.setItem('zh-timezone', tz);
+    this.userPrefs.updateSystemDefaults({ timezone: tz });
+    this.userPrefs.applyEffectiveSettings();
+    this.notifications.success('settings.saved');
   }
 
   onDateFormatChange(fmt: string): void {
-    this.dateFormatService.setFormat(fmt);
+    this.userPrefs.updateSystemDefaults({ dateFormat: fmt });
+    this.userPrefs.applyEffectiveSettings();
+    this.notifications.success('settings.saved');
   }
 }

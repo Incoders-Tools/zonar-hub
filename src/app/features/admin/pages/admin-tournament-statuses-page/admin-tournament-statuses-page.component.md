@@ -8,7 +8,7 @@ Manage tournament statuses (Scheduled, In Progress, Completed, Cancelled, etc.) 
 ### Layer Separation
 - **Page Component** (`admin-tournament-statuses-page.component.ts`): UI orchestration, dialog management, table interactions
 - **Facade Service** (`tournament-statuses-facade.service.ts`): Business logic, state management, validation
-- **Form Dialog Component** (`tournament-statuses-form-dialog.component.ts`): Form UI and local form state
+- **Form Dialog Component** (`tournament-statuses-form-panel.component.ts`): Form UI and local form state
 - **Help Dialog Component** (`tournament-statuses-help-dialog.component.ts`): Help content display
 - **Repository** (`MockTournamentStatusRepository`): Data access layer (mock for now, real API later)
 

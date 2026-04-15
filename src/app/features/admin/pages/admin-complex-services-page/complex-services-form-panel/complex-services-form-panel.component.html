@@ -1,0 +1,100 @@
+<app-form-shell
+  [titleKey]="isEditing ? 'admin.complex-services.edit.title' : 'admin.complex-services.create.title'"
+  [descriptionKey]="isEditing ? 'admin.complex-services.edit.description' : 'admin.complex-services.create.description'">
+
+  <form [formGroup]="form" class="form-content">
+    <div class="form-grid">
+      <!-- Name Field -->
+      <div class="form-field">
+        <label>{{ 'admin.complex-services.form.name' | t }} *</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="e.g., WiFi, Parking"
+          [class.error]="isFieldInvalid('name')"
+          matInput
+        />
+        @if (isFieldInvalid('name')) {
+          <span class="error-message">{{ getErrorMessage('name') | t }}</span>
+        }
+      </div>
+
+      <!-- Icon Field -->
+      <div class="form-field">
+        <label>{{ 'admin.complex-services.form.icon' | t }}</label>
+        <input
+          type="text"
+          formControlName="faIcon"
+          placeholder="e.g., FaWifi, FaParking"
+          matInput
+        />
+        <span class="hint">{{ 'admin.complex-services.form.iconHint' | t }}</span>
+      </div>
+
+      <!-- Active Status -->
+      <div class="form-field">
+        <app-active-toggle
+          [value]="form.get('isActive')!.value"
+          mode="toggle"
+          (toggled)="form.get('isActive')!.setValue($event)">
+        </app-active-toggle>
+      </div>
+    </div>
+
+    <!-- Technical Fields (system_admin only) -->
+    @if (isSystemAdmin()) {
+      <app-collapsible-section [titleKey]="'common.technicalFields'">
+        <div class="form-grid">
+          <!-- Key Field -->
+          <div class="form-field">
+            <label>{{ 'admin.complex-services.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+            <input
+              type="text"
+              formControlName="key"
+              placeholder="e.g., wifi, parking"
+              [class.error]="isFieldInvalid('key')"
+              [disabled]="isEditing"
+              matInput
+            />
+            @if (isFieldInvalid('key')) {
+              <span class="error-message">{{ getErrorMessage('key') | t }}</span>
+            }
+          </div>
+
+          <!-- Sort Order Field -->
+          <div class="form-field">
+            <label>{{ 'admin.complex-services.form.sortOrder' | t }}</label>
+            <input
+              type="number"
+              formControlName="sortOrder"
+              min="0"
+              placeholder="e.g., 1"
+              [class.error]="isFieldInvalid('sortOrder')"
+              matInput
+            />
+            @if (isFieldInvalid('sortOrder')) {
+              <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
+            }
+            <span class="hint">{{ 'admin.complex-services.form.sortOrderHint' | t }}</span>
+          </div>
+        </div>
+      </app-collapsible-section>
+    }
+
+    <!-- Form Actions -->
+    <div formActions class="form-actions">
+      <button type="button" (click)="onCancel()" class="btn-cancel">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+        (clicked)="onSave()"
+        class="btn-save">
+        {{ (isEditing ? 'common.update' : 'common.create') | t }}
+      </app-async-button>
+    </div>
+  </form>
+
+</app-form-shell>

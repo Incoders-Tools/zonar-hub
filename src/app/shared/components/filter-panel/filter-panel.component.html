@@ -52,13 +52,14 @@
           </button>
 
           @if (sortsOpen()) {
-            <div class="sort-builder__body">
+            <div class="sort-builder__body" cdkDropList (cdkDropListDropped)="dropSortRule($event)">
               @if (sortRules.length === 0) {
                 <p class="sort-builder__empty">{{ 'filter.noSortRules' | t }}</p>
               }
 
               @for (rule of sortRules; track $index; let i = $index) {
-                <div class="sort-builder__rule">
+                <div class="sort-builder__rule" cdkDrag>
+                  <span class="sort-builder__drag-handle" cdkDragHandle>⠿</span>
                   <select
                     class="sort-builder__field-select"
                     [ngModel]="rule.field"

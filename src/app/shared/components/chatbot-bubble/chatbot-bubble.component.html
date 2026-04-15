@@ -1,0 +1,84 @@
+<div class="chatbot">
+  @if (isOpen()) {
+    <div class="chatbot__panel">
+      <div class="chatbot__header">
+        @if (chatMode()) {
+          <button class="chatbot__back" type="button" (click)="backToFaq()" [attr.aria-label]="'chatbot.chat.back' | t">
+            ←
+          </button>
+        }
+        <span class="chatbot__header-title">{{ 'chatbot.title' | t }}</span>
+        <button class="chatbot__close" type="button" (click)="toggle()" [attr.aria-label]="'common.close' | t">
+          ✕
+        </button>
+      </div>
+
+      @if (!chatMode()) {
+        <div class="chatbot__body">
+          <p class="chatbot__welcome">{{ 'chatbot.welcome' | t }}</p>
+          <div class="chatbot__faq-list">
+            @for (faq of faqs; track faq.questionKey; let i = $index) {
+              <div class="chatbot__faq-item" [class.chatbot__faq-item--open]="selectedFaq() === i">
+                <button class="chatbot__faq-question" type="button" (click)="selectFaq(i)">
+                  <span>{{ faq.questionKey | t }}</span>
+                  <span class="chatbot__faq-toggle">{{ selectedFaq() === i ? '−' : '+' }}</span>
+                </button>
+                @if (selectedFaq() === i) {
+                  <div class="chatbot__faq-answer">
+                    <p>{{ faq.answerKey | t }}</p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <button class="chatbot__open-chat" type="button" (click)="openChat()">
+            {{ 'chatbot.chat.startChat' | t }}
+          </button>
+        </div>
+      } @else {
+        <div class="chatbot__chat-body" #chatBodyRef>
+          @for (msg of messages(); track msg.timestamp) {
+            <div class="chatbot__message" [class.chatbot__message--user]="msg.role === 'user'" [class.chatbot__message--bot]="msg.role === 'bot'">
+              <p>{{ msg.text }}</p>
+            </div>
+          }
+          @if (isTyping()) {
+            <div class="chatbot__message chatbot__message--bot chatbot__typing">
+              <span class="chatbot__typing-dot"></span>
+              <span class="chatbot__typing-dot"></span>
+              <span class="chatbot__typing-dot"></span>
+            </div>
+          }
+        </div>
+        <div class="chatbot__chat-input">
+          <input
+            type="text"
+            [value]="userInput()"
+            (input)="userInput.set($any($event.target).value)"
+            (keydown)="onKeyDown($event)"
+            [placeholder]="'chatbot.chat.placeholder' | t"
+            [disabled]="isTyping()"
+            class="chatbot__input-field"
+          />
+          <button
+            class="chatbot__send-btn"
+            type="button"
+            (click)="sendMessage()"
+            [disabled]="!userInput().trim() || isTyping()"
+            [attr.aria-label]="'chatbot.chat.send' | t"
+          >
+            ➤
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <button class="chatbot__trigger" type="button" (click)="toggle()" [attr.aria-label]="'chatbot.title' | t">
+    @if (isOpen()) {
+      ✕
+    } @else {
+      💬
+    }
+  </button>
+</div>

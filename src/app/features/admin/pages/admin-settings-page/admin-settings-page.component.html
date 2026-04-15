@@ -1,8 +1,24 @@
 <div class="settings-page">
   <div class="settings-page__header">
-    <h1 class="settings-page__title">{{ 'settings.title' | t }}</h1>
-    <p class="settings-page__subtitle">{{ 'settings.subtitle' | t }}</p>
+    <div class="settings-page__title-row">
+      <div>
+        <h1 class="settings-page__title">{{ 'settings.title' | t }}</h1>
+        <p class="settings-page__subtitle">{{ 'settings.subtitle' | t }}</p>
+      </div>
+      <div class="settings-page__header-actions">
+        <app-help-button
+          [titleKey]="'settings.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+      </div>
+    </div>
   </div>
+
+  @if (hasUserOverride()) {
+    <div class="settings-page__override-notice">
+      <span>{{ 'settings.overrideNotice' | t }}</span>
+    </div>
+  }
 
   <div class="settings-page__grid">
     <!-- Language Setting -->
@@ -16,7 +32,7 @@
         @for (locale of locales; track locale.value) {
           <button
             class="settings-card__option"
-            [class.settings-card__option--active]="i18n.locale() === locale.value"
+            [class.settings-card__option--active]="systemLocale() === locale.value"
             (click)="onLocaleChange(locale.value)">
             {{ locale.labelKey | t }}
           </button>
@@ -35,7 +51,7 @@
         @for (theme of themes; track theme.value) {
           <button
             class="settings-card__option"
-            [class.settings-card__option--active]="themeService.theme() === theme.value"
+            [class.settings-card__option--active]="systemTheme() === theme.value"
             (click)="onThemeChange(theme.value)">
             {{ theme.labelKey | t }}
           </button>
@@ -53,7 +69,7 @@
       <div class="settings-card__select-wrapper">
         <select
           class="settings-card__select"
-          [value]="selectedTimezone()"
+          [value]="systemTimezone()"
           (change)="onTimezoneChange($any($event.target).value)">
           @for (tz of timezones; track tz.value) {
             <option [value]="tz.value">{{ tz.label }}</option>
@@ -73,7 +89,7 @@
         @for (fmt of dateFormats; track fmt.value) {
           <button
             class="settings-card__option"
-            [class.settings-card__option--active]="selectedDateFormat() === fmt.value"
+            [class.settings-card__option--active]="systemDateFormat() === fmt.value"
             (click)="onDateFormatChange(fmt.value)">
             {{ fmt.example }}
           </button>

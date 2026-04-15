@@ -33,13 +33,13 @@
   </app-data-table>
 </div>
 
-@if (showFormDialog()) {
-  <app-plan-form-dialog
+@if (showFormPanel()) {
+  <app-plan-form-panel
     [plan]="editingPlan()"
     [saving]="facade.saving()"
     (submitted)="onFormSubmitted($event)"
-    (cancelled)="closeFormDialog()">
-  </app-plan-form-dialog>
+    (cancelled)="closeFormPanel()">
+  </app-plan-form-panel>
 }
 
 @if (showDeleteDialog()) {

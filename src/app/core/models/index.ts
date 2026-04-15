@@ -17,3 +17,4 @@ export * from './app-log.model';
 export * from './sport.model';
 export * from './tournament-rule-set.model';
 export * from './sport-config.model';
+export * from './organization.model';

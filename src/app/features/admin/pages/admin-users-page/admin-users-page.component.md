@@ -19,14 +19,14 @@ User management component for system administrators. Provides complete CRUD oper
 - **admin-users-page.component.html**: Template with data-table and filter-panel
 - **admin-users-page.component.scss**: Styling with design tokens
 - **users-facade.service.ts**: State management and API integration
-- **users-form-dialog/**: Form dialog for create/edit operations
+- **users-form-panel/**: form panel for create/edit operations
 - **users-help-dialog/**: Help dialog component
 
 ## Dependencies
 - `DataTableComponent`: For displaying tabular data with sorting
 - `FilterPanelComponent`: For filtering users
 - `ConfirmDialogComponent`: For delete confirmation
-- `UsersFormDialogComponent`: For user form operations
+- `UsersFormPanelComponent`: For user form operations
 - `UsersFacadeService`: For state management
 
 ## Models Used

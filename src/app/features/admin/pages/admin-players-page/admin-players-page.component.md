@@ -15,7 +15,7 @@ None.
 - `FilterPanelComponent` — shared filter panel with text and select fields
 - `ConfirmDialogComponent` — shared destructive action confirmation
 - `AsyncButtonComponent` — shared submit button with loading state
-- `PlayerFormDialogComponent` — create/edit form dialog
+- `PlayerFormPanelComponent` — create/edit form panel
 - `HelpButtonComponent` — contextual help dialog trigger
 - `TranslatePipe` — i18n key resolution
 
@@ -41,4 +41,4 @@ All user-facing text uses `admin.players.*` translation keys. Supported locales:
 All colors use semantic design tokens (`--zh-*`). No hardcoded colors.
 
 ## Reuse Guidance
-This component is specific to the Players entity. The pattern (facade + repository + form dialog + help dialog + shared table) can be replicated for other entities by following the same structure.
+This component is specific to the Players entity. The pattern (facade + repository + form panel + help dialog + shared table) can be replicated for other entities by following the same structure.

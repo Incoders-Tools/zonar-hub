@@ -90,7 +90,7 @@
       }
 
       <app-filter-panel
-        [fields]="filterFields"
+        [fields]="filterFields()"
         [collapsible]="true"
         [sortFields]="listSortOptions"
         (filtersApplied)="onFiltersApplied($event)"
@@ -174,4 +174,12 @@
     (confirmed)="onDeleteConfirmed()"
     (cancelled)="onDeleteCancelled()">
   </app-confirm-dialog>
+}
+
+<!-- Social Share Preview -->
+@if (sharePayload()) {
+  <app-social-share-preview
+    [payload]="sharePayload()!"
+    (closed)="closeSharePreview()">
+  </app-social-share-preview>
 }

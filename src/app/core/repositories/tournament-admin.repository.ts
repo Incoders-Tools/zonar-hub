@@ -19,8 +19,8 @@ export interface TournamentTypeRepository {
 }
 
 const MOCK_TYPES: TournamentType[] = [
-  { id: 'tt1', name: 'singles', key: 'singles', sportId: 'sp1', sportName: 'Padel', sortOrder: 1, scoresPoints: true, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 'tt2', name: 'doubles', key: 'doubles', sportId: 'sp1', sportName: 'Padel', sortOrder: 2, scoresPoints: true, appliesGender: false, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' }
+  { id: 'tt1', name: 'singles', key: 'singles', sportId: 'sp1', sportIds: ['sp1'], sportName: 'Padel', sortOrder: 1, scoresPoints: true, appliesGender: true, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
+  { id: 'tt2', name: 'doubles', key: 'doubles', sportId: 'sp1', sportIds: ['sp1'], sportName: 'Padel', sortOrder: 2, scoresPoints: true, appliesGender: false, isActive: true, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' }
 ];
 
 @Injectable({ providedIn: 'root' })

@@ -11,7 +11,7 @@ import { TournamentEligibilityProfile } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentEligibilityProfilesFacadeService, TournamentEligibilityProfileFilters } from './tournament-eligibility-profiles-facade.service';
-import { TournamentEligibilityProfilesFormDialogComponent } from './tournament-eligibility-profiles-form-dialog/tournament-eligibility-profiles-form-dialog.component';
+import { TournamentEligibilityProfilesFormPanelComponent } from './tournament-eligibility-profiles-form-panel/tournament-eligibility-profiles-form-panel.component';
 
 interface TournamentEligibilityProfileRow extends Record<string, unknown> {
   id: string;
@@ -36,7 +36,7 @@ interface TournamentEligibilityProfileRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    TournamentEligibilityProfilesFormDialogComponent,
+    TournamentEligibilityProfilesFormPanelComponent,
     HelpButtonComponent
   ],
   providers: [TournamentEligibilityProfilesFacadeService],

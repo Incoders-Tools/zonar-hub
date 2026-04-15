@@ -31,6 +31,7 @@ export class PlayerFacadeService {
   private readonly deletingState = signal(false);
   private readonly filtersState = signal<PlayerFilters>({});
   private readonly sortOptionState = signal('lastName_asc');
+  private readonly sortRulesState = signal<{ field: string; dir: 'asc' | 'desc' }[]>([]);
 
   private readonly categoriesState = signal<Category[]>([]);
   private readonly gendersState = signal<Gender[]>([]);
@@ -82,15 +83,27 @@ export class PlayerFacadeService {
     }
 
     const [field, dir] = sort.split('_');
-    const multiplier = dir === 'desc' ? -1 : 1;
-    result.sort((a, b) => {
-      const aVal = (a as unknown as Record<string, unknown>)[field];
-      const bVal = (b as unknown as Record<string, unknown>)[field];
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return (aVal - bVal) * multiplier;
-      }
-      return String(aVal ?? '').localeCompare(String(bVal ?? '')) * multiplier;
-    });
+    const sortRules = this.sortRulesState();
+
+    if (sortRules.length > 0) {
+      result.sort((a, b) => {
+        for (const rule of sortRules) {
+          const cmp = this.comparePlayerField(a, b, rule.field, rule.dir);
+          if (cmp !== 0) return cmp;
+        }
+        return 0;
+      });
+    } else {
+      const multiplier = dir === 'desc' ? -1 : 1;
+      result.sort((a, b) => {
+        const aVal = (a as unknown as Record<string, unknown>)[field];
+        const bVal = (b as unknown as Record<string, unknown>)[field];
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return (aVal - bVal) * multiplier;
+        }
+        return String(aVal ?? '').localeCompare(String(bVal ?? '')) * multiplier;
+      });
+    }
 
     return result;
   });
@@ -126,6 +139,27 @@ export class PlayerFacadeService {
 
   applySortOption(sortKey: string): void {
     this.sortOptionState.set(sortKey);
+    this.sortRulesState.set([]);
+  }
+
+  applySortRules(rules: { field: string; dir: 'asc' | 'desc' }[]): void {
+    this.sortRulesState.set(rules);
+  }
+
+  private comparePlayerField(a: Player, b: Player, field: string, dir: 'asc' | 'desc'): number {
+    const mul = dir === 'asc' ? 1 : -1;
+    switch (field) {
+      case 'lastName': return a.lastName.localeCompare(b.lastName) * mul;
+      case 'firstName': return a.firstName.localeCompare(b.firstName) * mul;
+      case 'email': return a.email.localeCompare(b.email) * mul;
+      case 'ranking': return ((a.ranking ?? 9999) - (b.ranking ?? 9999)) * mul;
+      case 'categoryName': return (a.categoryName ?? '').localeCompare(b.categoryName ?? '') * mul;
+      default: {
+        const aVal = (a as unknown as Record<string, unknown>)[field];
+        const bVal = (b as unknown as Record<string, unknown>)[field];
+        return String(aVal ?? '').localeCompare(String(bVal ?? '')) * mul;
+      }
+    }
   }
 
   async save(player: Omit<Player, 'id' | 'createdAt'>, editId?: string): Promise<boolean> {

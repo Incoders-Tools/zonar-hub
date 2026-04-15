@@ -5,6 +5,19 @@
     margin-bottom: var(--zh-space-xl);
   }
 
+  &__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--zh-space-md);
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+  }
+
   &__title {
     margin: 0;
     font-size: var(--zh-font-size-xl);
@@ -16,6 +29,16 @@
     margin: var(--zh-space-xs) 0 0;
     color: var(--zh-text-secondary);
     font-size: var(--zh-font-size-md);
+  }
+
+  &__override-notice {
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    margin-bottom: var(--zh-space-lg);
+    background: var(--zh-warning-soft, rgba(234, 179, 8, 0.1));
+    border: 1px solid var(--zh-warning, #eab308);
+    border-radius: var(--zh-radius-md);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
   }
 
   &__grid {

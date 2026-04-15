@@ -2,19 +2,30 @@ import { Injectable } from '@angular/core';
 import { Tournament } from '../../models';
 import { TournamentAdminRepository } from '../tournament-admin.repository';
 import { MOCK_TOURNAMENTS } from '../../data/mock/mock-tournaments';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
 
 const MOCK_DELAY = 400;
 
 @Injectable({ providedIn: 'root' })
 export class MockTournamentAdminRepository implements TournamentAdminRepository {
-  private tournaments: Tournament[] = structuredClone(MOCK_TOURNAMENTS);
-  private idCounter = this.tournaments.length;
+  private tournaments: Tournament[] = [];
+  private idCounter = 0;
+  private _seededForTenant: string | null = '__none__';
+
+  private ensureSeed(): void {
+    const tid = getCurrentMockTenantId();
+    if (this._seededForTenant === tid) return;
+    this._seededForTenant = tid;
+    this.tournaments = isDemoTenant() ? structuredClone(MOCK_TOURNAMENTS) : [];
+    this.idCounter = this.tournaments.length;
+  }
 
   private delay<T>(value: T): Promise<T> {
     return new Promise(resolve => setTimeout(() => resolve(value), MOCK_DELAY));
   }
 
   async getAll(): Promise<Tournament[]> {
+    this.ensureSeed();
     return this.delay(structuredClone(this.tournaments));
   }
 

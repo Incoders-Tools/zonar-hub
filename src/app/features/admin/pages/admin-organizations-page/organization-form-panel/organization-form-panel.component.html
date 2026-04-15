@@ -1,0 +1,79 @@
+<app-form-shell [titleKey]="titleKey()">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Display Name -->
+        <div class="form-field">
+          <label class="form-field__label" for="org-displayName">{{ 'admin.organizations.field.displayName' | t }} *</label>
+          <input
+            class="form-field__input"
+            id="org-displayName"
+            type="text"
+            formControlName="displayName"
+            [placeholder]="'admin.organizations.placeholder.displayName' | t" />
+          @if (form.get('displayName')?.hasError('required') && form.get('displayName')?.touched) {
+            <span class="form-field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('displayName')?.hasError('minlength') && form.get('displayName')?.touched) {
+            <span class="form-field__error">{{ 'admin.organizations.error.nameMinLength' | t }}</span>
+          }
+        </div>
+
+        <!-- Legal Name -->
+        <div class="form-field">
+          <label class="form-field__label" for="org-legalName">{{ 'admin.organizations.field.legalName' | t }}</label>
+          <input
+            class="form-field__input"
+            id="org-legalName"
+            type="text"
+            formControlName="legalName"
+            [placeholder]="'admin.organizations.placeholder.legalName' | t" />
+          <span class="form-field__hint">{{ 'admin.organizations.hint.legalName' | t }}</span>
+        </div>
+
+        <!-- Description -->
+        <div class="form-field">
+          <label class="form-field__label" for="org-description">{{ 'admin.organizations.field.description' | t }}</label>
+          <textarea
+            class="form-field__input"
+            id="org-description"
+            formControlName="description"
+            rows="3"
+            [placeholder]="'admin.organizations.placeholder.description' | t"></textarea>
+        </div>
+
+        <!-- Type -->
+        <div class="form-field">
+          <label class="form-field__label" for="org-type">{{ 'admin.organizations.field.type' | t }} *</label>
+          <select
+            class="form-field__select"
+            id="org-type"
+            formControlName="type">
+            @for (opt of typeOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Active -->
+        <div class="form-field">
+          <app-active-toggle
+            [value]="form.get('isActive')!.value"
+            mode="toggle"
+            (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
+          </app-active-toggle>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-field form-field--actions">
+          <button class="btn btn--outline" type="button" (click)="onCancel()">
+            {{ 'common.cancel' | t }}
+          </button>
+          <app-async-button
+            variant="primary"
+            [disabled]="!canSubmit()"
+            [loading]="saving()"
+            type="submit">
+            {{ (isEditing() ? 'common.update' : 'common.create') | t }}
+          </app-async-button>
+        </div>
+      </form>
+    </app-form-shell>

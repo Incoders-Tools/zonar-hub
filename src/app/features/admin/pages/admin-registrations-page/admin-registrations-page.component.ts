@@ -10,6 +10,9 @@ import { HelpButtonComponent, HelpSection } from '../../../../shared/components/
 import { RegistrationFacadeService, RegistrationFilters } from './registration-facade.service';
 import { RegistrationFormPanelComponent } from './registration-form-panel/registration-form-panel.component';
 import { Registration, RegistrationToken } from '../../../../core/models';
+import { TournamentService } from '../../../../core/services/tournament.service';
+import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
+import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 
 export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens';
 
@@ -46,7 +49,8 @@ interface TokenRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     HelpButtonComponent,
-    RegistrationFormPanelComponent
+    RegistrationFormPanelComponent,
+    SocialSharePreviewComponent
   ],
   providers: [RegistrationFacadeService],
   templateUrl: './admin-registrations-page.component.html',
@@ -66,6 +70,16 @@ interface TokenRow extends Record<string, unknown> {
 })
 export class AdminRegistrationsPageComponent implements OnInit {
   readonly facade = inject(RegistrationFacadeService);
+  private readonly tournamentService = inject(TournamentService);
+  private readonly tenantFilter = inject(TenantFilterService);
+
+  /** Dynamic tournament options for the filter panel */
+  readonly tournamentFilterOptions = computed(() =>
+    this.tournamentService.tournaments().map(t => ({
+      value: t.id,
+      labelKey: t.name
+    }))
+  );
 
   readonly activeTab = signal<AdminRegistrationsTab>('list');
   readonly showDeleteDialog = signal(false);
@@ -74,6 +88,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
   readonly showFormPanel = signal(false);
   readonly editingRegistration = signal<Registration | null>(null);
   readonly highlightedRowId = signal<string | null>(null);
+  readonly sharePayload = signal<SocialSharePayload | null>(null);
 
   readonly helpSections: HelpSection[] = [
     { titleKey: 'registrations.help.section1Title', contentKey: 'registrations.help.section1Text' },
@@ -96,28 +111,40 @@ export class AdminRegistrationsPageComponent implements OnInit {
 
   readonly listRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+    { icon: 'share', labelKey: 'share.label', action: 'share', variant: 'default' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
-  readonly filterFields: FilterField[] = [
-    { key: 'search', labelKey: 'registrations.filter.search', type: 'text' },
-    {
-      key: 'statusId', labelKey: 'registrations.filter.status', type: 'select',
-      options: [
-        { value: 'rs1', labelKey: 'registrations.status.confirmed' },
-        { value: 'rs2', labelKey: 'registrations.status.pending' },
-        { value: 'rs3', labelKey: 'registrations.status.rejected' }
-      ]
-    },
-    {
-      key: 'source', labelKey: 'registrations.filter.source', type: 'select',
-      options: [
-        { value: 'wizard', labelKey: 'registrations.source.wizard' },
-        { value: 'admin', labelKey: 'registrations.source.admin' },
-        { value: 'excel', labelKey: 'registrations.source.excel' }
-      ]
-    }
-  ];
+  readonly filterFields = computed<FilterField[]>(() => {
+    const fields: FilterField[] = [
+      { key: 'search', labelKey: 'registrations.filter.search', type: 'text' },
+      {
+        key: 'tournamentId', labelKey: 'registrations.filter.tournament', type: 'select',
+        options: [
+          { value: '', labelKey: 'registrations.filter.allTournaments' },
+          ...this.tournamentFilterOptions()
+        ]
+      },
+      {
+        key: 'statusId', labelKey: 'registrations.filter.status', type: 'select',
+        options: [
+          { value: 'rs1', labelKey: 'registrations.status.confirmed' },
+          { value: 'rs2', labelKey: 'registrations.status.pending' },
+          { value: 'rs3', labelKey: 'registrations.status.rejected' }
+        ]
+      },
+      {
+        key: 'source', labelKey: 'registrations.filter.source', type: 'select',
+        options: [
+          { value: 'wizard', labelKey: 'registrations.source.wizard' },
+          { value: 'admin', labelKey: 'registrations.source.admin' },
+          { value: 'excel', labelKey: 'registrations.source.excel' }
+        ]
+      }
+    ];
+    const tf = this.tenantFilter.tenantFilterField();
+    return tf ? [tf, ...fields] : fields;
+  });
 
   readonly listSortOptions: SortOption[] = [
     { key: 'player1Name', labelKey: 'registrations.column.player1' },
@@ -197,6 +224,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
   onFiltersApplied(filters: Record<string, string>): void {
     const mapped: RegistrationFilters = {
       search: filters['search'] || undefined,
+      tournamentId: filters['tournamentId'] || undefined,
       statusId: filters['statusId'] || undefined,
       source: filters['source'] || undefined
     };
@@ -218,6 +246,8 @@ export class AdminRegistrationsPageComponent implements OnInit {
   onRowActionClicked(event: { action: string; row: RegistrationRow }): void {
     if (event.action === 'edit') {
       this.openEdit(event.row);
+    } else if (event.action === 'share') {
+      this.openShare(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
     }
@@ -289,6 +319,22 @@ export class AdminRegistrationsPageComponent implements OnInit {
       rs3: 'registrations.status.rejected'
     };
     return map[statusId] ?? statusId;
+  }
+
+  openShare(row: RegistrationRow): void {
+    this.sharePayload.set({
+      type: 'registration',
+      title: row.player1,
+      subtitle: row.player2,
+      lines: [
+        `📋 ${row.source}`,
+        `📅 ${row.registeredAt}`
+      ]
+    });
+  }
+
+  closeSharePreview(): void {
+    this.sharePayload.set(null);
   }
 
   private getSourceLabelKey(source: string): string {

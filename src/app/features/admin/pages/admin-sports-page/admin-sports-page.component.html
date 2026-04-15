@@ -5,13 +5,16 @@
       <div>
         <h1 class="sports-page__title">{{ 'admin.sports.title' | t }}</h1>
         <p class="sports-page__subtitle">{{ 'admin.sports.subtitle' | t }}</p>
+        @if (!isSystemAdmin()) {
+          <p class="sports-page__governance-notice">{{ 'admin.sports.governance.readOnly' | t }}</p>
+        }
       </div>
       <div class="sports-page__header-actions">
         <app-help-button
           [titleKey]="'admin.sports.help.title'"
           [sections]="helpSections">
         </app-help-button>
-        @if (hasSelection()) {
+        @if (isSystemAdmin() && hasSelection()) {
           <app-async-button
             variant="danger"
             [loading]="facade.deleting()"
@@ -19,7 +22,7 @@
             {{ 'admin.bulkDelete' | t }}
           </app-async-button>
         }
-        @if (!showFormPanel()) {
+        @if (isSystemAdmin() && !showFormPanel()) {
           <app-async-button variant="primary" (clicked)="openCreate()">
             {{ 'admin.sports.action.create' | t }}
           </app-async-button>
@@ -43,12 +46,12 @@
         </button>
       </div>
       <div class="sports-page__form-panel-body">
-        <app-sports-form-dialog
+        <app-sports-form-panel
           [sport]="editingSport()"
           [saving]="facade.saving()"
           (saved)="closeFormPanel()"
           (cancelled)="closeFormPanel()">
-        </app-sports-form-dialog>
+        </app-sports-form-panel>
       </div>
     </div>
   }
@@ -68,9 +71,9 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    [selectable]="true"
-    [reorderable]="true"
-    [rowActions]="sportRowActions"
+    [selectable]="isSystemAdmin()"
+    [reorderable]="isSystemAdmin()"
+    [rowActions]="sportRowActions()"
     emptyMessageKey="admin.sports.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"

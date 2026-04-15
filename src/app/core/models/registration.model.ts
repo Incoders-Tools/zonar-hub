@@ -18,6 +18,8 @@ export interface RegistrationParticipant {
 
 export interface Registration {
   id: string;
+  organizationId?: string;
+  organizationName?: string;
   tournamentId: string;
   tournamentName?: string;
   eligibilityProfileId?: string;

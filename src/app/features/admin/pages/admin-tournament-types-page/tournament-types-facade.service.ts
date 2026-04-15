@@ -1,6 +1,8 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { TournamentType } from '../../../../core/models';
+import { Sport } from '../../../../core/models';
 import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
 
 export interface TournamentTypeFilters {
   name?: string;
@@ -10,9 +12,11 @@ export interface TournamentTypeFilters {
 @Injectable()
 export class TournamentTypesFacadeService {
   private readonly repository = inject(MockTournamentTypeRepository);
+  private readonly sportRepo = inject(MockSportRepository);
 
   // State signals
   private readonly entitiesState = signal<TournamentType[]>([]);
+  private readonly sportsState = signal<Sport[]>([]);
   private readonly loadingState = signal(false);
   private readonly savingState = signal(false);
   private readonly deletingState = signal(false);
@@ -22,6 +26,7 @@ export class TournamentTypesFacadeService {
 
   // Public computed properties
   readonly entities = this.entitiesState;
+  readonly sports = this.sportsState.asReadonly();
   readonly loading = this.loadingState;
   readonly saving = this.savingState;
   readonly deleting = this.deletingState;
@@ -64,8 +69,12 @@ export class TournamentTypesFacadeService {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
-      const types = await this.repository.getAll();
+      const [types, sports] = await Promise.all([
+        this.repository.getAll(),
+        this.sportRepo.getAll()
+      ]);
       this.entitiesState.set(types);
+      this.sportsState.set(sports);
     } catch (error) {
       this.errorState.set((error as Error).message);
     } finally {

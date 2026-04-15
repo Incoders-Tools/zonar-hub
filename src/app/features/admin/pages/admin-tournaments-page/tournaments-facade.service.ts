@@ -27,7 +27,10 @@ export class TournamentsFacadeService {
   private readonly deletingState = signal(false);
   private readonly errorState = signal<string | null>(null);
   private readonly filtersState = signal<TournamentFilters>({});
-  private readonly sortState = signal<string>('name_asc');
+  private readonly sortState = signal<string>('status_priority');
+
+  // Multi-criteria sort rules
+  private readonly sortRulesState = signal<{ field: string; dir: 'asc' | 'desc' }[]>([]);
 
   // Lookup signals
   private readonly complexesState = signal<Complex[]>([]);
@@ -77,7 +80,24 @@ export class TournamentsFacadeService {
     }
 
     const sortOption = this.sortState();
-    if (sortOption === 'name_asc') {
+    const sortRules = this.sortRulesState();
+
+    if (sortRules.length > 0) {
+      result.sort((a, b) => {
+        for (const rule of sortRules) {
+          const cmp = this.compareTournamentField(a, b, rule.field, rule.dir);
+          if (cmp !== 0) return cmp;
+        }
+        return 0;
+      });
+    } else if (sortOption === 'status_priority') {
+      result.sort((a, b) => {
+        const pa = this.getStatusPriority(a.startDate, a.endDate);
+        const pb = this.getStatusPriority(b.startDate, b.endDate);
+        if (pa !== pb) return pa - pb;
+        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+      });
+    } else if (sortOption === 'name_asc') {
       result.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortOption === 'name_desc') {
       result.sort((a, b) => b.name.localeCompare(a.name));
@@ -182,6 +202,32 @@ export class TournamentsFacadeService {
 
   applySortOption(sortOption: string): void {
     this.sortState.set(sortOption);
+    this.sortRulesState.set([]);
+  }
+
+  applySortRules(rules: { field: string; dir: 'asc' | 'desc' }[]): void {
+    this.sortRulesState.set(rules);
+  }
+
+  private getStatusPriority(startDate: string, endDate: string): number {
+    const status = this.computeStatus(startDate, endDate);
+    if (status.key === 'in_progress') return 0;
+    if (status.key === 'upcoming') return 1;
+    return 2; // finished
+  }
+
+  private compareTournamentField(a: Tournament, b: Tournament, field: string, dir: 'asc' | 'desc'): number {
+    const mul = dir === 'asc' ? 1 : -1;
+    switch (field) {
+      case 'name': return a.name.localeCompare(b.name) * mul;
+      case 'startDate': return (new Date(a.startDate).getTime() - new Date(b.startDate).getTime()) * mul;
+      case 'endDate': return (new Date(a.endDate).getTime() - new Date(b.endDate).getTime()) * mul;
+      case 'status': return (this.getStatusPriority(a.startDate, a.endDate) - this.getStatusPriority(b.startDate, b.endDate)) * mul;
+      case 'maxPairs': return ((a.maxPairs ?? 0) - (b.maxPairs ?? 0)) * mul;
+      case 'complexName': return (a.complexName ?? '').localeCompare(b.complexName ?? '') * mul;
+      case 'tournamentTypeName': return (a.tournamentTypeName ?? '').localeCompare(b.tournamentTypeName ?? '') * mul;
+      default: return 0;
+    }
   }
 
   async saveTournament(tournament: Tournament | Omit<Tournament, 'id' | 'createdAt'>): Promise<boolean> {

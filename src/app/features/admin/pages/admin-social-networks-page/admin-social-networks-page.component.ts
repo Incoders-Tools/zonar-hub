@@ -16,6 +16,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { SocialNetwork } from '../../../../core/models';
 import { SocialNetworksFacadeService, SocialNetworkFilters } from './social-networks-facade.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 
 interface SocialNetworkRow extends Record<string, unknown> {
   id: string;
@@ -45,7 +46,8 @@ interface SocialNetworkRow extends Record<string, unknown> {
     AsyncButtonComponent,
     FormShellComponent,
     CollapsibleSectionComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ActiveToggleComponent
   ],
   providers: [SocialNetworksFacadeService],
   templateUrl: './admin-social-networks-page.component.html',

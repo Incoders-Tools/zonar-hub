@@ -13,6 +13,7 @@ import { AuthService } from '../../../../../core/auth/auth.service';
 import { DateFormatService } from '../../../../../core/services/date-format.service';
 import { TournamentsFacadeService } from '../tournaments-facade.service';
 import { dateRangeValidator } from '../../../../../shared/validators/date-range.validator';
+import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 
 @Component({
   selector: 'app-tournaments-form',
@@ -25,7 +26,8 @@ import { dateRangeValidator } from '../../../../../shared/validators/date-range.
     FormShellComponent,
     AsyncButtonComponent,
     CollapsibleSectionComponent,
-    ChildCollectionGridComponent
+    ChildCollectionGridComponent,
+    ActiveToggleComponent
   ],
   templateUrl: './tournaments-form.component.html',
   styleUrl: './tournaments-form.component.scss'
@@ -77,10 +79,15 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   ];
 
   // Date constraint computed signals
-  readonly endDateMin = computed(() => this._startDate() || null);
+  readonly endDateMin = computed(() => this._startDate() || this.todayDate());
   readonly regStartMax = computed(() => this._startDate() || null);
   readonly regEndMin = computed(() => this._regStartDate() || null);
   readonly regEndMax = computed(() => this._startDate() || null);
+
+  readonly todayDate = computed(() => {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  });
 
   readonly computedStatus = computed(() => {
     const startDate = this._startDate();

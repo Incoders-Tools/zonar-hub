@@ -5,6 +5,7 @@ import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { SportService } from '../../../../core/services/sport.service';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
+import { ChatbotBubbleComponent } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
 
 interface FeatureCard {
   icon: string;
@@ -26,7 +27,7 @@ interface FaqItem {
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent, ChatbotBubbleComponent],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
@@ -49,6 +50,15 @@ export class HomePageComponent implements OnInit {
     { icon: '⚙️', titleKey: 'home.card.two.title', descriptionKey: 'home.card.two.description' },
     { icon: '📊', titleKey: 'home.card.three.title', descriptionKey: 'home.card.three.description' },
     { icon: '🏆', titleKey: 'home.card.four.title', descriptionKey: 'home.card.four.description' }
+  ];
+
+  readonly originTypes: FeatureCard[] = [
+    { icon: '🏢', titleKey: 'home.origins.empresa.title', descriptionKey: 'home.origins.empresa.description' },
+    { icon: '🏆', titleKey: 'home.origins.circuito.title', descriptionKey: 'home.origins.circuito.description' },
+    { icon: '🎓', titleKey: 'home.origins.academia.title', descriptionKey: 'home.origins.academia.description' },
+    { icon: '🎯', titleKey: 'home.origins.operadora.title', descriptionKey: 'home.origins.operadora.description' },
+    { icon: '🏷️', titleKey: 'home.origins.marca.title', descriptionKey: 'home.origins.marca.description' },
+    { icon: '🏟️', titleKey: 'home.origins.unidad.title', descriptionKey: 'home.origins.unidad.description' }
   ];
 
   readonly workflowSteps: WorkflowStep[] = [

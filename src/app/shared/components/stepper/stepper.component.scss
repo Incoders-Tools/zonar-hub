@@ -4,6 +4,11 @@
   gap: 0;
   padding: var(--zh-space-md) 0;
   overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   &__step {
     display: flex;
@@ -14,12 +19,14 @@
     background: none;
     cursor: pointer;
     white-space: nowrap;
+    flex-shrink: 0;
     transition: color var(--zh-transition-fast);
 
     &--active {
       .stepper__indicator {
         background: var(--zh-primary);
         color: var(--zh-on-primary);
+        box-shadow: 0 0 0 3px var(--zh-primary-alpha-20);
       }
       .stepper__label {
         color: var(--zh-primary);
@@ -52,6 +59,7 @@
     font-size: var(--zh-font-size-sm);
     font-weight: 700;
     flex-shrink: 0;
+    transition: box-shadow var(--zh-transition-fast), background var(--zh-transition-fast);
   }
 
   &__label {
@@ -60,10 +68,12 @@
   }
 
   &__connector {
-    flex: 1;
-    min-width: 24px;
+    flex: 1 1 auto;
+    min-width: 20px;
+    max-width: 80px;
     height: 2px;
     background: var(--zh-border-subtle);
+    transition: background var(--zh-transition-fast);
 
     &--completed {
       background: var(--zh-success);
@@ -72,7 +82,16 @@
 }
 
 @media (max-width: 599px) {
-  .stepper__label {
-    display: none;
+  .stepper {
+    justify-content: center;
+
+    &__label {
+      display: none;
+    }
+
+    &__connector {
+      min-width: 12px;
+      max-width: 32px;
+    }
   }
 }

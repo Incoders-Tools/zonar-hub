@@ -8,7 +8,7 @@ Manage tournament types (Singles, Doubles, Mixed, etc.) through a full CRUD inte
 ### Layer Separation
 - **Page Component** (`admin-tournament-types-page.component.ts`): UI orchestration, dialog management, table interactions
 - **Facade Service** (`tournament-types-facade.service.ts`): Business logic, state management, validation
-- **Form Dialog Component** (`tournament-types-form-dialog.component.ts`): Form UI with checkbox support
+- **Form Dialog Component** (`tournament-types-form-panel.component.ts`): Form UI with checkbox support
 - **Help Dialog Component** (`tournament-types-help-dialog.component.ts`): Help content display
 - **Repository** (`MockTournamentTypeRepository`): Data access layer
 

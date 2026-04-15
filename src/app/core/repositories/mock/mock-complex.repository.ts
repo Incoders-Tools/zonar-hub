@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork } from '../../models';
 import { ComplexRepository } from '../complex.repository';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
 
 const MOCK_DELAY = 400;
 
@@ -78,17 +79,17 @@ const MOCK_COMPLEXES: Complex[] = [
 
 const MOCK_COURTS: Court[] = [
   // Club Pádel Norte courts
-  { id: 'ct1', complexId: 'cx1', name: 'Cancha 1', sportIds: ['sp1'], surfaceType: 'sintético', isIndoor: false, isActive: true },
-  { id: 'ct2', complexId: 'cx1', name: 'Cancha 2', sportIds: ['sp1'], surfaceType: 'sintético', isIndoor: false, isActive: true },
-  { id: 'ct3', complexId: 'cx1', name: 'Cancha 3', sportIds: ['sp1'], surfaceType: 'cemento', isIndoor: true, isActive: true },
-  { id: 'ct4', complexId: 'cx1', name: 'Cancha 4', sportIds: ['sp1'], surfaceType: 'césped', isIndoor: false, isActive: false },
+  { id: 'ct1', complexId: 'cx1', name: 'Cancha 1', sportIds: ['sp1'], surfaceType: 'synthetic', isIndoor: false, isActive: true },
+  { id: 'ct2', complexId: 'cx1', name: 'Cancha 2', sportIds: ['sp1'], surfaceType: 'synthetic', isIndoor: false, isActive: true },
+  { id: 'ct3', complexId: 'cx1', name: 'Cancha 3', sportIds: ['sp1'], surfaceType: 'cement', isIndoor: true, isActive: true },
+  { id: 'ct4', complexId: 'cx1', name: 'Cancha 4', sportIds: ['sp1'], surfaceType: 'grass', isIndoor: false, isActive: false },
   // Arena Sur courts
-  { id: 'ct5', complexId: 'cx2', name: 'Cancha A', sportIds: ['sp1'], surfaceType: 'sintético', isIndoor: true, isActive: true },
-  { id: 'ct6', complexId: 'cx2', name: 'Cancha B', sportIds: ['sp2'], surfaceType: 'cemento', isIndoor: false, isActive: true },
-  { id: 'ct7', complexId: 'cx2', name: 'Cancha C', sportIds: ['sp1', 'sp2'], surfaceType: 'césped', isIndoor: false, isActive: true },
+  { id: 'ct5', complexId: 'cx2', name: 'Cancha A', sportIds: ['sp1'], surfaceType: 'synthetic', isIndoor: true, isActive: true },
+  { id: 'ct6', complexId: 'cx2', name: 'Cancha B', sportIds: ['sp2'], surfaceType: 'cement', isIndoor: false, isActive: true },
+  { id: 'ct7', complexId: 'cx2', name: 'Cancha C', sportIds: ['sp1', 'sp2'], surfaceType: 'grass', isIndoor: false, isActive: true },
   // Centro Deportivo Este courts
-  { id: 'ct8', complexId: 'cx3', name: 'Pista 1', sportIds: ['sp1'], surfaceType: 'arcilla', isIndoor: false, isActive: true },
-  { id: 'ct9', complexId: 'cx3', name: 'Pista 2', sportIds: ['sp4'], surfaceType: 'sintético', isIndoor: true, isActive: true }
+  { id: 'ct8', complexId: 'cx3', name: 'Pista 1', sportIds: ['sp1'], surfaceType: 'clay', isIndoor: false, isActive: true },
+  { id: 'ct9', complexId: 'cx3', name: 'Pista 2', sportIds: ['sp4'], surfaceType: 'synthetic', isIndoor: true, isActive: true }
 ];
 
 // Default weekday availability for first complex's first court (8:00-22:00 Mon-Fri)
@@ -141,14 +142,37 @@ const MOCK_SOCIAL_NETWORKS: Record<string, ComplexSocialNetwork[]> = {
 
 @Injectable({ providedIn: 'root' })
 export class MockComplexRepository implements ComplexRepository {
-  private complexes: Complex[] = structuredClone(MOCK_COMPLEXES);
-  private courts: Court[] = structuredClone(MOCK_COURTS);
-  private availability: Availability[] = structuredClone(MOCK_AVAILABILITY);
-  private serviceAssignments: Record<string, ComplexServiceAssignment[]> = structuredClone(MOCK_SERVICE_ASSIGNMENTS);
-  private socialNetworks: Record<string, ComplexSocialNetwork[]> = structuredClone(MOCK_SOCIAL_NETWORKS);
-  private complexIdCounter = this.complexes.length;
-  private courtIdCounter = this.courts.length;
-  private availabilityIdCounter = this.availability.length;
+  private complexes: Complex[] = [];
+  private courts: Court[] = [];
+  private availability: Availability[] = [];
+  private serviceAssignments: Record<string, ComplexServiceAssignment[]> = {};
+  private socialNetworks: Record<string, ComplexSocialNetwork[]> = {};
+  private complexIdCounter = 0;
+  private courtIdCounter = 0;
+  private availabilityIdCounter = 0;
+  private _seededForTenant: string | null = '__none__';
+
+  private ensureSeed(): void {
+    const tid = getCurrentMockTenantId();
+    if (this._seededForTenant === tid) return;
+    this._seededForTenant = tid;
+    if (isDemoTenant()) {
+      this.complexes = structuredClone(MOCK_COMPLEXES);
+      this.courts = structuredClone(MOCK_COURTS);
+      this.availability = structuredClone(MOCK_AVAILABILITY);
+      this.serviceAssignments = structuredClone(MOCK_SERVICE_ASSIGNMENTS);
+      this.socialNetworks = structuredClone(MOCK_SOCIAL_NETWORKS);
+    } else {
+      this.complexes = [];
+      this.courts = [];
+      this.availability = [];
+      this.serviceAssignments = {};
+      this.socialNetworks = {};
+    }
+    this.complexIdCounter = this.complexes.length;
+    this.courtIdCounter = this.courts.length;
+    this.availabilityIdCounter = this.availability.length;
+  }
 
   private delay<T>(value: T): Promise<T> {
     return new Promise(resolve => setTimeout(() => resolve(value), MOCK_DELAY));
@@ -157,6 +181,7 @@ export class MockComplexRepository implements ComplexRepository {
   // --- Complex CRUD ---
 
   async getAll(): Promise<Complex[]> {
+    this.ensureSeed();
     return this.delay(structuredClone(this.complexes));
   }
 

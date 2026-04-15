@@ -1,0 +1,58 @@
+<div class="permission-matrix" [class.permission-matrix--disabled]="disabled()">
+  <div class="permission-matrix__header">
+    <span class="permission-matrix__counter">
+      {{ selectedTools().length }} / {{ availableTools().length }} {{ 'admin.permissions.toolsSelected' | t }}
+    </span>
+    <div class="permission-matrix__bulk-actions">
+      <button type="button" class="permission-matrix__link" (click)="selectAll()" [disabled]="disabled()">
+        {{ 'admin.permissions.selectAll' | t }}
+      </button>
+      <button type="button" class="permission-matrix__link" (click)="deselectAll()" [disabled]="disabled()">
+        {{ 'admin.permissions.deselectAll' | t }}
+      </button>
+    </div>
+  </div>
+
+  @for (group of moduleGroups(); track group.module) {
+    <div class="permission-matrix__module">
+      <button
+        type="button"
+        class="permission-matrix__module-header"
+        (click)="toggleExpand(group.module)"
+        [attr.aria-expanded]="isExpanded(group.module)">
+        <mat-icon class="permission-matrix__chevron"
+          [class.permission-matrix__chevron--expanded]="isExpanded(group.module)">
+          chevron_right
+        </mat-icon>
+        <label class="permission-matrix__module-check">
+          <input
+            type="checkbox"
+            [checked]="isModuleFullySelected(group.module)"
+            [indeterminate]="isModulePartiallySelected(group.module)"
+            (change)="toggleModule(group.module, $event)"
+            (click)="$event.stopPropagation()"
+            [disabled]="disabled()" />
+          <span>{{ group.labelKey | t }}</span>
+        </label>
+        <span class="permission-matrix__module-count">
+          {{ getModuleSelectedCount(group.module) }}/{{ group.tools.length }}
+        </span>
+      </button>
+
+      @if (isExpanded(group.module)) {
+        <div class="permission-matrix__tools">
+          @for (tool of group.tools; track tool.key) {
+            <label class="permission-matrix__tool">
+              <input
+                type="checkbox"
+                [checked]="isToolSelected(tool.key)"
+                (change)="toggleTool(tool.key, $event)"
+                [disabled]="disabled()" />
+              <span>{{ tool.labelKey | t }}</span>
+            </label>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

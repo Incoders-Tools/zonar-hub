@@ -9,11 +9,13 @@ import { AsyncButtonComponent } from '../../../../../shared/components/async-but
 import { ConfirmDialogComponent } from '../../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { Court } from '../../../../../core/models';
 import { Sport } from '../../../../../core/models';
+import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 
 interface CourtRow extends Record<string, unknown> {
   id: string;
   name: string;
   surfaceType: string;
+  surfaceTypeLabel: string;
   isIndoor: boolean;
   isActive: boolean;
   indoorLabel: string;
@@ -31,7 +33,8 @@ interface CourtRow extends Record<string, unknown> {
     TranslatePipe,
     DataTableComponent,
     AsyncButtonComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    ActiveToggleComponent
   ],
   templateUrl: './complex-courts-panel.component.html',
   styleUrl: './complex-courts-panel.component.scss',
@@ -71,8 +74,8 @@ export class ComplexCourtsPanelComponent {
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.complexes.courts.column.name', sortable: true },
-    { key: 'surfaceType', labelKey: 'admin.complexes.courts.column.surfaceType', sortable: true },
-    { key: 'indoorLabel', labelKey: 'admin.complexes.courts.column.isIndoor', sortable: false },
+    { key: 'surfaceTypeLabel', labelKey: 'admin.complexes.courts.column.surfaceType', sortable: true, translate: true },
+    { key: 'indoorLabel', labelKey: 'admin.complexes.courts.column.isIndoor', sortable: false, translate: true },
     { key: 'statusLabel', labelKey: 'admin.complexes.courts.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
@@ -82,13 +85,14 @@ export class ComplexCourtsPanelComponent {
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
-  readonly surfaceTypes = ['sintético', 'cemento', 'césped', 'arcilla'];
+  readonly surfaceTypes = ['synthetic', 'cement', 'grass', 'clay'];
 
   get tableData(): CourtRow[] {
     return this.courts().map(ct => ({
       id: ct.id,
       name: ct.name,
       surfaceType: ct.surfaceType,
+      surfaceTypeLabel: `admin.complexes.courts.surfaceType.${ct.surfaceType}`,
       isIndoor: ct.isIndoor,
       isActive: ct.isActive,
       indoorLabel: ct.isIndoor ? 'admin.complexes.courts.indoor' : 'admin.complexes.courts.outdoor',

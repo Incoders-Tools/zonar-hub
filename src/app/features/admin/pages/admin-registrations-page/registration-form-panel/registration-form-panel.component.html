@@ -29,6 +29,35 @@
 
     <!-- Dynamic participant slots -->
     @if (selectedTournament() && !loadingTournament()) {
+      <!-- Tournament details card -->
+      <div class="registration-form__tournament-card">
+        <h4 class="registration-form__tournament-card-title">{{ 'registrations.form.tournamentDetails' | t }}</h4>
+        <div class="registration-form__tournament-card-body">
+          <div class="registration-form__tournament-card-row">
+            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentComplex' | t }}</span>
+            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.complexName }}</span>
+          </div>
+          <div class="registration-form__tournament-card-row">
+            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentDates' | t }}</span>
+            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.startDate | formatDate }} — {{ selectedTournament()!.endDate | formatDate }}</span>
+          </div>
+          <div class="registration-form__tournament-card-row">
+            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentCategory' | t }}</span>
+            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.categoryName }} · {{ selectedTournament()!.genderLabel }}</span>
+          </div>
+          <div class="registration-form__tournament-card-row">
+            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentMaxPairs' | t }}</span>
+            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.maxPairs }}</span>
+          </div>
+          @if (selectedTournament()!.registrationStartDate || selectedTournament()!.registrationEndDate) {
+            <div class="registration-form__tournament-card-row">
+              <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentRegistration' | t }}</span>
+              <span class="registration-form__tournament-card-value">{{ selectedTournament()!.registrationStartDate | formatDate }} — {{ selectedTournament()!.registrationEndDate | formatDate }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
       <app-collapsible-section
         [titleKey]="'registrations.form.participantsSection'"
         [initialExpanded]="true">
@@ -66,8 +95,9 @@
         [titleKey]="'registrations.form.availabilitySection'"
         [initialExpanded]="true">
         <app-availability-selector
+          [days]="tournamentDays()"
           [showNotes]="true"
-          [notesPlaceholderKey]="'registration.availability.notesPlaceholder'"
+          [notesPlaceholderKey]="'registration.notesPlaceholder'"
           (changed)="onAvailabilityChanged($event)">
         </app-availability-selector>
       </app-collapsible-section>

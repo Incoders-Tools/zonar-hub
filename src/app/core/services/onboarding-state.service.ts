@@ -7,6 +7,7 @@ export interface OnboardingProgress {
   tourCompleted: boolean;
   tourStep: number;
   createdTournament: boolean;
+  organizationCreated: boolean;
 }
 
 const STORAGE_KEY = 'zh_onboarding_progress';
@@ -44,7 +45,8 @@ export class OnboardingStateService {
       wizardStep: 0,
       tourCompleted: false,
       tourStep: 0,
-      createdTournament: false
+      createdTournament: false,
+      organizationCreated: false
     };
     this._progress.set(initial);
     this.persist(initial);

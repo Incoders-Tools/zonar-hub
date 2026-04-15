@@ -1,0 +1,110 @@
+<app-form-shell [titleKey]="titleKey">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Level Field (drives inference for new categories) -->
+        <div class="form-field">
+          <label class="form-field__label" for="category-level">{{ 'categories.form.level' | t }} *</label>
+          <input
+            class="form-field__input"
+            id="category-level"
+            type="number"
+            formControlName="level"
+            min="1"
+            max="99"
+            [placeholder]="'categories.form.levelPlaceholder' | t" />
+          @if (form.get('level')?.invalid && form.get('level')?.touched) {
+            <span class="form-field__error">{{ 'categories.validation.levelRequired' | t }}</span>
+          }
+          @if (levelInferred()) {
+            <span class="form-field__hint form-field__hint--inferred">{{ 'categories.form.levelInferredHint' | t }}</span>
+          }
+        </div>
+
+        <!-- Name Field -->
+        <div class="form-field">
+          <label class="form-field__label" for="category-name">{{ 'categories.form.name' | t }} *</label>
+          <input
+            class="form-field__input"
+            id="category-name"
+            type="text"
+            formControlName="name"
+            [placeholder]="'categories.form.namePlaceholder' | t"
+            (blur)="onNameBlur()" />
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <span class="form-field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('name')?.hasError('invalidCategoryName')) {
+            <span class="form-field__error">{{ 'categories.validation.nameChars' | t }}</span>
+          }
+        </div>
+
+        <!-- Short Name Field -->
+        <div class="form-field">
+          <label class="form-field__label" for="category-short-name">{{ 'categories.form.shortName' | t }} *</label>
+          <input
+            class="form-field__input"
+            id="category-short-name"
+            type="text"
+            formControlName="shortName"
+            [placeholder]="'categories.form.shortNamePlaceholder' | t" />
+          @if (form.get('shortName')?.invalid && form.get('shortName')?.touched) {
+            <span class="form-field__error">{{ 'common.required' | t }}</span>
+          }
+          <span class="form-field__hint">{{ 'categories.form.shortNameHint' | t }}</span>
+        </div>
+
+        <!-- Key Field (Admin Only) -->
+        @if (isAdmin()) {
+          <div class="form-field">
+            <label class="form-field__label" for="category-key">{{ 'categories.form.key' | t }}</label>
+            <input
+              class="form-field__input form-field__input--mono"
+              id="category-key"
+              type="text"
+              formControlName="key"
+              [placeholder]="'categories.form.keyPlaceholder' | t" />
+            <span class="form-field__hint">{{ 'categories.form.keyHint' | t }}</span>
+            @if (keyConflict()) {
+              <span class="form-field__error">{{ 'categories.form.keyConflict' | t }}</span>
+            }
+          </div>
+        }
+
+        <!-- Sort Order Field (Admin Only) -->
+        @if (isAdmin()) {
+        <div class="form-field">
+          <label class="form-field__label" for="category-sort-order">{{ 'categories.form.sortOrder' | t }}</label>
+          <input
+            class="form-field__input"
+            id="category-sort-order"
+            type="number"
+            formControlName="sortOrder"
+            min="0"
+            [placeholder]="'categories.form.sortOrderPlaceholder' | t" />
+        </div>
+        }
+
+        <!-- Is Active Toggle -->
+        <div class="form-field">
+          <app-active-toggle
+            [value]="form.get('isActive')!.value"
+            mode="toggle"
+            (toggled)="form.get('isActive')!.setValue($event)">
+          </app-active-toggle>
+          <span class="form-field__hint">{{ 'categories.form.isActiveHint' | t }}</span>
+        </div>
+
+        <!-- Actions -->
+        <div formActions class="form-actions">
+          <button type="button" class="form-actions__cancel" (click)="onCancel()">
+            {{ 'common.cancel' | t }}
+          </button>
+          <app-async-button
+            type="submit"
+            variant="primary"
+            [disabled]="!canSubmit"
+            [loading]="saving()">
+            {{ (isEditing ? 'common.save' : 'common.create') | t }}
+          </app-async-button>
+        </div>
+    </form>
+  </app-form-shell>

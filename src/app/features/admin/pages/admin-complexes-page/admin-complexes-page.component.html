@@ -43,19 +43,19 @@
         </button>
       </div>
       <div class="complexes-page__form-panel-body">
-        <app-complexes-form-dialog
+        <app-complexes-form-panel
           [complex]="editingComplex()"
           [saving]="facade.saving()"
           (saved)="closeFormPanel()"
           (cancelled)="closeFormPanel()">
-        </app-complexes-form-dialog>
+        </app-complexes-form-panel>
       </div>
     </div>
   }
 
   <!-- Filter Panel -->
   <app-filter-panel
-    [fields]="filterFields"
+    [fields]="filterFields()"
     [collapsible]="true"
     [defaultCollapsed]="true"
     (filtersApplied)="onFiltersApplied($event)"

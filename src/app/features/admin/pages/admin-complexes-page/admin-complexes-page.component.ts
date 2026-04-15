@@ -11,9 +11,10 @@ import { HelpButtonComponent, HelpSection } from '../../../../shared/components/
 import { Complex } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ComplexesFacadeService, ComplexFilters } from './complexes-facade.service';
-import { ComplexesFormDialogComponent } from './complexes-form-dialog/complexes-form-dialog.component';
+import { ComplexesFormPanelComponent } from './complexes-form-panel/complexes-form-panel.component';
 import { ComplexCourtsPanelComponent } from './complex-courts-panel/complex-courts-panel.component';
 import { CourtAvailabilityGridComponent } from './court-availability-grid/court-availability-grid.component';
+import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
 
 interface ComplexRow extends Record<string, unknown> {
   id: string;
@@ -40,7 +41,7 @@ interface ComplexRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     HelpButtonComponent,
-    ComplexesFormDialogComponent,
+    ComplexesFormPanelComponent,
     ComplexCourtsPanelComponent,
     CourtAvailabilityGridComponent
   ],
@@ -63,6 +64,7 @@ interface ComplexRow extends Record<string, unknown> {
 export class AdminComplexesPageComponent implements OnInit {
   readonly facade = inject(ComplexesFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly tenantFilter = inject(TenantFilterService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
@@ -102,16 +104,20 @@ export class AdminComplexesPageComponent implements OnInit {
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
-  readonly filterFields: FilterField[] = [
-    { key: 'name', labelKey: 'admin.complexes.filter.name', type: 'text' },
-    {
-      key: 'isActive', labelKey: 'admin.complexes.filter.status', type: 'select',
-      options: [
-        { value: 'true', labelKey: 'admin.complexes.status.active' },
-        { value: 'false', labelKey: 'admin.complexes.status.inactive' }
-      ]
-    }
-  ];
+  readonly filterFields = computed<FilterField[]>(() => {
+    const base: FilterField[] = [
+      { key: 'name', labelKey: 'admin.complexes.filter.name', type: 'text' },
+      {
+        key: 'isActive', labelKey: 'admin.complexes.filter.status', type: 'select',
+        options: [
+          { value: 'true', labelKey: 'admin.complexes.status.active' },
+          { value: 'false', labelKey: 'admin.complexes.status.inactive' }
+        ]
+      }
+    ];
+    const tf = this.tenantFilter.tenantFilterField();
+    return tf ? [tf, ...base] : base;
+  });
 
   readonly tableData = computed<ComplexRow[]>(() =>
     this.facade.filteredComplexes().map(c => ({

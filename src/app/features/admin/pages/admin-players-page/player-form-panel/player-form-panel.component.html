@@ -1,0 +1,194 @@
+<app-form-shell [titleKey]="titleKey">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- First Name -->
+    <div class="form-field">
+      <label class="form-field__label" for="player-firstName">{{ 'admin.players.form.firstName' | t }} *</label>
+      <input
+        class="form-field__input"
+        id="player-firstName"
+        type="text"
+        formControlName="firstName"
+        [placeholder]="'admin.players.form.firstNamePlaceholder' | t" />
+      @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+    </div>
+
+    <!-- Last Name -->
+    <div class="form-field">
+      <label class="form-field__label" for="player-lastName">{{ 'admin.players.form.lastName' | t }} *</label>
+      <input
+        class="form-field__input"
+        id="player-lastName"
+        type="text"
+        formControlName="lastName"
+        [placeholder]="'admin.players.form.lastNamePlaceholder' | t" />
+      @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+    </div>
+
+    <!-- Email -->
+    <div class="form-field">
+      <label class="form-field__label" for="player-email">{{ 'admin.players.form.email' | t }} *</label>
+      <input
+        class="form-field__input"
+        id="player-email"
+        type="email"
+        formControlName="email"
+        [placeholder]="'admin.players.form.emailPlaceholder' | t" />
+      @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+      @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+        <span class="form-field__error">{{ 'common.invalidEmail' | t }}</span>
+      }
+    </div>
+
+    <!-- Gender Select -->
+    <div class="form-field">
+      <label class="form-field__label" for="player-genderId">{{ 'admin.players.form.gender' | t }} *</label>
+      <select
+        class="form-field__input"
+        id="player-genderId"
+        formControlName="genderId">
+        <option value="">{{ 'admin.players.form.genderPlaceholder' | t }}</option>
+        @for (gender of genders(); track gender.id) {
+          <option [value]="gender.id">{{ gender.name }}</option>
+        }
+      </select>
+      @if (form.get('genderId')?.hasError('required') && form.get('genderId')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+    </div>
+
+    <!-- Category Select -->
+    <div class="form-field">
+      <label class="form-field__label" for="player-categoryId">{{ 'admin.players.form.category' | t }} *</label>
+      <select
+        class="form-field__input"
+        id="player-categoryId"
+        formControlName="categoryId">
+        <option value="">{{ 'admin.players.form.categoryPlaceholder' | t }}</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+      @if (form.get('categoryId')?.hasError('required') && form.get('categoryId')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+    </div>
+
+    <!-- Sport Assignment (multi-select with drag-drop) -->
+    <app-child-collection-grid
+      mode="select"
+      [titleKey]="'admin.players.sport.title'"
+      [columns]="sportColumns"
+      [items]="sportItems()"
+      [selectedIds]="selectedSportIds()"
+      [initialOrderedIds]="orderedSportIds()"
+      [emptyMessageKey]="'admin.players.sport.empty'"
+      [selectAllLabelKey]="'childGrid.selectAll'"
+      [deselectAllLabelKey]="'childGrid.deselectAll'"
+      [reorderable]="true"
+      [collapsible]="true"
+      [initialExpanded]="true"
+      (selectionChanged)="onSportSelectionChanged($event)"
+      (selectionReordered)="onSportOrderChanged($event)">
+    </app-child-collection-grid>
+    <div class="form-field" style="margin-top: var(--zh-space-xs);">
+      <span class="form-field__hint">{{ 'admin.players.sport.primaryHint' | t }}</span>
+    </div>
+
+    <!-- Optional Fields Collapsible -->
+    <app-collapsible-section [titleKey]="'admin.players.form.optionalTitle'">
+      <!-- Phone -->
+      <div class="form-field">
+        <label class="form-field__label">{{ 'admin.players.form.phone' | t }}</label>
+        <app-phone-input formControlName="phone"></app-phone-input>
+      </div>
+
+      <!-- Document ID -->
+      <div class="form-field">
+        <label class="form-field__label" for="player-documentId">{{ 'admin.players.form.documentId' | t }}</label>
+        <input
+          class="form-field__input"
+          id="player-documentId"
+          type="text"
+          formControlName="documentId"
+          [placeholder]="'admin.players.form.documentIdPlaceholder' | t" />
+      </div>
+
+      <!-- Birth Date -->
+      <div class="form-field">
+        <label class="form-field__label" for="player-birthDate">{{ 'admin.players.form.birthDate' | t }}</label>
+        <input
+          class="form-field__input"
+          id="player-birthDate"
+          type="date"
+          formControlName="birthDate" />
+      </div>
+
+      <!-- City -->
+      <div class="form-field">
+        <label class="form-field__label" for="player-city">{{ 'admin.players.form.city' | t }}</label>
+        <input
+          class="form-field__input"
+          id="player-city"
+          type="text"
+          formControlName="city"
+          [placeholder]="'admin.players.form.cityPlaceholder' | t" />
+      </div>
+
+      <!-- Ranking -->
+      <div class="form-field">
+        <label class="form-field__label" for="player-ranking">{{ 'admin.players.form.ranking' | t }}</label>
+        <input
+          class="form-field__input"
+          id="player-ranking"
+          type="number"
+          formControlName="ranking"
+          min="1"
+          [placeholder]="'admin.players.form.rankingPlaceholder' | t" />
+        @if (form.get('ranking')?.hasError('min') && form.get('ranking')?.touched) {
+          <span class="form-field__error">{{ 'admin.players.validation.rankingMin' | t }}</span>
+        }
+      </div>
+
+      <!-- Photo URL -->
+      <div class="form-field">
+        <label class="form-field__label" for="player-photoUrl">{{ 'admin.players.form.photoUrl' | t }}</label>
+        <input
+          class="form-field__input"
+          id="player-photoUrl"
+          type="url"
+          formControlName="photoUrl"
+          [placeholder]="'admin.players.form.photoUrlPlaceholder' | t" />
+      </div>
+    </app-collapsible-section>
+
+    <!-- Is Active Toggle -->
+    <div class="form-field">
+      <app-active-toggle
+        [value]="form.get('isActive')!.value"
+        mode="toggle"
+        (toggled)="form.get('isActive')!.setValue($event)">
+      </app-active-toggle>
+      <span class="form-field__hint">{{ 'admin.players.form.isActiveHint' | t }}</span>
+    </div>
+
+    <!-- Actions -->
+    <div formActions class="form-actions">
+      <button type="button" class="form-actions__cancel" (click)="onCancel()">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        variant="primary"
+        [disabled]="!canSubmit"
+        [loading]="saving()">
+        {{ (isEditing ? 'common.save' : 'common.create') | t }}
+      </app-async-button>
+    </div>
+  </form>
+</app-form-shell>

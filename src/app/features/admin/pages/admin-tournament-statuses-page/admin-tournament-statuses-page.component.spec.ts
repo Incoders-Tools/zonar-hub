@@ -31,14 +31,14 @@ describe('AdminTournamentStatusesPageComponent', () => {
 
   it('should open form dialog for create', () => {
     component.openCreate();
-    expect(component.showFormDialog()).toBe(true);
+    expect(component.showFormPanel()).toBe(true);
     expect(component.editingStatus()).toBeNull();
   });
 
   it('should close form dialog', () => {
-    component.showFormDialog.set(true);
-    component.closeFormDialog();
-    expect(component.showFormDialog()).toBe(false);
+    component.showFormPanel.set(true);
+    component.closeFormPanel();
+    expect(component.showFormPanel()).toBe(false);
     expect(component.editingStatus()).toBeNull();
   });
 });

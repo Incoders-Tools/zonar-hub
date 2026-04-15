@@ -1,0 +1,95 @@
+<div class="organizations-page">
+  <div class="organizations-page__header">
+    <div class="organizations-page__title-row">
+      <div>
+        <h1 class="organizations-page__title">{{ 'admin.organizations.title' | t }}</h1>
+        <p class="organizations-page__subtitle">{{ 'admin.organizations.subtitle' | t }}</p>
+      </div>
+      <div class="organizations-page__header-actions">
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        @if (!showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'admin.organizations.action.create' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="organizations-page__form-panel" @slideDown>
+      <div class="organizations-page__form-panel-header">
+        <h3 class="organizations-page__form-panel-title">
+          {{ (editingOrganization() ? 'admin.organizations.form.edit' : 'admin.organizations.form.create') | t }}
+        </h3>
+        <button
+          class="organizations-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="organizations-page__form-panel-body">
+        <app-organization-form-panel
+          [organization]="editingOrganization()"
+          [saving]="facade.saving()"
+          (submitted)="onFormSubmitted($event)"
+          (cancelled)="closeFormPanel()">
+        </app-organization-form-panel>
+      </div>
+    </div>
+  }
+
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="false"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="true"
+    [rowActions]="rowActions"
+    emptyMessageKey="admin.organizations.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.organizations.confirm.deleteTitle"
+    messageKey="admin.organizations.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.organizations.confirm.bulkDeleteTitle"
+    messageKey="admin.confirmBulkDelete"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}

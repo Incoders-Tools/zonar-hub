@@ -57,6 +57,11 @@ export class MockTenantRepository extends TenantRepository {
     return JSON.parse(JSON.stringify(this.tenants));
   }
 
+  /** Synchronous access to tenants for use in computed signals */
+  getAllSync(): Tenant[] {
+    return JSON.parse(JSON.stringify(this.tenants));
+  }
+
   async getById(id: string): Promise<Tenant> {
     await this.delay();
     const tenant = this.tenants.find(t => t.id === id);

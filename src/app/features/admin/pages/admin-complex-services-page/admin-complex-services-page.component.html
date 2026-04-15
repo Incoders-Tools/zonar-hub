@@ -43,12 +43,12 @@
         </button>
       </div>
       <div class="complex-services-page__form-panel-body">
-        <app-complex-services-form-dialog
+        <app-complex-services-form-panel
           [service]="editingService()"
           [saving]="facade.saving()"
           (saved)="closeFormPanel()"
           (cancelled)="closeFormPanel()">
-        </app-complex-services-form-dialog>
+        </app-complex-services-form-panel>
       </div>
     </div>
   }

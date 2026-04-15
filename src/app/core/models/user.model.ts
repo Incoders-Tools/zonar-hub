@@ -1,4 +1,4 @@
-export type UserRole = 'system_admin' | 'admin' | 'player' | 'viewer';
+export type UserRole = 'system_admin' | 'admin' | 'user' | 'player' | 'viewer';
 
 export type PlanType = 'starter' | 'pro' | 'enterprise' | 'single_use';
 
@@ -44,6 +44,8 @@ export interface User {
   isActive: boolean;
   avatarUrl?: string;
   tenantId?: string;
+  tenantIds?: string[];
+  organizationId?: string;
   locale?: string;
   dateFormat?: string;
   createdAt: string;
@@ -54,6 +56,8 @@ export interface AuthSession {
   token: string;
   expiresAt: string;
   tenant?: Tenant;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 export interface LoginRequest {

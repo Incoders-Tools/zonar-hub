@@ -15,6 +15,7 @@ import { FormShellComponent } from '../../../../shared/components/form-shell/for
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentRuleSet } from '../../../../core/models';
 import { TournamentRulesFacadeService, TournamentRuleSetFilters } from './tournament-rules-facade.service';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 
 interface TournamentRuleSetRow extends Record<string, unknown> {
   id: string;
@@ -41,7 +42,8 @@ interface TournamentRuleSetRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     FormShellComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ActiveToggleComponent
   ],
   providers: [TournamentRulesFacadeService],
   templateUrl: './admin-tournament-rules-page.component.html',

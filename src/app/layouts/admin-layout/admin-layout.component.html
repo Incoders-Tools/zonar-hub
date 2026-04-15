@@ -27,7 +27,7 @@
       </a>
 
       <!-- Grouped navigation -->
-      @for (group of navGroups; track group.labelKey) {
+      @for (group of filteredNavGroups(); track group.labelKey) {
         <div class="admin-sidebar__group">
           @if (sidebarCollapsed()) {
             <!-- Collapsed: show only the group icon -->
@@ -112,6 +112,12 @@
           </span>
         }
       </a>
+      <button class="admin-sidebar__chatbot-toggle" (click)="toggleChatbot()">
+        <span class="admin-sidebar__icon">💬</span>
+        @if (!sidebarCollapsed()) {
+          <span>{{ (showChatbot() ? 'admin.chatbot.hide' : 'admin.chatbot.show') | t }}</span>
+        }
+      </button>
       <button class="admin-sidebar__logout" (click)="logout()">
         <span class="admin-sidebar__icon">🚪</span>
         @if (!sidebarCollapsed()) {
@@ -138,5 +144,10 @@
       (completed)="onTourCompleted()"
       (cancelled)="onTourCancelled()">
     </app-guided-tour>
+  }
+
+  <!-- Chatbot -->
+  @if (showChatbot()) {
+    <app-chatbot-bubble></app-chatbot-bubble>
   }
 </div>

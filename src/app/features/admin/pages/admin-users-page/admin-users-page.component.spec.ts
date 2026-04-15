@@ -42,7 +42,7 @@ describe('AdminUsersPageComponent', () => {
 
   it('should open create form', () => {
     component.openCreateForm();
-    expect(component.showFormDialog()).toBe(true);
+    expect(component.showFormPanel()).toBe(true);
     expect(component.editingUser()).toBeNull();
   });
 

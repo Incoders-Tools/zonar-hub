@@ -2,13 +2,24 @@ import { Injectable } from '@angular/core';
 import { PlayerRepository, PlayerSearchFilters } from '../player.repository';
 import { Player } from '../../models/player.model';
 import { MOCK_PLAYERS } from '../../data/mock/mock-players';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
 
 @Injectable({ providedIn: 'root' })
 export class MockPlayerRepository implements PlayerRepository {
-  private players: Player[] = structuredClone(MOCK_PLAYERS);
-  private idCounter = this.players.length;
+  private players: Player[] = [];
+  private idCounter = 0;
+  private _seededForTenant: string | null = '__none__';
+
+  private ensureSeed(): void {
+    const tid = getCurrentMockTenantId();
+    if (this._seededForTenant === tid) return;
+    this._seededForTenant = tid;
+    this.players = isDemoTenant() ? structuredClone(MOCK_PLAYERS) : [];
+    this.idCounter = this.players.length;
+  }
 
   async getAll(): Promise<Player[]> {
+    this.ensureSeed();
     return new Promise(resolve =>
       setTimeout(() => resolve(structuredClone(this.players)), 400)
     );

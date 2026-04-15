@@ -93,6 +93,35 @@
   padding: var(--zh-space-lg);
 }
 
+.profile-tabs {
+  display: flex;
+  gap: var(--zh-space-xs);
+  border-bottom: 2px solid var(--zh-border-subtle);
+
+  &__tab {
+    padding: var(--zh-space-sm) var(--zh-space-lg);
+    border: none;
+    background: none;
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color var(--zh-transition-fast), border-color var(--zh-transition-fast);
+    font-family: inherit;
+
+    &:hover {
+      color: var(--zh-text-primary);
+    }
+
+    &--active {
+      color: var(--zh-primary);
+      border-bottom-color: var(--zh-primary);
+    }
+  }
+}
+
 .form-field {
   margin-bottom: var(--zh-space-md);
 

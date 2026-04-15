@@ -4,13 +4,15 @@ import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
-import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
+import { FilterPanelComponent, FilterField, SortOption, SortRule } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Tournament } from '../../../../core/models';
 import { TournamentsFacadeService, TournamentFilters } from './tournaments-facade.service';
 import { TournamentsFormComponent } from './tournaments-form/tournaments-form.component';
+import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
+import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 
 interface TournamentRow extends Record<string, unknown> {
   id: string;
@@ -36,7 +38,8 @@ interface TournamentRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     TournamentsFormComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    SocialSharePreviewComponent
   ],
   providers: [TournamentsFacadeService],
   templateUrl: './admin-tournaments-page.component.html',
@@ -56,6 +59,7 @@ interface TournamentRow extends Record<string, unknown> {
 })
 export class AdminTournamentsPageComponent implements OnInit {
   readonly facade = inject(TournamentsFacadeService);
+  private readonly tenantFilter = inject(TenantFilterService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -64,6 +68,7 @@ export class AdminTournamentsPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly selectedTournaments = signal<TournamentRow[]>([]);
   readonly highlightedRowId = signal<string | null>(null);
+  readonly sharePayload = signal<SocialSharePayload | null>(null);
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.tournaments.column.name', sortable: true },
@@ -77,19 +82,38 @@ export class AdminTournamentsPageComponent implements OnInit {
 
   readonly tournamentRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+    { icon: 'share', labelKey: 'common.share', action: 'share', variant: 'default' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
-  readonly filterFields: FilterField[] = [
-    { key: 'name', labelKey: 'admin.tournaments.filter.name', type: 'text' },
-    {
-      key: 'statusLabel', labelKey: 'admin.tournaments.filter.status', type: 'select',
-      options: [
-        { value: 'upcoming', labelKey: 'admin.tournaments.status.upcoming' },
-        { value: 'in_progress', labelKey: 'admin.tournaments.status.in_progress' },
-        { value: 'finished', labelKey: 'admin.tournaments.status.finished' }
-      ]
-    }
+  readonly filterFields = computed<FilterField[]>(() => {
+    const base: FilterField[] = [
+      { key: 'name', labelKey: 'admin.tournaments.filter.name', type: 'text' },
+      {
+        key: 'statusLabel', labelKey: 'admin.tournaments.filter.status', type: 'select',
+        options: [
+          { value: 'upcoming', labelKey: 'admin.tournaments.status.upcoming' },
+          { value: 'in_progress', labelKey: 'admin.tournaments.status.in_progress' },
+          { value: 'finished', labelKey: 'admin.tournaments.status.finished' }
+        ]
+      }
+    ];
+    const tf = this.tenantFilter.tenantFilterField();
+    return tf ? [tf, ...base] : base;
+  });
+
+  readonly sortFields: SortOption[] = [
+    { key: 'status', labelKey: 'admin.tournaments.column.status' },
+    { key: 'name', labelKey: 'admin.tournaments.column.name' },
+    { key: 'startDate', labelKey: 'admin.tournaments.column.startDate' },
+    { key: 'endDate', labelKey: 'admin.tournaments.column.endDate' },
+    { key: 'complexName', labelKey: 'admin.tournaments.column.complex' },
+    { key: 'tournamentTypeName', labelKey: 'admin.tournaments.column.type' },
+    { key: 'maxPairs', labelKey: 'admin.tournaments.column.maxPairs' }
+  ];
+
+  readonly defaultSortRules: SortRule[] = [
+    { field: 'status', dir: 'asc' }
   ];
 
   readonly tableData = computed<TournamentRow[]>(() =>
@@ -142,6 +166,8 @@ export class AdminTournamentsPageComponent implements OnInit {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
+    } else if (event.action === 'share') {
+      this.openShare(event.row);
     }
   }
 
@@ -209,5 +235,28 @@ export class AdminTournamentsPageComponent implements OnInit {
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
     this.facade.applySortOption(`${event.key}_${event.direction}`);
+  }
+
+  onSortRulesChanged(rules: SortRule[]): void {
+    this.facade.applySortRules(rules);
+  }
+
+  openShare(row: TournamentRow): void {
+    const tournament = this.facade.filteredTournaments().find(t => t.id === row.id);
+    if (!tournament) return;
+    this.sharePayload.set({
+      type: 'tournament',
+      title: tournament.name,
+      subtitle: tournament.complexName,
+      lines: [
+        `📅 ${tournament.startDate} → ${tournament.endDate}`,
+        `🏆 ${tournament.tournamentTypeName}`,
+        `👥 ${tournament.maxPairs} parejas máx.`
+      ]
+    });
+  }
+
+  closeSharePreview(): void {
+    this.sharePayload.set(null);
   }
 }

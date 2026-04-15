@@ -73,11 +73,12 @@
           </div>
 
           <!-- Is Active -->
-          <div class="courts-panel__form-field courts-panel__form-field--checkbox">
-            <label>
-              <input type="checkbox" formControlName="isActive" />
-              {{ 'admin.complexes.courts.form.isActive' | t }}
-            </label>
+          <div class="courts-panel__form-field">
+            <app-active-toggle
+              [value]="courtForm.get('isActive')!.value"
+              mode="toggle"
+              (toggled)="courtForm.get('isActive')!.setValue($event)">
+            </app-active-toggle>
           </div>
         </div>
 

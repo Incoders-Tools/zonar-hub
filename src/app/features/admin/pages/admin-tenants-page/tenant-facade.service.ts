@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Tenant } from '../../../../core/models';
 import { MockTenantRepository } from '../../../../core/repositories/mock/mock-tenant.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 export interface TenantFilters {
   name?: string;
@@ -13,6 +14,7 @@ export interface TenantFilters {
 export class TenantFacadeService {
   private readonly repo = inject(MockTenantRepository);
   private readonly notification = inject(NotificationService);
+  private readonly auth = inject(AuthService);
 
   private readonly tenantsState = signal<Tenant[]>([]);
   private readonly loadingState = signal(false);
@@ -67,7 +69,15 @@ export class TenantFacadeService {
     this.loadingState.set(true);
     this.errorState.set(false);
     try {
-      const data = await this.repo.getAll();
+      let data = await this.repo.getAll();
+      // Admins only see their assigned tenants
+      const user = this.auth.currentUser();
+      if (user && user.role !== 'system_admin' && user.tenantIds?.length) {
+        const allowed = new Set(user.tenantIds);
+        data = data.filter(t => allowed.has(t.id));
+      } else if (user && user.role !== 'system_admin' && user.tenantId) {
+        data = data.filter(t => t.id === user.tenantId);
+      }
       this.tenantsState.set(data);
     } catch {
       this.errorState.set(true);

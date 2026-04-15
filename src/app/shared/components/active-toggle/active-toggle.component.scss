@@ -1,0 +1,41 @@
+.active-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--zh-space-sm);
+  margin-top: var(--zh-space-sm);
+  margin-bottom: var(--zh-space-sm);
+
+  &--interactive {
+    cursor: pointer;
+  }
+
+  &__checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--zh-primary);
+    cursor: inherit;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--zh-space-2xs) var(--zh-space-sm);
+    border-radius: var(--zh-radius-full);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    transition: all var(--zh-transition-fast);
+
+    &--active {
+      background: var(--zh-success-soft, rgba(34, 197, 94, 0.12));
+      color: var(--zh-success);
+    }
+
+    &--inactive {
+      background: var(--zh-danger-soft, rgba(239, 68, 68, 0.12));
+      color: var(--zh-danger);
+    }
+  }
+}

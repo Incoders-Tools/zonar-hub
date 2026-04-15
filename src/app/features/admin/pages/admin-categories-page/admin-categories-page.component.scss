@@ -34,6 +34,51 @@
     gap: var(--zh-space-sm);
   }
 
+  &__form-panel {
+    background: var(--zh-surface-elevated);
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    padding: var(--zh-space-lg);
+    margin-bottom: var(--zh-space-lg);
+    box-shadow: var(--zh-elevation-sm);
+  }
+
+  &__form-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--zh-space-lg);
+    padding-bottom: var(--zh-space-md);
+    border-bottom: 1px solid var(--zh-border-subtle);
+  }
+
+  &__form-panel-title {
+    font-size: var(--zh-font-size-lg);
+    font-weight: 600;
+    margin: 0;
+    color: var(--zh-text-primary);
+  }
+
+  &__form-panel-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--zh-text-secondary);
+    cursor: pointer;
+    border-radius: var(--zh-radius-sm);
+    font-size: var(--zh-font-size-md);
+    transition: all var(--zh-transition-fast);
+
+    &:hover {
+      background: var(--zh-surface-muted);
+      color: var(--zh-text-primary);
+    }
+  }
+
   &__result-count {
     font-size: var(--zh-font-size-sm);
     color: var(--zh-text-secondary);

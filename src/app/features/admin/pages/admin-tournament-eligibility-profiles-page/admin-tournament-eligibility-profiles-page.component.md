@@ -8,7 +8,7 @@ Manage tournament eligibility profiles with complex slot-based configuration. Al
 ### Layer Separation
 - **Page Component** (`admin-tournament-eligibility-profiles-page.component.ts`): UI orchestration, dialog management, table interactions
 - **Facade Service** (`tournament-eligibility-profiles-facade.service.ts`): Business logic, state management, data fetching (including genders/categories)
-- **Form Dialog Component** (`tournament-eligibility-profiles-form-dialog.component.ts`): Main form with slot management (collapsible section)
+- **Form Dialog Component** (`tournament-eligibility-profiles-form-panel.component.ts`): Main form with slot management (collapsible section)
 - **Slot Editor Component** (`slot-editor/slot-editor.component.ts`): Dedicated component for rendering slot table with add/remove buttons
 - **Help Dialog Component** (`tournament-eligibility-profiles-help-dialog.component.ts`): Help content display
 - **Repository** (`MockTournamentEligibilityProfileRepository`): Data access layer

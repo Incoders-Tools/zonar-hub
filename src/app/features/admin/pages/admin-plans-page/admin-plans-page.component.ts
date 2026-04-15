@@ -6,7 +6,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { Plan } from '../../../../core/models';
 import { PlanFacadeService, PlanFilters } from './plan-facade.service';
-import { PlanFormDialogComponent } from './plan-form-dialog/plan-form-dialog.component';
+import { PlanFormPanelComponent } from './plan-form-panel/plan-form-panel.component';
 
 interface PlanRow extends Record<string, unknown> {
   id: string;
@@ -28,7 +28,7 @@ interface PlanRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    PlanFormDialogComponent
+    PlanFormPanelComponent
   ],
   providers: [PlanFacadeService],
   templateUrl: './admin-plans-page.component.html',
@@ -37,7 +37,7 @@ interface PlanRow extends Record<string, unknown> {
 export class AdminPlansPageComponent implements OnInit {
   readonly facade = inject(PlanFacadeService);
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly editingPlan = signal<Plan | null>(null);
   readonly deletingId = signal<string | null>(null);
@@ -117,19 +117,19 @@ export class AdminPlansPageComponent implements OnInit {
 
   openCreate(): void {
     this.editingPlan.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
   }
 
   openEdit(row: PlanRow): void {
     const plan = this.facade.plans().find(p => p.id === row.id);
     if (plan) {
       this.editingPlan.set(plan);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingPlan.set(null);
   }
 
@@ -141,7 +141,7 @@ export class AdminPlansPageComponent implements OnInit {
     } else {
       success = await this.facade.createPlan(data as Omit<Plan, 'id'>);
     }
-    if (success) this.closeFormDialog();
+    if (success) this.closeFormPanel();
   }
 
   confirmDelete(row: PlanRow): void {

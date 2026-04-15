@@ -55,9 +55,9 @@
     align-items: center;
     justify-content: center;
     height: 44px;
-    border: 2px solid var(--zh-border-default);
+    border: 2px solid var(--zh-border-subtle);
     border-radius: var(--zh-radius-md);
-    background: var(--zh-surface-default);
+    background: var(--zh-surface-elevated);
     color: var(--zh-text-muted);
     cursor: pointer;
     font-size: var(--zh-font-size-md);
@@ -66,13 +66,17 @@
 
     &:hover {
       border-color: var(--zh-primary);
-      background: var(--zh-surface-hover);
+      background: var(--zh-surface-muted);
     }
 
     &--active {
       border-color: var(--zh-primary);
       background: var(--zh-primary);
       color: var(--zh-primary-contrast);
+
+      &:hover {
+        opacity: 0.9;
+      }
     }
   }
 
@@ -92,9 +96,9 @@
     width: 100%;
     padding: var(--zh-space-sm) var(--zh-space-md);
     font-size: var(--zh-font-size-sm);
-    border: 1px solid var(--zh-border-default);
+    border: 1px solid var(--zh-border-subtle);
     border-radius: var(--zh-radius-md);
-    background: var(--zh-surface-input);
+    background: var(--zh-surface-elevated);
     color: var(--zh-text-primary);
     resize: vertical;
     box-sizing: border-box;

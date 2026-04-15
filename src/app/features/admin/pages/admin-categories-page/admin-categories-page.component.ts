@@ -1,11 +1,12 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { CategoryFacadeService, CategoryFilters } from './category-facade.service';
-import { CategoryFormDialogComponent } from './category-form-dialog/category-form-dialog.component';
+import { CategoryFormPanelComponent } from './category-form-panel/category-form-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Category } from '../../../../core/models';
@@ -31,19 +32,31 @@ interface CategoryRow extends Record<string, unknown> {
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    CategoryFormDialogComponent,
+    CategoryFormPanelComponent,
     HelpButtonComponent
   ],
   providers: [CategoryFacadeService],
   templateUrl: './admin-categories-page.component.html',
-  styleUrl: './admin-categories-page.component.scss'
+  styleUrl: './admin-categories-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminCategoriesPageComponent implements OnInit {
   readonly facade = inject(CategoryFacadeService);
   private readonly auth = inject(AuthService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
-  readonly showFormDialog = signal(false);
+  readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingCategory = signal<Category | null>(null);
@@ -129,19 +142,19 @@ export class AdminCategoriesPageComponent implements OnInit {
 
   openCreate(): void {
     this.editingCategory.set(null);
-    this.showFormDialog.set(true);
+    this.showFormPanel.set(true);
   }
 
   openEdit(row: CategoryRow): void {
     const category = this.facade.filteredCategories().find(c => c.id === row.id);
     if (category) {
       this.editingCategory.set(category);
-      this.showFormDialog.set(true);
+      this.showFormPanel.set(true);
     }
   }
 
-  closeFormDialog(): void {
-    this.showFormDialog.set(false);
+  closeFormPanel(): void {
+    this.showFormPanel.set(false);
     this.editingCategory.set(null);
   }
 

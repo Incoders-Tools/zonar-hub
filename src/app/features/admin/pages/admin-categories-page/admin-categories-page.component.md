@@ -16,7 +16,7 @@ None.
 - `ConfirmDialogComponent` — shared destructive action confirmation
 - `AsyncButtonComponent` — shared submit button with loading state
 - `StatusBadgeComponent` — shared status indicator
-- `CategoryFormDialogComponent` — create/edit form dialog
+- `CategoryFormPanelComponent` — create/edit form panel
 - `CategoryHelpDialogComponent` — contextual help dialog
 - `TranslatePipe` — i18n key resolution
 
@@ -25,7 +25,7 @@ None.
 - **Empty** — delegated to `DataTableComponent` empty state
 - **Error** — delegated to `DataTableComponent` error state
 - **Data** — table with categories, filter panel, page header, row actions
-- **Form dialog** — create or edit mode
+- **form panel** — create or edit mode
 - **Delete dialog** — single or bulk delete confirmation
 - **Help dialog** — contextual business help
 
@@ -42,4 +42,4 @@ All user-facing text uses `categories.*` translation keys. Supported locales: es
 All colors use semantic design tokens (`--zh-*`). No hardcoded colors.
 
 ## Reuse Guidance
-This component is specific to the Categories catalog entity. The pattern (facade + repository + form dialog + help dialog + shared table) can be replicated for other catalog entities (Genders, Cities, etc.) by following the same structure.
+This component is specific to the Categories catalog entity. The pattern (facade + repository + form panel + help dialog + shared table) can be replicated for other catalog entities (Genders, Cities, etc.) by following the same structure.

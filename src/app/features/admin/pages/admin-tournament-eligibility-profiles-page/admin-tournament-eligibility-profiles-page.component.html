@@ -40,12 +40,12 @@
         </button>
       </div>
       <div class="tournament-eligibility-profiles-page__form-panel-body">
-        <app-tournament-eligibility-profiles-form-dialog
+        <app-tournament-eligibility-profiles-form-panel
           [profile]="editingProfile()"
           [saving]="facade.saving()"
           (saved)="closeFormPanel()"
           (cancelled)="closeFormPanel()">
-        </app-tournament-eligibility-profiles-form-dialog>
+        </app-tournament-eligibility-profiles-form-panel>
       </div>
     </div>
   }

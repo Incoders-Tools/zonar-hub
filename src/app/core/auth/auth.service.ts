@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { AuthSession, LoginRequest, RegisterRequest, Tenant, User, UserRole } from '../models';
 import { MOCK_USERS } from '../data/mock/mock-users';
+import { setCurrentMockTenant } from '../data/mock/mock-tenant-context';
 
 const MOCK_TENANT: Tenant = {
   id: 'tenant-1',
@@ -36,9 +37,12 @@ export class AuthService {
       user,
       token: 'mock-jwt-token-' + Date.now(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      tenant: user.tenantId ? MOCK_TENANT : undefined
+      tenant: user.tenantId ? MOCK_TENANT : undefined,
+      organizationId: user.tenantId ? 'org-1' : undefined,
+      organizationName: user.tenantId ? 'Club Padel Barcelona' : undefined
     };
     this.sessionState.set(session);
+    setCurrentMockTenant(session.tenant?.id);
     return session;
   }
 
@@ -67,9 +71,12 @@ export class AuthService {
         name: request.fullName + ' Circuit',
         planType: 'starter',
         isActive: true
-      }
+      },
+      organizationId: 'org-' + Date.now(),
+      organizationName: request.fullName + ' Circuit'
     };
     this.sessionState.set(session);
+    setCurrentMockTenant(session.tenant?.id);
     return session;
   }
 
@@ -96,6 +103,7 @@ export class AuthService {
 
   logout(): void {
     this.sessionState.set(null);
+    setCurrentMockTenant(undefined);
   }
 
   private delay(ms: number): Promise<void> {

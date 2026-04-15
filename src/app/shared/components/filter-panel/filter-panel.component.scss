@@ -41,7 +41,7 @@
   }
 
   &--collapsible &__body {
-    padding-top: 0;
+    padding-top: var(--zh-space-sm);
   }
 
   &__fields {
@@ -207,6 +207,31 @@
     display: flex;
     align-items: center;
     gap: var(--zh-space-sm);
+    transition: box-shadow var(--zh-transition-fast);
+
+    &.cdk-drag-preview {
+      background: var(--zh-surface-elevated);
+      border: 1px solid var(--zh-border-subtle);
+      border-radius: var(--zh-radius-sm);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: var(--zh-space-xs);
+    }
+
+    &.cdk-drag-placeholder {
+      opacity: 0.3;
+    }
+  }
+
+  &__drag-handle {
+    cursor: grab;
+    color: var(--zh-text-muted);
+    font-size: var(--zh-font-size-md);
+    line-height: 1;
+    user-select: none;
+
+    &:active {
+      cursor: grabbing;
+    }
   }
 
   &__field-select,

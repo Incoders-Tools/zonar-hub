@@ -8,7 +8,7 @@ Manage complex services (WiFi, Parking, Showers, etc.) through a full CRUD inter
 ### Layer Separation
 - **Page Component** (`admin-complex-services-page.component.ts`): UI orchestration, dialog management, table interactions
 - **Facade Service** (`complex-services-facade.service.ts`): Business logic, state management, validation
-- **Form Dialog Component** (`complex-services-form-dialog.component.ts`): Form UI and local form state
+- **form panel Component** (`complex-services-form-panel.component.ts`): Form UI and local form state
 - **Help Dialog Component** (`complex-services-help-dialog.component.ts`): Help content display
 - **Repository** (`MockComplexServiceRepository`): Data access layer (mock for now, real API later)
 
@@ -16,7 +16,7 @@ Manage complex services (WiFi, Parking, Showers, etc.) through a full CRUD inter
 ```
 Page Component
   ↓ (user clicks)
-Form Dialog
+form panel
   ↓ (on save)
 Facade Service
   ↓ (delegates)
@@ -37,7 +37,7 @@ Main container component managing page-level state.
 **Inputs**: None (facade is injected)
 
 **Signals**:
-- `showFormDialog`: Controls form dialog visibility
+- `showFormPanel`: Controls form panel visibility
 - `showDeleteDialog`: Controls delete confirmation visibility
 - `showBulkDeleteDialog`: Controls bulk delete confirmation visibility
 - `showHelpDialog`: Controls help dialog visibility
@@ -52,7 +52,7 @@ Main container component managing page-level state.
 - Handle selection changes
 - Trigger filter/sort operations
 
-### ComplexServicesFormDialogComponent
+### ComplexServicesFormPanelComponent
 Reactive form for creating/editing services.
 
 **Inputs**:
@@ -175,7 +175,7 @@ All strings must use translation keys. Core keys:
 - Filters apply correctly to entities
 
 ### Integration Tests (Page + Form)
-- Form dialog → Facade save flow
+- form panel → Facade save flow
 - Table row click → Edit dialog opens
 - Delete confirmation → Facade delete call
 - Bulk delete works correctly

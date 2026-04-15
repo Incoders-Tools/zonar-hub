@@ -1,5 +1,7 @@
 export interface AdminUser {
   id: string;
+  organizationId?: string;
+  organizationName?: string;
   email: string;
   fullName: string;
   phone?: string;

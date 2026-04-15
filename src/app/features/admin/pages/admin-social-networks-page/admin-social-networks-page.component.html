@@ -29,7 +29,7 @@
     <div class="social-networks-page__form-panel" @slideDown>
       <div class="social-networks-page__form-panel-header">
         <h3 class="social-networks-page__form-panel-title">
-          {{ (editingNetwork() ? 'admin.social-networks.edit.title' : 'admin.social-networks.create.title') | t }}
+          {{ (editingNetwork() ? 'admin.social-networks.form.editTitle' : 'admin.social-networks.form.createTitle') | t }}
         </h3>
         <button
           class="social-networks-page__form-panel-close"
@@ -40,8 +40,8 @@
       </div>
       <div class="social-networks-page__form-panel-body">
         <app-form-shell
-          [titleKey]="isEditing ? 'admin.social-networks.edit.title' : 'admin.social-networks.create.title'"
-          [descriptionKey]="isEditing ? 'admin.social-networks.edit.description' : 'admin.social-networks.create.description'">
+          [titleKey]="isEditing ? 'admin.social-networks.form.editTitle' : 'admin.social-networks.form.createTitle'"
+          [descriptionKey]="isEditing ? 'admin.social-networks.form.editDescription' : 'admin.social-networks.form.createDescription'">
 
           <form [formGroup]="form" class="form-content">
             <div class="form-grid">
@@ -96,19 +96,12 @@
               </div>
 
               <!-- Active Status -->
-              <div class="form-field form-field--checkbox">
-                <label>{{ 'admin.social-networks.form.isActive' | t }}</label>
-                <div class="checkbox-group">
-                  <input
-                    type="checkbox"
-                    formControlName="isActive"
-                    matCheckbox
-                  />
-                  <span>{{ 'admin.social-networks.status.active' | t }}</span>
-                  <span class="status-badge" [class.active]="form.get('isActive')?.value">
-                    {{ form.get('isActive')?.value ? ('admin.social-networks.status.active' | t) : ('admin.social-networks.status.inactive' | t) }}
-                  </span>
-                </div>
+              <div class="form-field">
+                <app-active-toggle
+                  [value]="form.get('isActive')!.value"
+                  mode="toggle"
+                  (toggled)="form.get('isActive')!.setValue($event)">
+                </app-active-toggle>
                 <span class="hint">{{ 'admin.social-networks.form.isActiveHint' | t }}</span>
               </div>
             </div>

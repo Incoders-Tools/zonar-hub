@@ -43,7 +43,7 @@
         <form [formGroup]="form" class="form-content">
           <div class="form-grid">
             <!-- Name -->
-            <div class="form-field">
+            <div class="form-field form-field--full">
               <label>{{ 'admin.tournament-statuses.form.name' | t }} *</label>
               <input type="text" formControlName="name"
                 [placeholder]="'admin.tournament-statuses.form.namePlaceholder' | t"
@@ -61,11 +61,12 @@
             </div>
 
             <!-- Active -->
-            <div class="form-field form-field--checkbox">
-              <label>
-                <input type="checkbox" formControlName="isActive">
-                {{ 'admin.tournament-statuses.form.isActive' | t }}
-              </label>
+            <div class="form-field">
+              <app-active-toggle
+                [value]="form.get('isActive')!.value"
+                mode="toggle"
+                (toggled)="form.get('isActive')!.setValue($event)">
+              </app-active-toggle>
               <span class="hint">{{ 'admin.tournament-statuses.form.isActiveHint' | t }}</span>
             </div>
           </div>

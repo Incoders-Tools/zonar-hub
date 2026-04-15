@@ -1,5 +1,6 @@
 import { Component, input, output, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, CdkDrag, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 export interface FilterField {
@@ -22,7 +23,7 @@ export interface SortRule {
 @Component({
   selector: 'app-filter-panel',
   standalone: true,
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, CdkDropList, CdkDrag],
   templateUrl: './filter-panel.component.html',
   styleUrl: './filter-panel.component.scss'
 })
@@ -108,6 +109,13 @@ export class FilterPanelComponent {
 
   canAddSortRule(): boolean {
     return this.sortRules.length < this.sortFields().length;
+  }
+
+  dropSortRule(event: CdkDragDrop<SortRule[]>): void {
+    const rules = [...this.sortRules];
+    moveItemInArray(rules, event.previousIndex, event.currentIndex);
+    this.sortRules = rules;
+    this.emitSortRules();
   }
 
   private emitSortRules(): void {

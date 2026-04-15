@@ -8,6 +8,7 @@ import { AsyncButtonComponent } from '../../../../../shared/components/async-but
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { ParticipantSearchComponent } from '../../../../../shared/components/participant-search/participant-search.component';
 import { AvailabilitySelectorComponent, AvailabilitySelection } from '../../../../../shared/components/availability-selector/availability-selector.component';
+import { FormatDatePipe } from '../../../../../shared/pipes/format-date.pipe';
 import { RegistrationStrategyService } from '../../../../../core/services/registration-strategy.service';
 import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
 import { MockEligibilityProfileRepository } from '../../../../../core/repositories/mock/mock-eligibility-profile.repository';
@@ -32,7 +33,8 @@ import { SportParticipantConfig, ParticipantValidationResult } from '../../../..
     AsyncButtonComponent,
     CollapsibleSectionComponent,
     ParticipantSearchComponent,
-    AvailabilitySelectorComponent
+    AvailabilitySelectorComponent,
+    FormatDatePipe
   ],
   templateUrl: './registration-form-panel.component.html',
   styleUrl: './registration-form-panel.component.scss'
@@ -76,6 +78,30 @@ export class RegistrationFormPanelComponent implements OnInit {
   readonly loadingTournament = signal(false);
   readonly formValid = signal(false);
   readonly availabilitySelection = signal<AvailabilitySelection | null>(null);
+
+  private static readonly DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+  readonly tournamentDays = computed<string[]>(() => {
+    const tournament = this.selectedTournament();
+    if (!tournament?.startDate || !tournament?.endDate) return ['friday', 'saturday', 'sunday'];
+
+    const start = new Date(tournament.startDate);
+    const end = new Date(tournament.endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return ['friday', 'saturday', 'sunday'];
+
+    const days: string[] = [];
+    const current = new Date(start);
+    // Cap at 14 days to prevent runaway loops
+    const maxDays = 14;
+    let count = 0;
+    while (current <= end && count < maxDays) {
+      days.push(RegistrationFormPanelComponent.DAY_NAMES[current.getDay()]);
+      current.setDate(current.getDate() + 1);
+      count++;
+    }
+
+    return days.length > 0 ? days : ['friday', 'saturday', 'sunday'];
+  });
 
   readonly isEditing = computed(() => !!this.registration());
 
