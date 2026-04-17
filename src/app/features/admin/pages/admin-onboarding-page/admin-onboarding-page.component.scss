@@ -90,27 +90,151 @@
     }
   }
 
+  &__divider {
+    border: none;
+    border-top: 1px solid var(--zh-border-subtle);
+    margin: var(--zh-space-lg) 0;
+  }
+
+  // Organization type card grid
+  &__type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--zh-space-md);
+  }
+
+  &__type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-lg);
+    background: var(--zh-surface-default);
+    border: 2px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    text-align: center;
+
+    &:hover {
+      border-color: var(--zh-border-default);
+      background: var(--zh-surface-hover);
+    }
+
+    &--active {
+      border-color: var(--zh-primary);
+      background: var(--zh-surface-selected);
+      box-shadow: 0 0 0 2px var(--zh-primary-alpha-20);
+    }
+  }
+
+  &__type-icon {
+    font-size: var(--zh-font-size-2xl);
+  }
+
+  &__type-label {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+  }
+
+  &__type-desc {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+    line-height: 1.4;
+  }
+
+  // Sport grid
+  // Courts counter
+  &__counter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    background: var(--zh-surface-input);
+  }
+
+  &__counter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-sm);
+    background: var(--zh-surface-default);
+    color: var(--zh-text-primary);
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--zh-transition-fast), border-color var(--zh-transition-fast);
+
+    &:hover:not(:disabled) {
+      background: var(--zh-surface-hover);
+      border-color: var(--zh-primary);
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  }
+
+  &__counter-value {
+    min-width: 40px;
+    text-align: center;
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+  }
+
+  // Court names list
+  &__court-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-sm);
+  }
+
+  &__court-row {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+  }
+
+  &__court-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    background: var(--zh-primary-alpha-10);
+    color: var(--zh-primary);
+    border-radius: var(--zh-radius-full);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+  }
+
+  // Sport grid
   &__sport-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: var(--zh-space-md);
+    margin-top: var(--zh-space-sm);
   }
 
   &__sport-option {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--zh-space-sm);
-    padding: var(--zh-space-md) var(--zh-space-lg);
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-lg);
     background: var(--zh-surface-default);
     border: 2px solid var(--zh-border-subtle);
     border-radius: var(--zh-radius-md);
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
-
-    input[type='radio'],
-    input[type='checkbox'] {
-      display: none;
-    }
 
     &--active {
       border-color: var(--zh-primary);
@@ -118,10 +242,93 @@
     }
   }
 
+  &__sport-icon {
+    font-size: var(--zh-font-size-2xl);
+  }
+
   &__sport-label {
     font-size: var(--zh-font-size-sm);
     font-weight: 600;
     color: var(--zh-text-primary);
+  }
+
+  // Settings grid (Step 1)
+  &__settings-grid {
+    display: grid;
+    gap: var(--zh-space-lg);
+  }
+
+  &__settings-card {
+    padding: var(--zh-space-md) var(--zh-space-lg);
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    background: var(--zh-surface-default);
+  }
+
+  &__settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    margin-bottom: var(--zh-space-xs);
+  }
+
+  &__settings-card-icon {
+    font-size: 1.5rem;
+  }
+
+  &__settings-card-title {
+    margin: 0;
+    font-size: var(--zh-font-size-md);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+  }
+
+  &__settings-card-desc {
+    margin: 0 0 var(--zh-space-md);
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__settings-card-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zh-space-sm);
+  }
+
+  &__settings-card-select {
+    max-width: 360px;
+  }
+
+  &__settings-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 var(--zh-space-lg);
+    border: 2px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: transparent;
+    color: var(--zh-text-primary);
+    font-weight: 600;
+    font-size: var(--zh-font-size-sm);
+    cursor: pointer;
+    transition: all var(--zh-transition-fast);
+
+    &:hover {
+      border-color: var(--zh-primary);
+      color: var(--zh-primary);
+    }
+
+    &--active {
+      background: var(--zh-primary);
+      border-color: var(--zh-primary);
+      color: var(--zh-on-primary);
+
+      &:hover {
+        color: var(--zh-on-primary);
+        opacity: 0.9;
+      }
+    }
   }
 }
 
@@ -152,6 +359,10 @@
       border-color: var(--zh-primary);
       box-shadow: 0 0 0 2px var(--zh-primary-alpha-20);
     }
+  }
+
+  &__input--narrow {
+    max-width: 120px;
   }
 
   &__hint {

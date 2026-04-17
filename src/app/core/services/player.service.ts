@@ -1,10 +1,11 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { Player } from '../models';
-import { MOCK_PLAYERS } from '../data/mock/mock-players';
+import { MockPlayerRepository } from '../repositories/mock/mock-player.repository';
 
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
-  private readonly playersState = signal<Player[]>(MOCK_PLAYERS);
+  private readonly repository = inject(MockPlayerRepository);
+  private readonly playersState = signal<Player[]>([]);
   private readonly loadingState = signal(false);
 
   readonly players = this.playersState.asReadonly();
@@ -12,19 +13,16 @@ export class PlayerService {
 
   async loadPlayers(): Promise<void> {
     this.loadingState.set(true);
-    await this.delay(500);
-    this.playersState.set(MOCK_PLAYERS);
-    this.loadingState.set(false);
+    try {
+      const data = await this.repository.getAll();
+      this.playersState.set(data);
+    } finally {
+      this.loadingState.set(false);
+    }
   }
 
   async searchPlayers(query: string): Promise<Player[]> {
-    await this.delay(300);
-    const q = query.toLowerCase();
-    return this.playersState().filter(p =>
-      p.firstName.toLowerCase().includes(q) ||
-      p.lastName.toLowerCase().includes(q) ||
-      p.email.toLowerCase().includes(q)
-    );
+    return this.repository.search(query);
   }
 
   getPlayerById(id: string): Player | undefined {
@@ -32,19 +30,14 @@ export class PlayerService {
   }
 
   async savePlayer(player: Partial<Player>): Promise<Player> {
-    await this.delay(600);
     const existing = this.playersState().find(p => p.id === player.id);
     if (existing) {
-      const updated = { ...existing, ...player };
+      const updated = await this.repository.update(existing.id, player);
       this.playersState.update(items => items.map(p => p.id === updated.id ? updated : p));
       return updated;
     }
-    const created: Player = { ...player as Player, id: 'p-' + Date.now(), createdAt: new Date().toISOString() };
+    const created = await this.repository.create(player as Omit<Player, 'id' | 'createdAt'>);
     this.playersState.update(items => [...items, created]);
     return created;
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

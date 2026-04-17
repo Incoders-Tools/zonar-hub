@@ -1,4 +1,5 @@
-import { Component, input, output, signal, inject, computed, OnInit } from '@angular/core';
+import { Component, input, output, signal, inject, computed, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { AsyncButtonComponent } from '../async-button/async-button.component';
 import { ContentService } from '../../../core/services/content.service';
@@ -22,10 +23,10 @@ export interface SocialSharePayload {
   imports: [TranslatePipe, AsyncButtonComponent],
   template: `
     <div class="share-overlay" (click)="onOverlayClick($event)">
-      <div class="share-dialog">
+      <div class="share-dialog" (click)="$event.stopPropagation()">
         <div class="share-dialog__header">
           <h2 class="share-dialog__title">{{ 'share.previewTitle' | t }}</h2>
-          <button class="share-dialog__close" (click)="close.emit()" [attr.aria-label]="'share.close' | t">✕</button>
+          <button class="share-dialog__close" type="button" (click)="close.emit()" [attr.aria-label]="'share.close' | t">✕</button>
         </div>
 
         <!-- Background selector -->
@@ -93,8 +94,9 @@ export interface SocialSharePayload {
   `,
   styleUrl: './social-share-preview.component.scss'
 })
-export class SocialSharePreviewComponent implements OnInit {
+export class SocialSharePreviewComponent implements OnInit, OnDestroy {
   private readonly content = inject(ContentService);
+  private readonly doc = inject(DOCUMENT);
 
   readonly payload = input.required<SocialSharePayload>();
   readonly close = output<void>();
@@ -118,10 +120,20 @@ export class SocialSharePreviewComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.doc.body.style.overflow = 'hidden';
     const bgs = this.availableBackgrounds();
     if (bgs.length > 0) {
       this.selectedBackground.set(bgs[0]);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.doc.body.style.overflow = '';
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscKey(): void {
+    this.close.emit();
   }
 
   onOverlayClick(event: MouseEvent): void {

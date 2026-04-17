@@ -9,84 +9,13 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AttemptGuardService } from '../../../../core/services/security.service';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { NormalizeLowercaseDirective } from '../../../../shared/directives/normalize-lowercase.directive';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, ProgressBarComponent],
-  template: `
-    <div class="auth-card">
-      <h1>{{ 'auth.login' | t }}</h1>
-      <p class="auth-card__desc">{{ 'auth.loginDesc' | t }}</p>
-
-      @if (submitting()) {
-        <div class="auth-card__progress">
-          <app-progress-bar
-            [progress]="loginProgress()"
-            [messageKey]="loginStageKey()"
-            [showPercentage]="true">
-          </app-progress-bar>
-        </div>
-      } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
-          <div class="field">
-            <label for="login-email">{{ 'auth.email' | t }}</label>
-            <input id="login-email" type="email" formControlName="email" autocomplete="email" />
-            @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
-              <span class="field__error">{{ 'common.required' | t }}</span>
-            }
-            @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
-              <span class="field__error">{{ 'common.invalidEmail' | t }}</span>
-            }
-          </div>
-
-          <div class="field">
-            <label for="login-password">{{ 'auth.password' | t }}</label>
-            <div class="field__password-wrapper">
-              <input
-                id="login-password"
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="password"
-                autocomplete="current-password" />
-              <button
-                type="button"
-                class="field__toggle-password"
-                (click)="togglePassword()"
-                [attr.aria-label]="'auth.togglePassword' | t">
-                {{ showPassword() ? '🙈' : '👁️' }}
-              </button>
-            </div>
-            @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
-              <span class="field__error">{{ 'common.required' | t }}</span>
-            }
-          </div>
-
-          @if (isBlocked()) {
-            <div class="auth-error">{{ 'auth.accountBlocked' | t }}</div>
-          } @else if (error()) {
-            <div class="auth-error">
-              {{ error() | t }}
-              @if (remainingAttempts() < 4 && remainingAttempts() > 0) {
-                <span class="auth-error__attempts">{{ remainingAttempts() }} {{ 'auth.attemptsRemaining' | t }}</span>
-              }
-            </div>
-          }
-
-          <button
-            type="submit"
-            class="btn btn--primary btn--full"
-            [disabled]="!formValid() || submitting() || isBlocked()">
-            {{ 'auth.loginAction' | t }}
-          </button>
-        </form>
-      }
-
-      <div class="auth-card__links">
-        <a routerLink="/forgot-password">{{ 'auth.forgotPassword' | t }}</a>
-        <span>{{ 'auth.noAccount' | t }} <a routerLink="/register">{{ 'auth.registerLink' | t }}</a></span>
-      </div>
-    </div>
-  `,
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, ProgressBarComponent, NormalizeLowercaseDirective],
+  templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss'
 })
 export class LoginPageComponent {

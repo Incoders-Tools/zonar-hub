@@ -21,12 +21,31 @@
       <!-- Icon Field -->
       <div class="sports-form__field">
         <label>{{ 'admin.sports.form.icon' | t }}</label>
-        <input
-          type="text"
-          formControlName="icon"
-          matInput
-        />
+        <div class="sports-form__icon-row">
+          <input
+            type="text"
+            formControlName="icon"
+            matInput
+          />
+          @if (form.get('icon')!.value) {
+            <app-sport-icon
+              [icon]="form.get('icon')!.value"
+              [source]="form.get('iconSource')!.value"
+              [size]="32"
+              [alt]="form.get('name')!.value" />
+          }
+        </div>
         <span class="sports-form__hint">{{ 'admin.sports.form.iconHint' | t }}</span>
+      </div>
+
+      <!-- Icon Source -->
+      <div class="sports-form__field">
+        <label>{{ 'admin.sports.form.iconSource' | t }}</label>
+        <mat-radio-group formControlName="iconSource">
+          <mat-radio-button value="unicode">{{ 'admin.sports.form.iconSourceUnicode' | t }}</mat-radio-button>
+          <mat-radio-button value="svg">{{ 'admin.sports.form.iconSourceSvg' | t }}</mat-radio-button>
+        </mat-radio-group>
+        <span class="sports-form__hint">{{ 'admin.sports.form.iconSourceHint' | t }}</span>
       </div>
 
       <!-- Active Status -->

@@ -112,12 +112,15 @@
             [columns]="tenantColumns"
             [items]="tenantItems()"
             [selectedIds]="userTenantIds()"
+            [initialOrderedIds]="orderedTenantIds()"
             [emptyMessageKey]="'admin.users.company.empty'"
             [selectAllLabelKey]="'childGrid.selectAll'"
             [deselectAllLabelKey]="'childGrid.deselectAll'"
+            [reorderable]="true"
             [collapsible]="true"
             [initialExpanded]="false"
-            (selectionChanged)="onTenantSelectionChanged($event)">
+            (selectionChanged)="onTenantSelectionChanged($event)"
+            (selectionReordered)="onTenantOrderChanged($event)">
           </app-child-collection-grid>
 
           <!-- Actions -->

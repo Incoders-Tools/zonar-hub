@@ -117,6 +117,12 @@ export class ChildCollectionGridComponent {
     return items.every((item: any) => selected.has(this.getItemId(item)));
   });
 
+  /** Items not currently selected (for reorderable pick-list) */
+  readonly unselectedItems = computed(() => {
+    const selected = this.internalSelectedIds();
+    return this.items().filter((item: any) => !selected.has(this.getItemId(item)));
+  });
+
   readonly someSelected = computed(() => {
     const items = this.items();
     const selected = this.internalSelectedIds();

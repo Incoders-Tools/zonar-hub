@@ -5,8 +5,10 @@ import { AuthService } from '../../core/auth/auth.service';
 import { PermissionService } from '../../core/auth/permission.service';
 import { UserPreferencesService } from '../../core/services/user-preferences.service';
 import { OnboardingStateService } from '../../core/services/onboarding-state.service';
+import { ActiveOrganizationService } from '../../core/services/active-organization.service';
 import { GuidedTourComponent, TourStep } from '../../shared/components/guided-tour/guided-tour.component';
 import { ChatbotBubbleComponent } from '../../shared/components/chatbot-bubble/chatbot-bubble.component';
+import { OrgSelectorComponent } from '../../shared/components/org-selector/org-selector.component';
 
 interface AdminNavItem {
   labelKey: string;
@@ -29,7 +31,7 @@ interface AdminNavGroup {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, GuidedTourComponent, ChatbotBubbleComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, GuidedTourComponent, ChatbotBubbleComponent, OrgSelectorComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
@@ -37,8 +39,9 @@ export class AdminLayoutComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
-  private readonly onboarding = inject(OnboardingStateService);
+  protected readonly onboarding = inject(OnboardingStateService);
   private readonly userPrefs = inject(UserPreferencesService);
+  protected readonly activeOrg = inject(ActiveOrganizationService);
   protected readonly sidebarCollapsed = signal(false);
   protected readonly mobileSidebarOpen = signal(false);
   protected readonly showTour = signal(false);
@@ -57,7 +60,7 @@ export class AdminLayoutComponent implements OnInit {
     { targetSelector: '.admin-sidebar__link[href="/admin"]', titleKey: 'tour.dashboard.title', descriptionKey: 'tour.dashboard.description', position: 'right' },
     { targetSelector: '.admin-sidebar__group:first-of-type', titleKey: 'tour.circuitOps.title', descriptionKey: 'tour.circuitOps.description', position: 'right' },
     { targetSelector: '.admin-sidebar__user', titleKey: 'tour.profile.title', descriptionKey: 'tour.profile.description', position: 'top' },
-    { targetSelector: '.admin-main', titleKey: 'tour.mainArea.title', descriptionKey: 'tour.mainArea.description', position: 'left' }
+    { targetSelector: '.admin-sidebar__header', titleKey: 'tour.mainArea.title', descriptionKey: 'tour.mainArea.description', position: 'right' }
   ];
 
   protected readonly userInitials = computed(() => {
@@ -125,7 +128,6 @@ export class AdminLayoutComponent implements OnInit {
       items: [
         { labelKey: 'admin.users', route: '/admin/system/users', icon: '🔑', toolKey: 'users' },
         { labelKey: 'admin.roles', route: '/admin/system/roles', icon: '🛡️', toolKey: 'roles' },
-        { labelKey: 'admin.tenants', route: '/admin/system/tenants', icon: '🏢', toolKey: 'tenants' },
         { labelKey: 'admin.organizations', route: '/admin/system/organizations', icon: '🏛️', toolKey: 'organizations' },
         { labelKey: 'admin.plans', route: '/admin/system/plans', icon: '💳', toolKey: 'plans' },
         { labelKey: 'admin.nav.actions', route: '/admin/system/actions', icon: '⚡', toolKey: 'actions' },

@@ -1,0 +1,78 @@
+<div class="admin-dashboard">
+  <h1 class="admin-dashboard__title">{{ 'admin.dashboard' | t }}</h1>
+
+  @if (showSetupPrompt()) {
+    <div class="setup-banner">
+      <div class="setup-banner__content">
+        <span class="setup-banner__icon">🚀</span>
+        <div>
+          <h2 class="setup-banner__title">{{ 'onboarding.banner.title' | t }}</h2>
+          <p class="setup-banner__desc">{{ 'onboarding.banner.desc' | t }}</p>
+        </div>
+      </div>
+      <a class="setup-banner__cta" routerLink="/admin/onboarding">
+        {{ 'onboarding.banner.cta' | t }}
+      </a>
+    </div>
+  }
+
+  <div class="stats-grid">
+    <div class="stat-card stat-card--primary">
+      <div class="stat-card__icon">🏆</div>
+      <span class="stat-card__value">{{ totalTournaments() }}</span>
+      <span class="stat-card__label">{{ 'admin.tournaments' | t }}</span>
+    </div>
+    <div class="stat-card stat-card--success">
+      <div class="stat-card__icon">▶️</div>
+      <span class="stat-card__value">{{ activeTournaments() }}</span>
+      <span class="stat-card__label">{{ 'dashboard.activeTournaments' | t }}</span>
+    </div>
+    <div class="stat-card stat-card--info">
+      <div class="stat-card__icon">✅</div>
+      <span class="stat-card__value">{{ finishedTournaments() }}</span>
+      <span class="stat-card__label">{{ 'dashboard.finishedTournaments' | t }}</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">👥</div>
+      <span class="stat-card__value">{{ totalPlayers() }}</span>
+      <span class="stat-card__label">{{ 'admin.players' | t }}</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">📋</div>
+      <span class="stat-card__value">{{ totalRegistrations() }}</span>
+      <span class="stat-card__label">{{ 'admin.registrations' | t }}</span>
+    </div>
+  </div>
+
+  @if (!showSetupPrompt()) {
+    <div class="dashboard-section">
+      <h2 class="dashboard-section__title">{{ 'dashboard.overview' | t }}</h2>
+      <div class="dashboard-charts">
+        <div class="chart-card">
+          <h3 class="chart-card__title">{{ 'dashboard.tournamentsByStatus' | t }}</h3>
+          <div class="chart-card__body">
+            <div class="chart-bar-group">
+              <div class="chart-bar">
+                <div class="chart-bar__fill chart-bar__fill--primary" [style.width.%]="totalTournaments() > 0 ? (activeTournaments() / totalTournaments()) * 100 : 0"></div>
+                <span class="chart-bar__label">{{ 'dashboard.active' | t }} ({{ activeTournaments() }})</span>
+              </div>
+              <div class="chart-bar">
+                <div class="chart-bar__fill chart-bar__fill--muted" [style.width.%]="totalTournaments() > 0 ? (finishedTournaments() / totalTournaments()) * 100 : 0"></div>
+                <span class="chart-bar__label">{{ 'dashboard.finished' | t }} ({{ finishedTournaments() }})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 class="chart-card__title">{{ 'dashboard.quickActions' | t }}</h3>
+          <div class="chart-card__body chart-card__body--actions">
+            <a class="quick-action" routerLink="/admin/tournaments">{{ 'admin.tournaments' | t }}</a>
+            <a class="quick-action" routerLink="/admin/players">{{ 'admin.players' | t }}</a>
+            <a class="quick-action" routerLink="/admin/registrations">{{ 'admin.registrations' | t }}</a>
+            <a class="quick-action" routerLink="/admin/complexes">{{ 'admin.complexes' | t }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

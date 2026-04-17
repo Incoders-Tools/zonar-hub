@@ -61,11 +61,11 @@
   </section>
 
   <!-- Upcoming Tournaments -->
-  @if (tournamentService.upcomingTournaments().length > 0) {
+  @if (showcaseTournaments().length > 0) {
     <section class="section tournaments-section">
       <h2 class="section__title">{{ 'home.upcomingTournaments' | t }}</h2>
       <div class="card-grid">
-        @for (t of tournamentService.upcomingTournaments(); track t.id) {
+        @for (t of showcaseTournaments(); track t.id) {
           <a class="tournament-card" [routerLink]="['/tournaments', t.id]">
             <span class="tournament-card__status" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span>
             <h3 class="tournament-card__name">{{ t.name }}</h3>

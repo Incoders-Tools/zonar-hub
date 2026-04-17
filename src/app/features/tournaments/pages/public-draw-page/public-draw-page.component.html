@@ -1,0 +1,31 @@
+<div class="public-draw">
+  @if (tournament()) {
+    <a [routerLink]="['/tournaments', tournament()!.id]" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
+    <h1>{{ 'draw.title' | t }}</h1>
+    <p class="subtitle">{{ tournament()!.name }}</p>
+  }
+
+  @if (loading()) {
+    <div class="loading"><span class="spinner"></span> {{ 'states.loading' | t }}</div>
+  } @else if (!drawResult()) {
+    <div class="empty">{{ 'draw.notPublished' | t }}</div>
+  } @else {
+    <div class="zones">
+      @for (zone of drawResult()!.zones; track zone.zoneName) {
+        <div class="zone-card">
+          <h3 class="zone-card__title">{{ zone.zoneName }}</h3>
+          <ul class="zone-card__pairs">
+            @for (pair of zone.pairs; track pair.registrationId) {
+              <li>
+                <span class="pair-label">{{ pair.player1Name }} & {{ pair.player2Name }}</span>
+                <span class="pair-seed" [class.seeded]="!!pair.seedPosition">
+                  @if (pair.seedPosition) { ★ }
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  }
+</div>

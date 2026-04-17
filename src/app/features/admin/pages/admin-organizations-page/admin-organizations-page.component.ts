@@ -75,12 +75,11 @@ export class AdminOrganizationsPageComponent implements OnInit {
     {
       key: 'type', labelKey: 'admin.organizations.filter.type', type: 'select',
       options: [
-        { value: 'empresa', labelKey: 'organization.type.empresa' },
+        { value: 'estandar', labelKey: 'organization.type.estandar' },
         { value: 'circuito', labelKey: 'organization.type.circuito' },
         { value: 'academia', labelKey: 'organization.type.academia' },
         { value: 'operadora', labelKey: 'organization.type.operadora' },
-        { value: 'marca', labelKey: 'organization.type.marca' },
-        { value: 'unidad_operativa', labelKey: 'organization.type.unidadOperativa' }
+        { value: 'marca', labelKey: 'organization.type.marca' }
       ]
     },
     {
@@ -98,7 +97,7 @@ export class AdminOrganizationsPageComponent implements OnInit {
       displayName: o.displayName,
       legalName: o.legalName ?? '',
       type: o.type,
-      typeLabel: `organization.type.${o.type === 'unidad_operativa' ? 'unidadOperativa' : o.type}`,
+      typeLabel: `organization.type.${o.type}`,
       statusLabel: o.isActive ? 'admin.organizations.status.active' : 'admin.organizations.status.inactive',
       statusVariant: o.isActive ? 'active' : 'inactive'
     }))

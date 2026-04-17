@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -11,7 +12,7 @@ import { HelpButtonComponent, HelpSection } from '../../../../shared/components/
 import { Tournament } from '../../../../core/models';
 import { TournamentsFacadeService, TournamentFilters } from './tournaments-facade.service';
 import { TournamentsFormComponent } from './tournaments-form/tournaments-form.component';
-import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
+import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 
 interface TournamentRow extends Record<string, unknown> {
@@ -59,7 +60,8 @@ interface TournamentRow extends Record<string, unknown> {
 })
 export class AdminTournamentsPageComponent implements OnInit {
   readonly facade = inject(TournamentsFacadeService);
-  private readonly tenantFilter = inject(TenantFilterService);
+  private readonly tenantContext = inject(TenantContextService);
+  private readonly router = inject(Router);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -69,6 +71,7 @@ export class AdminTournamentsPageComponent implements OnInit {
   readonly selectedTournaments = signal<TournamentRow[]>([]);
   readonly highlightedRowId = signal<string | null>(null);
   readonly sharePayload = signal<SocialSharePayload | null>(null);
+  readonly showPlanEnforcement = signal(false);
 
   readonly columns: DataTableColumn[] = [
     { key: 'name', labelKey: 'admin.tournaments.column.name', sortable: true },
@@ -86,21 +89,17 @@ export class AdminTournamentsPageComponent implements OnInit {
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
-  readonly filterFields = computed<FilterField[]>(() => {
-    const base: FilterField[] = [
-      { key: 'name', labelKey: 'admin.tournaments.filter.name', type: 'text' },
-      {
-        key: 'statusLabel', labelKey: 'admin.tournaments.filter.status', type: 'select',
-        options: [
-          { value: 'upcoming', labelKey: 'admin.tournaments.status.upcoming' },
-          { value: 'in_progress', labelKey: 'admin.tournaments.status.in_progress' },
-          { value: 'finished', labelKey: 'admin.tournaments.status.finished' }
-        ]
-      }
-    ];
-    const tf = this.tenantFilter.tenantFilterField();
-    return tf ? [tf, ...base] : base;
-  });
+  readonly filterFields = computed<FilterField[]>(() => [
+    { key: 'name', labelKey: 'admin.tournaments.filter.name', type: 'text' },
+    {
+      key: 'statusLabel', labelKey: 'admin.tournaments.filter.status', type: 'select',
+      options: [
+        { value: 'upcoming', labelKey: 'admin.tournaments.status.upcoming' },
+        { value: 'in_progress', labelKey: 'admin.tournaments.status.in_progress' },
+        { value: 'finished', labelKey: 'admin.tournaments.status.finished' }
+      ]
+    }
+  ]);
 
   readonly sortFields: SortOption[] = [
     { key: 'status', labelKey: 'admin.tournaments.column.status' },
@@ -172,8 +171,23 @@ export class AdminTournamentsPageComponent implements OnInit {
   }
 
   openCreate(): void {
+    const plan = this.tenantContext.planType();
+    const needsEnforcement = !plan || plan === 'starter';
+    if (needsEnforcement && this.facade.entities().length >= 1) {
+      this.showPlanEnforcement.set(true);
+      return;
+    }
     this.editingTournament.set(null);
     this.showFormPanel.set(true);
+  }
+
+  dismissPlanEnforcement(): void {
+    this.showPlanEnforcement.set(false);
+  }
+
+  goToBilling(): void {
+    this.showPlanEnforcement.set(false);
+    this.router.navigate(['/admin/billing']);
   }
 
   openEdit(row: TournamentRow): void {

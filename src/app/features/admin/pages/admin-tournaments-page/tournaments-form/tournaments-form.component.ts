@@ -55,7 +55,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     this.facade.complexes().map(c => ({ value: c.id, label: c.name }))
   );
   readonly tournamentTypeOptions = computed(() =>
-    this.facade.tournamentTypes().map(t => ({ value: t.id, label: t.name }))
+    this.facade.tournamentTypes().filter(t => t.isActive).map(t => ({ value: t.id, label: t.name }))
   );
   readonly genderOptions = computed(() =>
     this.facade.genders().map(g => ({ value: g.id, label: g.name }))

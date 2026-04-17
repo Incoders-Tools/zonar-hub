@@ -1,4 +1,4 @@
-import { Component, inject, signal, ElementRef, viewChild } from '@angular/core';
+import { Component, inject, signal, ElementRef, viewChild, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -21,7 +21,7 @@ interface ChatMessage {
   templateUrl: './chatbot-bubble.component.html',
   styleUrl: './chatbot-bubble.component.scss'
 })
-export class ChatbotBubbleComponent {
+export class ChatbotBubbleComponent implements OnInit, OnDestroy {
   readonly isOpen = signal(false);
   readonly selectedFaq = signal<number | null>(null);
   readonly chatMode = signal(false);
@@ -31,6 +31,7 @@ export class ChatbotBubbleComponent {
 
   private readonly chatBody = viewChild<ElementRef>('chatBodyRef');
   private readonly i18nService = inject(I18nService);
+  private readonly openChatbotHandler = (e: Event) => this.handleOpenChatbot(e as CustomEvent);
 
   readonly faqs: ChatbotFaq[] = [
     { questionKey: 'chatbot.faq.q1', answerKey: 'chatbot.faq.a1' },
@@ -46,6 +47,50 @@ export class ChatbotBubbleComponent {
     if (!this.isOpen()) {
       this.selectedFaq.set(null);
       this.chatMode.set(false);
+    }
+  }
+
+  ngOnInit(): void {
+    window.addEventListener('zh-open-chatbot', this.openChatbotHandler);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('zh-open-chatbot', this.openChatbotHandler);
+  }
+
+  private handleOpenChatbot(event: CustomEvent): void {
+    const message = event.detail?.message;
+    this.isOpen.set(true);
+    this.chatMode.set(true);
+
+    if (this.messages().length === 0) {
+      this.messages.set([{
+        role: 'bot',
+        text: this.i18nService.translate('chatbot.chat.greeting'),
+        timestamp: new Date()
+      }]);
+    }
+
+    if (message) {
+      // Send the pre-filled message
+      this.messages.update(msgs => [...msgs, {
+        role: 'user',
+        text: message,
+        timestamp: new Date()
+      }]);
+      this.scrollToBottom();
+
+      this.isTyping.set(true);
+      setTimeout(() => {
+        const reply = this.generateReply(message);
+        this.messages.update(msgs => [...msgs, {
+          role: 'bot',
+          text: reply,
+          timestamp: new Date()
+        }]);
+        this.isTyping.set(false);
+        this.scrollToBottom();
+      }, 1000 + Math.random() * 500);
     }
   }
 

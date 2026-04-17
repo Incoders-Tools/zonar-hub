@@ -21,86 +21,8 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   selector: 'app-reset-password-page',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
-  template: `
-    <div class="auth-card">
-      <h1>{{ 'auth.resetPassword' | t }}</h1>
-      <p class="auth-card__desc">{{ 'auth.resetPasswordDesc' | t }}</p>
-
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
-        <div class="field">
-          <label for="reset-password">{{ 'auth.newPassword' | t }}</label>
-          <div class="field__password-wrapper">
-            <input
-              id="reset-password"
-              [type]="showPassword() ? 'text' : 'password'"
-              formControlName="password"
-              autocomplete="new-password" />
-            <button
-              type="button"
-              class="field__toggle-password"
-              (click)="togglePassword()"
-              [attr.aria-label]="'auth.togglePassword' | t">
-              {{ showPassword() ? '🙈' : '👁️' }}
-            </button>
-          </div>
-          @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
-            <span class="field__error">{{ 'common.required' | t }}</span>
-          }
-          @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
-            <span class="field__error">{{ 'auth.passwordMinLength' | t }}</span>
-          }
-
-          @if (form.get('password')?.value) {
-            <div class="field__password-strength">
-              <div class="field__password-strength-bar" [class]="'field__password-strength-bar--' + getPasswordStrength()"></div>
-              <span class="field__password-strength-label">{{ 'auth.passwordStrength.' + getPasswordStrength() | t }}</span>
-            </div>
-          }
-        </div>
-
-        <div class="field">
-          <label for="reset-confirm">{{ 'auth.confirmPassword' | t }}</label>
-          <div class="field__password-wrapper">
-            <input
-              id="reset-confirm"
-              [type]="showConfirm() ? 'text' : 'password'"
-              formControlName="confirmPassword"
-              autocomplete="new-password" />
-            <button
-              type="button"
-              class="field__toggle-password"
-              (click)="toggleConfirm()"
-              [attr.aria-label]="'auth.togglePassword' | t">
-              {{ showConfirm() ? '🙈' : '👁️' }}
-            </button>
-          </div>
-          @if (form.get('confirmPassword')?.hasError('required') && form.get('confirmPassword')?.touched) {
-            <span class="field__error">{{ 'common.required' | t }}</span>
-          }
-          @if (form.get('confirmPassword')?.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
-            <span class="field__error">{{ 'common.passwordMismatch' | t }}</span>
-          }
-        </div>
-
-        @if (error()) {
-          <div class="auth-error">{{ error() | t }}</div>
-        }
-
-        <button
-          type="submit"
-          class="btn btn--primary btn--full"
-          [disabled]="!formValid() || submitting()">
-          @if (submitting()) { <span class="spinner"></span> }
-          {{ 'auth.resetAction' | t }}
-        </button>
-      </form>
-
-      <div class="auth-card__links">
-        <a routerLink="/login">{{ 'auth.backToLogin' | t }}</a>
-      </div>
-    </div>
-  `,
-  styleUrl: '../login-page/login-page.component.scss'
+  templateUrl: './reset-password-page.component.html',
+  styleUrl: './reset-password-page.component.scss'
 })
 export class ResetPasswordPageComponent {
   private readonly fb = inject(FormBuilder);

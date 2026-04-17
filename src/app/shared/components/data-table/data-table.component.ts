@@ -1,6 +1,7 @@
 import { Component, input, output, signal, computed } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { FormatDatePipe } from '../../pipes/format-date.pipe';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
@@ -12,15 +13,17 @@ export interface DataTableColumn {
   labelKey: string;
   sortable?: boolean;
   order?: number;
-  renderType?: 'text' | 'pill' | 'date';
+  renderType?: 'text' | 'pill' | 'date' | 'toggle';
   translate?: boolean;
   pillVariantKey?: string;
+  /** For toggle columns: action name emitted when toggled */
+  toggleAction?: string;
 }
 
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [NgTemplateOutlet, MatIcon, TranslatePipe, FormatDatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [NgTemplateOutlet, MatIcon, MatSlideToggle, TranslatePipe, FormatDatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
 })

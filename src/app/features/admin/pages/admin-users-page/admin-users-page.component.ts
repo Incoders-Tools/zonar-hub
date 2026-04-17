@@ -28,6 +28,7 @@ interface UserRow extends Record<string, unknown> {
   roleName?: string;
   role?: string;
   complexName?: string;
+  organizations?: string;
   isActive: boolean;
   status: string;
   statusVariant: string;
@@ -83,6 +84,7 @@ export class AdminUsersPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly userPermissions = signal<string[]>([]);
   readonly userTenantIds = signal<Set<string>>(new Set());
+  readonly orderedTenantIds = signal<string[]>([]);
 
   readonly tenantColumns: ChildGridColumn[] = [
     { key: 'name', labelKey: 'admin.users.company.name', type: 'display' },
@@ -111,7 +113,7 @@ export class AdminUsersPageComponent implements OnInit {
     { key: 'email', labelKey: 'admin.users.column.email', sortable: true },
     { key: 'fullName', labelKey: 'admin.users.column.name', sortable: true },
     { key: 'roleName', labelKey: 'admin.users.column.role', sortable: true },
-    { key: 'complexName', labelKey: 'admin.users.column.complex', sortable: true },
+    { key: 'organizations', labelKey: 'admin.users.column.organizations', sortable: false },
     { key: 'status', labelKey: 'admin.users.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
@@ -160,6 +162,7 @@ export class AdminUsersPageComponent implements OnInit {
       roleName: user.roleName,
       role: user.role,
       complexName: user.complexName,
+      organizations: user.tenantNames?.join(', ') || user.complexName || '',
       isActive: user.isActive,
       status: user.isActive ? 'admin.users.status.active' : 'admin.users.status.inactive',
       statusVariant: user.isActive ? 'active' : 'inactive'
@@ -215,7 +218,13 @@ export class AdminUsersPageComponent implements OnInit {
       }
 
       // Load company assignment
-      this.userTenantIds.set(user.complexId ? new Set([user.complexId]) : new Set());
+      if (user.tenantIds?.length) {
+        this.userTenantIds.set(new Set(user.tenantIds));
+      } else if (user.complexId) {
+        this.userTenantIds.set(new Set([user.complexId]));
+      } else {
+        this.userTenantIds.set(new Set());
+      }
     } else {
       this.isEditing = false;
       this.form.reset({ email: '', fullName: '', phone: '', roleId: '', isActive: true });
@@ -282,6 +291,13 @@ export class AdminUsersPageComponent implements OnInit {
 
     const formValue = this.form.getRawValue();
 
+    // Resolve tenant assignment
+    const tenantIds = Array.from(this.userTenantIds());
+    const allTenants = this.facade.tenants();
+    const tenantNames = tenantIds
+      .map(id => allTenants.find(t => t.id === id)?.name)
+      .filter((n): n is string => !!n);
+
     if (this.isEditing) {
       const existingUser = this.editingUser();
       if (existingUser) {
@@ -289,7 +305,9 @@ export class AdminUsersPageComponent implements OnInit {
           fullName: formValue.fullName,
           phone: formValue.phone || undefined,
           roleId: formValue.roleId || undefined,
-          isActive: formValue.isActive
+          isActive: formValue.isActive,
+          tenantIds,
+          tenantNames
         });
         if (success) {
           this.permissions.setUserPermissions(existingUser.id, this.userPermissions());
@@ -315,6 +333,10 @@ export class AdminUsersPageComponent implements OnInit {
 
   onTenantSelectionChanged(ids: Set<string>): void {
     this.userTenantIds.set(ids);
+  }
+
+  onTenantOrderChanged(orderedIds: string[]): void {
+    this.orderedTenantIds.set(orderedIds);
   }
 
   isFieldInvalid(controlName: string): boolean {

@@ -1,10 +1,9 @@
 export type OrganizationType =
-  | 'empresa'
+  | 'estandar'
   | 'circuito'
   | 'academia'
   | 'operadora'
-  | 'marca'
-  | 'unidad_operativa';
+  | 'marca';
 
 export interface Organization {
   id: string;

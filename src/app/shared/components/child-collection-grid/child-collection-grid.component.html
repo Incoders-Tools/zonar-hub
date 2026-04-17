@@ -52,18 +52,17 @@
                     <mat-icon class="child-grid__drag-handle">drag_indicator</mat-icon>
                   </td>
                   <td class="child-grid__td child-grid__td--order">
-                    @if (i === 0) {
-                      <span class="child-grid__primary-pill">{{ 'childGrid.primary' | t }}</span>
-                    } @else {
-                      {{ i + 1 }}
-                    }
+                    {{ i + 1 }}
                   </td>
-                  @for (col of columns(); track col.key) {
+                  @for (col of columns(); track col.key; let colIdx = $index) {
                     <td class="child-grid__td">
                       @if (col.type === 'checkbox') {
                         {{ getCellValue(item, col) ? '✓' : '✗' }}
                       } @else {
                         {{ getCellValue(item, col) }}
+                      }
+                      @if (colIdx === 0 && i === 0) {
+                        <span class="child-grid__primary-pill">{{ 'childGrid.primary' | t }}</span>
                       }
                     </td>
                   }
@@ -83,24 +82,25 @@
         </div>
       }
 
-      <!-- Unselected items for picking -->
-      <table class="child-grid__table">
-        <thead>
-          <tr>
-            <th class="child-grid__th child-grid__th--checkbox"></th>
-            @for (col of columns(); track col.key) {
-              <th class="child-grid__th" [style.width]="col.width || 'auto'">{{ col.labelKey | t }}</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of items(); track getItemId(item)) {
-            @if (!isItemSelected(item)) {
+      <!-- Unselected items for picking + selected items display -->
+      @if (!reorderable()) {
+        <table class="child-grid__table">
+          <thead>
+            <tr>
+              <th class="child-grid__th child-grid__th--checkbox"></th>
+              @for (col of columns(); track col.key) {
+                <th class="child-grid__th" [style.width]="col.width || 'auto'">{{ col.labelKey | t }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track getItemId(item)) {
               <tr class="child-grid__row"
+                  [class.child-grid__row--selected]="isItemSelected(item)"
                   (click)="toggleItem(item)">
                 <td class="child-grid__td child-grid__td--checkbox">
                   <input type="checkbox"
-                    [checked]="false"
+                    [checked]="isItemSelected(item)"
                     [disabled]="disabled()"
                     (click)="$event.stopPropagation()"
                     (change)="toggleItem(item)">
@@ -116,9 +116,52 @@
                 }
               </tr>
             }
-          }
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      }
+
+      <!-- Reorderable: unselected items for picking -->
+      @if (reorderable()) {
+        @if (unselectedItems().length > 0) {
+          <table class="child-grid__table">
+            <thead>
+              <tr>
+                <th class="child-grid__th child-grid__th--checkbox"></th>
+                <th class="child-grid__th child-grid__th--order">#</th>
+                @for (col of columns(); track col.key) {
+                  <th class="child-grid__th" [style.width]="col.width || 'auto'">{{ col.labelKey | t }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of unselectedItems(); track getItemId(item); let i = $index) {
+                <tr class="child-grid__row"
+                    (click)="toggleItem(item)">
+                  <td class="child-grid__td child-grid__td--checkbox">
+                    <input type="checkbox"
+                      [checked]="false"
+                      [disabled]="disabled()"
+                      (click)="$event.stopPropagation()"
+                      (change)="toggleItem(item)">
+                  </td>
+                  <td class="child-grid__td child-grid__td--order">
+                    {{ orderedSelectedItems().length + i + 1 }}
+                  </td>
+                  @for (col of columns(); track col.key) {
+                    <td class="child-grid__td">
+                      @if (col.type === 'checkbox') {
+                        {{ getCellValue(item, col) ? '✓' : '✗' }}
+                      } @else {
+                        {{ getCellValue(item, col) }}
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
     }
   } @else {
     <!-- Edit Mode (FormArray) -->

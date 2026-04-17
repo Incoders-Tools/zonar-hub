@@ -141,6 +141,17 @@ export class AdminProfilePageComponent implements OnInit {
       .subscribe(() => {
         this.configDirty.set(this.configForm.dirty);
         this.configValid.set(this.configForm.valid);
+
+        // Apply config changes in real-time
+        if (this.configForm.valid && this.configForm.dirty) {
+          const values = this.configForm.getRawValue();
+          this.prefs.updateCurrentUserPrefs({
+            locale: values.locale,
+            theme: values.theme,
+            dateFormat: values.dateFormat,
+            timezone: values.timezone
+          });
+        }
       });
   }
 

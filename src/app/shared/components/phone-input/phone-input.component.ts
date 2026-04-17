@@ -118,9 +118,36 @@ export class PhoneInputComponent implements ControlValueAccessor {
   }
 
   onNumberInput(event: Event): void {
-    const raw = (event.target as HTMLInputElement).value;
-    this.phoneNumber.set(raw);
+    const target = event.target as HTMLInputElement;
+    const cleaned = target.value.replace(/\D/g, '');
+    target.value = cleaned;
+    this.phoneNumber.set(cleaned);
     this.emitValue();
+  }
+
+  onNumberKeyDown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Tab', 'Enter', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Delete', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) return;
+    if (event.ctrlKey || event.metaKey) return;
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  onNumberPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text') ?? '';
+    const cleaned = pasted.replace(/\D/g, '');
+    const target = event.target as HTMLInputElement;
+    const start = target.selectionStart ?? 0;
+    const end = target.selectionEnd ?? 0;
+    const current = target.value;
+    const newValue = current.slice(0, start) + cleaned + current.slice(end);
+    target.value = newValue;
+    this.phoneNumber.set(newValue);
+    this.emitValue();
+    const newPos = start + cleaned.length;
+    target.setSelectionRange(newPos, newPos);
   }
 
   private emitValue(): void {

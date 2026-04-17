@@ -9,6 +9,8 @@ import { ActiveToggleComponent } from '../../../../../shared/components/active-t
 import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../../shared/components/child-collection-grid/child-collection-grid.component';
 import { PlayerFacadeService } from '../player-facade.service';
 import { Player, PlayerSportAssignment, Category, Gender, Sport } from '../../../../../core/models';
+import { NormalizeNameDirective } from '../../../../../shared/directives/normalize-name.directive';
+import { NormalizeLowercaseDirective } from '../../../../../shared/directives/normalize-lowercase.directive';
 
 @Component({
   selector: 'app-player-form-panel',
@@ -21,7 +23,9 @@ import { Player, PlayerSportAssignment, Category, Gender, Sport } from '../../..
     CollapsibleSectionComponent,
     PhoneInputComponent,
     ActiveToggleComponent,
-    ChildCollectionGridComponent
+    ChildCollectionGridComponent,
+    NormalizeNameDirective,
+    NormalizeLowercaseDirective
   ],
   templateUrl: './player-form-panel.component.html',
   styleUrl: './player-form-panel.component.scss'
@@ -39,6 +43,7 @@ export class PlayerFormPanelComponent implements OnInit {
   readonly cancelled = output<void>();
 
   form!: FormGroup;
+  readonly today = new Date().toISOString().split('T')[0];
 
   readonly sportColumns: ChildGridColumn[] = [
     { key: 'name', labelKey: 'admin.players.sport.name', type: 'display' }

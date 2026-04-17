@@ -9,6 +9,8 @@ export interface AdminUser {
   roleName?: string;
   complexId?: string;
   complexName?: string;
+  tenantIds?: string[];
+  tenantNames?: string[];
   profileImagePath?: string;
   is2FAEnabled?: boolean;
   lastLogin?: string;
@@ -33,6 +35,8 @@ export interface AdminUserUpdatePayload {
   phone?: string;
   roleId?: string;
   complexId?: string;
+  tenantIds?: string[];
+  tenantNames?: string[];
   profileImagePath?: string;
   isActive?: boolean;
 }

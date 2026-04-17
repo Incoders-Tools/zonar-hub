@@ -83,7 +83,7 @@
             <li>{{ 'billing.feature.dedicatedDB' | t }}</li>
             <li>{{ 'billing.feature.dedicatedAI' | t }}</li>
           </ul>
-          <app-async-button variant="primary" (clicked)="upgradePlan('enterprise')">
+          <app-async-button variant="primary" (clicked)="contactSales()">
             {{ 'billing.contactSalesAction' | t }}
           </app-async-button>
         </div>
@@ -122,9 +122,39 @@
       </div>
     } @else {
       <div class="billing-page__no-card">
-        <p>{{ 'billing.noPaymentMethod' | t }}</p>
-        <button class="btn btn--primary">{{ 'billing.addCard' | t }}</button>
+        @if (showAddCardForm()) {
+          <div class="billing-page__add-card-form">
+            <h3>{{ 'billing.addCard' | t }}</h3>
+            <div class="billing-page__add-card-fields">
+              <div class="billing-page__add-card-field">
+                <label>{{ 'billing.cardNumber' | t }}</label>
+                <input type="text" placeholder="4242 4242 4242 4242" maxlength="19" />
+              </div>
+              <div class="billing-page__add-card-row">
+                <div class="billing-page__add-card-field">
+                  <label>{{ 'billing.cardExpiry' | t }}</label>
+                  <input type="text" placeholder="MM/YY" maxlength="5" />
+                </div>
+                <div class="billing-page__add-card-field">
+                  <label>{{ 'billing.cardCvc' | t }}</label>
+                  <input type="text" placeholder="CVC" maxlength="4" />
+                </div>
+              </div>
+            </div>
+            <div class="billing-page__add-card-actions">
+              <button class="billing-page__card-action" (click)="cancelAddCard()">{{ 'common.cancel' | t }}</button>
+              <app-async-button variant="primary" [loading]="addingCard()" (clicked)="saveNewCard()">
+                {{ 'billing.saveCard' | t }}
+              </app-async-button>
+            </div>
+          </div>
+        } @else {
+          <p>{{ 'billing.noPaymentMethod' | t }}</p>
+          <button class="btn btn--primary" (click)="addCard()">{{ 'billing.addCard' | t }}</button>
+        }
       </div>
     }
   </div>
 </div>
+
+<app-chatbot-bubble></app-chatbot-bubble>

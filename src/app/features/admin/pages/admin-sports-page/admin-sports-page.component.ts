@@ -71,7 +71,7 @@ export class AdminSportsPageComponent implements OnInit {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.sports.column.name', sortable: true },
       { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.sports.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
+      { key: 'isActive', labelKey: 'admin.sports.column.status', sortable: true, renderType: 'toggle', toggleAction: 'toggleActive' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -90,7 +90,6 @@ export class AdminSportsPageComponent implements OnInit {
       ];
     }
     return [
-      { icon: 'toggle_on', labelKey: 'admin.sports.action.toggleActive', action: 'toggleActive', variant: 'default' as const },
       { icon: 'visibility', labelKey: 'common.view', action: 'view', variant: 'primary' as const }
     ];
   });

@@ -1,8 +1,9 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Registration, RegistrationToken, RegistrationSource } from '../../../../core/models';
 import { RegistrationService } from '../../../../core/services/registration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface RegistrationFilters {
   search?: string;
@@ -23,6 +24,18 @@ export class RegistrationFacadeService {
   private readonly service = inject(RegistrationService);
   private readonly notification = inject(NotificationService);
   private readonly i18n = inject(I18nService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
+  private lastOrgId: string | null | undefined = undefined;
+
+  constructor() {
+    effect(() => {
+      const currentOrgId = this.activeOrg.activeOrganizationId();
+      if (this.lastOrgId !== undefined && currentOrgId !== this.lastOrgId) {
+        this.load();
+      }
+      this.lastOrgId = currentOrgId;
+    });
+  }
 
   private readonly loadingState = signal(false);
   private readonly errorState = signal(false);

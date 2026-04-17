@@ -1,7 +1,8 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork, Sport } from '../../../../core/models';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface ComplexFilters {
   name?: string;
@@ -12,6 +13,18 @@ export interface ComplexFilters {
 export class ComplexesFacadeService {
   private readonly repository = inject(MockComplexRepository);
   private readonly sportRepository = inject(MockSportRepository);
+  private readonly activeOrg = inject(ActiveOrganizationService);
+  private lastOrgId: string | null | undefined = undefined;
+
+  constructor() {
+    effect(() => {
+      const currentOrgId = this.activeOrg.activeOrganizationId();
+      if (this.lastOrgId !== undefined && currentOrgId !== this.lastOrgId) {
+        this.load();
+      }
+      this.lastOrgId = currentOrgId;
+    });
+  }
 
   // State signals
   private readonly entitiesState = signal<Complex[]>([]);

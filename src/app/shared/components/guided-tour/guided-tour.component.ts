@@ -119,12 +119,15 @@ export class GuidedTourComponent implements OnDestroy, AfterViewInit {
     const step = this.activeStep();
     if (!rect) return 100;
     const pos = step?.position ?? 'bottom';
+    let top: number;
     switch (pos) {
-      case 'top': return rect.top - 200;
+      case 'top': top = rect.top - 200; break;
       case 'left':
-      case 'right': return rect.top + rect.height / 2 - 80;
-      default: return rect.bottom + 16;
+      case 'right': top = rect.top + rect.height / 2 - 80; break;
+      default: top = rect.bottom + 16; break;
     }
+    // Clamp within viewport
+    return Math.max(16, Math.min(top, window.innerHeight - 260));
   }
 
   getTooltipLeft(): number {
@@ -132,10 +135,12 @@ export class GuidedTourComponent implements OnDestroy, AfterViewInit {
     const step = this.activeStep();
     if (!rect) return 100;
     const pos = step?.position ?? 'bottom';
+    let left: number;
     switch (pos) {
-      case 'left': return rect.left - 400;
-      case 'right': return rect.right + 16;
-      default: return Math.max(16, rect.left + rect.width / 2 - 190);
+      case 'left': left = rect.left - 400; break;
+      case 'right': left = rect.right + 16; break;
+      default: left = Math.max(16, rect.left + rect.width / 2 - 190); break;
     }
+    return Math.max(16, Math.min(left, window.innerWidth - 400));
   }
 }

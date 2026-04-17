@@ -7,6 +7,20 @@
   &--collapsed {
     grid-template-columns: var(--zh-sidebar-collapsed-width) 1fr;
   }
+
+  // Onboarding mode: dim sidebar and disable pointer events
+  &--onboarding {
+    .admin-sidebar {
+      opacity: 0.35;
+      pointer-events: none;
+      filter: grayscale(40%);
+      transition: opacity 0.3s, filter 0.3s;
+    }
+
+    .admin-main {
+      position: relative;
+    }
+  }
 }
 
 .admin-mobile-header {
@@ -101,6 +115,11 @@
       opacity: 1;
       background: rgba(255, 255, 255, 0.08);
     }
+  }
+
+  &__org-selector {
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   &__nav {

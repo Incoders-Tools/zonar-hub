@@ -6,6 +6,8 @@ import { TournamentService } from '../../../../core/services/tournament.service'
 import { SportService } from '../../../../core/services/sport.service';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
 import { ChatbotBubbleComponent } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
+import { MOCK_TOURNAMENTS } from '../../../../core/data/mock/mock-tournaments';
+import { Tournament } from '../../../../core/models';
 
 interface FeatureCard {
   icon: string;
@@ -44,6 +46,15 @@ export class HomePageComponent implements OnInit {
   readonly proMonthly = 97;
   readonly starterAnnual = computed(() => Math.round(this.starterMonthly * 12 * 0.8));
   readonly proAnnual = computed(() => Math.round(this.proMonthly * 12 * 0.8));
+
+  /** Showcase tournaments for the public landing page: always include mock upcoming + user-created */
+  private readonly mockUpcoming: Tournament[] = MOCK_TOURNAMENTS.filter(t => ['ts1', 'ts2'].includes(t.statusId));
+  readonly showcaseTournaments = computed(() => {
+    const userTournaments = this.tournamentService.upcomingTournaments();
+    const mockIds = new Set(this.mockUpcoming.map(t => t.id));
+    const userOnly = userTournaments.filter(t => !mockIds.has(t.id));
+    return [...this.mockUpcoming, ...userOnly];
+  });
 
   readonly features: FeatureCard[] = [
     { icon: '📝', titleKey: 'home.card.one.title', descriptionKey: 'home.card.one.description' },

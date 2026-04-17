@@ -12,8 +12,11 @@
   <input
     class="phone-input__number"
     type="tel"
+    inputmode="numeric"
     [value]="phoneNumber()"
     (input)="onNumberInput($event)"
+    (keydown)="onNumberKeyDown($event)"
+    (paste)="onNumberPaste($event)"
     (blur)="onTouched()"
     [disabled]="isDisabled()"
     [placeholder]="resolvedPlaceholder()"

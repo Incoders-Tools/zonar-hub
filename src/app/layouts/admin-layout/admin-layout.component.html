@@ -1,4 +1,4 @@
-<div class="admin-layout" [class.admin-layout--collapsed]="sidebarCollapsed()">
+<div class="admin-layout" [class.admin-layout--collapsed]="sidebarCollapsed()" [class.admin-layout--onboarding]="onboarding.needsWizard()">
   <!-- Mobile Header -->
   <header class="admin-mobile-header">
     <button class="admin-mobile-header__toggle" (click)="toggleMobileSidebar()" aria-label="Toggle menu">☰</button>
@@ -11,6 +11,13 @@
       <a routerLink="/" class="admin-sidebar__logo">{{ sidebarCollapsed() ? 'ZH' : ('common.appName' | t) }}</a>
       <button class="admin-sidebar__collapse" (click)="toggleSidebar()">{{ sidebarCollapsed() ? '→' : '←' }}</button>
     </div>
+
+    <!-- Organization Selector -->
+    @if (!sidebarCollapsed() && activeOrg.hasActiveOrganization()) {
+      <div class="admin-sidebar__org-selector">
+        <app-org-selector></app-org-selector>
+      </div>
+    }
 
     <nav class="admin-sidebar__nav">
       <!-- Dashboard (always top-level) -->
@@ -146,8 +153,8 @@
     </app-guided-tour>
   }
 
-  <!-- Chatbot -->
-  @if (showChatbot()) {
+  <!-- Chatbot (always visible during onboarding, otherwise based on user pref) -->
+  @if (showChatbot() || onboarding.needsWizard()) {
     <app-chatbot-bubble></app-chatbot-bubble>
   }
 </div>

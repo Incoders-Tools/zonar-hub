@@ -6,47 +6,14 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { NormalizeLowercaseDirective } from '../../../../shared/directives/normalize-lowercase.directive';
 
 @Component({
   selector: 'app-forgot-password-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
-  template: `
-    <div class="auth-card">
-      <h1>{{ 'auth.forgotPassword' | t }}</h1>
-      <p class="auth-card__desc">{{ 'auth.forgotPasswordDesc' | t }}</p>
-
-      @if (!sent()) {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
-          <div class="field">
-            <label for="forgot-email">{{ 'auth.email' | t }}</label>
-            <input id="forgot-email" type="email" formControlName="email" autocomplete="email" />
-            @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
-              <span class="field__error">{{ 'common.required' | t }}</span>
-            }
-            @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
-              <span class="field__error">{{ 'common.invalidEmail' | t }}</span>
-            }
-          </div>
-
-          <button
-            type="submit"
-            class="btn btn--primary btn--full"
-            [disabled]="!formValid() || submitting()">
-            @if (submitting()) { <span class="spinner"></span> }
-            {{ 'auth.sendResetLink' | t }}
-          </button>
-        </form>
-      } @else {
-        <div class="success-msg">{{ 'auth.resetLinkSent' | t }}</div>
-      }
-
-      <div class="auth-card__links">
-        <a routerLink="/login">{{ 'auth.backToLogin' | t }}</a>
-      </div>
-    </div>
-  `,
-  styleUrl: '../login-page/login-page.component.scss'
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, NormalizeLowercaseDirective],
+  templateUrl: './forgot-password-page.component.html',
+  styleUrl: './forgot-password-page.component.scss'
 })
 export class ForgotPasswordPageComponent {
   private readonly fb = inject(FormBuilder);

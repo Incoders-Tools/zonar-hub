@@ -1,10 +1,11 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Tournament, Court, Category, Gender, TournamentType, Complex } from '../../../../core/models';
 import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { MockCategoryRepository } from '../../../../core/repositories/mock/mock-category.repository';
 import { MockGenderRepository } from '../../../../core/repositories/mock/mock-gender.repository';
 import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface TournamentFilters {
   name?: string;
@@ -19,6 +20,18 @@ export class TournamentsFacadeService {
   private readonly categoryRepo = inject(MockCategoryRepository);
   private readonly genderRepo = inject(MockGenderRepository);
   private readonly tournamentTypeRepo = inject(MockTournamentTypeRepository);
+  private readonly activeOrg = inject(ActiveOrganizationService);
+  private lastOrgId: string | null | undefined = undefined;
+
+  constructor() {
+    effect(() => {
+      const currentOrgId = this.activeOrg.activeOrganizationId();
+      if (this.lastOrgId !== undefined && currentOrgId !== this.lastOrgId) {
+        this.load();
+      }
+      this.lastOrgId = currentOrgId;
+    });
+  }
 
   // State signals
   private readonly entitiesState = signal<Tournament[]>([]);

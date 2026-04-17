@@ -1,0 +1,227 @@
+<div class="auth-card">
+  <h1>{{ 'auth.register' | t }}</h1>
+  <p class="auth-card__desc">{{ 'auth.registerDesc' | t }}</p>
+
+  @if (selectedPlan()) {
+    <div class="auth-card__plan-badge">
+      {{ 'home.pricing.' + selectedPlan() + '.name' | t }}
+    </div>
+  }
+
+  <!-- STEP 1: Registration Form -->
+  @if (step() === 'form') {
+    <form [formGroup]="form" (ngSubmit)="onRequestVerification()" class="auth-form">
+      <!-- Section: Personal info -->
+      <fieldset class="auth-form__section">
+        <legend class="auth-form__section-title">{{ 'auth.section.personal' | t }}</legend>
+
+        <div class="field">
+          <label for="reg-name">{{ 'auth.fullName' | t }}</label>
+          <input id="reg-name" type="text" formControlName="fullName" autocomplete="name"
+            appNormalizeName
+            [placeholder]="'auth.fullNamePlaceholder' | t" />
+          @if (form.get('fullName')?.hasError('required') && form.get('fullName')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('fullName')?.hasError('minlength') && form.get('fullName')?.touched) {
+            <span class="field__error">{{ 'common.minLength' | t }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="reg-email">{{ 'auth.email' | t }}</label>
+          <input id="reg-email" type="email" formControlName="email" autocomplete="email"
+            appNormalizeLowercase
+            [placeholder]="'auth.emailPlaceholder' | t" />
+          @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+            <span class="field__error">{{ 'common.invalidEmail' | t }}</span>
+          }
+          @if (emailTaken()) {
+            <div class="field__warning">
+              <span class="field__error">{{ 'auth.emailAlreadyInUse' | t }}</span>
+              <a routerLink="/login" class="field__link">{{ 'auth.loginInstead' | t }}</a>
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <label>{{ 'auth.phone' | t }}</label>
+          <app-phone-input formControlName="phone" [required]="true"></app-phone-input>
+          @if (form.get('phone')?.hasError('required') && form.get('phone')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (phoneTaken()) {
+            <div class="field__warning">
+              <span class="field__error">{{ 'auth.phoneAlreadyInUse' | t }}</span>
+              <a routerLink="/login" class="field__link">{{ 'auth.loginInstead' | t }}</a>
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <!-- Section: Security -->
+      <fieldset class="auth-form__section">
+        <legend class="auth-form__section-title">{{ 'auth.section.security' | t }}</legend>
+
+        <div class="field">
+          <label for="reg-password">{{ 'auth.password' | t }}</label>
+          <div class="field__password-wrapper">
+            <input
+              id="reg-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password" />
+            <button
+              type="button"
+              class="field__toggle-password"
+              (click)="togglePassword()"
+              [attr.aria-label]="'auth.togglePassword' | t">
+              {{ showPassword() ? '🙈' : '👁️' }}
+            </button>
+          </div>
+          @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
+            <span class="field__error">{{ 'auth.passwordMinLength' | t }}</span>
+          }
+          @if (form.get('password')?.value) {
+            <div class="field__password-strength">
+              <div class="field__password-strength-bar" [class]="'field__password-strength-bar--' + getPasswordStrength()"></div>
+              <span class="field__password-strength-label">{{ 'auth.passwordStrength.' + getPasswordStrength() | t }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <label for="reg-confirm">{{ 'auth.confirmPassword' | t }}</label>
+          <div class="field__password-wrapper">
+            <input
+              id="reg-confirm"
+              [type]="showConfirm() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password" />
+            <button
+              type="button"
+              class="field__toggle-password"
+              (click)="toggleConfirm()"
+              [attr.aria-label]="'auth.togglePassword' | t">
+              {{ showConfirm() ? '🙈' : '👁️' }}
+            </button>
+          </div>
+          @if (form.get('confirmPassword')?.hasError('required') && form.get('confirmPassword')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('confirmPassword')?.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
+            <span class="field__error">{{ 'common.passwordMismatch' | t }}</span>
+          }
+        </div>
+      </fieldset>
+
+      <!-- Terms -->
+      <label class="field field--checkbox">
+        <input type="checkbox" formControlName="acceptTerms" />
+        <span>{{ 'auth.acceptTermsPrefix' | t }} <a class="field__link" (click)="$event.preventDefault(); showTerms.set(true)">{{ 'auth.acceptTermsLink' | t }}</a></span>
+      </label>
+      @if (form.get('acceptTerms')?.hasError('requiredTrue') && form.get('acceptTerms')?.touched) {
+        <span class="field__error">{{ 'auth.mustAcceptTerms' | t }}</span>
+      }
+
+      @if (error()) {
+        <div class="auth-error">{{ error() | t }}</div>
+      }
+
+      <button
+        type="submit"
+        class="btn btn--primary btn--full"
+        [disabled]="!formValid() || submitting()">
+        @if (submitting()) { <span class="spinner"></span> }
+        {{ 'common.next' | t }}
+      </button>
+    </form>
+  }
+
+  <!-- STEP 2: Verification Code -->
+  @if (step() === 'verify') {
+    <div class="auth-form">
+      <fieldset class="auth-form__section">
+        <legend class="auth-form__section-title">{{ 'verification.title' | t }}</legend>
+        <p class="field__hint" style="text-align: center; margin-bottom: 1.5rem;">{{ 'verification.codeSent' | t }}</p>
+
+        <app-otp-input
+          [disabled]="verifying() || codeVerified() || attemptsExhausted()"
+          [error]="!!codeError()"
+          (codeChanged)="onOtpChanged($event)"
+          (codeComplete)="onOtpComplete($event)">
+        </app-otp-input>
+
+        <!-- Attempts indicator -->
+        <div class="field__attempts" style="text-align: center; margin-top: 1rem;">
+          <span>{{ 'verification.attemptsLabel' | t }} {{ attempts() }} {{ 'verification.attemptsOf' | t }} 3</span>
+        </div>
+
+        <!-- Verification progress -->
+        @if (verifying()) {
+          <div class="field__verify-progress">
+            <span class="spinner"></span>
+            <span>{{ 'verification.verifying' | t }}</span>
+          </div>
+        }
+
+        @if (codeVerified()) {
+          <div class="field__verify-success">{{ 'verification.success' | t }}</div>
+        }
+
+        @if (codeError()) {
+          <div class="field__verify-error">{{ codeError() | t }}</div>
+        }
+
+        @if (!codeVerified() && !attemptsExhausted()) {
+          <button
+            type="button"
+            class="btn btn--secondary btn--full"
+            style="margin-top: 1rem;"
+            [disabled]="verificationCode().length !== 6 || verifying()"
+            (click)="verifyCode()">
+            {{ 'verification.verify' | t }}
+          </button>
+        }
+      </fieldset>
+
+      @if (error()) {
+        <div class="auth-error">{{ error() | t }}</div>
+      }
+
+      <div class="auth-form__button-group">
+        <button
+          type="button"
+          class="btn btn--secondary"
+          (click)="backToForm()">
+          {{ 'common.back' | t }}
+        </button>
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="!canCreateAccount()"
+          (click)="onSubmit()">
+          @if (submitting()) { <span class="spinner"></span> }
+          {{ 'auth.registerAction' | t }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="auth-card__links">
+    <span>{{ 'auth.hasAccount' | t }} <a routerLink="/login">{{ 'auth.loginLink' | t }}</a></span>
+  </div>
+</div>
+
+@if (showTerms()) {
+  <app-terms-dialog
+    (closed)="showTerms.set(false)"
+    (accepted)="acceptTermsFromDialog()">
+  </app-terms-dialog>
+}

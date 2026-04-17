@@ -8,6 +8,7 @@
         id="player-firstName"
         type="text"
         formControlName="firstName"
+        appNormalizeName
         [placeholder]="'admin.players.form.firstNamePlaceholder' | t" />
       @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) {
         <span class="form-field__error">{{ 'common.required' | t }}</span>
@@ -22,6 +23,7 @@
         id="player-lastName"
         type="text"
         formControlName="lastName"
+        appNormalizeName
         [placeholder]="'admin.players.form.lastNamePlaceholder' | t" />
       @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) {
         <span class="form-field__error">{{ 'common.required' | t }}</span>
@@ -36,6 +38,7 @@
         id="player-email"
         type="email"
         formControlName="email"
+        appNormalizeLowercase
         [placeholder]="'admin.players.form.emailPlaceholder' | t" />
       @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
         <span class="form-field__error">{{ 'common.required' | t }}</span>
@@ -126,7 +129,8 @@
           class="form-field__input"
           id="player-birthDate"
           type="date"
-          formControlName="birthDate" />
+          formControlName="birthDate"
+          [max]="today" />
       </div>
 
       <!-- City -->
@@ -168,7 +172,8 @@
     </app-collapsible-section>
 
     <!-- Is Active Toggle -->
-    <div class="form-field">
+    <hr class="form-field__divider" style="margin: var(--zh-space-lg) 0; border: none; border-top: 1px solid var(--zh-border-subtle);" />
+    <div class="form-field" style="margin-top: var(--zh-space-md);">
       <app-active-toggle
         [value]="form.get('isActive')!.value"
         mode="toggle"

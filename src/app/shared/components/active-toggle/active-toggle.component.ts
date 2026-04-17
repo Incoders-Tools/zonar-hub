@@ -14,13 +14,20 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
   imports: [TranslatePipe],
   template: `
     @if (mode() === 'toggle') {
-      <label class="active-toggle active-toggle--interactive">
-        <input
-          type="checkbox"
-          [checked]="value()"
-          [disabled]="disabled()"
-          (change)="onToggle($event)"
-          class="active-toggle__checkbox" />
+      <label class="active-toggle active-toggle--interactive"
+        [class.active-toggle--disabled]="disabled()">
+        <span class="active-toggle__switch"
+          [class.active-toggle__switch--on]="value()">
+          <input
+            type="checkbox"
+            [checked]="value()"
+            [disabled]="disabled()"
+            (change)="onToggle($event)"
+            class="active-toggle__input" />
+          <span class="active-toggle__track">
+            <span class="active-toggle__thumb"></span>
+          </span>
+        </span>
         <span
           class="active-toggle__badge"
           [class.active-toggle__badge--active]="value()"

@@ -107,6 +107,18 @@
   </app-confirm-dialog>
 }
 
+<!-- Plan Enforcement Dialog -->
+@if (showPlanEnforcement()) {
+  <app-confirm-dialog
+    titleKey="plan.enforcement.title"
+    messageKey="plan.enforcement.description"
+    confirmLabelKey="plan.enforcement.selectPlan"
+    confirmVariant="primary"
+    (confirmed)="goToBilling()"
+    (cancelled)="dismissPlanEnforcement()">
+  </app-confirm-dialog>
+}
+
 <!-- Social Share Preview -->
 @if (sharePayload()) {
   <app-social-share-preview

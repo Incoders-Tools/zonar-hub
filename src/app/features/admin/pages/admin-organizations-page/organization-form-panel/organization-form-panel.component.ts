@@ -26,12 +26,11 @@ export class OrganizationFormPanelComponent implements OnInit {
   readonly titleKey = computed(() => this.isEditing() ? 'admin.organizations.form.edit' : 'admin.organizations.form.create');
 
   readonly typeOptions: { value: OrganizationType; labelKey: string }[] = [
-    { value: 'empresa', labelKey: 'organization.type.empresa' },
+    { value: 'estandar', labelKey: 'organization.type.estandar' },
     { value: 'circuito', labelKey: 'organization.type.circuito' },
     { value: 'academia', labelKey: 'organization.type.academia' },
     { value: 'operadora', labelKey: 'organization.type.operadora' },
-    { value: 'marca', labelKey: 'organization.type.marca' },
-    { value: 'unidad_operativa', labelKey: 'organization.type.unidadOperativa' }
+    { value: 'marca', labelKey: 'organization.type.marca' }
   ];
 
   readonly canSubmit = computed(() => this.form?.valid && this.form?.dirty && !this.saving());

@@ -1,7 +1,8 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { AuthSession, LoginRequest, RegisterRequest, Tenant, User, UserRole } from '../models';
 import { MOCK_USERS } from '../data/mock/mock-users';
 import { setCurrentMockTenant } from '../data/mock/mock-tenant-context';
+import { MockAdminUserRepository } from '../repositories/mock/mock-admin-user.repository';
 
 const MOCK_TENANT: Tenant = {
   id: 'tenant-1',
@@ -18,6 +19,7 @@ const MOCK_TENANT: Tenant = {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly sessionState = signal<AuthSession | null>(null);
+  private readonly adminUserRepo = inject(MockAdminUserRepository);
 
   readonly session = this.sessionState.asReadonly();
   readonly isAuthenticated = computed(() => this.sessionState() !== null);
@@ -77,6 +79,15 @@ export class AuthService {
     };
     this.sessionState.set(session);
     setCurrentMockTenant(session.tenant?.id);
+
+    // Persist user into admin users repository so it appears in ABM lists
+    this.adminUserRepo.create({
+      email: request.email,
+      fullName: request.fullName,
+      phone: request.phone,
+      roleId: 'role1'
+    }).catch(() => { /* silent — mock persistence only */ });
+
     return session;
   }
 

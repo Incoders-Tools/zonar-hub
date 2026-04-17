@@ -144,6 +144,16 @@
     margin-top: 0.25rem;
   }
 
+  &__tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--zh-text-muted);
+    cursor: help;
+    margin-left: var(--zh-space-2xs);
+  }
+
   &__actions {
     display: flex;
     justify-content: flex-end;

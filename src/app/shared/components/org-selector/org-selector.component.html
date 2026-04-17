@@ -1,0 +1,44 @@
+<div class="org-selector" [class.org-selector--open]="isOpen()" [class.org-selector--single]="!hasMultiple()">
+  <!-- Trigger -->
+  <button class="org-selector__trigger" type="button" (click)="toggle()" [attr.aria-expanded]="isOpen()">
+    <span class="org-selector__avatar">{{ orgInitials() }}</span>
+    <span class="org-selector__info">
+      <span class="org-selector__label">{{ 'org.selector.label' | t }}</span>
+      <span class="org-selector__name">{{ activeOrganization()?.name || ('org.selector.none' | t) }}</span>
+    </span>
+    @if (hasMultiple()) {
+      <span class="org-selector__chevron">▾</span>
+    }
+  </button>
+
+  <!-- Dropdown -->
+  @if (isOpen()) {
+    <div class="org-selector__dropdown" role="listbox" [attr.aria-label]="'org.selector.label' | t">
+      <div class="org-selector__dropdown-header">
+        <span class="org-selector__dropdown-title">{{ 'org.selector.switch' | t }}</span>
+      </div>
+      @for (org of organizations(); track org.id) {
+        <button
+          class="org-selector__option"
+          type="button"
+          role="option"
+          [class.org-selector__option--active]="org.id === activeOrgId()"
+          [class.org-selector__option--primary]="org.id === primaryOrgId()"
+          [attr.aria-selected]="org.id === activeOrgId()"
+          (click)="selectOrganization(org.id)">
+          <span class="org-selector__option-dot"
+                [class.org-selector__option-dot--active]="org.id === activeOrgId()"></span>
+          <span class="org-selector__option-info">
+            <span class="org-selector__option-name">{{ org.name }}</span>
+            @if (org.id === primaryOrgId()) {
+              <span class="org-selector__option-badge">{{ 'org.selector.primary' | t }}</span>
+            }
+          </span>
+          @if (org.id === activeOrgId()) {
+            <span class="org-selector__option-check">✓</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

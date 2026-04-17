@@ -191,8 +191,6 @@
         />
         @if (!registrationEnabled()) {
           <span class="tournaments-form__hint">{{ 'admin.tournaments.form.registrationHint' | t }}</span>
-        } @else {
-          <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
         }
         @if (isFieldInvalid('registrationStartDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('registrationStartDate') | t }}</span>
@@ -200,7 +198,9 @@
       </div>
 
       <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.registrationEndDate' | t }}</label>
+        <label>{{ 'admin.tournaments.form.registrationEndDate' | t }}
+          <span class="tournaments-form__tooltip" [title]="'admin.tournaments.form.registrationEndDateTooltip' | t">ⓘ</span>
+        </label>
         <input
           type="date"
           formControlName="registrationEndDate"
@@ -210,7 +210,9 @@
           [title]="dateFormatPlaceholder()"
           [class.error]="isFieldInvalid('registrationEndDate')"
         />
-        <span class="tournaments-form__hint">{{ dateFormatPlaceholder() }}</span>
+        @if (!registrationEnabled()) {
+          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.registrationHint' | t }}</span>
+        }
         @if (isFieldInvalid('registrationEndDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('registrationEndDate') | t }}</span>
         }

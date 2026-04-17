@@ -11,7 +11,6 @@ import { PlayerFacadeService, PlayerFilters } from './player-facade.service';
 import { PlayerFormPanelComponent } from './player-form-panel/player-form-panel.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Player } from '../../../../core/models';
-import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
 
 interface PlayerRow extends Record<string, unknown> {
   id: string;
@@ -58,7 +57,6 @@ interface PlayerRow extends Record<string, unknown> {
 export class AdminPlayersPageComponent implements OnInit {
   readonly facade = inject(PlayerFacadeService);
   private readonly auth = inject(AuthService);
-  private readonly tenantFilter = inject(TenantFilterService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
@@ -96,7 +94,7 @@ export class AdminPlayersPageComponent implements OnInit {
       .filter(s => s.isActive)
       .map(s => ({ value: s.id, labelKey: s.name }));
 
-    const fields: FilterField[] = [
+    return [
       { key: 'search', labelKey: 'admin.players.filter.search', type: 'text' as const },
       {
         key: 'genderId', labelKey: 'admin.players.filter.gender', type: 'select' as const,
@@ -118,8 +116,6 @@ export class AdminPlayersPageComponent implements OnInit {
         ]
       }
     ];
-    const tf = this.tenantFilter.tenantFilterField();
-    return tf ? [tf, ...fields] : fields;
   });
 
   readonly tableData = computed<PlayerRow[]>(() =>

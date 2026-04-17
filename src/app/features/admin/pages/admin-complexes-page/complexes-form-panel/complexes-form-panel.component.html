@@ -207,9 +207,11 @@
         <div class="complexes-form__assignment-table" cdkDropList (cdkDropListDropped)="onServiceDrop($event)">
           <div class="complexes-form__assignment-header">
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag"></span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">{{ 'admin.complexes.form.servicios.assigned' | t }}</span>
+            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check"></span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ 'admin.complexes.form.servicios.service' | t }}</span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">{{ 'admin.complexes.form.servicios.sortOrder' | t }}</span>
+            @if (isSystemAdmin()) {
+              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">{{ 'admin.complexes.form.servicios.sortOrder' | t }}</span>
+            }
           </div>
           @for (row of serviceRows(); track row.serviceId; let i = $index) {
             <div class="complexes-form__assignment-row" cdkDrag>
@@ -220,15 +222,17 @@
                 <input type="checkbox" [checked]="row.isActive" (change)="toggleServiceActive(i)" />
               </span>
               <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ row.name }}</span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">
-                <input
-                  type="number"
-                  min="0"
-                  [value]="row.sortOrder"
-                  (input)="updateServiceSortOrder(i, $any($event.target).valueAsNumber)"
-                  class="complexes-form__inline-input"
-                />
-              </span>
+              @if (isSystemAdmin()) {
+                <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">
+                  <input
+                    type="number"
+                    min="0"
+                    [value]="row.sortOrder"
+                    (input)="updateServiceSortOrder(i, $any($event.target).valueAsNumber)"
+                    class="complexes-form__inline-input"
+                  />
+                </span>
+              }
             </div>
           }
         </div>
@@ -259,7 +263,7 @@
         <div class="complexes-form__assignment-table" cdkDropList (cdkDropListDropped)="onNetworkDrop($event)">
           <div class="complexes-form__assignment-header">
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag"></span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">{{ 'admin.complexes.form.redes.assigned' | t }}</span>
+            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check"></span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ 'admin.complexes.form.redes.network' | t }}</span>
             <span class="complexes-form__assignment-cell complexes-form__assignment-cell--url">{{ 'admin.complexes.form.redes.profileUrl' | t }}</span>
           </div>

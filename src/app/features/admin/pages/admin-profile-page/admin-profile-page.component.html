@@ -97,7 +97,7 @@
     @if (activeTab() === 'config') {
       <div class="profile-form-container">
         <app-form-shell [titleKey]="'admin.profile.config.title'">
-          <form [formGroup]="configForm" (ngSubmit)="onSubmitConfig()">
+          <form [formGroup]="configForm">
             <!-- Locale -->
             <div class="form-field">
               <label class="form-field__label" for="profile-locale">{{ 'admin.profile.field.locale' | t }}</label>
@@ -154,15 +154,9 @@
               <span class="form-field__hint">{{ 'admin.profile.hint.timezone' | t }}</span>
             </div>
 
-            <!-- Actions -->
-            <div formActions class="form-actions">
-              <app-async-button
-                type="submit"
-                variant="primary"
-                [disabled]="!canSubmitConfig()"
-                [loading]="savingConfig()">
-                {{ 'common.save' | t }}
-              </app-async-button>
+            <!-- Real-time apply notice -->
+            <div class="form-actions">
+              <span class="form-field__hint">{{ 'admin.profile.config.realtimeHint' | t }}</span>
             </div>
           </form>
         </app-form-shell>

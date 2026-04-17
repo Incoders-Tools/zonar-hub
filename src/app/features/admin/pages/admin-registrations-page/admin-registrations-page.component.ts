@@ -11,7 +11,6 @@ import { RegistrationFacadeService, RegistrationFilters } from './registration-f
 import { RegistrationFormPanelComponent } from './registration-form-panel/registration-form-panel.component';
 import { Registration, RegistrationToken } from '../../../../core/models';
 import { TournamentService } from '../../../../core/services/tournament.service';
-import { TenantFilterService } from '../../../../core/services/tenant-filter.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 
 export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens';
@@ -71,7 +70,6 @@ interface TokenRow extends Record<string, unknown> {
 export class AdminRegistrationsPageComponent implements OnInit {
   readonly facade = inject(RegistrationFacadeService);
   private readonly tournamentService = inject(TournamentService);
-  private readonly tenantFilter = inject(TenantFilterService);
 
   /** Dynamic tournament options for the filter panel */
   readonly tournamentFilterOptions = computed(() =>
@@ -115,36 +113,32 @@ export class AdminRegistrationsPageComponent implements OnInit {
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
-  readonly filterFields = computed<FilterField[]>(() => {
-    const fields: FilterField[] = [
-      { key: 'search', labelKey: 'registrations.filter.search', type: 'text' },
-      {
-        key: 'tournamentId', labelKey: 'registrations.filter.tournament', type: 'select',
-        options: [
-          { value: '', labelKey: 'registrations.filter.allTournaments' },
-          ...this.tournamentFilterOptions()
-        ]
-      },
-      {
-        key: 'statusId', labelKey: 'registrations.filter.status', type: 'select',
-        options: [
-          { value: 'rs1', labelKey: 'registrations.status.confirmed' },
-          { value: 'rs2', labelKey: 'registrations.status.pending' },
-          { value: 'rs3', labelKey: 'registrations.status.rejected' }
-        ]
-      },
-      {
-        key: 'source', labelKey: 'registrations.filter.source', type: 'select',
-        options: [
-          { value: 'wizard', labelKey: 'registrations.source.wizard' },
-          { value: 'admin', labelKey: 'registrations.source.admin' },
-          { value: 'excel', labelKey: 'registrations.source.excel' }
-        ]
-      }
-    ];
-    const tf = this.tenantFilter.tenantFilterField();
-    return tf ? [tf, ...fields] : fields;
-  });
+  readonly filterFields = computed<FilterField[]>(() => [
+    { key: 'search', labelKey: 'registrations.filter.search', type: 'text' },
+    {
+      key: 'tournamentId', labelKey: 'registrations.filter.tournament', type: 'select',
+      options: [
+        { value: '', labelKey: 'registrations.filter.allTournaments' },
+        ...this.tournamentFilterOptions()
+      ]
+    },
+    {
+      key: 'statusId', labelKey: 'registrations.filter.status', type: 'select',
+      options: [
+        { value: 'rs1', labelKey: 'registrations.status.confirmed' },
+        { value: 'rs2', labelKey: 'registrations.status.pending' },
+        { value: 'rs3', labelKey: 'registrations.status.rejected' }
+      ]
+    },
+    {
+      key: 'source', labelKey: 'registrations.filter.source', type: 'select',
+      options: [
+        { value: 'wizard', labelKey: 'registrations.source.wizard' },
+        { value: 'admin', labelKey: 'registrations.source.admin' },
+        { value: 'excel', labelKey: 'registrations.source.excel' }
+      ]
+    }
+  ]);
 
   readonly listSortOptions: SortOption[] = [
     { key: 'player1Name', labelKey: 'registrations.column.player1' },

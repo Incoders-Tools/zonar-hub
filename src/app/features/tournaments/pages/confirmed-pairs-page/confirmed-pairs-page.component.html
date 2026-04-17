@@ -1,0 +1,27 @@
+<div class="confirmed-pairs">
+  @if (tournament()) {
+    <a [routerLink]="['/tournaments', tournament()!.id]" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
+    <h1>{{ 'confirmedPairs.title' | t }}</h1>
+    <p class="subtitle">{{ tournament()!.name }}</p>
+  }
+
+  @if (pairs().length === 0) {
+    <div class="empty">{{ 'confirmedPairs.empty' | t }}</div>
+  } @else {
+    <div class="pairs-grid">
+      @for (pair of pairs(); track pair.id) {
+        <div class="pair-card">
+          <div class="pair-card__players">
+            <span class="pair-card__player">{{ pair.player1Name }}</span>
+            <span class="pair-card__separator">&</span>
+            <span class="pair-card__player">{{ pair.player2Name }}</span>
+          </div>
+          <div class="pair-card__meta">
+            <span>{{ pair.categoryName }}</span>
+            <span>{{ pair.genderLabel }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -65,6 +65,12 @@
                     <span class="data-table__pill" [attr.data-variant]="row[col.pillVariantKey ?? col.key]">
                       {{ col.translate ? ($any(row[col.key]) | t) : row[col.key] }}
                     </span>
+                  } @else if (col.renderType === 'toggle') {
+                    <mat-slide-toggle
+                      [checked]="!!row[col.key]"
+                      (change)="onRowAction(col.toggleAction ?? 'toggle', row); $event.source.checked = !!row[col.key]"
+                      [attr.aria-label]="col.labelKey | t">
+                    </mat-slide-toggle>
                   } @else if (col.renderType === 'date') {
                     {{ $any(row[col.key]) | formatDate }}
                   } @else if (col.translate) {

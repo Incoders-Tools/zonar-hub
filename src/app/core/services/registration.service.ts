@@ -1,11 +1,10 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Registration, RegistrationAvailability, RegistrationToken } from '../models';
-import { MOCK_REGISTRATIONS, MOCK_REGISTRATION_TOKENS } from '../data/mock/mock-registrations';
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationService {
-  private readonly registrationsState = signal<Registration[]>(MOCK_REGISTRATIONS);
-  private readonly tokensState = signal<RegistrationToken[]>(MOCK_REGISTRATION_TOKENS);
+  private readonly registrationsState = signal<Registration[]>([]);
+  private readonly tokensState = signal<RegistrationToken[]>([]);
   private readonly loadingState = signal(false);
 
   readonly registrations = this.registrationsState.asReadonly();

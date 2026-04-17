@@ -93,6 +93,8 @@
       background: var(--zh-surface-bg);
       color: var(--zh-text-primary);
       transition: border-color var(--zh-transition-fast);
+      min-height: 40px;
+      box-sizing: border-box;
 
       &:focus {
         outline: none;
@@ -102,6 +104,11 @@
       &.error {
         border-color: var(--zh-danger);
       }
+    }
+
+    select {
+      appearance: auto;
+      cursor: pointer;
     }
 
     &--checkbox {

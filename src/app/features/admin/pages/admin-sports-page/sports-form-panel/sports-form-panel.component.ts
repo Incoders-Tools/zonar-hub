@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
@@ -11,6 +12,7 @@ import { AuthService } from '../../../../../core/auth/auth.service';
 import { Sport } from '../../../../../core/models';
 import { SportsFacadeService } from '../sports-facade.service';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
+import { SportIconComponent } from '../../../../../shared/components/sport-icon/sport-icon.component';
 
 @Component({
   selector: 'app-sports-form-panel',
@@ -20,11 +22,13 @@ import { ActiveToggleComponent } from '../../../../../shared/components/active-t
     ReactiveFormsModule,
     MatInputModule,
     MatCheckboxModule,
+    MatRadioModule,
     TranslatePipe,
     FormShellComponent,
     AsyncButtonComponent,
     CollapsibleSectionComponent,
-    ActiveToggleComponent
+    ActiveToggleComponent,
+    SportIconComponent
   ],
   templateUrl: './sports-form-panel.component.html',
   styleUrl: './sports-form-panel.component.scss'
@@ -55,6 +59,7 @@ export class SportsFormPanelComponent implements OnInit {
       name: ['', [Validators.required]],
       key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
       icon: [''],
+      iconSource: ['unicode'],
       sortOrder: ['', [Validators.min(0)]],
       isActive: [true]
     });
@@ -83,6 +88,7 @@ export class SportsFormPanelComponent implements OnInit {
         name: sport.name,
         key: sport.key,
         icon: sport.icon || '',
+        iconSource: sport.iconSource || 'unicode',
         sortOrder: sport.sortOrder || '',
         isActive: sport.isActive
       });
