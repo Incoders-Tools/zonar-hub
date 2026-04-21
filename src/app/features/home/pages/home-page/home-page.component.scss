@@ -518,6 +518,11 @@
     box-shadow: var(--zh-elevation-md);
   }
 
+  &--selected {
+    border-color: var(--zh-primary);
+    box-shadow: var(--zh-elevation-sm);
+  }
+
   &__badge {
     position: absolute;
     top: -12px;

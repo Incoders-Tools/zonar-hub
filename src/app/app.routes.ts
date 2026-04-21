@@ -192,6 +192,11 @@ export const routes: Routes = [
         data: { toolKey: 'players' }, canActivate: [toolGuard]
       },
       {
+        path: 'teams',
+        loadComponent: () => import('./features/admin/pages/admin-teams-page/admin-teams-page.component').then(m => m.AdminTeamsPageComponent),
+        data: { toolKey: 'teams' }, canActivate: [toolGuard]
+      },
+      {
         path: 'draw-planner',
         loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent),
         data: { toolKey: 'draw-planner' }, canActivate: [toolGuard]

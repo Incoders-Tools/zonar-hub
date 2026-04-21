@@ -67,10 +67,15 @@ export class RegistrationFacadeService {
 
     if (f.search) {
       const term = f.search.toLowerCase();
-      result = result.filter(r =>
-        r.player1Name.toLowerCase().includes(term) ||
-        r.player2Name.toLowerCase().includes(term)
-      );
+      result = result.filter(r => {
+        const participantMatch = (r.participants ?? []).some(p =>
+          p.playerName.toLowerCase().includes(term)
+        );
+        const legacyMatch =
+          r.player1Name.toLowerCase().includes(term) ||
+          r.player2Name.toLowerCase().includes(term);
+        return participantMatch || legacyMatch;
+      });
     }
 
     if (f.statusId) {

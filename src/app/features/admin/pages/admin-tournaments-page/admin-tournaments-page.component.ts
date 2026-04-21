@@ -24,7 +24,7 @@ interface TournamentRow extends Record<string, unknown> {
   endDate: string;
   statusLabel: string;
   statusVariant: string;
-  maxPairs: number;
+  maxPairs: string;
 }
 
 @Component({
@@ -127,7 +127,7 @@ export class AdminTournamentsPageComponent implements OnInit {
         endDate: t.endDate,
         statusLabel: status.labelKey,
         statusVariant: status.key === 'upcoming' ? 'info' : status.key === 'in_progress' ? 'warning' : 'finished',
-        maxPairs: t.maxPairs
+        maxPairs: t.maxPairs != null ? String(t.maxPairs) : '∞'
       };
     })
   );
@@ -265,7 +265,7 @@ export class AdminTournamentsPageComponent implements OnInit {
       lines: [
         `📅 ${tournament.startDate} → ${tournament.endDate}`,
         `🏆 ${tournament.tournamentTypeName}`,
-        `👥 ${tournament.maxPairs} parejas máx.`
+        `👥 ${tournament.maxPairs != null ? tournament.maxPairs + ' máx.' : 'Sin límite'}`
       ]
     });
   }

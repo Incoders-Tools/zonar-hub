@@ -348,6 +348,54 @@
   }
 }
 
+// ── OTP Input ──
+
+.rw-otp {
+  display: flex;
+  align-items: center;
+  gap: var(--zh-space-sm);
+  justify-content: center;
+
+  &__digit {
+    width: 52px;
+    height: 64px;
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    border: 2px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-bg);
+    color: var(--zh-text-primary);
+    caret-color: var(--zh-primary);
+    transition: border-color var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+
+    &:focus {
+      outline: none;
+      border-color: var(--zh-primary);
+      box-shadow: 0 0 0 3px rgba(var(--zh-primary-rgb, 99, 102, 241), 0.12);
+    }
+
+    &:not(:placeholder-shown) {
+      border-color: var(--zh-primary);
+      background: color-mix(in srgb, var(--zh-primary) 6%, var(--zh-surface-bg));
+    }
+
+    @media (max-width: 480px) {
+      width: 40px;
+      height: 52px;
+      font-size: 1.4rem;
+    }
+  }
+
+  &__separator {
+    font-size: 1.5rem;
+    color: var(--zh-text-muted);
+    user-select: none;
+    line-height: 1;
+    margin: 0 var(--zh-space-xs);
+  }
+}
+
 // ── Confirmation summary ──
 
 .rw-summary {

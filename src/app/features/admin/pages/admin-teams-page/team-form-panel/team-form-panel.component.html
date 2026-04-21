@@ -1,0 +1,130 @@
+<app-form-shell [titleKey]="titleKey">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Team Name -->
+    <div class="form-field">
+      <label class="form-field__label" for="team-name">{{ 'admin.teams.form.name' | t }} *</label>
+      <input
+        class="form-field__input"
+        id="team-name"
+        type="text"
+        formControlName="name"
+        [placeholder]="'admin.teams.form.namePlaceholder' | t" />
+      @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+    </div>
+
+    <!-- Sport Select -->
+    <div class="form-field">
+      <label class="form-field__label" for="team-sportId">{{ 'admin.teams.form.sport' | t }} *</label>
+      <select
+        class="form-field__input"
+        id="team-sportId"
+        formControlName="sportId">
+        <option value="">{{ 'admin.teams.form.sportPlaceholder' | t }}</option>
+        @for (sport of sports(); track sport.id) {
+          @if (sport.isActive) {
+            <option [value]="sport.id">{{ sport.name }}</option>
+          }
+        }
+      </select>
+      @if (form.get('sportId')?.hasError('required') && form.get('sportId')?.touched) {
+        <span class="form-field__error">{{ 'common.required' | t }}</span>
+      }
+    </div>
+
+    <!-- Category Select -->
+    <div class="form-field">
+      <label class="form-field__label" for="team-categoryId">{{ 'admin.teams.form.category' | t }}</label>
+      <select
+        class="form-field__input"
+        id="team-categoryId"
+        formControlName="categoryId">
+        <option value="">{{ 'admin.teams.form.categoryPlaceholder' | t }}</option>
+        @for (cat of categories(); track cat.id) {
+          @if (cat.isActive) {
+            <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        }
+      </select>
+    </div>
+
+    <!-- Players child-collection grid -->
+    <div class="form-field form-field--full">
+      <label class="form-field__label">{{ 'admin.teams.form.players' | t }}</label>
+      <app-child-collection-grid
+        [columns]="playerColumns"
+        [items]="allPlayers()"
+        [selectedIds]="selectedPlayerIds()"
+        [reorderable]="true"
+        mode="select"
+        (selectionChanged)="onPlayerSelectionChanged($event)"
+        (selectionReordered)="onPlayerOrderChanged($event)">
+      </app-child-collection-grid>
+    </div>
+
+    <!-- Captain Select (from selected players) -->
+    @if (selectedPlayerIds().size > 0) {
+      <div class="form-field">
+        <label class="form-field__label" for="team-captainId">{{ 'admin.teams.form.captain' | t }}</label>
+        <select
+          class="form-field__input"
+          id="team-captainId"
+          formControlName="captainId">
+          <option value="">{{ 'admin.teams.form.captainPlaceholder' | t }}</option>
+          @for (p of allPlayers(); track p.id) {
+            @if (selectedPlayerIds().has(p.id)) {
+              <option [value]="p.id">{{ p.fullName }}</option>
+            }
+          }
+        </select>
+      </div>
+    }
+
+    <!-- Logo URL -->
+    <div class="form-field">
+      <label class="form-field__label" for="team-logoUrl">{{ 'admin.teams.form.logoUrl' | t }}</label>
+      <input
+        class="form-field__input"
+        id="team-logoUrl"
+        type="url"
+        formControlName="logoUrl"
+        [placeholder]="'admin.teams.form.logoUrlPlaceholder' | t" />
+    </div>
+
+    <!-- Observations -->
+    <div class="form-field form-field--full">
+      <label class="form-field__label" for="team-observations">{{ 'admin.teams.form.observations' | t }}</label>
+      <textarea
+        class="form-field__input form-field__input--textarea"
+        id="team-observations"
+        formControlName="observations"
+        rows="3"
+        [placeholder]="'admin.teams.form.observationsPlaceholder' | t">
+      </textarea>
+    </div>
+
+    <!-- Active Toggle -->
+    <div class="form-field">
+      <label class="form-field__label">{{ 'admin.teams.form.isActive' | t }}</label>
+      <app-active-toggle formControlName="isActive"></app-active-toggle>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-field form-field--actions">
+      <button
+        type="button"
+        class="btn btn--secondary"
+        (click)="onCancel()">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        variant="primary"
+        [loading]="saving()"
+        [disabled]="!canSubmit">
+        {{ 'common.save' | t }}
+      </app-async-button>
+    </div>
+  </form>
+</app-form-shell>

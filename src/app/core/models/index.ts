@@ -1,4 +1,5 @@
 export * from './tournament.model';
+export * from './team.model';
 export * from './player.model';
 export * from './registration.model';
 export * from './user.model';

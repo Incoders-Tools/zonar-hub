@@ -29,7 +29,7 @@ export interface Tournament {
   endDate: string;
   registrationStartDate: string;
   registrationEndDate: string;
-  maxPairs: number;
+  maxPairs: number | null;
   description: string;
   rules: string;
   imageUrl?: string;

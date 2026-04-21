@@ -36,6 +36,7 @@ export class ParticipantSearchComponent implements OnInit {
   readonly disabled = input(false);
   readonly categories = input<Category[]>([]);
   readonly habitualPartnerSuggestion = input<Player | null>(null);
+  readonly initialPlayer = input<Player | null>(null);
 
   // Outputs
   readonly playerSelected = output<{ slotNumber: number; player: Player }>();
@@ -50,6 +51,11 @@ export class ParticipantSearchComponent implements OnInit {
   readonly partnerDismissed = signal(false);
 
   ngOnInit(): void {
+    const pre = this.initialPlayer();
+    if (pre) {
+      this.selectedPlayer.set(pre);
+    }
+
     this.searchControl.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef),
       debounceTime(300),

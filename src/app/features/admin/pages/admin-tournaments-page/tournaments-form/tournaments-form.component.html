@@ -175,13 +175,14 @@
 
       <!-- Max Pairs -->
       <div class="tournaments-form__field">
-        <label>{{ maxParticipantsLabelKey() | t }} *</label>
+        <label>{{ maxParticipantsLabelKey() | t }}</label>
         <input
           type="number"
           formControlName="maxPairs"
           min="2"
           [class.error]="isFieldInvalid('maxPairs')"
         />
+        <span class="tournaments-form__hint">{{ 'admin.tournaments.form.maxParticipants.hint' | t }}</span>
         @if (isFieldInvalid('maxPairs')) {
           <span class="tournaments-form__error">{{ getErrorMessage('maxPairs') | t }}</span>
         }

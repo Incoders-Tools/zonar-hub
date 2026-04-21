@@ -30,6 +30,7 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
   { key: 'tournament-rules', module: 'circuit', labelKey: 'admin.tournamentRuleSets', route: '/admin/catalogs/tournament-rules' },
   { key: 'registrations', module: 'circuit', labelKey: 'admin.registrations', route: '/admin/registrations' },
   { key: 'players', module: 'circuit', labelKey: 'admin.players', route: '/admin/players' },
+  { key: 'teams', module: 'circuit', labelKey: 'admin.teams', route: '/admin/teams' },
   { key: 'draw-planner', module: 'circuit', labelKey: 'admin.drawPlanner', route: '/admin/draw-planner' },
 
   // Catalog
@@ -63,7 +64,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: [
     'dashboard',
     'tournaments', 'tournament-eligibility-profiles', 'tournament-rules',
-    'registrations', 'players', 'draw-planner',
+    'registrations', 'players', 'teams', 'draw-planner',
     'complexes', 'categories', 'genders', 'sports', 'complex-services',
     'social-networks', 'tournament-statuses',
     'users', 'organizations', 'tenants',
@@ -72,7 +73,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
 
   user: [
     'dashboard',
-    'tournaments', 'registrations', 'players',
+    'tournaments', 'registrations', 'players', 'teams',
     'complexes',
   ],
 

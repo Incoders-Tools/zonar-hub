@@ -1,0 +1,110 @@
+<div class="teams-page">
+  <!-- Page Header -->
+  <div class="teams-page__header">
+    <div class="teams-page__title-row">
+      <div>
+        <h1 class="teams-page__title">{{ 'admin.teams.title' | t }}</h1>
+        <p class="teams-page__subtitle">{{ 'admin.teams.subtitle' | t }}</p>
+      </div>
+      <div class="teams-page__header-actions">
+        <app-help-button
+          [titleKey]="'admin.teams.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+        @if (hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        <app-async-button variant="primary" (clicked)="openCreate()">
+          {{ 'admin.teams.action.create' | t }}
+        </app-async-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="teams-page__form-panel" @slideDown #formPanel>
+      <div class="teams-page__form-panel-header">
+        <h3 class="teams-page__form-panel-title">
+          {{ (editingTeam() ? 'admin.teams.form.editTitle' : 'admin.teams.form.createTitle') | t }}
+        </h3>
+        <button
+          class="teams-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="teams-page__form-panel-body">
+        <app-team-form-panel
+          [team]="editingTeam()"
+          [saving]="facade.saving()"
+          [sports]="facade.sports()"
+          [categories]="facade.categories()"
+          (saved)="closeFormPanel()"
+          (cancelled)="closeFormPanel()">
+        </app-team-form-panel>
+      </div>
+    </div>
+  }
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields()"
+    [sortFields]="sortFields"
+    [defaultSortRules]="defaultSortRules"
+    [collapsible]="true"
+    [defaultCollapsed]="true"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()"
+    (sortRulesChanged)="onSortRulesChanged($event)">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="facade.error()"
+    [selectable]="true"
+    [paginated]="true"
+    [pageSize]="25"
+    [rowActions]="teamRowActions"
+    emptyMessageKey="admin.teams.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+
+  <!-- Delete Confirm Dialog -->
+  @if (showDeleteDialog()) {
+    <app-confirm-dialog
+      titleKey="admin.teams.deleteConfirm.title"
+      messageKey="admin.teams.deleteConfirm.message"
+      confirmKey="common.delete"
+      cancelKey="common.cancel"
+      [dangerous]="true"
+      [loading]="facade.deleting()"
+      (confirmed)="executeDelete()"
+      (cancelled)="cancelDelete()">
+    </app-confirm-dialog>
+  }
+
+  <!-- Bulk Delete Confirm Dialog -->
+  @if (showBulkDeleteDialog()) {
+    <app-confirm-dialog
+      titleKey="admin.teams.bulkDeleteConfirm.title"
+      messageKey="admin.teams.bulkDeleteConfirm.message"
+      confirmKey="common.delete"
+      cancelKey="common.cancel"
+      [dangerous]="true"
+      [loading]="facade.deleting()"
+      (confirmed)="executeBulkDelete()"
+      (cancelled)="cancelBulkDelete()">
+    </app-confirm-dialog>
+  }
+</div>

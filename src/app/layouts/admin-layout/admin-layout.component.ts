@@ -95,6 +95,7 @@ export class AdminLayoutComponent implements OnInit {
         },
         { labelKey: 'admin.registrations', route: '/admin/registrations', icon: '📝', toolKey: 'registrations' },
         { labelKey: 'admin.players', route: '/admin/players', icon: '👤', toolKey: 'players' },
+        { labelKey: 'admin.teams', route: '/admin/teams', icon: '🫂', toolKey: 'teams' },
         { labelKey: 'admin.drawPlanner', route: '/admin/draw-planner', icon: '🎯', toolKey: 'draw-planner' }
       ]
     },

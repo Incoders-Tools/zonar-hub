@@ -17,8 +17,9 @@ export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens';
 
 interface RegistrationRow extends Record<string, unknown> {
   id: string;
-  player1: string;
-  player2: string;
+  tournamentName: string;
+  participantsDisplay: string;
+  participantCount: number;
   statusId: string;
   statusLabel: string;
   source: string;
@@ -100,8 +101,8 @@ export class AdminRegistrationsPageComponent implements OnInit {
 
   // List tab
   readonly listColumns: DataTableColumn[] = [
-    { key: 'player1', labelKey: 'registrations.column.player1', sortable: true },
-    { key: 'player2', labelKey: 'registrations.column.player2', sortable: true },
+    { key: 'tournamentName', labelKey: 'registrations.column.tournament', sortable: true },
+    { key: 'participantsDisplay', labelKey: 'registrations.column.participants', sortable: false },
     { key: 'statusLabel', labelKey: 'registrations.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusId' },
     { key: 'source', labelKey: 'registrations.column.source', sortable: true, translate: true },
     { key: 'registeredAt', labelKey: 'registrations.column.registeredAt', sortable: true, renderType: 'date' }
@@ -150,14 +151,27 @@ export class AdminRegistrationsPageComponent implements OnInit {
   readonly tableData = computed<RegistrationRow[]>(() =>
     this.facade.filteredRegistrations().map(r => ({
       id: r.id,
-      player1: `${r.player1Name} · ${r.categoryName} ${r.genderLabel}`,
-      player2: `${r.player2Name} · ${r.categoryName} ${r.genderLabel}`,
+      tournamentName: r.tournamentName ?? '—',
+      participantsDisplay: this.buildParticipantsDisplay(r),
+      participantCount: (r.participants ?? []).length,
       statusId: r.statusId,
       statusLabel: this.getStatusLabelKey(r.statusId),
       source: this.getSourceLabelKey(r.source),
       registeredAt: r.registeredAt
     }))
   );
+
+  private buildParticipantsDisplay(r: Registration): string {
+    const parts = r.participants ?? [];
+    if (parts.length === 0) {
+      // Fallback to deprecated fields
+      return [r.player1Name, r.player2Name].filter(Boolean).join(' / ');
+    }
+    if (parts.length === 1) {
+      return parts[0].playerName;
+    }
+    return parts.map(p => p.playerName).join(' / ');
+  }
 
   // Tokens tab
   readonly tokenColumns: DataTableColumn[] = [
