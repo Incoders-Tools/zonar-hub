@@ -310,3 +310,48 @@
     }
   }
 }
+
+// Mobile: stack filters vertically
+@media (max-width: 599px) {
+  .filter-panel {
+    &__body {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__fields {
+      flex-direction: column;
+    }
+
+    &__field {
+      min-width: unset;
+      width: 100%;
+    }
+
+    &__actions {
+      align-self: stretch;
+      justify-content: stretch;
+    }
+
+    &__clear,
+    &__apply {
+      flex: 1;
+    }
+  }
+
+  .sort-builder {
+    &__rule {
+      flex-wrap: wrap;
+    }
+
+    &__field-select {
+      min-width: unset;
+      flex: 1 1 100%;
+    }
+
+    &__dir-select {
+      min-width: unset;
+      flex: 1;
+    }
+  }
+}

@@ -1,5 +1,6 @@
-import { Component, inject, input, output, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, input, output, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
@@ -14,8 +15,9 @@ import { Tenant, PlanType } from '../../../../../core/models';
   templateUrl: './tenant-form-panel.component.html',
   styleUrl: './tenant-form-panel.component.scss'
 })
-export class TenantFormPanelComponent implements OnInit {
+export class TenantFormPanelComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly subs: Subscription[] = [];
 
   readonly tenant = input<Tenant | null>(null);
   readonly saving = input(false);
@@ -33,7 +35,9 @@ export class TenantFormPanelComponent implements OnInit {
     { value: 'single_use', labelKey: 'admin.tenants.plan.singleUse' }
   ];
 
-  readonly canSubmit = computed(() => this.form?.valid && this.form?.dirty && !this.saving());
+  private readonly formValid = signal(false);
+  private readonly formDirty = signal(false);
+  readonly canSubmit = computed(() => this.formValid() && this.formDirty() && !this.saving());
 
   ngOnInit(): void {
     const t = this.tenant();
@@ -45,6 +49,16 @@ export class TenantFormPanelComponent implements OnInit {
       planType: [t?.planType ?? 'starter', [Validators.required]],
       isActive: [t?.isActive ?? true]
     });
+
+    this.formValid.set(this.form.valid);
+    this.subs.push(
+      this.form.statusChanges.subscribe(() => this.formValid.set(this.form.valid)),
+      this.form.valueChanges.subscribe(() => this.formDirty.set(this.form.dirty))
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   onNameBlur(): void {

@@ -36,7 +36,7 @@
         <app-active-toggle
           [value]="form.get('isActive')!.value"
           mode="toggle"
-          (toggled)="form.get('isActive')!.setValue($event)">
+          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
         </app-active-toggle>
       </div>
     </div>

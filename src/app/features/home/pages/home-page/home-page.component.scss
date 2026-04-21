@@ -4,6 +4,19 @@
   padding: var(--zh-space-xl) var(--zh-space-md) var(--zh-space-2xl);
 }
 
+// Allow hero to break out of the landing max-width on large screens
+@media (min-width: 1400px) {
+  .landing {
+    max-width: 1320px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .landing {
+    max-width: 1480px;
+  }
+}
+
 // ---- Hero ----
 .hero {
   position: relative;
@@ -32,6 +45,9 @@
     &--2 { top: 18%; right: 10%; animation-delay: 1.5s; font-size: 3rem; }
     &--3 { bottom: 20%; left: 12%; animation-delay: 3s; }
     &--4 { bottom: 15%; right: 8%; animation-delay: 4.5s; font-size: 2rem; }
+    &--5 { top: 40%; left: 4%; animation-delay: 2s; font-size: 2rem; }
+    &--6 { top: 50%; right: 5%; animation-delay: 3.5s; font-size: 2.2rem; }
+    &--7 { bottom: 35%; left: 25%; animation-delay: 5s; font-size: 1.8rem; }
   }
 
   // Ensure text content stays above floaters
@@ -194,6 +210,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--zh-space-md);
+  max-width: 1040px;
+  margin: 0 auto;
 }
 
 .feature-card {
@@ -201,6 +219,7 @@
   border: 1px solid var(--zh-border-subtle);
   border-radius: var(--zh-radius-lg);
   background: var(--zh-surface-card);
+  text-align: center;
 
   &__icon {
     display: inline-flex;
@@ -731,5 +750,33 @@
 
   .pricing-card--popular {
     order: -1;
+  }
+}
+
+@media (max-width: 599px) {
+  .hero {
+    padding: var(--zh-space-lg) var(--zh-space-sm);
+
+    &__title {
+      font-size: var(--zh-font-size-2xl);
+    }
+
+    &__float {
+      font-size: 1.5rem;
+    }
+
+    &__actions {
+      flex-direction: column;
+      gap: var(--zh-space-sm);
+    }
+  }
+
+  .sports-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--zh-space-sm);
+  }
+
+  .faq-item__question {
+    font-size: var(--zh-font-size-sm);
   }
 }

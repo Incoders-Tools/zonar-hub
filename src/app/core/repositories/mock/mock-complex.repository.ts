@@ -2,8 +2,22 @@ import { Injectable } from '@angular/core';
 import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork } from '../../models';
 import { ComplexRepository } from '../complex.repository';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;
+
+const STORAGE_COLLECTION = 'complexes';
+
+interface ComplexStorageState {
+  complexes: Complex[];
+  courts: Court[];
+  availability: Availability[];
+  serviceAssignments: Record<string, ComplexServiceAssignment[]>;
+  socialNetworks: Record<string, ComplexSocialNetwork[]>;
+  complexIdCounter: number;
+  courtIdCounter: number;
+  availabilityIdCounter: number;
+}
 
 const MOCK_COMPLEXES: Complex[] = [
   {
@@ -156,22 +170,49 @@ export class MockComplexRepository implements ComplexRepository {
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    if (isDemoTenant()) {
+    const stored = loadFromStorage<ComplexStorageState>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.complexes = stored.complexes;
+      this.courts = stored.courts;
+      this.availability = stored.availability;
+      this.serviceAssignments = stored.serviceAssignments;
+      this.socialNetworks = stored.socialNetworks;
+      this.complexIdCounter = stored.complexIdCounter;
+      this.courtIdCounter = stored.courtIdCounter;
+      this.availabilityIdCounter = stored.availabilityIdCounter;
+    } else if (isDemoTenant()) {
       this.complexes = structuredClone(MOCK_COMPLEXES);
       this.courts = structuredClone(MOCK_COURTS);
       this.availability = structuredClone(MOCK_AVAILABILITY);
       this.serviceAssignments = structuredClone(MOCK_SERVICE_ASSIGNMENTS);
       this.socialNetworks = structuredClone(MOCK_SOCIAL_NETWORKS);
+      this.complexIdCounter = this.complexes.length;
+      this.courtIdCounter = this.courts.length;
+      this.availabilityIdCounter = this.availability.length;
     } else {
       this.complexes = [];
       this.courts = [];
       this.availability = [];
       this.serviceAssignments = {};
       this.socialNetworks = {};
+      this.complexIdCounter = 0;
+      this.courtIdCounter = 0;
+      this.availabilityIdCounter = 0;
     }
-    this.complexIdCounter = this.complexes.length;
-    this.courtIdCounter = this.courts.length;
-    this.availabilityIdCounter = this.availability.length;
+  }
+
+  private persist(): void {
+    const state: ComplexStorageState = {
+      complexes: this.complexes,
+      courts: this.courts,
+      availability: this.availability,
+      serviceAssignments: this.serviceAssignments,
+      socialNetworks: this.socialNetworks,
+      complexIdCounter: this.complexIdCounter,
+      courtIdCounter: this.courtIdCounter,
+      availabilityIdCounter: this.availabilityIdCounter
+    };
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), state);
   }
 
   private delay<T>(value: T): Promise<T> {
@@ -199,6 +240,7 @@ export class MockComplexRepository implements ComplexRepository {
       updatedAt: now
     };
     this.complexes.push(newComplex);
+    this.persist();
     return this.delay(structuredClone(newComplex));
   }
 
@@ -208,6 +250,7 @@ export class MockComplexRepository implements ComplexRepository {
       throw new Error(`Complex ${id} not found`);
     }
     this.complexes[idx] = { ...this.complexes[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return this.delay(structuredClone(this.complexes[idx]));
   }
 
@@ -219,6 +262,7 @@ export class MockComplexRepository implements ComplexRepository {
     this.availability = this.availability.filter(av => !courtIds.includes(av.courtId));
     delete this.serviceAssignments[id];
     delete this.socialNetworks[id];
+    this.persist();
     return this.delay(undefined);
   }
 
@@ -244,6 +288,7 @@ export class MockComplexRepository implements ComplexRepository {
     if (complex) {
       complex.courtsCount = this.courts.filter(ct => ct.complexId === court.complexId).length;
     }
+    this.persist();
     return this.delay(structuredClone(newCourt));
   }
 
@@ -253,6 +298,7 @@ export class MockComplexRepository implements ComplexRepository {
       throw new Error(`Court ${id} not found`);
     }
     this.courts[idx] = { ...this.courts[idx], ...changes };
+    this.persist();
     return this.delay(structuredClone(this.courts[idx]));
   }
 
@@ -267,6 +313,7 @@ export class MockComplexRepository implements ComplexRepository {
         complex.courtsCount = this.courts.filter(ct => ct.complexId === court.complexId).length;
       }
     }
+    this.persist();
     return this.delay(undefined);
   }
 
@@ -287,6 +334,7 @@ export class MockComplexRepository implements ComplexRepository {
       courtId
     }));
     this.availability.push(...newSlots);
+    this.persist();
     return this.delay(structuredClone(newSlots));
   }
 
@@ -299,6 +347,7 @@ export class MockComplexRepository implements ComplexRepository {
 
   async saveServiceAssignments(complexId: string, assignments: ComplexServiceAssignment[]): Promise<ComplexServiceAssignment[]> {
     this.serviceAssignments[complexId] = structuredClone(assignments);
+    this.persist();
     return this.delay(structuredClone(assignments));
   }
 
@@ -311,6 +360,7 @@ export class MockComplexRepository implements ComplexRepository {
 
   async saveSocialNetworks(complexId: string, networks: ComplexSocialNetwork[]): Promise<ComplexSocialNetwork[]> {
     this.socialNetworks[complexId] = structuredClone(networks);
+    this.persist();
     return this.delay(structuredClone(networks));
   }
 }

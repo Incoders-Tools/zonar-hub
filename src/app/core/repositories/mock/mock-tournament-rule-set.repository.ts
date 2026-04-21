@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { TournamentRuleSet } from '../../models';
 import { TournamentRuleSetRepository } from '../tournament-rule-set.repository';
+import { globalStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;
+const STORAGE_COLLECTION = 'tournament_rule_sets';
+
+interface TrsStorageState { data: TournamentRuleSet[]; counter: number; }
 
 const MOCK_TOURNAMENT_RULE_SETS: TournamentRuleSet[] = [
   {
@@ -39,8 +43,23 @@ const MOCK_TOURNAMENT_RULE_SETS: TournamentRuleSet[] = [
 
 @Injectable({ providedIn: 'root' })
 export class MockTournamentRuleSetRepository implements TournamentRuleSetRepository {
-  private ruleSets: TournamentRuleSet[] = structuredClone(MOCK_TOURNAMENT_RULE_SETS);
-  private idCounter = this.ruleSets.length;
+  private ruleSets: TournamentRuleSet[];
+  private idCounter: number;
+
+  constructor() {
+    const stored = loadFromStorage<TrsStorageState>(globalStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.ruleSets = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.ruleSets = structuredClone(MOCK_TOURNAMENT_RULE_SETS);
+      this.idCounter = this.ruleSets.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(globalStorageKey(STORAGE_COLLECTION), { data: this.ruleSets, counter: this.idCounter });
+  }
 
   private delay<T>(value: T): Promise<T> {
     return new Promise(resolve => setTimeout(() => resolve(value), MOCK_DELAY));
@@ -64,6 +83,7 @@ export class MockTournamentRuleSetRepository implements TournamentRuleSetReposit
       updatedAt: now
     };
     this.ruleSets.push(newRuleSet);
+    this.persist();
     return this.delay(structuredClone(newRuleSet));
   }
 
@@ -73,11 +93,13 @@ export class MockTournamentRuleSetRepository implements TournamentRuleSetReposit
       throw new Error(`TournamentRuleSet ${id} not found`);
     }
     this.ruleSets[idx] = { ...this.ruleSets[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return this.delay(structuredClone(this.ruleSets[idx]));
   }
 
   async delete(id: string): Promise<void> {
     this.ruleSets = this.ruleSets.filter(r => r.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 }

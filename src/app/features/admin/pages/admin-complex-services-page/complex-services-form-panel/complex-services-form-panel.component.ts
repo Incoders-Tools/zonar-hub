@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractContro
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
@@ -20,6 +21,7 @@ import { ActiveToggleComponent } from '../../../../../shared/components/active-t
     ReactiveFormsModule,
     MatInputModule,
     MatCheckboxModule,
+    MatIcon,
     TranslatePipe,
     FormShellComponent,
     AsyncButtonComponent,

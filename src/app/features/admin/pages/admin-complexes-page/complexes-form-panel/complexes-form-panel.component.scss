@@ -125,6 +125,21 @@
     }
   }
 
+  &__service-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--zh-primary);
+    vertical-align: middle;
+    margin-right: var(--zh-space-xs);
+    flex-shrink: 0;
+  }
+
+  &__assignment-cell--name {
+    display: flex;
+    align-items: center;
+  }
+
   &__inline-input {
     width: 100%;
     padding: var(--zh-space-xs) var(--zh-space-sm);

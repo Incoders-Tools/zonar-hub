@@ -6,12 +6,12 @@
     <div class="availability-grid__date-field"
          [matTooltip]="'admin.complexes.availability.comingSoon' | t">
       <label class="availability-grid__date-label">{{ 'admin.complexes.availability.startDate' | t }}</label>
-      <input class="availability-grid__date-input" type="date" disabled />
+      <app-date-input [externalDisabled]="true"></app-date-input>
     </div>
     <div class="availability-grid__date-field"
          [matTooltip]="'admin.complexes.availability.comingSoon' | t">
       <label class="availability-grid__date-label">{{ 'admin.complexes.availability.endDate' | t }}</label>
-      <input class="availability-grid__date-input" type="date" disabled />
+      <app-date-input [externalDisabled]="true"></app-date-input>
     </div>
   </div>
 

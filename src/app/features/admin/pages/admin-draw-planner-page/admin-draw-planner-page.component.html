@@ -30,20 +30,22 @@
           <span class="draw-planner__preview-label">{{ 'planner.preview.name' | t }}</span>
           <span class="draw-planner__preview-value">{{ tournamentPreview()!.name }}</span>
         </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.type' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.type }}</span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.complex' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.complex }}</span>
-        </div>
         @if (tournamentPreview()!.sport) {
           <div class="draw-planner__preview-item">
             <span class="draw-planner__preview-label">{{ 'planner.preview.sport' | t }}</span>
             <span class="draw-planner__preview-value">{{ tournamentPreview()!.sport }}</span>
           </div>
         }
+        @if (tournamentPreview()!.modality) {
+          <div class="draw-planner__preview-item">
+            <span class="draw-planner__preview-label">{{ 'planner.preview.modality' | t }}</span>
+            <span class="draw-planner__preview-value">{{ tournamentPreview()!.modality }}</span>
+          </div>
+        }
+        <div class="draw-planner__preview-item">
+          <span class="draw-planner__preview-label">{{ 'planner.preview.complex' | t }}</span>
+          <span class="draw-planner__preview-value">{{ tournamentPreview()!.complex }}</span>
+        </div>
         <div class="draw-planner__preview-item">
           <span class="draw-planner__preview-label">{{ 'planner.preview.maxTeams' | t }}</span>
           <span class="draw-planner__preview-value">{{ tournamentPreview()!.maxPairs }}</span>
@@ -71,6 +73,44 @@
           <span class="draw-planner__preview-value">{{ tournamentPreview()!.registrationEnd | formatDate }}</span>
         </div>
       </div>
+
+      <!-- Rule Set highlight -->
+      <div class="draw-planner__preview-rule">
+        <span class="draw-planner__preview-rule-label">{{ 'planner.preview.ruleSet' | t }}</span>
+        @if (tournamentPreview()!.ruleSetDescription) {
+          <span class="draw-planner__preview-rule-value">{{ tournamentPreview()!.ruleSetDescription }}</span>
+        } @else {
+          <span class="draw-planner__preview-rule-empty">{{ 'planner.preview.noRuleSet' | t }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Courts Summary Card -->
+    <div class="draw-planner__courts-summary">
+      <div class="draw-planner__courts-summary-header">
+        <span class="draw-planner__courts-summary-icon">
+          <mat-icon>sports_tennis</mat-icon>
+        </span>
+        <span class="draw-planner__courts-summary-title">{{ 'planner.preview.courts' | t }}</span>
+      </div>
+      @if (tournamentPreview()!.courtsCount > 0) {
+        <div class="draw-planner__courts-summary-body">
+          <div class="draw-planner__courts-summary-stat">
+            <span class="draw-planner__courts-summary-count">{{ tournamentPreview()!.courtsCount }}</span>
+            <span class="draw-planner__courts-summary-desc">{{ 'planner.preview.courtsCount' | t }}</span>
+          </div>
+          <div class="draw-planner__courts-summary-complex">
+            <mat-icon class="draw-planner__courts-summary-complex-icon">location_on</mat-icon>
+            <span>{{ tournamentPreview()!.complex }}</span>
+          </div>
+          <div class="draw-planner__courts-summary-range">
+            <mat-icon class="draw-planner__courts-summary-complex-icon">date_range</mat-icon>
+            <span>{{ tournamentPreview()!.startDate | formatDate }} — {{ tournamentPreview()!.endDate | formatDate }}</span>
+          </div>
+        </div>
+      } @else {
+        <p class="draw-planner__courts-summary-empty">{{ 'planner.preview.noCourts' | t }}</p>
+      }
     </div>
   }
 
@@ -111,7 +151,7 @@
 
         <!-- Progress -->
         @if (generating()) {
-          <div class="planner-section">
+          <div class="planner-section" id="draw-progress-anchor">
             <app-progress-bar
               [progress]="progress()"
               titleKey="planner.generate"
@@ -123,7 +163,7 @@
 
         <!-- Result Preview -->
         @if (result()) {
-          <div class="planner-section">
+          <div class="planner-section" id="draw-result-anchor">
             <h2>{{ 'drawPlanner.result' | t }}</h2>
 
             @if (result()!.warnings.length > 0) {

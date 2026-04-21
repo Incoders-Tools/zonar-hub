@@ -1,5 +1,10 @@
 <div class="admin-dashboard">
-  <h1 class="admin-dashboard__title">{{ 'admin.dashboard' | t }}</h1>
+  <div class="admin-dashboard__header">
+    <h1 class="admin-dashboard__title">{{ 'admin.dashboard' | t }}</h1>
+    @if (activeOrg.activeOrganizationName()) {
+      <p class="admin-dashboard__org-context">{{ activeOrg.activeOrganizationName() }}</p>
+    }
+  </div>
 
   @if (showSetupPrompt()) {
     <div class="setup-banner">
@@ -13,6 +18,32 @@
       <a class="setup-banner__cta" routerLink="/admin/onboarding">
         {{ 'onboarding.banner.cta' | t }}
       </a>
+    </div>
+  }
+
+  <!-- Setup Progress Checklist -->
+  @if (!isSetupComplete()) {
+    <div class="setup-checklist">
+      <div class="setup-checklist__header">
+        <h2 class="setup-checklist__title">{{ 'dashboard.checklist.title' | t }}</h2>
+        <span class="setup-checklist__progress">{{ setupProgress().done }}/{{ setupProgress().total }}</span>
+      </div>
+      <div class="setup-checklist__bar">
+        <div class="setup-checklist__fill" [style.width.%]="setupProgress().percent"></div>
+      </div>
+      <ul class="setup-checklist__list">
+        @for (item of setupChecklist(); track item.labelKey) {
+          <li class="setup-checklist__item" [class.setup-checklist__item--done]="item.done">
+            <span class="setup-checklist__icon">{{ item.icon }}</span>
+            <span class="setup-checklist__check">{{ item.done ? '✅' : '⬜' }}</span>
+            @if (item.routerLink && !item.done) {
+              <a class="setup-checklist__label setup-checklist__label--link" [routerLink]="item.routerLink">{{ item.labelKey | t }}</a>
+            } @else {
+              <span class="setup-checklist__label">{{ item.labelKey | t }}</span>
+            }
+          </li>
+        }
+      </ul>
     </div>
   }
 
@@ -42,7 +73,62 @@
       <span class="stat-card__value">{{ totalRegistrations() }}</span>
       <span class="stat-card__label">{{ 'admin.registrations' | t }}</span>
     </div>
+    <div class="stat-card">
+      <div class="stat-card__icon">🏟️</div>
+      <span class="stat-card__value">{{ complexCount() }}</span>
+      <span class="stat-card__label">{{ 'admin.complexes' | t }}</span>
+    </div>
   </div>
+
+  <!-- Usage Progress Section -->
+  @if (currentPlan(); as plan) {
+    <div class="dashboard-section">
+      <h2 class="dashboard-section__title">{{ 'dashboard.planUsage' | t }}</h2>
+      <div class="usage-grid">
+        <!-- Tournaments usage -->
+        @if (tournamentUsage().max !== null) {
+          <div class="usage-card">
+            <div class="usage-card__header">
+              <span class="usage-card__label">{{ 'admin.tournaments' | t }}</span>
+              <span class="usage-card__count">{{ tournamentUsage().current }} / {{ tournamentUsage().max }}</span>
+            </div>
+            <div class="usage-card__bar">
+              <div class="usage-card__fill"
+                   [class.usage-card__fill--warning]="tournamentUsage().percent >= 80"
+                   [class.usage-card__fill--danger]="tournamentUsage().percent >= 100"
+                   [style.width.%]="tournamentUsage().percent"></div>
+            </div>
+          </div>
+        }
+        <!-- Admins usage -->
+        <div class="usage-card">
+          <div class="usage-card__header">
+            <span class="usage-card__label">{{ 'admin.users' | t }}</span>
+            <span class="usage-card__count">{{ adminUsage().current }} / {{ adminUsage().max }}</span>
+          </div>
+          <div class="usage-card__bar">
+            <div class="usage-card__fill"
+                 [class.usage-card__fill--warning]="adminUsage().percent >= 80"
+                 [class.usage-card__fill--danger]="adminUsage().percent >= 100"
+                 [style.width.%]="adminUsage().percent"></div>
+          </div>
+        </div>
+        <!-- Complexes usage -->
+        <div class="usage-card">
+          <div class="usage-card__header">
+            <span class="usage-card__label">{{ 'admin.complexes' | t }}</span>
+            <span class="usage-card__count">{{ complexUsage().current }} / {{ complexUsage().max }}</span>
+          </div>
+          <div class="usage-card__bar">
+            <div class="usage-card__fill"
+                 [class.usage-card__fill--warning]="complexUsage().percent >= 80"
+                 [class.usage-card__fill--danger]="complexUsage().percent >= 100"
+                 [style.width.%]="complexUsage().percent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 
   @if (!showSetupPrompt()) {
     <div class="dashboard-section">
@@ -64,12 +150,21 @@
           </div>
         </div>
         <div class="chart-card">
+          <h3 class="chart-card__title">{{ 'dashboard.registrationRate' | t }}</h3>
+          <div class="chart-card__body">
+            <div class="metric-ring">
+              <span class="metric-ring__value">{{ registrationFillRate() }}%</span>
+              <span class="metric-ring__label">{{ 'dashboard.registrationFillRate' | t }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
           <h3 class="chart-card__title">{{ 'dashboard.quickActions' | t }}</h3>
           <div class="chart-card__body chart-card__body--actions">
             <a class="quick-action" routerLink="/admin/tournaments">{{ 'admin.tournaments' | t }}</a>
             <a class="quick-action" routerLink="/admin/players">{{ 'admin.players' | t }}</a>
             <a class="quick-action" routerLink="/admin/registrations">{{ 'admin.registrations' | t }}</a>
-            <a class="quick-action" routerLink="/admin/complexes">{{ 'admin.complexes' | t }}</a>
+            <a class="quick-action" routerLink="/admin/catalogs/complexes">{{ 'admin.complexes' | t }}</a>
           </div>
         </div>
       </div>

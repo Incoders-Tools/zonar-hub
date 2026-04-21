@@ -37,7 +37,7 @@ export class PermissionMatrixComponent {
   readonly changed = output<string[]>();
 
   readonly selectedTools = signal<string[]>([]);
-  private readonly expandedModules = signal<Set<AppModule>>(new Set(MODULE_ORDER));
+  private readonly expandedModules = signal<Set<AppModule>>(new Set());
 
   constructor() {
     effect(() => {

@@ -1,4 +1,13 @@
 <div class="onboarding">
+  @if (saving()) {
+    <div class="onboarding__finalizing-overlay">
+      <div class="onboarding__finalizing-content">
+        <div class="onboarding__finalizing-spinner"></div>
+        <h2 class="onboarding__finalizing-title">{{ 'onboarding.finalizing.title' | t }}</h2>
+        <p class="onboarding__finalizing-desc">{{ 'onboarding.finalizing.desc' | t }}</p>
+      </div>
+    </div>
+  }
   <div class="onboarding__header">
     <h1 class="onboarding__title">{{ 'onboarding.title' | t }}</h1>
     <p class="onboarding__subtitle">{{ 'onboarding.subtitle' | t }}</p>
@@ -251,18 +260,14 @@
           <div class="form-row">
             <div class="form-field">
               <label class="form-field__label" for="ob-tournament-start">{{ 'onboarding.tournament.startDate' | t }} *</label>
-              <input class="form-field__input" id="ob-tournament-start" type="date"
-                formControlName="startDate"
-                [min]="today" />
+              <app-date-input formControlName="startDate" [min]="today"></app-date-input>
               @if (tournamentForm.get('startDate')?.hasError('pastDate')) {
                 <span class="form-field__error">{{ 'common.pastDate' | t }}</span>
               }
             </div>
             <div class="form-field">
               <label class="form-field__label" for="ob-tournament-end">{{ 'onboarding.tournament.endDate' | t }} *</label>
-              <input class="form-field__input" id="ob-tournament-end" type="date"
-                formControlName="endDate"
-                [min]="tournamentEndDateMin" />
+              <app-date-input formControlName="endDate" [min]="tournamentEndDateMin"></app-date-input>
             </div>
           </div>
           @if (tournamentForm.hasError('dateRangeInvalid')) {

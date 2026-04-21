@@ -1,5 +1,6 @@
-import { Component, inject, input, output, computed, OnInit } from '@angular/core';
+import { Component, inject, input, output, computed, signal, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
@@ -13,8 +14,9 @@ import { Organization, OrganizationType } from '../../../../../core/models';
   templateUrl: './organization-form-panel.component.html',
   styleUrl: './organization-form-panel.component.scss'
 })
-export class OrganizationFormPanelComponent implements OnInit {
+export class OrganizationFormPanelComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly subs: Subscription[] = [];
 
   readonly organization = input<Organization | null>(null);
   readonly saving = input(false);
@@ -33,7 +35,11 @@ export class OrganizationFormPanelComponent implements OnInit {
     { value: 'marca', labelKey: 'organization.type.marca' }
   ];
 
-  readonly canSubmit = computed(() => this.form?.valid && this.form?.dirty && !this.saving());
+  /** Track form state via signals so computed can react */
+  private readonly formValid = signal(false);
+  private readonly formDirty = signal(false);
+
+  readonly canSubmit = computed(() => this.formValid() && this.formDirty() && !this.saving());
 
   ngOnInit(): void {
     const o = this.organization();
@@ -44,6 +50,17 @@ export class OrganizationFormPanelComponent implements OnInit {
       type: [o?.type ?? 'circuito', [Validators.required]],
       isActive: [o?.isActive ?? true]
     });
+
+    this.formValid.set(this.form.valid);
+
+    this.subs.push(
+      this.form.statusChanges.subscribe(() => this.formValid.set(this.form.valid)),
+      this.form.valueChanges.subscribe(() => this.formDirty.set(this.form.dirty))
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   onSubmit(): void {

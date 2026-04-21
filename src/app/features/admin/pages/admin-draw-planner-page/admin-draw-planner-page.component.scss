@@ -80,10 +80,121 @@
     }
   }
 
+  // --- Rule Set highlight ---
+  &__preview-rule {
+    display: flex;
+    align-items: baseline;
+    gap: var(--zh-space-sm);
+    margin-top: var(--zh-space-md);
+    padding-top: var(--zh-space-md);
+    border-top: 1px solid var(--zh-border-subtle);
+  }
+
+  &__preview-rule-label {
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    color: var(--zh-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  &__preview-rule-value {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+  }
+
+  &__preview-rule-empty {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-muted);
+    font-style: italic;
+  }
+
+  // --- Courts Summary Card ---
+  &__courts-summary {
+    background: var(--zh-surface-card);
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-lg);
+    padding: var(--zh-space-md) var(--zh-space-xl);
+    margin-bottom: var(--zh-space-lg);
+  }
+
+  &__courts-summary-header {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    margin-bottom: var(--zh-space-md);
+
+    mat-icon {
+      color: var(--zh-primary);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__courts-summary-title {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__courts-summary-body {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-xl);
+    flex-wrap: wrap;
+  }
+
+  &__courts-summary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  &__courts-summary-count {
+    font-size: var(--zh-font-size-2xl);
+    font-weight: 800;
+    color: var(--zh-primary);
+    line-height: 1;
+  }
+
+  &__courts-summary-desc {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+    text-align: center;
+  }
+
+  &__courts-summary-complex,
+  &__courts-summary-range {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+
+  &__courts-summary-complex-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--zh-text-muted);
+  }
+
+  &__courts-summary-empty {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-muted);
+    font-style: italic;
+    margin: 0;
+  }
+
   // --- Tabs ---
   &__tabs {
     display: flex;
-    gap: var(--zh-space-xs);
     border-bottom: 2px solid var(--zh-border-subtle);
     margin-bottom: var(--zh-space-lg);
   }
@@ -280,4 +391,40 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@media (max-width: 599px) {
+  .draw-planner {
+    &__header-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--zh-space-sm);
+    }
+
+    &__preview {
+      padding: var(--zh-space-md);
+    }
+
+    &__tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    &__tab {
+      white-space: nowrap;
+      padding: var(--zh-space-sm) var(--zh-space-md);
+    }
+  }
+
+  .planner-section {
+    padding: var(--zh-space-md);
+  }
+
+  .result-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
 }

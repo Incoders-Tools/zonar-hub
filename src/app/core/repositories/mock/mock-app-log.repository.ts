@@ -3,8 +3,10 @@ import { AppLog } from '../../models/app-log.model';
 import { AppLogRepository } from '../app-log.repository';
 import { MOCK_APP_LOGS } from '../../data/mock/mock-app-logs';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 300;
+const STORAGE_COLLECTION = 'app_logs';
 
 @Injectable({ providedIn: 'root' })
 export class MockAppLogRepository implements AppLogRepository {
@@ -15,7 +17,16 @@ export class MockAppLogRepository implements AppLogRepository {
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    this.logs = isDemoTenant() ? structuredClone(MOCK_APP_LOGS) : [];
+    const stored = loadFromStorage<AppLog[]>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.logs = stored;
+    } else {
+      this.logs = isDemoTenant() ? structuredClone(MOCK_APP_LOGS) : [];
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), this.logs);
   }
 
   private delay<T>(value: T): Promise<T> {
@@ -44,6 +55,7 @@ export class MockAppLogRepository implements AppLogRepository {
       resolved,
       resolvedAt: resolved ? new Date().toISOString() : undefined
     };
+    this.persist();
     return this.delay(structuredClone(this.logs[idx]));
   }
 
@@ -53,18 +65,21 @@ export class MockAppLogRepository implements AppLogRepository {
     const beforeCount = this.logs.length;
     this.logs = this.logs.filter(l => l.createdAt > cutoffDate);
     const deletedCount = beforeCount - this.logs.length;
+    this.persist();
     return this.delay(deletedCount);
   }
 
   async delete(id: string): Promise<void> {
     this.ensureSeed();
     this.logs = this.logs.filter(l => l.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 
   async deleteMany(ids: string[]): Promise<void> {
     this.ensureSeed();
     this.logs = this.logs.filter(l => !ids.includes(l.id));
+    this.persist();
     return this.delay(undefined);
   }
 }

@@ -22,21 +22,29 @@
       <!-- Icon Field -->
       <div class="form-field">
         <label>{{ 'admin.complex-services.form.icon' | t }}</label>
-        <input
-          type="text"
-          formControlName="faIcon"
-          placeholder="e.g., FaWifi, FaParking"
-          matInput
-        />
+        <div class="icon-input-row">
+          <input
+            type="text"
+            formControlName="faIcon"
+            placeholder="e.g., wifi, local_parking"
+            matInput
+          />
+          @if (form.get('faIcon')?.value) {
+            <span class="icon-preview" [title]="form.get('faIcon')?.value">
+              <mat-icon>{{ form.get('faIcon')?.value }}</mat-icon>
+            </span>
+          }
+        </div>
         <span class="hint">{{ 'admin.complex-services.form.iconHint' | t }}</span>
       </div>
 
       <!-- Active Status -->
-      <div class="form-field">
+      <div class="form-field form-field--toggle">
+        <label>{{ 'admin.complex-services.form.status' | t }}</label>
         <app-active-toggle
           [value]="form.get('isActive')!.value"
           mode="toggle"
-          (toggled)="form.get('isActive')!.setValue($event)">
+          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
         </app-active-toggle>
       </div>
     </div>

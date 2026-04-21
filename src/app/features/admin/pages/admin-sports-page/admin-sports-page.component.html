@@ -48,6 +48,7 @@
       <div class="sports-page__form-panel-body">
         <app-sports-form-panel
           [sport]="editingSport()"
+          [modalities]="facade.modalities()"
           [saving]="facade.saving()"
           (saved)="closeFormPanel()"
           (cancelled)="closeFormPanel()">

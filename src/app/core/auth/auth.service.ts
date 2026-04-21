@@ -3,6 +3,7 @@ import { AuthSession, LoginRequest, RegisterRequest, Tenant, User, UserRole } fr
 import { MOCK_USERS } from '../data/mock/mock-users';
 import { setCurrentMockTenant } from '../data/mock/mock-tenant-context';
 import { MockAdminUserRepository } from '../repositories/mock/mock-admin-user.repository';
+import { MockTenantRepository } from '../repositories/mock/mock-tenant.repository';
 
 const MOCK_TENANT: Tenant = {
   id: 'tenant-1',
@@ -20,6 +21,7 @@ const MOCK_TENANT: Tenant = {
 export class AuthService {
   private readonly sessionState = signal<AuthSession | null>(null);
   private readonly adminUserRepo = inject(MockAdminUserRepository);
+  private readonly tenantRepo = inject(MockTenantRepository);
 
   readonly session = this.sessionState.asReadonly();
   readonly isAuthenticated = computed(() => this.sessionState() !== null);
@@ -50,6 +52,20 @@ export class AuthService {
 
   async register(request: RegisterRequest): Promise<AuthSession> {
     await this.delay(1000);
+    const tenantName = request.fullName + ' Circuit';
+    const tenantKey = tenantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '_');
+
+    // Create the tenant in the repository so ActiveOrganizationService can find it
+    const createdTenant = await this.tenantRepo.create({
+      name: tenantName,
+      key: tenantKey,
+      contactEmail: request.email,
+      planId: 'plan-1',
+      planType: 'starter',
+      isActive: true
+    });
+    const tenantId = createdTenant.id;
+
     const newUser: User = {
       id: 'u-' + Date.now(),
       email: request.email,
@@ -58,6 +74,8 @@ export class AuthService {
       birthDate: request.birthDate,
       role: 'admin',
       roleId: 'role1',
+      tenantId,
+      tenantIds: [tenantId],
       isActive: true,
       createdAt: new Date().toISOString()
     };
@@ -67,18 +85,12 @@ export class AuthService {
       user: newUser,
       token: 'mock-jwt-token-' + Date.now(),
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      tenant: {
-        ...MOCK_TENANT,
-        id: 'tenant-' + Date.now(),
-        name: request.fullName + ' Circuit',
-        planType: 'starter',
-        isActive: true
-      },
-      organizationId: 'org-' + Date.now(),
-      organizationName: request.fullName + ' Circuit'
+      tenant: createdTenant,
+      organizationId: undefined,
+      organizationName: undefined
     };
     this.sessionState.set(session);
-    setCurrentMockTenant(session.tenant?.id);
+    setCurrentMockTenant(tenantId);
 
     // Persist user into admin users repository so it appears in ABM lists
     this.adminUserRepo.create({

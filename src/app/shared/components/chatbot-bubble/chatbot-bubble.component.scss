@@ -30,7 +30,7 @@
 }
 
 .chatbot__panel {
-  width: 340px;
+  width: 400px;
   max-height: 480px;
   border-radius: var(--zh-radius-xl);
   background: var(--zh-surface-elevated);
@@ -279,6 +279,7 @@
 
 .chatbot__input-field {
   flex: 1;
+  min-width: 0;
   padding: var(--zh-space-xs) var(--zh-space-sm);
   border: 1px solid var(--zh-border-subtle);
   border-radius: var(--zh-radius-md);

@@ -31,3 +31,20 @@
     border-top: 1px solid var(--zh-border-subtle);
   }
 }
+
+@media (max-width: 599px) {
+  .form-shell {
+    padding: var(--zh-space-md);
+    border-radius: var(--zh-radius-lg);
+
+    &__actions {
+      flex-direction: column;
+      margin-top: var(--zh-space-md);
+
+      button,
+      zh-async-button {
+        width: 100%;
+      }
+    }
+  }
+}

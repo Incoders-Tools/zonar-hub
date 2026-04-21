@@ -14,6 +14,7 @@ import { DateFormatService } from '../../../../../core/services/date-format.serv
 import { TournamentsFacadeService } from '../tournaments-facade.service';
 import { dateRangeValidator } from '../../../../../shared/validators/date-range.validator';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
+import { DateInputComponent } from '../../../../../shared/components/date-input/date-input.component';
 
 @Component({
   selector: 'app-tournaments-form',
@@ -27,7 +28,8 @@ import { ActiveToggleComponent } from '../../../../../shared/components/active-t
     AsyncButtonComponent,
     CollapsibleSectionComponent,
     ChildCollectionGridComponent,
-    ActiveToggleComponent
+    ActiveToggleComponent,
+    DateInputComponent
   ],
   templateUrl: './tournaments-form.component.html',
   styleUrl: './tournaments-form.component.scss'
@@ -57,17 +59,48 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   readonly tournamentTypeOptions = computed(() =>
     this.facade.tournamentTypes().filter(t => t.isActive).map(t => ({ value: t.id, label: t.name }))
   );
+  readonly sportOptions = computed(() =>
+    this.facade.sports().filter(s => s.isActive).map(s => ({ value: s.id, label: s.name }))
+  );
+  readonly modalityOptionsForSport = computed(() => {
+    const sportId = this._selectedSportId();
+    if (!sportId) return [];
+    return this.facade.getModalitiesForSport(sportId).map(m => ({ value: m.id, label: m.nameEs }));
+  });
   readonly genderOptions = computed(() =>
     this.facade.genders().map(g => ({ value: g.id, label: g.name }))
   );
   readonly categoryOptions = computed(() =>
     this.facade.categories().map(c => ({ value: c.id, label: c.name }))
   );
+  readonly ruleSetOptions = computed(() =>
+    this.facade.ruleSets().filter(r => r.isActive).map(r => ({
+      value: r.id,
+      label: r.tournamentTypeName,
+      description: r.descriptionText
+    }))
+  );
 
   readonly showGenderField = signal(true);
   readonly showPointsField = signal(true);
   readonly registrationEnabled = signal(false);
-  readonly derivedSport = signal<{ sportId: string; sportName: string } | null>(null);
+  private readonly _selectedSportId = signal<string>('');
+  private readonly _selectedModalityId = signal<string>('');
+
+  /** Dynamic label key for the max participants field, based on selected modality */
+  readonly maxParticipantsLabelKey = computed(() => {
+    const modalityId = this._selectedModalityId();
+    if (!modalityId) return 'admin.tournaments.form.maxPairs';
+    const sportId = this._selectedSportId();
+    if (!sportId) return 'admin.tournaments.form.maxPairs';
+    const modality = this.facade.getModalitiesForSport(sportId).find(m => m.id === modalityId);
+    if (!modality) return 'admin.tournaments.form.maxPairs';
+    switch (modality.key) {
+      case 'single': return 'admin.tournaments.form.maxPlayers';
+      case 'teams': return 'admin.tournaments.form.maxTeams';
+      default: return 'admin.tournaments.form.maxPairs';
+    }
+  });
 
   // Courts selection
   readonly selectedCourtIds = signal<Set<string>>(new Set());
@@ -116,10 +149,13 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     this.form = this.fb.group({
       name: ['', [Validators.required]],
       complexId: ['', [Validators.required]],
-      tournamentTypeId: ['', [Validators.required]],
+      sportId: ['', [Validators.required]],
+      modalityId: [''],
+      tournamentTypeId: [''],
+      ruleSetId: [''],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
-      genderId: [''],
+      genderId: ['', [Validators.required]],
       categoryId: [''],
       maxPairs: ['', [Validators.required, Validators.min(2)]],
       isActive: [true],
@@ -156,18 +192,35 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       }
     });
 
-    // Tournament type changes: show/hide gender and points fields based on type flags
-    this.form.get('tournamentTypeId')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(typeId => {
-      this.showGenderField.set(this.facade.typeAppliesGender(typeId));
-      this.showPointsField.set(this.facade.typeScoresPoints(typeId));
-      if (!this.facade.typeAppliesGender(typeId)) {
-        this.form.get('genderId')?.setValue('');
+    // Sport changes: update modality options and auto-select if only one
+    this.form.get('sportId')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(sportId => {
+      this._selectedSportId.set(sportId || '');
+      const modalityCtrl = this.form.get('modalityId')!;
+      if (!sportId) {
+        modalityCtrl.setValue('', { emitEvent: false });
+        this._selectedModalityId.set('');
+        return;
       }
-      if (!this.facade.typeScoresPoints(typeId)) {
-        this.form.get('pointsToAward')?.setValue('');
+      const modalities = this.facade.getModalitiesForSport(sportId);
+      if (modalities.length === 1) {
+        modalityCtrl.setValue(modalities[0].id, { emitEvent: false });
+        this._selectedModalityId.set(modalities[0].id);
+      } else if (modalities.length > 1) {
+        // Keep current selection if still valid, otherwise clear
+        const current = modalityCtrl.value;
+        if (!modalities.some(m => m.id === current)) {
+          modalityCtrl.setValue('', { emitEvent: false });
+          this._selectedModalityId.set('');
+        }
+      } else {
+        modalityCtrl.setValue('', { emitEvent: false });
+        this._selectedModalityId.set('');
       }
-      const sport = typeId ? this.facade.getSportForType(typeId) : null;
-      this.derivedSport.set(sport?.sportId ? sport : null);
+    });
+
+    // Modality changes: update the selected modality signal
+    this.form.get('modalityId')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(modalityId => {
+      this._selectedModalityId.set(modalityId || '');
     });
 
     // Complex changes: load courts for selected complex
@@ -203,10 +256,18 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
 
     if (tournament) {
       this.isEditing = true;
+
+      // Set sport first so modality options are populated
+      this._selectedSportId.set(tournament.sportId || '');
+      this._selectedModalityId.set(tournament.modalityId || '');
+
       this.form.patchValue({
         name: tournament.name,
         complexId: tournament.complexId,
-        tournamentTypeId: tournament.tournamentTypeId,
+        sportId: tournament.sportId || '',
+        modalityId: tournament.modalityId || '',
+        tournamentTypeId: tournament.tournamentTypeId || '',
+        ruleSetId: tournament.ruleSetId || '',
         startDate: tournament.startDate,
         endDate: tournament.endDate,
         genderId: tournament.genderId || '',
@@ -231,12 +292,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       this._startDate.set(tournament.startDate || '');
       this._endDate.set(tournament.endDate || '');
 
-      this.showGenderField.set(this.facade.typeAppliesGender(tournament.tournamentTypeId));
-      this.showPointsField.set(this.facade.typeScoresPoints(tournament.tournamentTypeId));
       this.updateRegistrationFieldsState();
-
-      const sport = tournament.tournamentTypeId ? this.facade.getSportForType(tournament.tournamentTypeId) : null;
-      this.derivedSport.set(sport?.sportId ? sport : null);
 
       // Load courts and restore selection
       if (tournament.complexId) {
@@ -303,14 +359,17 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     }
 
     const status = this.facade.computeStatus(formValue.startDate, formValue.endDate);
-    const sport = this.facade.getSportForType(formValue.tournamentTypeId);
 
     const payload: Partial<Tournament> = {
       ...formValue,
       complexName: this.facade.getComplexName(formValue.complexId),
       tournamentTypeName: this.facade.getTournamentTypeName(formValue.tournamentTypeId),
-      sportId: sport.sportId,
-      sportName: sport.sportName,
+      sportId: formValue.sportId,
+      sportName: this.facade.getSportName(formValue.sportId),
+      modalityId: formValue.modalityId || undefined,
+      modalityName: formValue.modalityId ? this.facade.getModalityName(formValue.modalityId) : undefined,
+      ruleSetId: formValue.ruleSetId || undefined,
+      ruleSetDescription: formValue.ruleSetId ? this.facade.getRuleSetDescription(formValue.ruleSetId) : undefined,
       genderLabel: this.facade.getGenderLabel(formValue.genderId),
       categoryName: this.facade.getCategoryName(formValue.categoryId),
       statusLabel: status.labelKey,

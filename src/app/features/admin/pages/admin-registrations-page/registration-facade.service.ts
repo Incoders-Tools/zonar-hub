@@ -57,7 +57,13 @@ export class RegistrationFacadeService {
     const all = this.service.registrations();
     const f = this.filtersState();
     const sortRules = this.sortRulesState();
+    const activeOrgId = this.activeOrg.activeOrganizationId();
     let result = [...all];
+
+    // Filter by active organization
+    if (activeOrgId) {
+      result = result.filter(r => !r.organizationId || r.organizationId === activeOrgId);
+    }
 
     if (f.search) {
       const term = f.search.toLowerCase();

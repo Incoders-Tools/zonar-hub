@@ -85,6 +85,10 @@ export class OnboardingStateService {
     this.update(p => ({ ...p, wizardCompleted: true }));
   }
 
+  markOrganizationCreated(): void {
+    this.update(p => ({ ...p, organizationCreated: true }));
+  }
+
   skipTour(): void {
     this.update(p => ({ ...p, tourCompleted: true }));
   }

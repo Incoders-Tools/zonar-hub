@@ -1,8 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Sport } from '../../models';
 import { SportRepository } from '../sport.repository';
+import { globalStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;
+const STORAGE_COLLECTION = 'sports';
+
+interface SportStorageState {
+  data: Sport[];
+  counter: number;
+}
 
 const MOCK_SPORTS: Sport[] = [
   {
@@ -11,6 +18,7 @@ const MOCK_SPORTS: Sport[] = [
     key: 'padel',
     icon: '🎾',
     iconSource: 'unicode',
+    modalityIds: ['mod2'],
     isActive: true,
     sortOrder: 1,
     createdAt: '2024-01-01T00:00:00Z',
@@ -22,6 +30,7 @@ const MOCK_SPORTS: Sport[] = [
     key: 'futbol',
     icon: '⚽',
     iconSource: 'unicode',
+    modalityIds: ['mod3'],
     isActive: true,
     sortOrder: 2,
     createdAt: '2024-01-01T00:00:00Z',
@@ -33,6 +42,7 @@ const MOCK_SPORTS: Sport[] = [
     key: 'rugby',
     icon: '🏉',
     iconSource: 'unicode',
+    modalityIds: ['mod3'],
     isActive: true,
     sortOrder: 3,
     createdAt: '2024-01-01T00:00:00Z',
@@ -44,8 +54,21 @@ const MOCK_SPORTS: Sport[] = [
     key: 'tenis',
     icon: '🎾',
     iconSource: 'unicode',
+    modalityIds: ['mod1', 'mod2'],
     isActive: true,
     sortOrder: 4,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'sp5',
+    name: 'Pickleball',
+    key: 'pickleball',
+    icon: '🏓',
+    iconSource: 'unicode',
+    modalityIds: ['mod1', 'mod2'],
+    isActive: true,
+    sortOrder: 5,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   }
@@ -53,8 +76,23 @@ const MOCK_SPORTS: Sport[] = [
 
 @Injectable({ providedIn: 'root' })
 export class MockSportRepository implements SportRepository {
-  private sports: Sport[] = structuredClone(MOCK_SPORTS);
-  private idCounter = this.sports.length;
+  private sports: Sport[];
+  private idCounter: number;
+
+  constructor() {
+    const stored = loadFromStorage<SportStorageState>(globalStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.sports = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.sports = structuredClone(MOCK_SPORTS);
+      this.idCounter = this.sports.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(globalStorageKey(STORAGE_COLLECTION), { data: this.sports, counter: this.idCounter } as SportStorageState);
+  }
 
   private delay<T>(value: T): Promise<T> {
     return new Promise(resolve => setTimeout(() => resolve(value), MOCK_DELAY));
@@ -78,6 +116,7 @@ export class MockSportRepository implements SportRepository {
       updatedAt: now
     };
     this.sports.push(newSport);
+    this.persist();
     return this.delay(structuredClone(newSport));
   }
 
@@ -87,11 +126,13 @@ export class MockSportRepository implements SportRepository {
       throw new Error(`Sport ${id} not found`);
     }
     this.sports[idx] = { ...this.sports[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return this.delay(structuredClone(this.sports[idx]));
   }
 
   async delete(id: string): Promise<void> {
     this.sports = this.sports.filter(s => s.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 

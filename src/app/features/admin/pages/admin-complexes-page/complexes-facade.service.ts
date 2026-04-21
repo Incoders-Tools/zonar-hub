@@ -88,8 +88,14 @@ export class ComplexesFacadeService {
   readonly filteredComplexes = computed(() => {
     const complexes = this.entitiesState();
     const filters = this.filtersState();
+    const activeOrgId = this.activeOrg.activeOrganizationId();
 
     let result = [...complexes];
+
+    // Filter by active organization
+    if (activeOrgId) {
+      result = result.filter(c => !c.organizationId || c.organizationId === activeOrgId);
+    }
 
     // Filter by name
     if (filters.name?.trim()) {

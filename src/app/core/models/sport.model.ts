@@ -6,6 +6,7 @@ export interface Sport {
   key: string;
   icon: string;
   iconSource: SportIconSource;
+  modalityIds: string[];
   isActive: boolean;
   sortOrder: number;
   createdAt: string;

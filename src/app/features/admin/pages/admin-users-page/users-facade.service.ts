@@ -1,9 +1,10 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../../../core/models/admin-user.model';
 import { Tenant } from '../../../../core/models/user.model';
 import { MockAdminUserRepository } from '../../../../core/repositories/mock/mock-admin-user.repository';
 import { MockTenantRepository } from '../../../../core/repositories/mock/mock-tenant.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface UsersFilters {
   search?: string;
@@ -17,6 +18,7 @@ export class UsersFacadeService {
   private readonly repository = inject(MockAdminUserRepository);
   private readonly tenantRepository = inject(MockTenantRepository);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
 
   readonly users = signal<AdminUser[]>([]);
   readonly tenants = signal<Tenant[]>([]);
@@ -32,10 +34,15 @@ export class UsersFacadeService {
   readonly filteredUsers = computed(() => {
     const allUsers = this.users();
     const appliedFilters = this.filters();
+    const activeOrgId = this.activeOrg.activeOrganizationId();
 
     let result = allUsers.filter(user => {
       // Non-sysadmin users cannot see sysadmin accounts
       if (!this.auth.isSystemAdmin() && user.role === 'system_admin') {
+        return false;
+      }
+      // Filter by active organization
+      if (activeOrgId && user.organizationId && user.organizationId !== activeOrgId) {
         return false;
       }
       if (appliedFilters.search) {

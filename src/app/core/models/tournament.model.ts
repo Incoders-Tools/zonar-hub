@@ -17,8 +17,12 @@ export interface Tournament {
   tournamentTypeName: string;
   sportId: string;
   sportName: string;
+  modalityId?: string;
+  modalityName?: string;
   eligibilityProfileId?: string;
   eligibilityProfileName?: string;
+  ruleSetId?: string;
+  ruleSetDescription?: string;
   statusId: string;
   statusLabel: string;
   startDate: string;

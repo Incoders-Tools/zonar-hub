@@ -5,6 +5,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
+import { DateInputComponent } from '../../../../../shared/components/date-input/date-input.component';
 import { Availability } from '../../../../../core/models';
 
 type SlotState = 'available' | 'blocked' | 'partial';
@@ -20,7 +21,7 @@ export interface GridSlot {
 @Component({
   selector: 'app-court-availability-grid',
   standalone: true,
-  imports: [CommonModule, MatIcon, MatTooltipModule, TranslatePipe, AsyncButtonComponent],
+  imports: [CommonModule, MatIcon, MatTooltipModule, TranslatePipe, AsyncButtonComponent, DateInputComponent],
   templateUrl: './court-availability-grid.component.html',
   styleUrl: './court-availability-grid.component.scss',
   animations: [

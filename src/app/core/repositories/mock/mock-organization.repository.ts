@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { Organization, OrganizationType } from '../../models';
 import { OrganizationRepository } from '../organization.repository';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
+
+const STORAGE_COLLECTION = 'organizations';
 
 const DEMO_ORGANIZATIONS: Organization[] = [
   {
@@ -28,6 +31,11 @@ const DEMO_ORGANIZATIONS: Organization[] = [
   }
 ];
 
+interface OrgStorageState {
+  data: Organization[];
+  nextId: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MockOrganizationRepository extends OrganizationRepository {
   private organizations: Organization[] = [];
@@ -38,8 +46,19 @@ export class MockOrganizationRepository extends OrganizationRepository {
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    this.organizations = isDemoTenant() ? structuredClone(DEMO_ORGANIZATIONS) : [];
-    this.nextId = this.organizations.length + 1;
+    const stored = loadFromStorage<OrgStorageState>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.organizations = stored.data;
+      this.nextId = stored.nextId;
+    } else {
+      this.organizations = isDemoTenant() ? structuredClone(DEMO_ORGANIZATIONS) : [];
+      this.nextId = this.organizations.length + 1;
+    }
+  }
+
+  private persist(): void {
+    const state: OrgStorageState = { data: this.organizations, nextId: this.nextId };
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), state);
   }
 
   async getAll(): Promise<Organization[]> {
@@ -71,6 +90,7 @@ export class MockOrganizationRepository extends OrganizationRepository {
       createdAt: new Date().toISOString()
     };
     this.organizations.push(org);
+    this.persist();
     return JSON.parse(JSON.stringify(org));
   }
 
@@ -80,6 +100,7 @@ export class MockOrganizationRepository extends OrganizationRepository {
     const idx = this.organizations.findIndex(o => o.id === id);
     if (idx === -1) throw new Error(`Organization ${id} not found`);
     this.organizations[idx] = { ...this.organizations[idx], ...data, updatedAt: new Date().toISOString() };
+    this.persist();
     return JSON.parse(JSON.stringify(this.organizations[idx]));
   }
 
@@ -89,6 +110,7 @@ export class MockOrganizationRepository extends OrganizationRepository {
     const idx = this.organizations.findIndex(o => o.id === id);
     if (idx === -1) throw new Error(`Organization ${id} not found`);
     this.organizations.splice(idx, 1);
+    this.persist();
   }
 
   async deactivate(id: string): Promise<Organization> {

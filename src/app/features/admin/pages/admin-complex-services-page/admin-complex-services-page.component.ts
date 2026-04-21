@@ -69,7 +69,7 @@ export class AdminComplexServicesPageComponent implements OnInit {
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.complex-services.column.name', sortable: true },
-      { key: 'faIcon', labelKey: 'admin.complex-services.column.icon', sortable: false },
+      { key: 'faIcon', labelKey: 'admin.complex-services.column.icon', sortable: false, renderType: 'icon' as const },
       { key: 'statusLabel', labelKey: 'admin.complex-services.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {

@@ -1,0 +1,116 @@
+<app-form-shell
+  [titleKey]="isEditing ? 'admin.modalities.edit.title' : 'admin.modalities.create.title'"
+  [descriptionKey]="isEditing ? 'admin.modalities.edit.description' : 'admin.modalities.create.description'">
+
+  <form [formGroup]="form" class="modalities-form">
+    <div class="modalities-form__grid">
+      <!-- Name ES -->
+      <div class="modalities-form__field">
+        <label>{{ 'admin.modalities.form.nameEs' | t }} *</label>
+        <input
+          type="text"
+          formControlName="nameEs"
+          [class.error]="isFieldInvalid('nameEs')"
+          matInput
+        />
+        @if (isFieldInvalid('nameEs')) {
+          <span class="modalities-form__error">{{ getErrorMessage('nameEs') | t }}</span>
+        }
+      </div>
+
+      <!-- Name EN -->
+      <div class="modalities-form__field">
+        <label>{{ 'admin.modalities.form.nameEn' | t }} *</label>
+        <input
+          type="text"
+          formControlName="nameEn"
+          [class.error]="isFieldInvalid('nameEn')"
+          matInput
+        />
+        @if (isFieldInvalid('nameEn')) {
+          <span class="modalities-form__error">{{ getErrorMessage('nameEn') | t }}</span>
+        }
+      </div>
+
+      <!-- Name PT -->
+      <div class="modalities-form__field">
+        <label>{{ 'admin.modalities.form.namePt' | t }} *</label>
+        <input
+          type="text"
+          formControlName="namePt"
+          [class.error]="isFieldInvalid('namePt')"
+          matInput
+        />
+        @if (isFieldInvalid('namePt')) {
+          <span class="modalities-form__error">{{ getErrorMessage('namePt') | t }}</span>
+        }
+      </div>
+
+      <!-- Active Status -->
+      <div class="modalities-form__field modalities-form__field--toggle">
+        <label>{{ 'admin.modalities.form.status' | t }}</label>
+        <app-active-toggle
+          [value]="form.get('isActive')!.value"
+          mode="toggle"
+          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
+        </app-active-toggle>
+        <span class="modalities-form__hint">{{ 'admin.modalities.form.isActiveHint' | t }}</span>
+      </div>
+    </div>
+
+    <!-- Technical Fields (system_admin only) -->
+    @if (isSystemAdmin()) {
+      <app-collapsible-section [titleKey]="'common.technicalFields'">
+        <div class="modalities-form__grid">
+          <!-- Key -->
+          <div class="modalities-form__field">
+            <label>{{ 'admin.modalities.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
+            <input
+              type="text"
+              formControlName="key"
+              [class.error]="isFieldInvalid('key')"
+              [disabled]="isEditing"
+              matInput
+            />
+            @if (isFieldInvalid('key')) {
+              <span class="modalities-form__error">{{ getErrorMessage('key') | t }}</span>
+            }
+            <span class="modalities-form__hint">{{ 'admin.modalities.form.keyHint' | t }}</span>
+          </div>
+
+          <!-- Sort Order -->
+          <div class="modalities-form__field">
+            <label>{{ 'admin.modalities.form.sortOrder' | t }}</label>
+            <input
+              type="number"
+              formControlName="sortOrder"
+              min="0"
+              [class.error]="isFieldInvalid('sortOrder')"
+              matInput
+            />
+            @if (isFieldInvalid('sortOrder')) {
+              <span class="modalities-form__error">{{ getErrorMessage('sortOrder') | t }}</span>
+            }
+            <span class="modalities-form__hint">{{ 'admin.modalities.form.sortOrderHint' | t }}</span>
+          </div>
+        </div>
+      </app-collapsible-section>
+    }
+
+    <!-- Form Actions -->
+    <div formActions class="modalities-form__actions">
+      <button type="button" (click)="onCancel()" class="modalities-form__btn-cancel">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+        (clicked)="onSave()"
+        class="modalities-form__btn-save">
+        {{ (isEditing ? 'common.update' : 'common.create') | t }}
+      </app-async-button>
+    </div>
+  </form>
+
+</app-form-shell>

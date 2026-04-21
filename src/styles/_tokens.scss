@@ -9,6 +9,7 @@
   // ---- Surface ----
   --zh-surface-bg: #f7f9f4;
   --zh-surface-elevated: #ffffff;
+  --zh-surface-card: #ffffff;
   --zh-surface-muted: #eef2e8;
   --zh-surface-overlay: rgba(15, 35, 20, 0.5);
 
@@ -28,6 +29,7 @@
   --zh-primary: #1b6b3a;
   --zh-primary-hover: #145530;
   --zh-primary-soft: rgba(27, 107, 58, 0.10);
+  --zh-primary-contrast: #ffffff;
   --zh-on-primary: #ffffff;
 
   // ---- Secondary Action ----
@@ -89,6 +91,7 @@
   --zh-elevation-hero: 0 16px 48px rgba(15, 23, 42, 0.12);
 
   // ---- Spacing ----
+  --zh-space-2xs: 2px;
   --zh-space-xs: 4px;
   --zh-space-sm: 8px;
   --zh-space-md: 16px;

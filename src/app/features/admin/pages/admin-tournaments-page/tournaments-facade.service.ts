@@ -1,10 +1,13 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Tournament, Court, Category, Gender, TournamentType, Complex } from '../../../../core/models';
+import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality, TournamentRuleSet } from '../../../../core/models';
 import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { MockCategoryRepository } from '../../../../core/repositories/mock/mock-category.repository';
 import { MockGenderRepository } from '../../../../core/repositories/mock/mock-gender.repository';
 import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
+import { MockTournamentRuleSetRepository } from '../../../../core/repositories/mock/mock-tournament-rule-set.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface TournamentFilters {
@@ -20,6 +23,9 @@ export class TournamentsFacadeService {
   private readonly categoryRepo = inject(MockCategoryRepository);
   private readonly genderRepo = inject(MockGenderRepository);
   private readonly tournamentTypeRepo = inject(MockTournamentTypeRepository);
+  private readonly sportRepo = inject(MockSportRepository);
+  private readonly modalityRepo = inject(MockTournamentModalityRepository);
+  private readonly ruleSetRepo = inject(MockTournamentRuleSetRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private lastOrgId: string | null | undefined = undefined;
 
@@ -50,6 +56,9 @@ export class TournamentsFacadeService {
   private readonly categoriesState = signal<Category[]>([]);
   private readonly gendersState = signal<Gender[]>([]);
   private readonly tournamentTypesState = signal<TournamentType[]>([]);
+  private readonly sportsState = signal<Sport[]>([]);
+  private readonly modalitiesState = signal<TournamentModality[]>([]);
+  private readonly ruleSetsState = signal<TournamentRuleSet[]>([]);
   private readonly courtsForComplexState = signal<Court[]>([]);
   private readonly loadingCourtsState = signal(false);
 
@@ -65,14 +74,23 @@ export class TournamentsFacadeService {
   readonly categories = this.categoriesState.asReadonly();
   readonly genders = this.gendersState.asReadonly();
   readonly tournamentTypes = this.tournamentTypesState.asReadonly();
+  readonly sports = this.sportsState.asReadonly();
+  readonly modalities = this.modalitiesState.asReadonly();
+  readonly ruleSets = this.ruleSetsState.asReadonly();
   readonly courtsForComplex = this.courtsForComplexState.asReadonly();
   readonly loadingCourts = this.loadingCourtsState.asReadonly();
 
   readonly filteredTournaments = computed(() => {
     const tournaments = this.entitiesState();
     const filters = this.filtersState();
+    const activeOrgId = this.activeOrg.activeOrganizationId();
 
     let result = [...tournaments];
+
+    // Filter by active organization
+    if (activeOrgId) {
+      result = result.filter(t => !t.organizationId || t.organizationId === activeOrgId);
+    }
 
     if (filters.name?.trim()) {
       const searchTerm = filters.name.toLowerCase();
@@ -166,22 +184,47 @@ export class TournamentsFacadeService {
     return { sportId: type?.sportId || '', sportName: type?.sportName || '' };
   }
 
+  getSportName(sportId: string): string {
+    return this.sportsState().find(s => s.id === sportId)?.name || '';
+  }
+
+  getModalityName(modalityId: string): string {
+    const m = this.modalitiesState().find(mod => mod.id === modalityId);
+    return m?.nameEs || '';
+  }
+
+  getModalitiesForSport(sportId: string): TournamentModality[] {
+    const sport = this.sportsState().find(s => s.id === sportId);
+    if (!sport?.modalityIds?.length) return [];
+    return this.modalitiesState().filter(m => sport.modalityIds.includes(m.id) && m.isActive);
+  }
+
+  getRuleSetDescription(ruleSetId: string): string {
+    return this.ruleSetsState().find(r => r.id === ruleSetId)?.descriptionText || '';
+  }
+
   async load(): Promise<void> {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
-      const [tournaments, complexes, categories, genders, tournamentTypes] = await Promise.all([
+      const [tournaments, complexes, categories, genders, tournamentTypes, sports, modalities, ruleSets] = await Promise.all([
         this.repository.getAll(),
         this.complexRepo.getAll(),
         this.categoryRepo.getAll(),
         this.genderRepo.getAll(),
-        this.tournamentTypeRepo.getAll()
+        this.tournamentTypeRepo.getAll(),
+        this.sportRepo.getAll(),
+        this.modalityRepo.getAll(),
+        this.ruleSetRepo.getAll()
       ]);
       this.entitiesState.set(tournaments);
       this.complexesState.set(complexes);
       this.categoriesState.set(categories);
       this.gendersState.set(genders);
       this.tournamentTypesState.set(tournamentTypes);
+      this.sportsState.set(sports);
+      this.modalitiesState.set(modalities);
+      this.ruleSetsState.set(ruleSets);
     } catch (error) {
       this.errorState.set((error as Error).message);
     } finally {

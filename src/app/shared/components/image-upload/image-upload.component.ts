@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../pipes/translate.pipe';
@@ -11,7 +11,7 @@ import { ImageOptimizationService } from '../../../core/services/image-optimizat
   templateUrl: './image-upload.component.html',
   styleUrl: './image-upload.component.scss'
 })
-export class ImageUploadComponent {
+export class ImageUploadComponent implements OnDestroy {
   private readonly optimizationService = inject(ImageOptimizationService);
 
   readonly currentImageUrl = input<string | null>(null);
@@ -69,7 +69,12 @@ export class ImageUploadComponent {
     }
   }
 
+  ngOnDestroy(): void {
+    this.revokeCurrentPreview();
+  }
+
   removeImage(): void {
+    this.revokeCurrentPreview();
     this.previewUrl.set(null);
     this.error.set(null);
     this.imageRemoved.emit();
@@ -99,11 +104,19 @@ export class ImageUploadComponent {
       }
 
       const previewUrl = URL.createObjectURL(processedFile);
+      this.revokeCurrentPreview();
       this.previewUrl.set(previewUrl);
       this.imageChanged.emit({ file: processedFile, previewUrl });
     } finally {
       this.uploading.set(false);
       this.optimizing.set(false);
+    }
+  }
+
+  private revokeCurrentPreview(): void {
+    const current = this.previewUrl();
+    if (current?.startsWith('blob:')) {
+      URL.revokeObjectURL(current);
     }
   }
 }

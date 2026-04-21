@@ -1,4 +1,4 @@
-import { Component, input, signal, computed, inject } from '@angular/core';
+import { Component, input, signal, computed, inject, effect } from '@angular/core';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { SocialShareComponent, ShareConfig } from '../social-share/social-share.component';
 import { ContentService } from '../../../core/services/content.service';
@@ -80,6 +80,15 @@ export class RegistrationFlyerComponent {
       .concat(this.contentService.flyerBackgroundsByCategory('tournament'))
       .concat(this.contentService.flyerBackgroundsByCategory('general'))
   );
+
+  constructor() {
+    effect(() => {
+      const bgs = this.availableBackgrounds();
+      if (bgs.length > 0 && !this.selectedBg()) {
+        this.selectedBg.set(bgs[0]);
+      }
+    });
+  }
 
   readonly shareConfig = computed<ShareConfig>(() => {
     const d = this.data();

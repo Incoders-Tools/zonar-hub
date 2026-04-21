@@ -7,6 +7,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Role, isSystemRole } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { RoleFacadeService, RoleFilters } from './role-facade.service';
 import { RolesFormComponent } from './roles-form/roles-form.component';
 
@@ -49,6 +50,7 @@ interface RoleRow extends Record<string, unknown> {
   ]
 })
 export class AdminRolesPageComponent implements OnInit {
+  private readonly auth = inject(AuthService);
   readonly facade = inject(RoleFacadeService);
 
   readonly showFormPanel = signal(false);
@@ -70,7 +72,7 @@ export class AdminRolesPageComponent implements OnInit {
   ];
 
   readonly roleActionsFilter = (row: RoleRow) => {
-    if (row['isSystem']) return [];
+    if (row['isSystem'] && !this.auth.isSystemAdmin()) return [];
     return this.roleRowActions;
   };
 
@@ -143,7 +145,7 @@ export class AdminRolesPageComponent implements OnInit {
 
   openEditForm(row: RoleRow): void {
     const role = this.facade.roles().find(r => r.id === row.id);
-    if (role && !isSystemRole(role.name)) {
+    if (role && (!isSystemRole(role.name) || this.auth.isSystemAdmin())) {
       this.editingRole.set(role);
       this.showFormPanel.set(true);
     }

@@ -3,8 +3,15 @@ import { Tournament } from '../../models';
 import { TournamentAdminRepository } from '../tournament-admin.repository';
 import { MOCK_TOURNAMENTS } from '../../data/mock/mock-tournaments';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;
+const STORAGE_COLLECTION = 'tournaments';
+
+interface TournamentStorageState {
+  data: Tournament[];
+  counter: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MockTournamentAdminRepository implements TournamentAdminRepository {
@@ -16,8 +23,18 @@ export class MockTournamentAdminRepository implements TournamentAdminRepository 
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    this.tournaments = isDemoTenant() ? structuredClone(MOCK_TOURNAMENTS) : [];
-    this.idCounter = this.tournaments.length;
+    const stored = loadFromStorage<TournamentStorageState>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.tournaments = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.tournaments = isDemoTenant() ? structuredClone(MOCK_TOURNAMENTS) : [];
+      this.idCounter = this.tournaments.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), { data: this.tournaments, counter: this.idCounter } as TournamentStorageState);
   }
 
   private delay<T>(value: T): Promise<T> {
@@ -42,6 +59,7 @@ export class MockTournamentAdminRepository implements TournamentAdminRepository 
       createdAt: now
     };
     this.tournaments.push(newTournament);
+    this.persist();
     return this.delay(structuredClone(newTournament));
   }
 
@@ -51,11 +69,13 @@ export class MockTournamentAdminRepository implements TournamentAdminRepository 
       throw new Error(`Tournament ${id} not found`);
     }
     this.tournaments[idx] = { ...this.tournaments[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return this.delay(structuredClone(this.tournaments[idx]));
   }
 
   async delete(id: string): Promise<void> {
     this.tournaments = this.tournaments.filter(t => t.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 

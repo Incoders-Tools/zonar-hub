@@ -1,55 +1,42 @@
 import { Injectable } from '@angular/core';
 import { Role, RoleCreatePayload, RoleUpdatePayload, SYSTEM_ROLE_NAMES, isSystemRole } from '../../models';
 import { RoleRepository } from '../role.repository';
+import { globalStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
+
+const STORAGE_COLLECTION = 'roles';
+
+interface RoleStorageState { data: Role[]; nextId: number; }
+
+const SEED_ROLES: Role[] = [
+  { id: '1', name: 'system_admin', description: 'Full system access with all permissions', isActive: true, createdAt: new Date('2025-01-01'), updatedAt: new Date('2025-01-01') },
+  { id: '2', name: 'admin', description: 'Administrative access to manage content', isActive: true, createdAt: new Date('2025-01-02'), updatedAt: new Date('2025-01-02') },
+  { id: '3', name: 'user', description: 'Standard user with limited permissions', isActive: true, createdAt: new Date('2025-01-03'), updatedAt: new Date('2025-01-03') },
+  { id: '4', name: 'viewer', description: 'Read-only access', isActive: true, createdAt: new Date('2025-01-04'), updatedAt: new Date('2025-01-04') },
+  { id: '5', name: 'editor', description: 'Content editor with publish permissions', isActive: false, createdAt: new Date('2025-01-05'), updatedAt: new Date('2025-02-01') }
+];
 
 @Injectable({
   providedIn: 'root'
 })
 export class MockRoleRepository extends RoleRepository {
-  private roles: Role[] = [
-    {
-      id: '1',
-      name: 'system_admin',
-      description: 'Full system access with all permissions',
-      isActive: true,
-      createdAt: new Date('2025-01-01'),
-      updatedAt: new Date('2025-01-01')
-    },
-    {
-      id: '2',
-      name: 'admin',
-      description: 'Administrative access to manage content',
-      isActive: true,
-      createdAt: new Date('2025-01-02'),
-      updatedAt: new Date('2025-01-02')
-    },
-    {
-      id: '3',
-      name: 'user',
-      description: 'Standard user with limited permissions',
-      isActive: true,
-      createdAt: new Date('2025-01-03'),
-      updatedAt: new Date('2025-01-03')
-    },
-    {
-      id: '4',
-      name: 'viewer',
-      description: 'Read-only access',
-      isActive: true,
-      createdAt: new Date('2025-01-04'),
-      updatedAt: new Date('2025-01-04')
-    },
-    {
-      id: '5',
-      name: 'editor',
-      description: 'Content editor with publish permissions',
-      isActive: false,
-      createdAt: new Date('2025-01-05'),
-      updatedAt: new Date('2025-02-01')
-    }
-  ];
+  private roles: Role[];
+  private nextId: number;
 
-  private nextId = 6;
+  constructor() {
+    super();
+    const stored = loadFromStorage<RoleStorageState>(globalStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.roles = stored.data.map(r => ({ ...r, createdAt: new Date(r.createdAt), updatedAt: new Date(r.updatedAt) }));
+      this.nextId = stored.nextId;
+    } else {
+      this.roles = structuredClone(SEED_ROLES);
+      this.nextId = 6;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(globalStorageKey(STORAGE_COLLECTION), { data: this.roles, nextId: this.nextId });
+  }
 
   /**
    * Retrieves all roles with simulated delay
@@ -99,6 +86,7 @@ export class MockRoleRepository extends RoleRepository {
     };
 
     this.roles.push(newRole);
+    this.persist();
     return JSON.parse(JSON.stringify(newRole));
   }
 
@@ -138,6 +126,7 @@ export class MockRoleRepository extends RoleRepository {
     };
 
     this.roles[roleIndex] = updatedRole;
+    this.persist();
     return JSON.parse(JSON.stringify(updatedRole));
   }
 
@@ -161,6 +150,7 @@ export class MockRoleRepository extends RoleRepository {
     }
 
     this.roles.splice(roleIndex, 1);
+    this.persist();
   }
 
   /**

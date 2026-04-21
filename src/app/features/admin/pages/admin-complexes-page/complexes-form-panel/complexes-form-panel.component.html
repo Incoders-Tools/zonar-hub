@@ -85,7 +85,7 @@
           <app-active-toggle
             [value]="form.get('isActive')!.value"
             mode="toggle"
-            (toggled)="form.get('isActive')!.setValue($event)">
+            (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
           </app-active-toggle>
         </div>
       </div>
@@ -221,7 +221,12 @@
               <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">
                 <input type="checkbox" [checked]="row.isActive" (change)="toggleServiceActive(i)" />
               </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ row.name }}</span>
+              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">
+                @if (row.faIcon) {
+                  <mat-icon class="complexes-form__service-icon">{{ row.faIcon }}</mat-icon>
+                }
+                {{ row.name }}
+              </span>
               @if (isSystemAdmin()) {
                 <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">
                   <input
@@ -275,7 +280,12 @@
               <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">
                 <input type="checkbox" [checked]="row.isActive" (change)="toggleNetworkActive(i)" />
               </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ row.name }}</span>
+              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">
+                @if (row.faIcon) {
+                  <mat-icon class="complexes-form__service-icon">{{ row.faIcon }}</mat-icon>
+                }
+                {{ row.name }}
+              </span>
               <span class="complexes-form__assignment-cell complexes-form__assignment-cell--url">
                 <input
                   type="text"

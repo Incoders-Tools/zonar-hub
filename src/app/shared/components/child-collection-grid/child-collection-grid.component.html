@@ -215,9 +215,9 @@
                             [class.child-grid__input--error]="getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched">
                         }
                         @case ('date') {
-                          <input type="date" [formControlName]="col.key"
-                            class="child-grid__input"
-                            [class.child-grid__input--error]="getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched">
+                          <app-date-input [formControlName]="col.key"
+                            [hasError]="!!(getFormGroup(i).get(col.key)?.invalid && getFormGroup(i).get(col.key)?.touched)">
+                          </app-date-input>
                         }
                         @case ('select') {
                           <select [formControlName]="col.key"

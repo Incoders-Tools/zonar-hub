@@ -11,6 +11,7 @@ import { PlayerFacadeService } from '../player-facade.service';
 import { Player, PlayerSportAssignment, Category, Gender, Sport } from '../../../../../core/models';
 import { NormalizeNameDirective } from '../../../../../shared/directives/normalize-name.directive';
 import { NormalizeLowercaseDirective } from '../../../../../shared/directives/normalize-lowercase.directive';
+import { DateInputComponent } from '../../../../../shared/components/date-input/date-input.component';
 
 @Component({
   selector: 'app-player-form-panel',
@@ -25,7 +26,8 @@ import { NormalizeLowercaseDirective } from '../../../../../shared/directives/no
     ActiveToggleComponent,
     ChildCollectionGridComponent,
     NormalizeNameDirective,
-    NormalizeLowercaseDirective
+    NormalizeLowercaseDirective,
+    DateInputComponent
   ],
   templateUrl: './player-form-panel.component.html',
   styleUrl: './player-form-panel.component.scss'

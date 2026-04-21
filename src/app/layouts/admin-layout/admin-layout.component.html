@@ -3,6 +3,9 @@
   <header class="admin-mobile-header">
     <button class="admin-mobile-header__toggle" (click)="toggleMobileSidebar()" aria-label="Toggle menu">☰</button>
     <span class="admin-mobile-header__title">{{ 'common.appName' | t }}</span>
+    <div class="admin-mobile-header__actions">
+      <a class="admin-mobile-header__avatar" routerLink="/admin/profile">{{ userInitials() }}</a>
+    </div>
   </header>
 
   <!-- Sidebar -->
@@ -13,7 +16,7 @@
     </div>
 
     <!-- Organization Selector -->
-    @if (!sidebarCollapsed() && activeOrg.hasActiveOrganization()) {
+    @if (!sidebarCollapsed()) {
       <div class="admin-sidebar__org-selector">
         <app-org-selector></app-org-selector>
       </div>
@@ -153,8 +156,41 @@
     </app-guided-tour>
   }
 
-  <!-- Chatbot (always visible during onboarding, otherwise based on user pref) -->
-  @if (showChatbot() || onboarding.needsWizard()) {
+  <!-- Chatbot -->
+  @if (showChatbot()) {
     <app-chatbot-bubble></app-chatbot-bubble>
   }
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="admin-bottom-nav">
+    <a class="admin-bottom-nav__item"
+       routerLink="/admin"
+       routerLinkActive="admin-bottom-nav__item--active"
+       [routerLinkActiveOptions]="{ exact: true }">
+      <span class="admin-bottom-nav__icon material-symbols-rounded">dashboard</span>
+      <span class="admin-bottom-nav__label">{{ 'admin.dashboard' | t }}</span>
+    </a>
+    <a class="admin-bottom-nav__item"
+       routerLink="/admin/tournaments"
+       routerLinkActive="admin-bottom-nav__item--active">
+      <span class="admin-bottom-nav__icon material-symbols-rounded">emoji_events</span>
+      <span class="admin-bottom-nav__label">{{ 'admin.tournaments' | t }}</span>
+    </a>
+    <a class="admin-bottom-nav__item"
+       routerLink="/admin/registrations"
+       routerLinkActive="admin-bottom-nav__item--active">
+      <span class="admin-bottom-nav__icon material-symbols-rounded">how_to_reg</span>
+      <span class="admin-bottom-nav__label">{{ 'admin.registrations' | t }}</span>
+    </a>
+    <a class="admin-bottom-nav__item"
+       routerLink="/admin/draw-planner"
+       routerLinkActive="admin-bottom-nav__item--active">
+      <span class="admin-bottom-nav__icon material-symbols-rounded">account_tree</span>
+      <span class="admin-bottom-nav__label">{{ 'admin.drawPlanner' | t }}</span>
+    </a>
+    <button class="admin-bottom-nav__item" (click)="toggleMobileSidebar()">
+      <span class="admin-bottom-nav__icon material-symbols-rounded">menu</span>
+      <span class="admin-bottom-nav__label">{{ 'admin.nav.more' | t }}</span>
+    </button>
+  </nav>
 </div>

@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { SocialNetwork } from '../../models';
 import { SocialNetworkRepository } from '../social-network.repository';
+import { globalStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;
+const STORAGE_COLLECTION = 'social_networks';
+
+interface SnStorageState { data: SocialNetwork[]; counter: number; }
 
 const MOCK_SOCIAL_NETWORKS: SocialNetwork[] = [
   {
@@ -45,8 +49,23 @@ const MOCK_SOCIAL_NETWORKS: SocialNetwork[] = [
 
 @Injectable({ providedIn: 'root' })
 export class MockSocialNetworkRepository implements SocialNetworkRepository {
-  private networks: SocialNetwork[] = structuredClone(MOCK_SOCIAL_NETWORKS);
-  private idCounter = this.networks.length;
+  private networks: SocialNetwork[];
+  private idCounter: number;
+
+  constructor() {
+    const stored = loadFromStorage<SnStorageState>(globalStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.networks = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.networks = structuredClone(MOCK_SOCIAL_NETWORKS);
+      this.idCounter = this.networks.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(globalStorageKey(STORAGE_COLLECTION), { data: this.networks, counter: this.idCounter });
+  }
 
   private delay<T>(value: T): Promise<T> {
     return new Promise(resolve => setTimeout(() => resolve(value), MOCK_DELAY));
@@ -70,6 +89,7 @@ export class MockSocialNetworkRepository implements SocialNetworkRepository {
       updatedAt: now
     };
     this.networks.push(newNetwork);
+    this.persist();
     return this.delay(structuredClone(newNetwork));
   }
 
@@ -79,11 +99,13 @@ export class MockSocialNetworkRepository implements SocialNetworkRepository {
       throw new Error(`SocialNetwork ${id} not found`);
     }
     this.networks[idx] = { ...this.networks[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return this.delay(structuredClone(this.networks[idx]));
   }
 
   async delete(id: string): Promise<void> {
     this.networks = this.networks.filter(n => n.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 

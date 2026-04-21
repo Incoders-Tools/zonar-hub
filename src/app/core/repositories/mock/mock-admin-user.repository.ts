@@ -3,8 +3,15 @@ import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../..
 import { AdminUserRepository } from '../admin-user.repository';
 import { MOCK_ADMIN_USERS } from '../../data/mock/mock-admin-users';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 300;
+const STORAGE_COLLECTION = 'admin_users';
+
+interface AdminUserStorageState {
+  data: AdminUser[];
+  counter: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MockAdminUserRepository implements AdminUserRepository {
@@ -16,8 +23,18 @@ export class MockAdminUserRepository implements AdminUserRepository {
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    this.users = isDemoTenant() ? structuredClone(MOCK_ADMIN_USERS) : [];
-    this.idCounter = this.users.length;
+    const stored = loadFromStorage<AdminUserStorageState>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.users = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.users = isDemoTenant() ? structuredClone(MOCK_ADMIN_USERS) : [];
+      this.idCounter = this.users.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), { data: this.users, counter: this.idCounter } as AdminUserStorageState);
   }
 
   private delay<T>(value: T): Promise<T> {
@@ -48,6 +65,7 @@ export class MockAdminUserRepository implements AdminUserRepository {
       updatedAt: now
     };
     this.users.push(newUser);
+    this.persist();
     return this.delay(structuredClone(newUser));
   }
 
@@ -62,18 +80,21 @@ export class MockAdminUserRepository implements AdminUserRepository {
       ...changes,
       updatedAt: new Date().toISOString()
     };
+    this.persist();
     return this.delay(structuredClone(this.users[idx]));
   }
 
   async delete(id: string): Promise<void> {
     this.ensureSeed();
     this.users = this.users.filter(u => u.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 
   async deleteMany(ids: string[]): Promise<void> {
     this.ensureSeed();
     this.users = this.users.filter(u => !ids.includes(u.id));
+    this.persist();
     return this.delay(undefined);
   }
 }

@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Plan, PlanType } from '../../models';
 import { PlanRepository } from '../plan.repository';
+import { globalStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
-@Injectable({ providedIn: 'root' })
-export class MockPlanRepository extends PlanRepository {
-  private plans: Plan[] = [
+const STORAGE_COLLECTION = 'plans';
+
+interface PlanStorageState { data: Plan[]; nextId: number; }
+
+const SEED_PLANS: Plan[] = [
     {
       id: 'plan-1',
       name: 'Starter',
@@ -103,7 +106,26 @@ export class MockPlanRepository extends PlanRepository {
     }
   ];
 
-  private nextId = 5;
+@Injectable({ providedIn: 'root' })
+export class MockPlanRepository extends PlanRepository {
+  private plans: Plan[];
+  private nextId: number;
+
+  constructor() {
+    super();
+    const stored = loadFromStorage<PlanStorageState>(globalStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.plans = stored.data;
+      this.nextId = stored.nextId;
+    } else {
+      this.plans = structuredClone(SEED_PLANS);
+      this.nextId = 5;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(globalStorageKey(STORAGE_COLLECTION), { data: this.plans, nextId: this.nextId });
+  }
 
   async getAll(): Promise<Plan[]> {
     await this.delay();
@@ -124,6 +146,7 @@ export class MockPlanRepository extends PlanRepository {
     }
     const plan: Plan = { ...data, id: `plan-${this.nextId++}` };
     this.plans.push(plan);
+    this.persist();
     return JSON.parse(JSON.stringify(plan));
   }
 
@@ -132,6 +155,7 @@ export class MockPlanRepository extends PlanRepository {
     const idx = this.plans.findIndex(p => p.id === id);
     if (idx === -1) throw new Error(`Plan ${id} not found`);
     this.plans[idx] = { ...this.plans[idx], ...data };
+    this.persist();
     return JSON.parse(JSON.stringify(this.plans[idx]));
   }
 
@@ -140,6 +164,7 @@ export class MockPlanRepository extends PlanRepository {
     const idx = this.plans.findIndex(p => p.id === id);
     if (idx === -1) throw new Error(`Plan ${id} not found`);
     this.plans.splice(idx, 1);
+    this.persist();
   }
 
   private delay(): Promise<void> {

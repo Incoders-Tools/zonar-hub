@@ -2,12 +2,29 @@ import { Injectable, signal } from '@angular/core';
 import { NewsArticle, HomeSection, FlyerBackground } from '../models';
 import { MOCK_NEWS, MOCK_HOME_SECTIONS } from '../data/mock/mock-content';
 
+/**
+ * Generate a simple SVG placeholder for flyer backgrounds.
+ * Each background gets a unique gradient based on its color stops.
+ */
+function svgPlaceholder(color1: string, color2: string, label: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080">
+    <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${color1}"/>
+      <stop offset="100%" stop-color="${color2}"/>
+    </linearGradient></defs>
+    <rect width="1080" height="1080" fill="url(#g)"/>
+    <text x="540" y="540" text-anchor="middle" dominant-baseline="middle"
+      font-family="sans-serif" font-size="48" fill="rgba(255,255,255,0.3)">${label}</text>
+  </svg>`;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
 const MOCK_FLYER_BACKGROUNDS: FlyerBackground[] = [
-  { id: 'fb-1', name: 'Court Sunset', key: 'court_sunset', imageUrl: '/assets/flyers/court-sunset.png', thumbnailUrl: '/assets/flyers/court-sunset-thumb.png', category: 'tournament', isActive: true, sortOrder: 1, createdAt: '2025-01-10' },
-  { id: 'fb-2', name: 'Neon Arena', key: 'neon_arena', imageUrl: '/assets/flyers/neon-arena.png', thumbnailUrl: '/assets/flyers/neon-arena-thumb.png', category: 'tournament', isActive: true, sortOrder: 2, createdAt: '2025-01-12' },
-  { id: 'fb-3', name: 'Blue Gradient', key: 'blue_gradient', imageUrl: '/assets/flyers/blue-gradient.png', thumbnailUrl: '/assets/flyers/blue-gradient-thumb.png', category: 'general', isActive: true, sortOrder: 3, createdAt: '2025-01-15' },
-  { id: 'fb-4', name: 'Registration Green', key: 'registration_green', imageUrl: '/assets/flyers/reg-green.png', thumbnailUrl: '/assets/flyers/reg-green-thumb.png', category: 'registration', isActive: false, sortOrder: 4, createdAt: '2025-02-01' },
-  { id: 'fb-5', name: 'Ranking Gold', key: 'ranking_gold', imageUrl: '/assets/flyers/ranking-gold.png', thumbnailUrl: '/assets/flyers/ranking-gold-thumb.png', category: 'ranking', isActive: true, sortOrder: 5, createdAt: '2025-02-10' }
+  { id: 'fb-1', name: 'Court Sunset', key: 'court_sunset', imageUrl: svgPlaceholder('#c2410c', '#ea580c', 'Court Sunset'), thumbnailUrl: svgPlaceholder('#c2410c', '#ea580c', ''), category: 'tournament', isActive: true, sortOrder: 1, createdAt: '2025-01-10' },
+  { id: 'fb-2', name: 'Neon Arena', key: 'neon_arena', imageUrl: svgPlaceholder('#6d28d9', '#8b5cf6', 'Neon Arena'), thumbnailUrl: svgPlaceholder('#6d28d9', '#8b5cf6', ''), category: 'tournament', isActive: true, sortOrder: 2, createdAt: '2025-01-12' },
+  { id: 'fb-3', name: 'Blue Gradient', key: 'blue_gradient', imageUrl: svgPlaceholder('#1e40af', '#3b82f6', 'Blue Gradient'), thumbnailUrl: svgPlaceholder('#1e40af', '#3b82f6', ''), category: 'general', isActive: true, sortOrder: 3, createdAt: '2025-01-15' },
+  { id: 'fb-4', name: 'Registration Green', key: 'registration_green', imageUrl: svgPlaceholder('#166534', '#22c55e', 'Reg Green'), thumbnailUrl: svgPlaceholder('#166534', '#22c55e', ''), category: 'registration', isActive: false, sortOrder: 4, createdAt: '2025-02-01' },
+  { id: 'fb-5', name: 'Ranking Gold', key: 'ranking_gold', imageUrl: svgPlaceholder('#92400e', '#f59e0b', 'Ranking Gold'), thumbnailUrl: svgPlaceholder('#92400e', '#f59e0b', ''), category: 'ranking', isActive: true, sortOrder: 5, createdAt: '2025-02-10' }
 ];
 
 @Injectable({ providedIn: 'root' })

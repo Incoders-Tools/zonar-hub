@@ -3,6 +3,14 @@ import { RegistrationRepository } from '../registration.repository';
 import { Registration } from '../../models/registration.model';
 import { MOCK_REGISTRATIONS } from '../../data/mock/mock-registrations';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
+
+const STORAGE_COLLECTION = 'registrations';
+
+interface RegistrationStorageState {
+  data: Registration[];
+  counter: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MockRegistrationRepository implements RegistrationRepository {
@@ -14,8 +22,18 @@ export class MockRegistrationRepository implements RegistrationRepository {
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    this.registrations = isDemoTenant() ? structuredClone(MOCK_REGISTRATIONS) : [];
-    this.idCounter = this.registrations.length;
+    const stored = loadFromStorage<RegistrationStorageState>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.registrations = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.registrations = isDemoTenant() ? structuredClone(MOCK_REGISTRATIONS) : [];
+      this.idCounter = this.registrations.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), { data: this.registrations, counter: this.idCounter } as RegistrationStorageState);
   }
 
   async getAll(): Promise<Registration[]> {
@@ -50,6 +68,7 @@ export class MockRegistrationRepository implements RegistrationRepository {
       registeredAt: new Date().toISOString()
     };
     this.registrations.push(created);
+    this.persist();
     return structuredClone(created);
   }
 
@@ -58,12 +77,14 @@ export class MockRegistrationRepository implements RegistrationRepository {
     const idx = this.registrations.findIndex(r => r.id === id);
     if (idx === -1) throw new Error(`Registration ${id} not found`);
     this.registrations[idx] = { ...this.registrations[idx], ...changes };
+    this.persist();
     return structuredClone(this.registrations[idx]);
   }
 
   async delete(id: string): Promise<void> {
     this.ensureSeed();
     this.registrations = this.registrations.filter(r => r.id !== id);
+    this.persist();
   }
 
   isDuplicateParticipantSet(tournamentId: string, playerIds: string[]): boolean {

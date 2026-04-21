@@ -75,12 +75,19 @@
               <!-- FA Icon Field -->
               <div class="form-field">
                 <label>{{ 'admin.social-networks.form.faIcon' | t }}</label>
-                <input
-                  type="text"
-                  formControlName="faIcon"
-                  [placeholder]="'admin.social-networks.form.faIconPlaceholder' | t"
-                  matInput
-                />
+                <div class="social-networks-form__icon-row">
+                  <input
+                    type="text"
+                    formControlName="faIcon"
+                    [placeholder]="'admin.social-networks.form.faIconPlaceholder' | t"
+                    matInput
+                  />
+                  @if (form.get('faIcon')?.value) {
+                    <span class="social-networks-form__icon-preview" [title]="form.get('faIcon')?.value">
+                      <mat-icon>{{ form.get('faIcon')?.value }}</mat-icon>
+                    </span>
+                  }
+                </div>
                 <span class="hint">{{ 'admin.social-networks.form.faIconHint' | t }}</span>
               </div>
 
@@ -100,7 +107,7 @@
                 <app-active-toggle
                   [value]="form.get('isActive')!.value"
                   mode="toggle"
-                  (toggled)="form.get('isActive')!.setValue($event)">
+                  (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
                 </app-active-toggle>
                 <span class="hint">{{ 'admin.social-networks.form.isActiveHint' | t }}</span>
               </div>

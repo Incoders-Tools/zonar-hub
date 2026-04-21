@@ -58,6 +58,7 @@ export class AdminLayoutComponent implements OnInit {
 
   readonly tourSteps: TourStep[] = [
     { targetSelector: '.admin-sidebar__link[href="/admin"]', titleKey: 'tour.dashboard.title', descriptionKey: 'tour.dashboard.description', position: 'right' },
+    { targetSelector: '.org-selector', titleKey: 'tour.orgSelector.title', descriptionKey: 'tour.orgSelector.description', position: 'right' },
     { targetSelector: '.admin-sidebar__group:first-of-type', titleKey: 'tour.circuitOps.title', descriptionKey: 'tour.circuitOps.description', position: 'right' },
     { targetSelector: '.admin-sidebar__user', titleKey: 'tour.profile.title', descriptionKey: 'tour.profile.description', position: 'top' },
     { targetSelector: '.admin-sidebar__header', titleKey: 'tour.mainArea.title', descriptionKey: 'tour.mainArea.description', position: 'right' }
@@ -87,7 +88,7 @@ export class AdminLayoutComponent implements OnInit {
           labelKey: 'admin.tournaments', route: '/admin/tournaments', icon: '🏆', toolKey: 'tournaments',
           expanded: false,
           children: [
-            { labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types', icon: '🎾', toolKey: 'tournament-types' },
+
             { labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles', icon: '✅', toolKey: 'tournament-eligibility-profiles' },
             { labelKey: 'admin.tournamentRuleSets', route: '/admin/catalogs/tournament-rules', icon: '📜', toolKey: 'tournament-rules' }
           ]
@@ -113,8 +114,10 @@ export class AdminLayoutComponent implements OnInit {
             { labelKey: 'admin.categories', route: '/admin/catalogs/categories', icon: '🏷️', toolKey: 'categories' },
             { labelKey: 'admin.genders', route: '/admin/catalogs/genders', icon: '⚧', toolKey: 'genders' },
             { labelKey: 'admin.sports', route: '/admin/catalogs/sports', icon: '🏅', toolKey: 'sports' },
+            { labelKey: 'admin.tournamentModalities', route: '/admin/catalogs/tournament-modalities', icon: '🎯', toolKey: 'tournament-modalities' },
             { labelKey: 'admin.complexServices', route: '/admin/catalogs/complex-services', icon: '🔧', toolKey: 'complex-services' },
             { labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks', icon: '📱', toolKey: 'social-networks' },
+            { labelKey: 'admin.flyerBackgrounds', route: '/admin/flyer-backgrounds', icon: '🖼️', toolKey: 'flyer-backgrounds' },
             { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊', toolKey: 'tournament-statuses' }
           ]
         }
@@ -135,8 +138,7 @@ export class AdminLayoutComponent implements OnInit {
         { labelKey: 'admin.appLogs', route: '/admin/system/logs', icon: '📋', toolKey: 'app-logs' },
         { labelKey: 'admin.security', route: '/admin/system/security', icon: '🛡️', toolKey: 'security' },
         { labelKey: 'admin.settings', route: '/admin/system/settings', icon: '⚙️', toolKey: 'settings' },
-        { labelKey: 'admin.billing', route: '/admin/billing', icon: '💰', toolKey: 'billing' },
-        { labelKey: 'admin.flyerBackgrounds', route: '/admin/flyer-backgrounds', icon: '🖼️', toolKey: 'flyer-backgrounds' }
+        { labelKey: 'admin.billing', route: '/admin/billing', icon: '💰', toolKey: 'billing' }
       ]
     }
   ];

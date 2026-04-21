@@ -18,19 +18,49 @@
         }
       </div>
 
-      <!-- Tournament Type Field -->
+      <!-- Sport Field -->
       <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.tournamentTypeId' | t }} *</label>
-        <select formControlName="tournamentTypeId" [class.error]="isFieldInvalid('tournamentTypeId')">
-          <option value="">{{ 'admin.tournaments.form.selectType' | t }}</option>
-          @for (option of tournamentTypeOptions(); track option.value) {
+        <label>{{ 'admin.tournaments.form.sportId' | t }} *</label>
+        <select formControlName="sportId" [class.error]="isFieldInvalid('sportId')">
+          <option value="">{{ 'admin.tournaments.form.selectSport' | t }}</option>
+          @for (option of sportOptions(); track option.value) {
             <option [value]="option.value">{{ option.label }}</option>
           }
         </select>
-        @if (isFieldInvalid('tournamentTypeId')) {
-          <span class="tournaments-form__error">{{ getErrorMessage('tournamentTypeId') | t }}</span>
+        @if (isFieldInvalid('sportId')) {
+          <span class="tournaments-form__error">{{ getErrorMessage('sportId') | t }}</span>
         }
       </div>
+
+      <!-- Modality Field (filtered by sport) -->
+      @if (modalityOptionsForSport().length > 0) {
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.modalityId' | t }}</label>
+          <select formControlName="modalityId">
+            @if (modalityOptionsForSport().length > 1) {
+              <option value="">{{ 'admin.tournaments.form.selectModality' | t }}</option>
+            }
+            @for (option of modalityOptionsForSport(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.modalityHint' | t }}</span>
+        </div>
+      }
+
+      <!-- Tournament Type Field (legacy, hidden for non-sysadmin) -->
+      @if (isSystemAdmin()) {
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.tournamentTypeId' | t }}</label>
+          <select formControlName="tournamentTypeId">
+            <option value="">{{ 'admin.tournaments.form.selectType' | t }}</option>
+            @for (option of tournamentTypeOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.typeHint' | t }}</span>
+        </div>
+      }
 
       <!-- Complex Field -->
       <div class="tournaments-form__field">
@@ -64,31 +94,14 @@
         </div>
       }
 
-      <!-- Derived Sport (read-only) -->
-      @if (derivedSport()) {
-        <div class="tournaments-form__field">
-          <label>{{ 'admin.tournaments.form.sport' | t }}</label>
-          <input
-            type="text"
-            [value]="derivedSport()!.sportName"
-            disabled
-            class="tournaments-form__readonly"
-          />
-          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.sportHint' | t }}</span>
-        </div>
-      }
-
       <!-- Start Date -->
       <div class="tournaments-form__field">
         <label>{{ 'admin.tournaments.form.startDate' | t }} *</label>
-        <input
-          type="date"
+        <app-date-input
           formControlName="startDate"
           [min]="todayDate()"
-          [placeholder]="dateFormatPlaceholder()"
-          [title]="dateFormatPlaceholder()"
-          [class.error]="isFieldInvalid('startDate')"
-        />
+          [hasError]="isFieldInvalid('startDate')">
+        </app-date-input>
         @if (isFieldInvalid('startDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('startDate') | t }}</span>
         }
@@ -97,14 +110,11 @@
       <!-- End Date -->
       <div class="tournaments-form__field">
         <label>{{ 'admin.tournaments.form.endDate' | t }} *</label>
-        <input
-          type="date"
+        <app-date-input
           formControlName="endDate"
           [min]="endDateMin()"
-          [placeholder]="dateFormatPlaceholder()"
-          [title]="dateFormatPlaceholder()"
-          [class.error]="isFieldInvalid('endDate')"
-        />
+          [hasError]="isFieldInvalid('endDate')">
+        </app-date-input>
         @if (isFieldInvalid('endDate')) {
           <span class="tournaments-form__error">{{ getErrorMessage('endDate') | t }}</span>
         }
@@ -126,18 +136,19 @@
         </div>
       }
 
-      <!-- Gender (conditional) -->
-      @if (showGenderField()) {
-        <div class="tournaments-form__field">
-          <label>{{ 'admin.tournaments.form.genderId' | t }}</label>
-          <select formControlName="genderId">
-            <option value="">{{ 'admin.tournaments.form.selectGender' | t }}</option>
-            @for (option of genderOptions(); track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </select>
-        </div>
-      }
+      <!-- Gender -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.genderId' | t }} *</label>
+        <select formControlName="genderId" [class.error]="isFieldInvalid('genderId')">
+          <option value="">{{ 'admin.tournaments.form.selectGender' | t }}</option>
+          @for (option of genderOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (isFieldInvalid('genderId')) {
+          <span class="tournaments-form__error">{{ 'common.required' | t }}</span>
+        }
+      </div>
 
       <!-- Category -->
       <div class="tournaments-form__field">
@@ -150,9 +161,21 @@
         </select>
       </div>
 
+      <!-- Rule Set -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.ruleSetId' | t }}</label>
+        <select formControlName="ruleSetId">
+          <option value="">{{ 'admin.tournaments.form.selectRuleSet' | t }}</option>
+          @for (option of ruleSetOptions(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        <span class="tournaments-form__hint">{{ 'admin.tournaments.form.ruleSetHint' | t }}</span>
+      </div>
+
       <!-- Max Pairs -->
       <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.maxPairs' | t }} *</label>
+        <label>{{ maxParticipantsLabelKey() | t }} *</label>
         <input
           type="number"
           formControlName="maxPairs"
@@ -165,11 +188,12 @@
       </div>
 
       <!-- Active Status -->
-      <div class="tournaments-form__field">
+      <div class="tournaments-form__field tournaments-form__field--toggle">
+        <label>{{ 'admin.tournaments.form.status' | t }}</label>
         <app-active-toggle
           [value]="form.get('isActive')!.value"
           mode="toggle"
-          (toggled)="form.get('isActive')!.setValue($event)">
+          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
         </app-active-toggle>
       </div>
     </div>
@@ -181,14 +205,11 @@
     <div class="tournaments-form__grid">
       <div class="tournaments-form__field">
         <label>{{ 'admin.tournaments.form.registrationStartDate' | t }}</label>
-        <input
-          type="date"
+        <app-date-input
           formControlName="registrationStartDate"
           [max]="regStartMax()"
-          [placeholder]="dateFormatPlaceholder()"
-          [title]="dateFormatPlaceholder()"
-          [class.error]="isFieldInvalid('registrationStartDate')"
-        />
+          [hasError]="isFieldInvalid('registrationStartDate')">
+        </app-date-input>
         @if (!registrationEnabled()) {
           <span class="tournaments-form__hint">{{ 'admin.tournaments.form.registrationHint' | t }}</span>
         }
@@ -201,15 +222,12 @@
         <label>{{ 'admin.tournaments.form.registrationEndDate' | t }}
           <span class="tournaments-form__tooltip" [title]="'admin.tournaments.form.registrationEndDateTooltip' | t">ⓘ</span>
         </label>
-        <input
-          type="date"
+        <app-date-input
           formControlName="registrationEndDate"
           [min]="regEndMin()"
           [max]="regEndMax()"
-          [placeholder]="dateFormatPlaceholder()"
-          [title]="dateFormatPlaceholder()"
-          [class.error]="isFieldInvalid('registrationEndDate')"
-        />
+          [hasError]="isFieldInvalid('registrationEndDate')">
+        </app-date-input>
         @if (!registrationEnabled()) {
           <span class="tournaments-form__hint">{{ 'admin.tournaments.form.registrationHint' | t }}</span>
         }
@@ -242,17 +260,15 @@
           />
         </div>
 
-        <!-- Points to Award (conditional) -->
-        @if (showPointsField()) {
-          <div class="tournaments-form__field">
-            <label>{{ 'admin.tournaments.form.pointsToAward' | t }}</label>
-            <input
-              type="number"
-              formControlName="pointsToAward"
-              min="0"
-            />
-          </div>
-        }
+        <!-- Points to Award -->
+        <div class="tournaments-form__field">
+          <label>{{ 'admin.tournaments.form.pointsToAward' | t }}</label>
+          <input
+            type="number"
+            formControlName="pointsToAward"
+            min="0"
+          />
+        </div>
 
         <!-- Cover Image URL -->
         <div class="tournaments-form__field">

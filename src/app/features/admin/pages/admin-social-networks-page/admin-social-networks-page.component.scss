@@ -79,6 +79,30 @@
   }
 }
 
+.social-networks-form__icon-row {
+  display: flex;
+  align-items: center;
+  gap: var(--zh-space-sm);
+}
+
+.social-networks-form__icon-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--zh-radius-md);
+  background: color-mix(in srgb, var(--zh-primary) 12%, transparent);
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--zh-primary);
+  }
+}
+
 .form-content {
   display: flex;
   flex-direction: column;

@@ -65,7 +65,13 @@ export class PlayerFacadeService {
     const all = this.playersState();
     const f = this.filtersState();
     const sort = this.sortOptionState();
+    const activeOrgId = this.activeOrg.activeOrganizationId();
     let result = [...all];
+
+    // Filter by active organization
+    if (activeOrgId) {
+      result = result.filter(p => !p.organizationId || p.organizationId === activeOrgId);
+    }
 
     if (f.search) {
       const term = f.search.toLowerCase();

@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { ProgressBarComponent } from '../../../../shared/components/progress-bar/progress-bar.component';
@@ -31,6 +32,7 @@ const PLANNER_STAGES: PlannerStage[] = [
   standalone: true,
   imports: [
     FormsModule,
+    MatIcon,
     TranslatePipe,
     FormatDatePipe,
     ProgressBarComponent,
@@ -115,16 +117,18 @@ export class AdminDrawPlannerPageComponent {
 
     return {
       name: t.name,
-      type: t.tournamentTypeName,
-      complex: t.complexName,
       sport: t.sportName ?? null,
+      modality: t.modalityName ?? null,
+      complex: t.complexName,
       maxPairs: t.maxPairs,
       startDate: t.startDate,
       endDate: t.endDate,
       statusKey,
       statusVariant,
       registrationStart: t.registrationStartDate,
-      registrationEnd: t.registrationEndDate
+      registrationEnd: t.registrationEndDate,
+      ruleSetDescription: t.ruleSetDescription ?? null,
+      courtsCount: (t.selectedCourtIds ?? []).length
     };
   });
 
@@ -184,6 +188,13 @@ export class AdminDrawPlannerPageComponent {
     this.currentStageLabel.set('');
     this.result.set(null);
 
+    // On mobile, scroll to the progress bar so the user can follow the generation
+    if (window.innerWidth < 768) {
+      setTimeout(() => {
+        document.getElementById('draw-progress-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+
     try {
       await this.simulateStages();
 
@@ -207,6 +218,13 @@ export class AdminDrawPlannerPageComponent {
       this.currentStageLabel.set('');
       this.result.set(drawResult);
       this.notifications.success('drawPlanner.generated');
+
+      // On mobile, scroll to the result once generation is complete
+      if (window.innerWidth < 768) {
+        setTimeout(() => {
+          document.getElementById('draw-result-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
     } finally {
       this.generating.set(false);
     }

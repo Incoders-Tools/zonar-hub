@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { ComplexService } from '../../models';
 import { ComplexServiceRepository } from '../complex-service.repository';
+import { globalStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;
+const STORAGE_COLLECTION = 'complex_services';
+
+interface CsStorageState { data: ComplexService[]; counter: number; }
 
 const MOCK_COMPLEX_SERVICES: ComplexService[] = [
   {
@@ -39,8 +43,23 @@ const MOCK_COMPLEX_SERVICES: ComplexService[] = [
 
 @Injectable({ providedIn: 'root' })
 export class MockComplexServiceRepository implements ComplexServiceRepository {
-  private services: ComplexService[] = structuredClone(MOCK_COMPLEX_SERVICES);
-  private idCounter = this.services.length;
+  private services: ComplexService[];
+  private idCounter: number;
+
+  constructor() {
+    const stored = loadFromStorage<CsStorageState>(globalStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.services = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.services = structuredClone(MOCK_COMPLEX_SERVICES);
+      this.idCounter = this.services.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(globalStorageKey(STORAGE_COLLECTION), { data: this.services, counter: this.idCounter });
+  }
 
   private delay<T>(value: T): Promise<T> {
     return new Promise(resolve => setTimeout(() => resolve(value), MOCK_DELAY));
@@ -64,6 +83,7 @@ export class MockComplexServiceRepository implements ComplexServiceRepository {
       updatedAt: now
     };
     this.services.push(newService);
+    this.persist();
     return this.delay(structuredClone(newService));
   }
 
@@ -73,11 +93,13 @@ export class MockComplexServiceRepository implements ComplexServiceRepository {
       throw new Error(`ComplexService ${id} not found`);
     }
     this.services[idx] = { ...this.services[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return this.delay(structuredClone(this.services[idx]));
   }
 
   async delete(id: string): Promise<void> {
     this.services = this.services.filter(s => s.id !== id);
+    this.persist();
     return this.delay(undefined);
   }
 

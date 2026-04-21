@@ -1,0 +1,108 @@
+<div class="modalities-page">
+  <!-- Page Header -->
+  <div class="modalities-page__header">
+    <div class="modalities-page__title-row">
+      <div>
+        <h1 class="modalities-page__title">{{ 'admin.modalities.title' | t }}</h1>
+        <p class="modalities-page__subtitle">{{ 'admin.modalities.subtitle' | t }}</p>
+        @if (!isSystemAdmin()) {
+          <p class="modalities-page__governance-notice">{{ 'admin.modalities.governance.readOnly' | t }}</p>
+        }
+      </div>
+      <div class="modalities-page__header-actions">
+        <app-help-button
+          [titleKey]="'admin.modalities.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+        @if (isSystemAdmin() && hasSelection()) {
+          <app-async-button
+            variant="danger"
+            [loading]="facade.deleting()"
+            (clicked)="openBulkDelete()">
+            {{ 'admin.bulkDelete' | t }}
+          </app-async-button>
+        }
+        @if (isSystemAdmin() && !showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'admin.modalities.action.create' | t }}
+          </app-async-button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Panel -->
+  @if (showFormPanel()) {
+    <div class="modalities-page__form-panel" @slideDown>
+      <div class="modalities-page__form-panel-header">
+        <h3 class="modalities-page__form-panel-title">
+          {{ (editingModality() ? 'admin.modalities.edit.title' : 'admin.modalities.create.title') | t }}
+        </h3>
+        <button
+          class="modalities-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="modalities-page__form-panel-body">
+        <app-modalities-form-panel
+          [modality]="editingModality()"
+          [saving]="facade.saving()"
+          (saved)="closeFormPanel()"
+          (cancelled)="closeFormPanel()">
+        </app-modalities-form-panel>
+      </div>
+    </div>
+  }
+
+  <!-- Filter Panel -->
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="true"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <!-- Data Table -->
+  <app-data-table
+    [columns]="columns()"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [selectable]="isSystemAdmin()"
+    [reorderable]="isSystemAdmin()"
+    [rowActions]="rowActions()"
+    emptyMessageKey="admin.modalities.emptyState"
+    (selectionChanged)="onSelectionChanged($event)"
+    (sorted)="onSorted($event)"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.modalities.confirm.deleteTitle"
+    messageKey="admin.modalities.confirm.deleteMessage"
+    confirmLabelKey="common.delete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Bulk Delete Confirmation Dialog -->
+@if (showBulkDeleteDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.modalities.confirm.bulkDeleteTitle"
+    messageKey="admin.modalities.confirm.bulkDeleteMessage"
+    confirmLabelKey="admin.bulkDelete"
+    confirmVariant="danger"
+    [loading]="facade.deleting()"
+    (confirmed)="executeBulkDelete()"
+    (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}

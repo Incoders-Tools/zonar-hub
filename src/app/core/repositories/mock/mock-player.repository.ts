@@ -3,6 +3,14 @@ import { PlayerRepository, PlayerSearchFilters } from '../player.repository';
 import { Player } from '../../models/player.model';
 import { MOCK_PLAYERS } from '../../data/mock/mock-players';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
+
+const STORAGE_COLLECTION = 'players';
+
+interface PlayerStorageState {
+  data: Player[];
+  counter: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MockPlayerRepository implements PlayerRepository {
@@ -14,8 +22,18 @@ export class MockPlayerRepository implements PlayerRepository {
     const tid = getCurrentMockTenantId();
     if (this._seededForTenant === tid) return;
     this._seededForTenant = tid;
-    this.players = isDemoTenant() ? structuredClone(MOCK_PLAYERS) : [];
-    this.idCounter = this.players.length;
+    const stored = loadFromStorage<PlayerStorageState>(tenantStorageKey(STORAGE_COLLECTION));
+    if (stored) {
+      this.players = stored.data;
+      this.idCounter = stored.counter;
+    } else {
+      this.players = isDemoTenant() ? structuredClone(MOCK_PLAYERS) : [];
+      this.idCounter = this.players.length;
+    }
+  }
+
+  private persist(): void {
+    persistToStorage(tenantStorageKey(STORAGE_COLLECTION), { data: this.players, counter: this.idCounter } as PlayerStorageState);
   }
 
   async getAll(): Promise<Player[]> {
@@ -59,6 +77,7 @@ export class MockPlayerRepository implements PlayerRepository {
       updatedAt: now
     };
     this.players.push(newPlayer);
+    this.persist();
     return structuredClone(newPlayer);
   }
 
@@ -66,11 +85,13 @@ export class MockPlayerRepository implements PlayerRepository {
     const idx = this.players.findIndex(p => p.id === id);
     if (idx === -1) throw new Error(`Player ${id} not found`);
     this.players[idx] = { ...this.players[idx], ...changes, updatedAt: new Date().toISOString() };
+    this.persist();
     return structuredClone(this.players[idx]);
   }
 
   async delete(id: string): Promise<void> {
     this.players = this.players.filter(p => p.id !== id);
+    this.persist();
   }
 
   async getByHabitualPartner(playerId: string): Promise<Player | undefined> {

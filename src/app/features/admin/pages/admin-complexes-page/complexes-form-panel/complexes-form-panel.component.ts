@@ -23,6 +23,7 @@ type FormTab = 'data' | 'services' | 'social';
 interface ServiceRow {
   serviceId: string;
   name: string;
+  faIcon: string | null;
   isActive: boolean;
   sortOrder: number;
 }
@@ -30,6 +31,7 @@ interface ServiceRow {
 interface NetworkRow {
   socialNetworkId: string;
   name: string;
+  faIcon: string | null;
   isActive: boolean;
   profileUrl: string;
 }
@@ -176,6 +178,7 @@ export class ComplexesFormPanelComponent implements OnInit {
           return {
             serviceId: s.id,
             name: s.name,
+            faIcon: s.faIcon ?? null,
             isActive: assignment?.isActive ?? false,
             sortOrder: assignment?.sortOrder ?? 0
           };
@@ -186,6 +189,7 @@ export class ComplexesFormPanelComponent implements OnInit {
         services.map(s => ({
           serviceId: s.id,
           name: s.name,
+          faIcon: s.faIcon ?? null,
           isActive: false,
           sortOrder: 0
         }))
@@ -206,6 +210,7 @@ export class ComplexesFormPanelComponent implements OnInit {
           return {
             socialNetworkId: n.id,
             name: n.name,
+            faIcon: n.faIcon ?? null,
             isActive: assignment?.isActive ?? false,
             profileUrl: assignment?.profileUrl ?? ''
           };
@@ -216,6 +221,7 @@ export class ComplexesFormPanelComponent implements OnInit {
         networks.map(n => ({
           socialNetworkId: n.id,
           name: n.name,
+          faIcon: n.faIcon ?? null,
           isActive: false,
           profileUrl: ''
         }))

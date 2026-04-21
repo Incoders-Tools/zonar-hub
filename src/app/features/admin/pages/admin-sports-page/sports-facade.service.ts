@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Sport } from '../../../../core/models';
+import { Sport, TournamentModality } from '../../../../core/models';
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
 
 export interface SportFilters {
   name?: string;
@@ -10,9 +11,11 @@ export interface SportFilters {
 @Injectable()
 export class SportsFacadeService {
   private readonly repository = inject(MockSportRepository);
+  private readonly modalityRepository = inject(MockTournamentModalityRepository);
 
   // State signals
   private readonly entitiesState = signal<Sport[]>([]);
+  private readonly modalitiesState = signal<TournamentModality[]>([]);
   private readonly loadingState = signal(false);
   private readonly savingState = signal(false);
   private readonly deletingState = signal(false);
@@ -22,6 +25,7 @@ export class SportsFacadeService {
 
   // Public computed properties
   readonly entities = this.entitiesState;
+  readonly modalities = this.modalitiesState;
   readonly loading = this.loadingState;
   readonly saving = this.savingState;
   readonly deleting = this.deletingState;
@@ -64,8 +68,12 @@ export class SportsFacadeService {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
-      const sports = await this.repository.getAll();
+      const [sports, modalities] = await Promise.all([
+        this.repository.getAll(),
+        this.modalityRepository.getAll()
+      ]);
       this.entitiesState.set(sports);
+      this.modalitiesState.set(modalities);
     } catch (error) {
       this.errorState.set((error as Error).message);
     } finally {

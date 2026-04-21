@@ -44,12 +44,15 @@
                 <span class="error-message">{{ 'common.required' | t }}</span>
               }
             </div>
-            <div class="form-field">
+            <div class="form-field form-field--full">
               <label>{{ 'flyers.form.imageUrl' | t }} *</label>
-              <input type="text" formControlName="imageUrl" matInput />
-              @if (form.get('imageUrl')?.invalid && form.get('imageUrl')?.touched) {
-                <span class="error-message">{{ 'common.required' | t }}</span>
-              }
+              <app-image-upload
+                [currentImageUrl]="editing()?.imageUrl ?? null"
+                [accept]="'image/png, image/jpeg, image/webp'"
+                [maxSizeMb]="5"
+                (imageChanged)="onImageChanged($event)"
+                (imageRemoved)="onImageRemoved()">
+              </app-image-upload>
             </div>
             <div class="form-field">
               <label>{{ 'flyers.form.category' | t }}</label>
@@ -77,7 +80,7 @@
             </button>
             <app-async-button
               [loading]="saving()"
-              [disabled]="form.invalid"
+              [disabled]="!formValid()"
               (clicked)="save()">
               {{ (editing() ? 'common.update' : 'common.create') | t }}
             </app-async-button>

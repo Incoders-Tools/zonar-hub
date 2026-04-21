@@ -131,6 +131,11 @@
     display: block;
   }
 
+  // Add padding-bottom so the fixed chatbot button (≈80px) doesn't overlap footer content
+  .public-footer {
+    padding-bottom: 88px;
+  }
+
   .public-header__nav {
     display: none;
     position: absolute;

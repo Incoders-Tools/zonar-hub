@@ -77,7 +77,7 @@
             <app-active-toggle
               [value]="courtForm.get('isActive')!.value"
               mode="toggle"
-              (toggled)="courtForm.get('isActive')!.setValue($event)">
+              (toggled)="courtForm.get('isActive')!.setValue($event); courtForm.markAsDirty()">
             </app-active-toggle>
           </div>
         </div>
@@ -88,7 +88,7 @@
           </button>
           <app-async-button
             [loading]="saving()"
-            [disabled]="courtForm.invalid"
+            [disabled]="courtForm.invalid || (!!editingCourt() && !courtForm.dirty)"
             (clicked)="saveCourt()">
             {{ (editingCourt() ? 'common.update' : 'common.create') | t }}
           </app-async-button>

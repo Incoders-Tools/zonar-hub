@@ -53,10 +53,31 @@
         <app-active-toggle
           [value]="form.get('isActive')!.value"
           mode="toggle"
-          (toggled)="form.get('isActive')!.setValue($event)">
+          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
         </app-active-toggle>
         <span class="sports-form__hint">{{ 'admin.sports.form.isActiveHint' | t }}</span>
       </div>
+    </div>
+
+    <!-- Modalities Selection (multi-select with drag-drop) -->
+    <app-child-collection-grid
+      mode="select"
+      [titleKey]="'admin.sports.form.modalitiesTitle'"
+      [columns]="modalityColumns"
+      [items]="activeModalities()"
+      [selectedIds]="selectedModalityIds()"
+      [initialOrderedIds]="orderedModalityIds()"
+      [emptyMessageKey]="'admin.sports.form.modalitiesEmpty'"
+      [selectAllLabelKey]="'childGrid.selectAll'"
+      [deselectAllLabelKey]="'childGrid.deselectAll'"
+      [reorderable]="true"
+      [collapsible]="true"
+      [initialExpanded]="true"
+      (selectionChanged)="onModalitySelectionChanged($event)"
+      (selectionReordered)="onModalityOrderChanged($event)">
+    </app-child-collection-grid>
+    <div class="sports-form__field" style="margin-top: 0.25rem;">
+      <span class="sports-form__hint">{{ 'admin.sports.form.modalitiesPrimaryHint' | t }}</span>
     </div>
 
     <!-- Technical Fields (system_admin only) -->

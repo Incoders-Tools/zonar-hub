@@ -186,34 +186,38 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--zh-space-md);
+  gap: 1rem;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: var(--zh-space-xs);
+  gap: 0.5rem;
+
+  &--full {
+    grid-column: 1 / -1;
+  }
 
   label {
     font-weight: 500;
-    font-size: var(--zh-font-size-sm);
+    font-size: 0.875rem;
     color: var(--zh-text-primary);
   }
 
   input,
   select {
-    padding: var(--zh-space-xs) var(--zh-space-sm);
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--zh-border-subtle);
     border-radius: var(--zh-radius-sm);
-    font-size: var(--zh-font-size-sm);
-    background: var(--zh-surface-card);
+    font-size: 0.875rem;
+    background-color: var(--zh-surface-elevated);
     color: var(--zh-text-primary);
     transition: border-color 0.2s;
 
     &:focus {
       outline: none;
-      border-color: var(--zh-primary);
-      box-shadow: 0 0 0 3px rgba(var(--zh-primary-rgb, 0, 123, 255), 0.1);
+      border-color: var(--zh-color-primary);
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
     &:disabled {
@@ -225,23 +229,23 @@
 }
 
 .error-message {
-  font-size: var(--zh-font-size-xs);
-  color: var(--zh-error);
-  margin-top: var(--zh-space-2xs);
+  font-size: 0.75rem;
+  color: var(--zh-color-danger);
+  margin-top: 0.25rem;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--zh-space-sm);
-  margin-top: var(--zh-space-lg);
-  padding-top: var(--zh-space-lg);
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--zh-border-subtle);
 
   .btn-cancel {
-    padding: var(--zh-space-xs) var(--zh-space-md);
+    padding: 0.5rem 1rem;
     border-radius: var(--zh-radius-sm);
-    font-size: var(--zh-font-size-sm);
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     background: var(--zh-surface-muted);

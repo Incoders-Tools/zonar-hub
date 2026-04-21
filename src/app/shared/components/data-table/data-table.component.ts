@@ -13,7 +13,7 @@ export interface DataTableColumn {
   labelKey: string;
   sortable?: boolean;
   order?: number;
-  renderType?: 'text' | 'pill' | 'date' | 'toggle';
+  renderType?: 'text' | 'pill' | 'date' | 'toggle' | 'icon';
   translate?: boolean;
   pillVariantKey?: string;
   /** For toggle columns: action name emitted when toggled */

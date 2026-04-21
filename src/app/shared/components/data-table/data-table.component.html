@@ -73,6 +73,15 @@
                     </mat-slide-toggle>
                   } @else if (col.renderType === 'date') {
                     {{ $any(row[col.key]) | formatDate }}
+                  } @else if (col.renderType === 'icon') {
+                    @if (row[col.key]) {
+                      <div class="data-table__icon-cell">
+                        <mat-icon class="data-table__icon-preview">{{ row[col.key] }}</mat-icon>
+                        <span class="data-table__icon-name">{{ row[col.key] }}</span>
+                      </div>
+                    } @else {
+                      <span class="data-table__icon-empty">—</span>
+                    }
                   } @else if (col.translate) {
                     {{ $any(row[col.key]) | t }}
                   } @else {

@@ -88,7 +88,7 @@
           <app-active-toggle
             [value]="form.get('isActive')!.value"
             mode="toggle"
-            (toggled)="form.get('isActive')!.setValue($event)">
+            (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
           </app-active-toggle>
           <span class="form-field__hint">{{ 'categories.form.isActiveHint' | t }}</span>
         </div>

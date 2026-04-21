@@ -26,7 +26,6 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
 
   // Circuit operations
   { key: 'tournaments', module: 'circuit', labelKey: 'admin.tournaments', route: '/admin/tournaments' },
-  { key: 'tournament-types', module: 'circuit', labelKey: 'admin.tournamentTypes', route: '/admin/catalogs/tournament-types' },
   { key: 'tournament-eligibility-profiles', module: 'circuit', labelKey: 'admin.tournamentEligibilityProfiles', route: '/admin/catalogs/tournament-eligibility-profiles' },
   { key: 'tournament-rules', module: 'circuit', labelKey: 'admin.tournamentRuleSets', route: '/admin/catalogs/tournament-rules' },
   { key: 'registrations', module: 'circuit', labelKey: 'admin.registrations', route: '/admin/registrations' },
@@ -63,11 +62,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
 
   admin: [
     'dashboard',
-    'tournaments', 'tournament-types', 'tournament-eligibility-profiles', 'tournament-rules',
+    'tournaments', 'tournament-eligibility-profiles', 'tournament-rules',
     'registrations', 'players', 'draw-planner',
     'complexes', 'categories', 'genders', 'sports', 'complex-services',
     'social-networks', 'tournament-statuses',
-    'users', 'tenants',
+    'users', 'organizations', 'tenants',
     'settings', 'flyer-backgrounds', 'billing',
   ],
 

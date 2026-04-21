@@ -6,6 +6,9 @@
       <span class="hero__float hero__float--2">🏆</span>
       <span class="hero__float hero__float--3">🏅</span>
       <span class="hero__float hero__float--4">🥇</span>
+      <span class="hero__float hero__float--5">⚽</span>
+      <span class="hero__float hero__float--6">🏓</span>
+      <span class="hero__float hero__float--7">🏉</span>
     </div>
     <span class="hero__badge">{{ 'home.badge' | t }}</span>
     <h1 class="hero__title">{{ 'home.title' | t }}</h1>
@@ -22,7 +25,7 @@
     <h2 class="section__title">{{ 'home.sports.title' | t }}</h2>
     <p class="section__subtitle">{{ 'home.sports.subtitle' | t }}</p>
     <div class="sports-grid">
-      @for (sport of sportService.activeSports(); track sport.id) {
+      @for (sport of sportService.sports(); track sport.id) {
         <div class="sport-card">
           <span class="sport-card__icon">{{ sport.icon }}</span>
           <span class="sport-card__label">{{ 'home.sport.' + sport.key | t }}</span>
@@ -235,28 +238,6 @@
         </ul>
         <a class="btn btn--outline pricing-card__cta" routerLink="/contact">
           {{ 'home.pricing.cta.enterprise' | t }}
-        </a>
-      </div>
-
-      <!-- Single Use Plan -->
-      <div class="pricing-card pricing-card--single-use">
-        <h3 class="pricing-card__name">{{ 'home.pricing.singleUse.name' | t }}</h3>
-        <div class="pricing-card__price">
-          {{ 'home.pricing.singleUse.price' | t }}
-          <span class="pricing-card__price-desc">{{ 'home.pricing.singleUse.priceDesc' | t }}</span>
-        </div>
-        <div class="pricing-card__scope">
-          <span>{{ 'home.pricing.singleUse.scope1' | t }}</span>
-          <span>{{ 'home.pricing.singleUse.scope2' | t }}</span>
-        </div>
-        <ul class="pricing-card__features">
-          <li>{{ 'home.pricing.singleUse.feature1' | t }}</li>
-          <li>{{ 'home.pricing.singleUse.feature2' | t }}</li>
-          <li>{{ 'home.pricing.singleUse.feature3' | t }}</li>
-          <li>{{ 'home.pricing.singleUse.feature4' | t }}</li>
-        </ul>
-        <a class="btn btn--outline pricing-card__cta" routerLink="/register" [queryParams]="{plan: 'single_use'}">
-          {{ 'home.pricing.cta.singleUse' | t }}
         </a>
       </div>
     </div>

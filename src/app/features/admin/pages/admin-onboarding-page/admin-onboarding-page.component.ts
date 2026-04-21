@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { StepperComponent, StepperStep } from '../../../../shared/components/stepper/stepper.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
+import { DateInputComponent } from '../../../../shared/components/date-input/date-input.component';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
@@ -13,6 +14,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { MockOrganizationRepository } from '../../../../core/repositories/mock/mock-organization.repository';
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { MockTenantRepository } from '../../../../core/repositories/mock/mock-tenant.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { UserPreferencesService } from '../../../../core/services/user-preferences.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -53,7 +55,9 @@ interface OrgTypeOption {
     TranslatePipe,
     StepperComponent,
     AsyncButtonComponent,
-    FormShellComponent
+    FormShellComponent,
+    DateInputComponent,
+    DateInputComponent
   ],
   templateUrl: './admin-onboarding-page.component.html',
   styleUrl: './admin-onboarding-page.component.scss'
@@ -66,6 +70,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly complexRepo = inject(MockComplexRepository);
   private readonly orgRepo = inject(MockOrganizationRepository);
   private readonly sportRepo = inject(MockSportRepository);
+  private readonly tenantRepo = inject(MockTenantRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
   private readonly tournamentService = inject(TournamentService);
   protected readonly userPrefs = inject(UserPreferencesService);
@@ -213,9 +218,9 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     this.venueValid.set(this.venueForm.valid);
     this.tournamentValid.set(this.tournamentForm.valid);
 
-    // Load sports from repository
+    // Load all sports from repository (unfiltered — let user choose which to activate)
     const sports = await this.sportRepo.getAll();
-    this.availableSports.set(sports.filter(s => s.isActive));
+    this.availableSports.set(sports);
 
     // Generate initial court name
     this.syncCourtNames(1);
@@ -339,7 +344,9 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
       // 2. Update tenant name from org name
       if (session?.tenant) {
-        session.tenant.name = orgValues.displayName ?? session.tenant.name;
+        const newName = orgValues.displayName ?? session.tenant.name;
+        session.tenant.name = newName;
+        await this.tenantRepo.update(tenantId, { name: newName }).catch(() => {});
       }
 
       // 3. Persist venue (complex)
@@ -397,6 +404,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       }
 
       this.onboarding.completeWizard(!!tValues.name);
+      this.onboarding.markOrganizationCreated();
       this.notifications.success('onboarding.toast.success');
       this.router.navigate(['/admin']);
     } catch {

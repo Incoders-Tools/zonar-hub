@@ -10,6 +10,7 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
+import { ImageUploadComponent } from '../../../../shared/components/image-upload/image-upload.component';
 import { ContentService } from '../../../../core/services/content.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -47,7 +48,8 @@ interface FlyerFilters {
     DataTableComponent,
     FilterPanelComponent,
     HelpButtonComponent,
-    ActiveToggleComponent
+    ActiveToggleComponent,
+    ImageUploadComponent
   ],
   templateUrl: './admin-flyer-backgrounds-page.component.html',
   styleUrl: './admin-flyer-backgrounds-page.component.scss',
@@ -168,10 +170,17 @@ export class AdminFlyerBackgroundsPageComponent implements OnInit {
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
-    imageUrl: ['', [Validators.required]],
+    imageUrl: [''],
     category: ['tournament', [Validators.required]],
     isActive: [true],
     sortOrder: [0, [Validators.min(0)]]
+  });
+
+  readonly uploadedImageDataUrl = signal<string | null>(null);
+
+  readonly formValid = computed(() => {
+    const hasImage = !!this.uploadedImageDataUrl() || !!this.editing()?.imageUrl;
+    return this.form.valid && hasImage;
   });
 
   ngOnInit(): void {
@@ -201,12 +210,14 @@ export class AdminFlyerBackgroundsPageComponent implements OnInit {
 
   openCreate(): void {
     this.editing.set(null);
+    this.uploadedImageDataUrl.set(null);
     this.form.reset({ name: '', imageUrl: '', category: 'tournament', isActive: true, sortOrder: 0 });
     this.showForm.set(true);
   }
 
   openEdit(bg: FlyerBackground): void {
     this.editing.set(bg);
+    this.uploadedImageDataUrl.set(null);
     this.form.patchValue({
       name: bg.name,
       imageUrl: bg.imageUrl,
@@ -217,13 +228,28 @@ export class AdminFlyerBackgroundsPageComponent implements OnInit {
     this.showForm.set(true);
   }
 
+  onImageChanged(event: { file: File; previewUrl: string }): void {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      this.uploadedImageDataUrl.set(dataUrl);
+      this.form.patchValue({ imageUrl: dataUrl });
+    };
+    reader.readAsDataURL(event.file);
+  }
+
+  onImageRemoved(): void {
+    this.uploadedImageDataUrl.set(null);
+    this.form.patchValue({ imageUrl: '' });
+  }
+
   cancelForm(): void {
     this.showForm.set(false);
     this.editing.set(null);
   }
 
   async save(): Promise<void> {
-    if (!this.form.valid) return;
+    if (!this.formValid()) return;
     this.saving.set(true);
     try {
       const values = this.form.getRawValue();
@@ -233,11 +259,12 @@ export class AdminFlyerBackgroundsPageComponent implements OnInit {
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, '_');
+      const imageUrl = this.uploadedImageDataUrl() || this.editing()?.imageUrl || values.imageUrl!;
       const payload: Partial<FlyerBackground> = {
         name: values.name!,
         key,
-        imageUrl: values.imageUrl!,
-        thumbnailUrl: values.imageUrl!,
+        imageUrl,
+        thumbnailUrl: imageUrl,
         category: values.category as FlyerBackground['category'],
         isActive: values.isActive!,
         sortOrder: values.sortOrder!

@@ -95,6 +95,41 @@
   <div class="billing-page__payment-section">
     <h2 class="billing-page__payment-title">{{ 'billing.paymentMethod' | t }}</h2>
 
+    <!-- Saved payment methods list -->
+    @if (paymentMethods().length > 0) {
+      <div class="billing-page__methods-list">
+        @for (method of paymentMethods(); track $index) {
+          <div class="billing-page__method-item" [class.billing-page__method-item--default]="method.isDefault">
+            <div class="billing-page__method-info">
+              <span class="billing-page__method-icon">
+                @switch (method.type) {
+                  @case ('card') { 💳 }
+                  @case ('paypal') { 🅿️ }
+                  @case ('bank_transfer') { 🏦 }
+                }
+              </span>
+              <div>
+                <span class="billing-page__method-label">{{ method.label }}</span>
+                <span class="billing-page__method-detail">{{ method.detail }}</span>
+              </div>
+            </div>
+            <div class="billing-page__method-actions">
+              @if (!method.isDefault) {
+                <button class="billing-page__card-action" (click)="setDefaultPaymentMethod($index)">
+                  {{ 'billing.setDefault' | t }}
+                </button>
+              } @else {
+                <span class="billing-page__method-default-badge">{{ 'billing.default' | t }}</span>
+              }
+              <button class="billing-page__card-action billing-page__card-action--danger" (click)="removePaymentMethod($index)">
+                {{ 'billing.removeCard' | t }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
     @if (savedCard(); as card) {
       <div class="billing-page__card-wrapper">
         <div class="billing-page__credit-card" [class.billing-page__credit-card--flipped]="cardFlipped()" (click)="toggleCardFlip()">
@@ -120,41 +155,148 @@
           </button>
         </div>
       </div>
-    } @else {
-      <div class="billing-page__no-card">
-        @if (showAddCardForm()) {
-          <div class="billing-page__add-card-form">
-            <h3>{{ 'billing.addCard' | t }}</h3>
-            <div class="billing-page__add-card-fields">
-              <div class="billing-page__add-card-field">
-                <label>{{ 'billing.cardNumber' | t }}</label>
-                <input type="text" placeholder="4242 4242 4242 4242" maxlength="19" />
+    }
+
+    <!-- Modern Add Card Form with Live Preview -->
+    @if (showAddCardForm()) {
+      <div class="billing-page__card-composer">
+        <!-- Live Card Preview -->
+        <div class="billing-page__card-preview">
+          <div class="billing-page__preview-card" [class.billing-page__preview-card--flipped]="cardFlipped()" [attr.data-brand]="detectedBrand()">
+            <div class="billing-page__preview-front">
+              <div class="billing-page__preview-top">
+                <div class="billing-page__preview-chip"></div>
+                <span class="billing-page__preview-brand">{{ brandLabel() }}</span>
               </div>
-              <div class="billing-page__add-card-row">
-                <div class="billing-page__add-card-field">
-                  <label>{{ 'billing.cardExpiry' | t }}</label>
-                  <input type="text" placeholder="MM/YY" maxlength="5" />
+              <div class="billing-page__preview-number" [class.billing-page__preview-number--focused]="newCardFocusField() === 'number'">
+                {{ formCardNumber() }}
+              </div>
+              <div class="billing-page__preview-bottom">
+                <div class="billing-page__preview-holder" [class.billing-page__preview-holder--focused]="newCardFocusField() === 'name'">
+                  <span class="billing-page__preview-label">{{ 'billing.cardHolder' | t }}</span>
+                  <span class="billing-page__preview-value">{{ formCardHolder() }}</span>
                 </div>
-                <div class="billing-page__add-card-field">
-                  <label>{{ 'billing.cardCvc' | t }}</label>
-                  <input type="text" placeholder="CVC" maxlength="4" />
+                <div class="billing-page__preview-expiry-box" [class.billing-page__preview-expiry-box--focused]="newCardFocusField() === 'expiry'">
+                  <span class="billing-page__preview-label">{{ 'billing.cardExpiry' | t }}</span>
+                  <span class="billing-page__preview-value">{{ formCardExpiry() }}</span>
                 </div>
               </div>
             </div>
-            <div class="billing-page__add-card-actions">
-              <button class="billing-page__card-action" (click)="cancelAddCard()">{{ 'common.cancel' | t }}</button>
-              <app-async-button variant="primary" [loading]="addingCard()" (clicked)="saveNewCard()">
-                {{ 'billing.saveCard' | t }}
-              </app-async-button>
+            <div class="billing-page__preview-back">
+              <div class="billing-page__preview-mag-stripe"></div>
+              <div class="billing-page__preview-cvv-area">
+                <span class="billing-page__preview-cvv-label">CVV</span>
+                <span class="billing-page__preview-cvv-value">{{ formCardCvv() }}</span>
+              </div>
+              <div class="billing-page__preview-back-brand">{{ brandLabel() }}</div>
             </div>
           </div>
-        } @else {
-          <p>{{ 'billing.noPaymentMethod' | t }}</p>
-          <button class="btn btn--primary" (click)="addCard()">{{ 'billing.addCard' | t }}</button>
-        }
+        </div>
+
+        <!-- Form Fields -->
+        <form class="billing-page__card-form" [formGroup]="cardForm" (ngSubmit)="saveNewCard()">
+          <div class="billing-page__card-field">
+            <label class="billing-page__card-field-label">{{ 'billing.cardNumber' | t }}</label>
+            <input
+              class="billing-page__card-field-input"
+              type="text"
+              formControlName="cardNumber"
+              placeholder="1234 5678 9012 3456"
+              maxlength="19"
+              autocomplete="cc-number"
+              (input)="formatCardNumber($event)"
+              (focus)="newCardFocusField.set('number')"
+              (blur)="newCardFocusField.set(null)"
+            />
+            @if (cardForm.get('cardNumber')?.touched && cardForm.get('cardNumber')?.invalid) {
+              <span class="billing-page__card-field-error">{{ 'billing.validation.cardNumber' | t }}</span>
+            }
+          </div>
+
+          <div class="billing-page__card-field">
+            <label class="billing-page__card-field-label">{{ 'billing.cardHolder' | t }}</label>
+            <input
+              class="billing-page__card-field-input"
+              type="text"
+              formControlName="cardHolder"
+              [placeholder]="'billing.cardHolderPlaceholder' | t"
+              autocomplete="cc-name"
+              (focus)="newCardFocusField.set('name')"
+              (blur)="newCardFocusField.set(null)"
+            />
+            @if (cardForm.get('cardHolder')?.touched && cardForm.get('cardHolder')?.invalid) {
+              <span class="billing-page__card-field-error">{{ 'billing.validation.cardHolder' | t }}</span>
+            }
+          </div>
+
+          <div class="billing-page__card-field-row">
+            <div class="billing-page__card-field">
+              <label class="billing-page__card-field-label">{{ 'billing.cardExpiry' | t }}</label>
+              <input
+                class="billing-page__card-field-input"
+                type="text"
+                formControlName="cardExpiry"
+                placeholder="MM/YY"
+                maxlength="5"
+                autocomplete="cc-exp"
+                (input)="formatExpiry($event)"
+                (focus)="newCardFocusField.set('expiry')"
+                (blur)="newCardFocusField.set(null)"
+              />
+              @if (cardForm.get('cardExpiry')?.touched && cardForm.get('cardExpiry')?.invalid) {
+                <span class="billing-page__card-field-error">{{ 'billing.validation.expiry' | t }}</span>
+              }
+            </div>
+
+            <div class="billing-page__card-field">
+              <label class="billing-page__card-field-label">{{ 'billing.cardCvc' | t }}</label>
+              <input
+                class="billing-page__card-field-input"
+                type="text"
+                formControlName="cardCvv"
+                placeholder="•••"
+                maxlength="4"
+                autocomplete="cc-csc"
+                (focus)="onCvvFocus()"
+                (blur)="onCvvBlur()"
+              />
+              @if (cardForm.get('cardCvv')?.touched && cardForm.get('cardCvv')?.invalid) {
+                <span class="billing-page__card-field-error">{{ 'billing.validation.cvv' | t }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="billing-page__card-form-actions">
+            <button type="button" class="billing-page__card-action" (click)="cancelAddCard()">{{ 'common.cancel' | t }}</button>
+            <app-async-button variant="primary" [loading]="addingCard()" (clicked)="saveNewCard()">
+              {{ 'billing.saveCard' | t }}
+            </app-async-button>
+          </div>
+        </form>
+      </div>
+    } @else if (!savedCard()) {
+      <div class="billing-page__no-card">
+        <p>{{ 'billing.noPaymentMethod' | t }}</p>
       </div>
     }
+
+    <!-- Add payment method options -->
+    <div class="billing-page__add-methods">
+      <h3 class="billing-page__add-methods-title">{{ 'billing.addPaymentMethod' | t }}</h3>
+      <div class="billing-page__add-methods-grid">
+        <button class="billing-page__add-method-btn" (click)="addCard()">
+          <span class="billing-page__add-method-icon">💳</span>
+          <span>{{ 'billing.addCard' | t }}</span>
+        </button>
+        <button class="billing-page__add-method-btn" (click)="connectPayPal()">
+          <span class="billing-page__add-method-icon">🅿️</span>
+          <span>PayPal</span>
+        </button>
+        <button class="billing-page__add-method-btn" (click)="addBankTransfer()">
+          <span class="billing-page__add-method-icon">🏦</span>
+          <span>{{ 'billing.bankTransfer' | t }}</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
-
-<app-chatbot-bubble></app-chatbot-bubble>

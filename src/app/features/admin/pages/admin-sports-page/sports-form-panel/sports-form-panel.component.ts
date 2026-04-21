@@ -1,4 +1,4 @@
-import { Component, inject, input, output, OnInit } from '@angular/core';
+import { Component, inject, input, output, signal, computed, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
@@ -8,8 +8,9 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
+import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../../shared/components/child-collection-grid/child-collection-grid.component';
 import { AuthService } from '../../../../../core/auth/auth.service';
-import { Sport } from '../../../../../core/models';
+import { Sport, TournamentModality } from '../../../../../core/models';
 import { SportsFacadeService } from '../sports-facade.service';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 import { SportIconComponent } from '../../../../../shared/components/sport-icon/sport-icon.component';
@@ -28,7 +29,8 @@ import { SportIconComponent } from '../../../../../shared/components/sport-icon/
     AsyncButtonComponent,
     CollapsibleSectionComponent,
     ActiveToggleComponent,
-    SportIconComponent
+    SportIconComponent,
+    ChildCollectionGridComponent
   ],
   templateUrl: './sports-form-panel.component.html',
   styleUrl: './sports-form-panel.component.scss'
@@ -40,6 +42,7 @@ export class SportsFormPanelComponent implements OnInit {
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly sport = input<Sport | null>(null);
+  readonly modalities = input<TournamentModality[]>([]);
   readonly saving = input(false);
 
   readonly saved = output<void>();
@@ -48,6 +51,18 @@ export class SportsFormPanelComponent implements OnInit {
   form!: FormGroup;
   isEditing = false;
   submitted = false;
+
+  readonly modalityColumns: ChildGridColumn[] = [
+    { key: 'nameEs', labelKey: 'admin.sports.form.modalityNameEs', type: 'display' },
+    { key: 'nameEn', labelKey: 'admin.sports.form.modalityNameEn', type: 'display' }
+  ];
+
+  readonly activeModalities = computed(() =>
+    this.modalities().filter(m => m.isActive)
+  );
+
+  readonly selectedModalityIds = signal<Set<string>>(new Set());
+  readonly orderedModalityIds = signal<string[]>([]);
 
   ngOnInit(): void {
     this.initializeForm();
@@ -94,6 +109,12 @@ export class SportsFormPanelComponent implements OnInit {
       });
       // Disable key field when editing
       this.form.get('key')?.disable();
+
+      // Populate modality selection
+      if (sport.modalityIds?.length) {
+        this.selectedModalityIds.set(new Set(sport.modalityIds));
+        this.orderedModalityIds.set([...sport.modalityIds]);
+      }
 
       // Non-system-admins can only toggle isActive
       if (!this.isSystemAdmin()) {
@@ -144,17 +165,32 @@ export class SportsFormPanelComponent implements OnInit {
       return;
     }
 
+    const orderedIds = this.orderedModalityIds().length > 0
+      ? this.orderedModalityIds()
+      : Array.from(this.selectedModalityIds());
+
     const payload = this.isEditing
       ? {
           ...this.sport(),
-          ...formValue
+          ...formValue,
+          modalityIds: orderedIds
         }
-      : formValue;
+      : { ...formValue, modalityIds: orderedIds };
 
     const success = await this.facade.saveSport(payload);
     if (success) {
       this.saved.emit();
     }
+  }
+
+  onModalitySelectionChanged(ids: Set<string>): void {
+    this.selectedModalityIds.set(ids);
+    this.form.markAsDirty();
+  }
+
+  onModalityOrderChanged(orderedIds: string[]): void {
+    this.orderedModalityIds.set(orderedIds);
+    this.form.markAsDirty();
   }
 
   onCancel(): void {

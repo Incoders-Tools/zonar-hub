@@ -165,11 +165,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/admin-tournament-statuses-page/admin-tournament-statuses-page.component').then(m => m.AdminTournamentStatusesPageComponent),
         data: { toolKey: 'tournament-statuses' }, canActivate: [toolGuard]
       },
-      {
-        path: 'catalogs/tournament-types',
-        loadComponent: () => import('./features/admin/pages/admin-tournament-types-page/admin-tournament-types-page.component').then(m => m.AdminTournamentTypesPageComponent),
-        data: { toolKey: 'tournament-types' }, canActivate: [toolGuard]
-      },
+
       {
         path: 'catalogs/tournament-eligibility-profiles',
         loadComponent: () => import('./features/admin/pages/admin-tournament-eligibility-profiles-page/admin-tournament-eligibility-profiles-page.component').then(m => m.AdminTournamentEligibilityProfilesPageComponent),
@@ -179,6 +175,11 @@ export const routes: Routes = [
         path: 'catalogs/sports',
         loadComponent: () => import('./features/admin/pages/admin-sports-page/admin-sports-page.component').then(m => m.AdminSportsPageComponent),
         data: { toolKey: 'sports' }, canActivate: [toolGuard]
+      },
+      {
+        path: 'catalogs/tournament-modalities',
+        loadComponent: () => import('./features/admin/pages/admin-tournament-modalities-page/admin-tournament-modalities-page.component').then(m => m.AdminTournamentModalitiesPageComponent),
+        data: { toolKey: 'tournament-modalities' }, canActivate: [toolGuard]
       },
       {
         path: 'catalogs/tournament-rules',

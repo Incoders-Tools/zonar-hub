@@ -86,7 +86,7 @@ export class AdminSocialNetworksPageComponent implements OnInit {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.social-networks.column.name', sortable: true },
       { key: 'url', labelKey: 'admin.social-networks.column.url', sortable: false },
-      { key: 'faIcon', labelKey: 'admin.social-networks.column.icon', sortable: false },
+      { key: 'faIcon', labelKey: 'admin.social-networks.column.icon', sortable: false, renderType: 'icon' as const },
       { key: 'statusLabel', labelKey: 'admin.social-networks.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
     ];
     if (this.isSystemAdmin()) {

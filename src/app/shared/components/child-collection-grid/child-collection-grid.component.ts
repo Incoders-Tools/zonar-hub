@@ -7,6 +7,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 import { CollapsibleSectionComponent } from '../collapsible-section/collapsible-section.component';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
+import { DateInputComponent } from '../date-input/date-input.component';
 
 export interface ChildGridColumn {
   key: string;
@@ -28,7 +29,8 @@ export interface ChildGridColumn {
     TranslatePipe,
     CollapsibleSectionComponent,
     LoadingStateComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    DateInputComponent
   ],
   templateUrl: './child-collection-grid.component.html',
   styleUrl: './child-collection-grid.component.scss'

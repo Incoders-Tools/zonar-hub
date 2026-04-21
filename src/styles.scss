@@ -1,6 +1,18 @@
 @use 'styles/tokens';
 @use 'styles/themes';
 @use 'styles/mixins';
+@use '@angular/material' as mat;
+
+// Minimal Material 3 theme for Angular Material components (slide-toggle, icons, etc.)
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    density: 0,
+  ));
+}
 
 *,
 *::before,
