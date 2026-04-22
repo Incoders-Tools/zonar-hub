@@ -1,10 +1,12 @@
 .stepper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: center;
   gap: 0;
   padding: var(--zh-space-md) 0;
   overflow-x: auto;
   scrollbar-width: none;
+  width: 100%;
 
   &::-webkit-scrollbar {
     display: none;
@@ -12,15 +14,18 @@
 
   &__step {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--zh-space-sm);
+    gap: var(--zh-space-xs);
     padding: var(--zh-space-sm) var(--zh-space-xs);
     border: none;
     background: none;
     cursor: pointer;
-    flex-shrink: 1;
-    min-width: 0;
+    flex: 1 1 0;
+    min-width: 64px;
+    max-width: 160px;
     transition: color var(--zh-transition-fast);
+    text-align: center;
 
     &--active {
       .stepper__indicator {
@@ -65,18 +70,22 @@
   &__label {
     font-size: var(--zh-font-size-sm);
     color: var(--zh-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 140px;
   }
 
   &__connector {
     flex: 1 1 auto;
-    min-width: 12px;
-    max-width: 40px;
+    min-width: 8px;
+    max-width: 60px;
     height: 2px;
     background: var(--zh-border-subtle);
     transition: background var(--zh-transition-fast);
+    align-self: flex-start;
+    margin-top: 24px;
 
     &--completed {
       background: var(--zh-success);
@@ -93,8 +102,8 @@
     }
 
     &__connector {
-      min-width: 12px;
-      max-width: 32px;
+      min-width: 8px;
+      max-width: 24px;
     }
   }
 }

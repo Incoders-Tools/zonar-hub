@@ -52,15 +52,32 @@
     <!-- Players child-collection grid -->
     <div class="form-field form-field--full">
       <label class="form-field__label">{{ 'admin.teams.form.players' | t }}</label>
-      <app-child-collection-grid
-        [columns]="playerColumns"
-        [items]="allPlayers()"
-        [selectedIds]="selectedPlayerIds()"
-        [reorderable]="true"
-        mode="select"
-        (selectionChanged)="onPlayerSelectionChanged($event)"
-        (selectionReordered)="onPlayerOrderChanged($event)">
-      </app-child-collection-grid>
+      <div class="form-field__player-search">
+        <input
+          class="form-field__input"
+          type="text"
+          [placeholder]="'admin.teams.form.playerSearchPlaceholder' | t"
+          [value]="playerSearchTerm()"
+          (input)="playerSearchTerm.set($any($event.target).value)" />
+        @if (selectedPlayerIds().size > 0) {
+          <span class="form-field__player-count">
+            {{ selectedPlayerIds().size }} {{ 'admin.teams.form.playersSelected' | t }}
+          </span>
+        }
+      </div>
+      @if (showPlayerGrid()) {
+        <app-child-collection-grid
+          [columns]="playerColumns"
+          [items]="filteredPlayersForGrid()"
+          [selectedIds]="selectedPlayerIds()"
+          [reorderable]="true"
+          mode="select"
+          (selectionChanged)="onPlayerSelectionChanged($event)"
+          (selectionReordered)="onPlayerOrderChanged($event)">
+        </app-child-collection-grid>
+      } @else {
+        <p class="form-field__hint">{{ 'admin.teams.form.playerSearchHint' | t }}</p>
+      }
     </div>
 
     <!-- Captain Select (from selected players) -->
@@ -107,7 +124,11 @@
     <!-- Active Toggle -->
     <div class="form-field">
       <label class="form-field__label">{{ 'admin.teams.form.isActive' | t }}</label>
-      <app-active-toggle formControlName="isActive"></app-active-toggle>
+      <app-active-toggle
+        [value]="form.get('isActive')?.value ?? true"
+        [mode]="'toggle'"
+        (toggled)="form.get('isActive')?.setValue($event)">
+      </app-active-toggle>
     </div>
 
     <!-- Actions -->

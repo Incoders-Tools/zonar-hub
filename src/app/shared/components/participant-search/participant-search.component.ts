@@ -54,6 +54,8 @@ export class ParticipantSearchComponent implements OnInit {
     const pre = this.initialPlayer();
     if (pre) {
       this.selectedPlayer.set(pre);
+      // Slot already has a player — suppress the habitual partner suggestion
+      this.partnerDismissed.set(true);
     }
 
     this.searchControl.valueChanges.pipe(

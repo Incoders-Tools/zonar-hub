@@ -54,11 +54,14 @@ export class MockTenantRepository extends TenantRepository {
 
   async create(data: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Tenant> {
     await this.delay();
-    if (this.tenants.some(t => t.key === data.key)) {
-      throw new Error(`Tenant key "${data.key}" already exists`);
+    let key = data.key;
+    let suffix = 2;
+    while (this.tenants.some(t => t.key === key)) {
+      key = `${data.key}_${suffix++}`;
     }
     const tenant: Tenant = {
       ...data,
+      key,
       id: `tenant-${this.nextId++}`,
       createdAt: new Date().toISOString()
     };

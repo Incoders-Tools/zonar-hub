@@ -7,13 +7,14 @@ import { FilterPanelComponent, FilterField, SortOption } from '../../../../share
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { RegistrationFacadeService, RegistrationFilters } from './registration-facade.service';
 import { RegistrationFormPanelComponent } from './registration-form-panel/registration-form-panel.component';
 import { Registration, RegistrationToken } from '../../../../core/models';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 
-export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens';
+export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens' | 'agent' | 'agent';
 
 interface RegistrationRow extends Record<string, unknown> {
   id: string;
@@ -71,6 +72,7 @@ interface TokenRow extends Record<string, unknown> {
 export class AdminRegistrationsPageComponent implements OnInit {
   readonly facade = inject(RegistrationFacadeService);
   private readonly tournamentService = inject(TournamentService);
+  private readonly i18n = inject(I18nService);
 
   /** Dynamic tournament options for the filter panel */
   readonly tournamentFilterOptions = computed(() =>
@@ -88,6 +90,15 @@ export class AdminRegistrationsPageComponent implements OnInit {
   readonly editingRegistration = signal<Registration | null>(null);
   readonly highlightedRowId = signal<string | null>(null);
   readonly sharePayload = signal<SocialSharePayload | null>(null);
+
+  // Importer state
+  readonly importerFile = signal<File | null>(null);
+  readonly importerFileName = signal('');
+  readonly importerImporting = signal(false);
+  readonly importerPreview = signal<Record<string, unknown>[]>([]);
+  readonly importerDone = signal(false);
+  readonly importerTournamentId = signal('');
+  readonly importerError = signal('');
 
   readonly helpSections: HelpSection[] = [
     { titleKey: 'registrations.help.section1Title', contentKey: 'registrations.help.section1Text' },
@@ -332,10 +343,10 @@ export class AdminRegistrationsPageComponent implements OnInit {
   openShare(row: RegistrationRow): void {
     this.sharePayload.set({
       type: 'registration',
-      title: row.player1,
-      subtitle: row.player2,
+      title: row.participantsDisplay as string,
+      subtitle: row.tournamentName as string,
       lines: [
-        `📋 ${row.source}`,
+        `📋 ${this.i18n.translate(row.source as string)}`,
         `📅 ${row.registeredAt}`
       ]
     });
@@ -352,5 +363,75 @@ export class AdminRegistrationsPageComponent implements OnInit {
       excel: 'registrations.source.excel'
     };
     return map[source] ?? source;
+  }
+
+  // ---- Importer ----
+
+  onImporterFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.importerFile.set(file);
+    this.importerFileName.set(file?.name ?? '');
+    this.importerError.set('');
+    this.importerDone.set(false);
+    this.importerPreview.set([]);
+    if (file) {
+      // Simulate parsing: show placeholder preview (pending real Excel parsing)
+      this.importerPreview.set([
+        { participants: 'García Ana / López Carlos', phone: '+54911000001', availability: 'Sábados y Domingos - Mañana' },
+        { participants: 'Martínez Sofía / Rodríguez Juan', phone: '+54911000002', availability: 'Sábados - Todo el día' }
+      ]);
+    }
+  }
+
+  triggerFileInput(fileInput: HTMLInputElement): void {
+    fileInput.value = '';
+    fileInput.click();
+  }
+
+  downloadRegistrationTemplate(): void {
+    const tournamentId = this.importerTournamentId();
+    const tournament = this.tournamentService.getTournamentById(tournamentId);
+    const tournamentName = tournament?.name ?? 'torneo';
+
+    // Build CSV with headers matching registration fields (excluding tournament)
+    const headers = ['Jugador 1 - Nombre', 'Jugador 1 - Apellido', 'Jugador 1 - Email', 'Jugador 1 - Teléfono',
+                     'Jugador 2 - Nombre', 'Jugador 2 - Apellido', 'Jugador 2 - Email', 'Jugador 2 - Teléfono',
+                     'Disponibilidad (días)', 'Disponibilidad (horario)'];
+    const example = ['María', 'González', 'maria@ejemplo.com', '+5491100000001',
+                     'Carlos', 'López', 'carlos@ejemplo.com', '+5491100000002',
+                     'Sábado,Domingo', 'Mañana'];
+    const csv = [headers, example].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `plantilla_inscripciones_${tournamentName.toLowerCase().replace(/\s+/g, '_')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async confirmImport(): Promise<void> {
+    if (!this.importerFile() || this.importerImporting()) return;
+    this.importerImporting.set(true);
+    this.importerError.set('');
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      this.importerDone.set(true);
+      await this.facade.load();
+    } catch {
+      this.importerError.set('registrations.importer.error');
+    } finally {
+      this.importerImporting.set(false);
+    }
+  }
+
+  resetImporter(): void {
+    this.importerFile.set(null);
+    this.importerFileName.set('');
+    this.importerPreview.set([]);
+    this.importerDone.set(false);
+    this.importerError.set('');
+    this.importerTournamentId.set('');
   }
 }

@@ -22,6 +22,14 @@ export class UsersFacadeService {
 
   readonly users = signal<AdminUser[]>([]);
   readonly tenants = signal<Tenant[]>([]);
+
+  constructor() {
+    // Reload users whenever the active organisation changes
+    effect(() => {
+      this.activeOrg.activeOrganizationId(); // reactive dependency
+      void this.load();
+    });
+  }
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saving = signal(false);

@@ -27,19 +27,26 @@ export class PermissionService {
   /** Per-user permission overrides (admin-managed) */
   private readonly overrides = signal<UserPermissions[]>(this.loadOverrides());
 
-  /** Effective tool keys the current user has access to */
+  /** Effective tool keys the current user has access to.
+   *
+   * Role defaults act as the minimum baseline. Per-user overrides are merged
+   * additively so that tools added to a role's defaults are always visible,
+   * even for users who had an override saved before the new tool was introduced.
+   */
   readonly allowedTools = computed<string[]>(() => {
     const user = this.auth.currentUser();
     if (!user) return [];
     const role = user.role;
+    const roleDefaults = new Set(DEFAULT_ROLE_PERMISSIONS[role] ?? []);
 
-    // Check for per-user override first
     const override = this.overrides().find(o => o.userId === user.id);
     if (override) {
-      return override.allowedTools;
+      // Merge: role defaults are always included; override adds extra tools
+      const merged = new Set([...roleDefaults, ...override.allowedTools]);
+      return Array.from(merged);
     }
 
-    // Fall back to role defaults
+    // No override — use role defaults
     return DEFAULT_ROLE_PERMISSIONS[role] ?? [];
   });
 

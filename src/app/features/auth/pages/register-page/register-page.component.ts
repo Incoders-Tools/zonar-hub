@@ -67,6 +67,7 @@ export class RegisterPageComponent implements OnInit {
 
   readonly form = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
+    circuitName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.required]],
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -191,6 +192,9 @@ export class RegisterPageComponent implements OnInit {
 
   backToForm(): void {
     this.step.set('form');
+    this.attempts.set(0);
+    this.codeError.set('');
+    this.codeVerified.set(false);
   }
 
   /** Step 2 → create account after code verification */
@@ -206,6 +210,7 @@ export class RegisterPageComponent implements OnInit {
 
       const session = await this.auth.register({
         fullName: this.form.value.fullName ?? '',
+        circuitName: this.form.value.circuitName ?? '',
         email,
         password: this.form.value.password ?? '',
         phone
@@ -221,7 +226,8 @@ export class RegisterPageComponent implements OnInit {
         ? '/admin/onboarding'
         : '/player';
       this.router.navigate([target]);
-    } catch {
+    } catch (err) {
+      console.error('[Register] onSubmit failed:', err);
       this.error.set('auth.registerError');
     } finally {
       this.submitting.set(false);

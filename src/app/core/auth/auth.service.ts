@@ -52,7 +52,7 @@ export class AuthService {
 
   async register(request: RegisterRequest): Promise<AuthSession> {
     await this.delay(1000);
-    const tenantName = request.fullName + ' Circuit';
+    const tenantName = (request.circuitName?.trim()) || (request.fullName + ' Circuit');
     const tenantKey = tenantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '_');
 
     // Create the tenant in the repository so ActiveOrganizationService can find it

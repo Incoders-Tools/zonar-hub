@@ -37,6 +37,7 @@ export class ConfirmDialogComponent {
   readonly confirmLabelKey = input('common.confirm');
   readonly confirmVariant = input<'primary' | 'danger'>('danger');
   readonly loading = input(false);
+  readonly dangerous = input(false);
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();
 

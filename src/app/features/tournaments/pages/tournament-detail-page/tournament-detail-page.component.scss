@@ -129,57 +129,131 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
+
+  &__matches {
+    display: grid;
+    gap: var(--zh-space-sm);
+  }
 }
 
 .results-match {
-  display: flex;
-  align-items: center;
-  gap: var(--zh-space-sm);
-  padding: var(--zh-space-sm) var(--zh-space-md);
   border: 1px solid var(--zh-border-subtle);
   border-radius: var(--zh-radius-md);
   background: var(--zh-surface-card);
-  margin-bottom: var(--zh-space-sm);
+  overflow: hidden;
+  transition: box-shadow var(--zh-transition-fast);
 
-  &__pair {
-    flex: 1;
+  &:hover {
+    box-shadow: var(--zh-elevation-sm);
+  }
+
+  &--played {
+    border-color: var(--zh-border-subtle);
+  }
+
+  &__meta {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: var(--zh-space-sm);
+    gap: var(--zh-space-md);
+    padding: var(--zh-space-xs) var(--zh-space-md);
+    background: var(--zh-surface-muted);
+    border-bottom: 1px solid var(--zh-border-subtle);
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+    flex-wrap: wrap;
+  }
 
-    &--winner {
-      font-weight: 700;
+  &__court,
+  &__date {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__status {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+
+    &--played {
+      color: var(--zh-success, #16a34a);
     }
   }
 
+  &__body {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  &__side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    padding: var(--zh-space-sm) var(--zh-space-md);
+
+    &--winner {
+      font-weight: 700;
+      background: color-mix(in srgb, var(--zh-primary) 6%, transparent);
+    }
+
+    &:last-child {
+      flex-direction: row-reverse;
+      text-align: right;
+    }
+  }
+
+  &__trophy {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--zh-warning, #f59e0b);
+    flex-shrink: 0;
+  }
+
   &__name {
+    flex: 1;
     font-size: var(--zh-font-size-sm);
   }
 
+  &__seed {
+    flex-shrink: 0;
+    font-size: var(--zh-font-size-xs);
+    font-weight: 800;
+    color: var(--zh-warning, #f59e0b);
+  }
+
   &__score {
+    flex-shrink: 0;
     font-size: var(--zh-font-size-sm);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--zh-text-secondary);
     white-space: nowrap;
   }
 
   &__vs {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--zh-space-xs);
     font-size: var(--zh-font-size-xs);
     color: var(--zh-text-muted);
     font-weight: 600;
     text-transform: uppercase;
+    border-left: 1px solid var(--zh-border-subtle);
+    border-right: 1px solid var(--zh-border-subtle);
   }
 }
 
-// ---- Pairs ----
-.pairs-list {
+// ---- Participants (singles / doubles / teams) ----
+.participants-list {
   display: grid;
   gap: var(--zh-space-xs);
 }
 
-.pair-row {
+.participant-row {
   display: flex;
   align-items: center;
   gap: var(--zh-space-md);
@@ -187,6 +261,11 @@
   border: 1px solid var(--zh-border-subtle);
   border-radius: var(--zh-radius-md);
   background: var(--zh-surface-card);
+  transition: box-shadow var(--zh-transition-fast);
+
+  &:hover {
+    box-shadow: var(--zh-elevation-sm);
+  }
 
   &__index {
     display: inline-flex;

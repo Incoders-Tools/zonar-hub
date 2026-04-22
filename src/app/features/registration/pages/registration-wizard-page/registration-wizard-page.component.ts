@@ -48,7 +48,8 @@ export class RegistrationWizardPageComponent implements OnInit {
 
   @ViewChildren('otpInput') otpInputs!: QueryList<ElementRef<HTMLInputElement>>;
 
-  readonly otpValue = computed(() => this.otpDigits.map(c => c.value ?? '').join(''));
+  /** Reactive OTP value — updated manually on every digit change since FormControl.value is not a Signal */
+  readonly otpValue = signal('');
 
   readonly steps = computed<StepperStep[]>(() => {
     const step = this.currentStep();
@@ -79,6 +80,7 @@ export class RegistrationWizardPageComponent implements OnInit {
     const val = input.value.replace(/\D/g, '').slice(-1);
     this.otpDigits[index].setValue(val);
     input.value = val;
+    this.otpValue.set(this.otpDigits.map(c => c.value ?? '').join(''));
     if (val && index < 5) {
       const next = this.otpInputs.toArray()[index + 1];
       next?.nativeElement.focus();
@@ -107,6 +109,7 @@ export class RegistrationWizardPageComponent implements OnInit {
     });
     const focusIdx = Math.min(startIndex + pasted.length, 5);
     inputs[focusIdx]?.nativeElement.focus();
+    this.otpValue.set(this.otpDigits.map(c => c.value ?? '').join(''));
   }
 
   ngOnInit(): void {

@@ -10,7 +10,12 @@ import { HelpButtonComponent, HelpSection } from '../../../../shared/components/
 import { PlayerFacadeService, PlayerFilters } from './player-facade.service';
 import { PlayerFormPanelComponent } from './player-form-panel/player-form-panel.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TournamentService } from '../../../../core/services/tournament.service';
 import { Player } from '../../../../core/models';
+
+export type AdminPlayersTab = 'list' | 'importer' | 'agent';
 
 interface PlayerRow extends Record<string, unknown> {
   id: string;
@@ -57,7 +62,26 @@ interface PlayerRow extends Record<string, unknown> {
 export class AdminPlayersPageComponent implements OnInit {
   readonly facade = inject(PlayerFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
+  private readonly tournamentService = inject(TournamentService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+
+  // Tabs
+  readonly activeTab = signal<AdminPlayersTab>('list');
+
+  // Importer state
+  readonly importerFile = signal<File | null>(null);
+  readonly importerFileName = signal('');
+  readonly importerImporting = signal(false);
+  readonly importerPreview = signal<Record<string, unknown>[]>([]);
+  readonly importerDone = signal(false);
+  readonly importerTournamentId = signal('');
+  readonly importerError = signal('');
+
+  readonly tournamentOptions = computed(() =>
+    this.tournamentService.tournaments().map(t => ({ value: t.id, label: t.name }))
+  );
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -259,5 +283,71 @@ export class AdminPlayersPageComponent implements OnInit {
 
   getStatusForRow(row: PlayerRow): string {
     return row.isActive ? 'active' : 'inactive';
+  }
+
+  setTab(tab: AdminPlayersTab): void {
+    this.activeTab.set(tab);
+  }
+
+  // ---- Importer ----
+
+  onImporterFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.importerFile.set(file);
+    this.importerFileName.set(file?.name ?? '');
+    this.importerError.set('');
+    this.importerDone.set(false);
+    this.importerPreview.set([]);
+    if (file) {
+      // Simulate parsing: show a placeholder preview
+      this.importerPreview.set([
+        { firstName: 'Ana', lastName: 'García', email: 'ana@example.com', phone: '+54911000001', sport: 'Pádel', category: 'A', gender: 'Femenino' },
+        { firstName: 'Carlos', lastName: 'López', email: 'carlos@example.com', phone: '+54911000002', sport: 'Pádel', category: 'B', gender: 'Masculino' }
+      ]);
+    }
+  }
+
+  triggerFileInput(fileInput: HTMLInputElement): void {
+    fileInput.value = '';
+    fileInput.click();
+  }
+
+  downloadPlayerTemplate(): void {
+    // Build CSV template
+    const headers = ['Nombre', 'Apellido', 'Email', 'Teléfono', 'Fecha de nacimiento (YYYY-MM-DD)', 'Deporte', 'Categoría', 'Género'];
+    const example = ['María', 'González', 'maria@ejemplo.com', '+5491100000000', '1990-05-20', 'Pádel', 'A', 'Femenino'];
+    const csv = [headers, example].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla_jugadores.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async confirmImport(): Promise<void> {
+    if (!this.importerFile() || this.importerImporting()) return;
+    this.importerImporting.set(true);
+    this.importerError.set('');
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      this.importerDone.set(true);
+      this.notifications.success(this.i18n.translate('players.importer.success'));
+      await this.facade.load();
+    } catch {
+      this.importerError.set('players.importer.error');
+    } finally {
+      this.importerImporting.set(false);
+    }
+  }
+
+  resetImporter(): void {
+    this.importerFile.set(null);
+    this.importerFileName.set('');
+    this.importerPreview.set([]);
+    this.importerDone.set(false);
+    this.importerError.set('');
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Tournament } from '../models';
 import { MockTournamentAdminRepository } from '../repositories/mock/mock-tournament-admin.repository';
+import { MOCK_TOURNAMENTS } from '../data/mock/mock-tournaments';
 
 @Injectable({ providedIn: 'root' })
 export class TournamentService {
@@ -22,6 +23,19 @@ export class TournamentService {
     this.tournamentsState().filter(t => ['ts1', 'ts2'].includes(t.statusId))
   );
 
+  /**
+   * Public display tournaments: always includes MOCK_TOURNAMENTS (demo data)
+   * merged with any tenant-specific tournaments. This ensures the public-facing
+   * tournament list is never empty regardless of who is logged in.
+   */
+  readonly publicDisplayTournaments = computed(() => {
+    const tenantTournaments = this.tournamentsState().filter(t => t.statusId !== 'ts6');
+    const mockIds = new Set(MOCK_TOURNAMENTS.map(t => t.id));
+    const tenantOnly = tenantTournaments.filter(t => !mockIds.has(t.id));
+    const allMock = MOCK_TOURNAMENTS.filter(t => t.statusId !== 'ts6');
+    return [...allMock, ...tenantOnly];
+  });
+
   async loadTournaments(): Promise<void> {
     this.loadingState.set(true);
     this.errorState.set(null);
@@ -37,7 +51,9 @@ export class TournamentService {
   }
 
   getTournamentById(id: string): Tournament | undefined {
-    return this.tournamentsState().find(t => t.id === id);
+    // Check tenant-specific data first, then fall back to mock data
+    return this.tournamentsState().find(t => t.id === id)
+      ?? MOCK_TOURNAMENTS.find(t => t.id === id);
   }
 
   isRegistrationOpen(tournament: Tournament): boolean {

@@ -181,7 +181,6 @@ export class AdminUsersPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.facade.load();
     this.initializeForm();
   }
 

@@ -13,7 +13,7 @@ import { TournamentService } from '../../../../core/services/tournament.service'
 })
 export class TournamentListPageComponent implements OnInit {
   private readonly tournamentService = inject(TournamentService);
-  readonly tournaments = this.tournamentService.publicTournaments;
+  readonly tournaments = this.tournamentService.publicDisplayTournaments;
   readonly loading = this.tournamentService.loading;
 
   ngOnInit(): void {

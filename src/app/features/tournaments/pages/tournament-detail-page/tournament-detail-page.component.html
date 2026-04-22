@@ -43,17 +43,19 @@
         <span>{{ 'tournaments.tab.results' | t }}</span>
       </button>
       <button class="tournament-tabs__tab"
-              [class.tournament-tabs__tab--active]="activeTab() === 'pairs'"
-              (click)="setTab('pairs')"
+              [class.tournament-tabs__tab--active]="activeTab() === 'participants'"
+              (click)="setTab('participants')"
               role="tab"
-              [attr.aria-selected]="activeTab() === 'pairs'">
+              [attr.aria-selected]="activeTab() === 'participants'">
         <mat-icon>groups</mat-icon>
-        <span>{{ 'tournaments.tab.pairs' | t }}</span>
+        <span>{{ 'tournaments.tab.participants' | t }}</span>
       </button>
     </nav>
 
     <!-- Tab content -->
     <div class="tournament-detail__content" role="tabpanel">
+
+      <!-- ── Bracket ── -->
       @if (activeTab() === 'bracket') {
         @if (bracket(); as b) {
           <app-tournament-bracket [bracket]="b"></app-tournament-bracket>
@@ -65,25 +67,64 @@
         }
       }
 
+      <!-- ── Results ── -->
       @if (activeTab() === 'results') {
         @if (bracket(); as b) {
           <div class="results-list">
             @for (round of b.rounds; track round.name) {
               <div class="results-round">
                 <h3 class="results-round__title">{{ round.name | t }}</h3>
-                @for (match of round.matches; track match.id) {
-                  <div class="results-match">
-                    <div class="results-match__pair" [class.results-match__pair--winner]="match.winnerId === match.pair1?.id">
-                      <span class="results-match__name">{{ match.pair1?.player1 }} / {{ match.pair1?.player2 }}</span>
-                      <span class="results-match__score">{{ match.score1.join(' - ') }}</span>
+                <div class="results-round__matches">
+                  @for (match of round.matches; track match.id) {
+                    <div class="results-match" [class.results-match--played]="match.winnerId">
+                      <!-- Match meta (court + date) -->
+                      @if (match.courtName || match.scheduledAt) {
+                        <div class="results-match__meta">
+                          @if (match.courtName) {
+                            <span class="results-match__court">📍 {{ match.courtName }}</span>
+                          }
+                          @if (match.scheduledAt) {
+                            <span class="results-match__date">📅 {{ match.scheduledAt | formatDate }}</span>
+                          }
+                          <span class="results-match__status"
+                                [class.results-match__status--played]="match.winnerId">
+                            {{ (match.winnerId ? 'tournaments.results.played' : 'tournaments.results.pending') | t }}
+                          </span>
+                        </div>
+                      }
+                      <!-- Participants + scores -->
+                      <div class="results-match__body">
+                        <div class="results-match__side"
+                             [class.results-match__side--winner]="match.winnerId === match.pair1?.id">
+                          @if (match.winnerId === match.pair1?.id) {
+                            <mat-icon class="results-match__trophy">emoji_events</mat-icon>
+                          }
+                          <span class="results-match__name">
+                            {{ formatPair(match.pair1?.player1 ?? '—', match.pair1?.player2) }}
+                          </span>
+                          @if (match.pair1?.seed) {
+                            <span class="results-match__seed">★{{ match.pair1!.seed }}</span>
+                          }
+                          <span class="results-match__score">{{ match.score1.join(' - ') }}</span>
+                        </div>
+                        <span class="results-match__vs">vs</span>
+                        <div class="results-match__side"
+                             [class.results-match__side--winner]="match.winnerId === match.pair2?.id">
+                          @if (match.winnerId === match.pair2?.id) {
+                            <mat-icon class="results-match__trophy">emoji_events</mat-icon>
+                          }
+                          <span class="results-match__name">
+                            {{ formatPair(match.pair2?.player1 ?? '—', match.pair2?.player2) }}
+                          </span>
+                          @if (match.pair2?.seed) {
+                            <span class="results-match__seed">★{{ match.pair2!.seed }}</span>
+                          }
+                          <span class="results-match__score">{{ match.score2.join(' - ') }}</span>
+                        </div>
+                      </div>
                     </div>
-                    <span class="results-match__vs">vs</span>
-                    <div class="results-match__pair" [class.results-match__pair--winner]="match.winnerId === match.pair2?.id">
-                      <span class="results-match__name">{{ match.pair2?.player1 }} / {{ match.pair2?.player2 }}</span>
-                      <span class="results-match__score">{{ match.score2.join(' - ') }}</span>
-                    </div>
-                  </div>
-                }
+                  }
+                </div>
               </div>
             }
           </div>
@@ -95,24 +136,33 @@
         }
       }
 
-      @if (activeTab() === 'pairs') {
-        @if (confirmedPairs().length > 0) {
-          <div class="pairs-list">
-            @for (pair of confirmedPairs(); track pair.id; let i = $index) {
-              <div class="pair-row">
-                <span class="pair-row__index">{{ i + 1 }}</span>
-                @if (pair.seed) {
-                  <span class="pair-row__seed">★ {{ pair.seed }}</span>
+      <!-- ── Participants (singles / doubles / teams) ── -->
+      @if (activeTab() === 'participants') {
+        @if (confirmedParticipants().length > 0) {
+          <div class="participants-list">
+            @for (entry of confirmedParticipants(); track entry.id; let i = $index) {
+              <div class="participant-row">
+                <span class="participant-row__index">{{ i + 1 }}</span>
+                @if (entry.seed) {
+                  <span class="participant-row__seed">★ {{ entry.seed }}</span>
                 }
-                <span class="pair-row__names">{{ pair.player1 }} / {{ pair.player2 }}</span>
-                <span class="pair-row__category">{{ pair.category }}</span>
+                <span class="participant-row__names">
+                  @if (entry.names.length === 1) {
+                    {{ entry.names[0] }}
+                  } @else if (entry.names.length === 2) {
+                    {{ entry.names[0] }} / {{ entry.names[1] }}
+                  } @else {
+                    {{ entry.names.join(' · ') }}
+                  }
+                </span>
+                <span class="participant-row__category">{{ entry.category }}</span>
               </div>
             }
           </div>
         } @else {
           <div class="empty-state">
             <mat-icon class="empty-state__icon">groups</mat-icon>
-            <p>{{ 'tournaments.pairs.noPairs' | t }}</p>
+            <p>{{ 'tournaments.participants.empty' | t }}</p>
           </div>
         }
       }

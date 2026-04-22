@@ -57,6 +57,24 @@
       <mat-icon class="admin-registrations__tab-icon">token</mat-icon>
       {{ 'registrations.tabs.tokens' | t }}
     </button>
+    <button
+      class="admin-registrations__tab"
+      [class.admin-registrations__tab--active]="activeTab() === 'agent'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'agent'"
+      (click)="setTab('agent')">
+      <mat-icon class="admin-registrations__tab-icon">smart_toy</mat-icon>
+      {{ 'registrations.tabs.agent' | t }}
+    </button>
+    <button
+      class="admin-registrations__tab"
+      [class.admin-registrations__tab--active]="activeTab() === 'agent'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'agent'"
+      (click)="setTab('agent')">
+      <mat-icon class="admin-registrations__tab-icon">smart_toy</mat-icon>
+      {{ 'registrations.tabs.agent' | t }}
+    </button>
   </nav>
 
   <!-- Tab content -->
@@ -115,29 +133,150 @@
     <!-- IMPORTER TAB -->
     @if (activeTab() === 'importer') {
       <div class="admin-registrations__importer">
-        <div class="admin-registrations__importer-zone">
-          <mat-icon class="admin-registrations__importer-icon">cloud_upload</mat-icon>
-          <h3 class="admin-registrations__importer-title">{{ 'registrations.importer.title' | t }}</h3>
-          <p class="admin-registrations__importer-desc">{{ 'registrations.importer.description' | t }}</p>
-          <p class="admin-registrations__importer-hint">{{ 'registrations.importer.hint' | t }}</p>
-        </div>
 
-        <div class="admin-registrations__importer-steps">
-          <div class="admin-registrations__importer-step">
-            <span class="admin-registrations__importer-step-number">1</span>
-            <span>{{ 'registrations.importer.step1' | t }}</span>
+        @if (importerDone()) {
+          <div class="admin-registrations__importer-success">
+            <mat-icon class="admin-registrations__importer-success-icon">check_circle</mat-icon>
+            <h3>{{ 'registrations.importer.success' | t }}</h3>
+            <p>{{ 'registrations.importer.successHint' | t }}</p>
+            <button class="btn btn--secondary" (click)="resetImporter()">
+              {{ 'registrations.importer.importMore' | t }}
+            </button>
           </div>
-          <div class="admin-registrations__importer-step">
-            <span class="admin-registrations__importer-step-number">2</span>
-            <span>{{ 'registrations.importer.step2' | t }}</span>
+        } @else {
+
+          <!-- Encabezado de zona de carga -->
+          <div class="admin-registrations__importer-zone">
+            <mat-icon class="admin-registrations__importer-icon">cloud_upload</mat-icon>
+            <h3 class="admin-registrations__importer-title">{{ 'registrations.importer.title' | t }}</h3>
+            <p class="admin-registrations__importer-desc">{{ 'registrations.importer.description' | t }}</p>
           </div>
-          <div class="admin-registrations__importer-step">
-            <span class="admin-registrations__importer-step-number">3</span>
-            <span>{{ 'registrations.importer.step3' | t }}</span>
+
+          <!-- Selector de torneo (primero) -->
+          <div class="admin-registrations__importer-tournament">
+            <label class="form-field__label" for="importer-tournament">
+              {{ 'registrations.importer.selectTournament' | t }} *
+            </label>
+            <select
+              id="importer-tournament"
+              class="form-field__input"
+              [value]="importerTournamentId()"
+              (change)="importerTournamentId.set($any($event.target).value)">
+              <option value="">{{ 'registrations.importer.tournamentPlaceholder' | t }}</option>
+              @for (t of tournamentFilterOptions(); track t.value) {
+                <option [value]="t.value">{{ t.labelKey }}</option>
+              }
+            </select>
+            @if (importerTournamentId()) {
+              <span class="admin-registrations__importer-tournament-badge">
+                <mat-icon>check</mat-icon>
+                {{ 'registrations.importer.tournamentSelected' | t }}
+              </span>
+            }
           </div>
-        </div>
+
+          <!-- Pasos -->
+          <div class="admin-registrations__importer-steps">
+
+            <!-- Paso 1: Descargar plantilla -->
+            <div class="admin-registrations__importer-step">
+              <span class="admin-registrations__importer-step-number">1</span>
+              <div class="admin-registrations__importer-step-body">
+                <span class="admin-registrations__importer-step-title">{{ 'registrations.importer.step1' | t }}</span>
+                <p class="admin-registrations__importer-step-desc">{{ 'registrations.importer.step1Desc' | t }}</p>
+                <button
+                  class="btn btn--secondary btn--sm"
+                  [disabled]="!importerTournamentId()"
+                  (click)="downloadRegistrationTemplate()">
+                  <mat-icon>download</mat-icon>
+                  {{ 'registrations.importer.downloadBtn' | t }}
+                </button>
+                @if (!importerTournamentId()) {
+                  <span class="admin-registrations__importer-step-warn">{{ 'registrations.importer.selectTournamentFirst' | t }}</span>
+                }
+              </div>
+            </div>
+
+            <!-- Paso 2: Completar datos -->
+            <div class="admin-registrations__importer-step">
+              <span class="admin-registrations__importer-step-number">2</span>
+              <div class="admin-registrations__importer-step-body">
+                <span class="admin-registrations__importer-step-title">{{ 'registrations.importer.step2' | t }}</span>
+                <p class="admin-registrations__importer-step-desc">{{ 'registrations.importer.step2Desc' | t }}</p>
+              </div>
+            </div>
+
+            <!-- Paso 3: Subir archivo -->
+            <div class="admin-registrations__importer-step">
+              <span class="admin-registrations__importer-step-number">3</span>
+              <div class="admin-registrations__importer-step-body">
+                <span class="admin-registrations__importer-step-title">{{ 'registrations.importer.step3' | t }}</span>
+                <p class="admin-registrations__importer-step-desc">{{ 'registrations.importer.step3Desc' | t }}</p>
+                <input
+                  #regFileInput
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  class="admin-registrations__file-input"
+                  [disabled]="!importerTournamentId()"
+                  (change)="onImporterFileSelected($event)" />
+                <button
+                  class="btn btn--primary btn--sm"
+                  [disabled]="!importerTournamentId()"
+                  (click)="triggerFileInput(regFileInput)">
+                  <mat-icon>attach_file</mat-icon>
+                  {{ importerFileName() || ('registrations.importer.selectFile' | t) }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview tabla -->
+          @if (importerPreview().length > 0) {
+            <div class="admin-registrations__importer-preview">
+              <h4>{{ 'registrations.importer.preview' | t }}</h4>
+              <p class="admin-registrations__importer-preview-count">
+                {{ importerPreview().length }} {{ 'registrations.importer.rowsFound' | t }}. {{ 'registrations.importer.previewHint' | t }}
+              </p>
+              <div class="admin-registrations__importer-preview-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{{ 'registrations.column.participants' | t }}</th>
+                      <th>{{ 'admin.players.form.phone' | t }}</th>
+                      <th>{{ 'registrations.importer.availability' | t }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of importerPreview(); track $index) {
+                      <tr>
+                        <td>{{ row['participants'] }}</td>
+                        <td>{{ row['phone'] }}</td>
+                        <td>{{ row['availability'] }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (importerError()) {
+                <p class="admin-registrations__importer-error">{{ importerError() | t }}</p>
+              }
+              <div class="admin-registrations__importer-actions">
+                <button class="btn btn--secondary" (click)="resetImporter()">
+                  {{ 'common.cancel' | t }}
+                </button>
+                <app-async-button
+                  variant="primary"
+                  [loading]="importerImporting()"
+                  (clicked)="confirmImport()">
+                  {{ 'registrations.importer.confirmImport' | t }}
+                </app-async-button>
+              </div>
+            </div>
+          }
+        }
       </div>
     }
+
 
     <!-- TOKENS TAB -->
     @if (activeTab() === 'tokens') {
@@ -160,6 +299,41 @@
         [rowActions]="tokenRowActions"
         (rowAction)="onTokenAction($event)">
       </app-data-table>
+    }
+
+    <!-- AI AGENT TAB -->
+    @if (activeTab() === 'agent') {
+      <div class="admin-registrations__agent">
+        <div class="admin-registrations__agent-header">
+          <mat-icon class="admin-registrations__agent-icon">smart_toy</mat-icon>
+          <h3 class="admin-registrations__agent-title">{{ 'registrations.agent.title' | t }}</h3>
+          <p class="admin-registrations__agent-desc">{{ 'registrations.agent.description' | t }}</p>
+        </div>
+
+        <div class="admin-registrations__agent-how">
+          <h4>{{ 'registrations.agent.howTitle' | t }}</h4>
+          <ol class="admin-registrations__agent-how-list">
+            <li>{{ 'registrations.agent.how1' | t }}</li>
+            <li>{{ 'registrations.agent.how2' | t }}</li>
+            <li>{{ 'registrations.agent.how3' | t }}</li>
+          </ol>
+        </div>
+
+        <div class="admin-registrations__agent-example">
+          <h4>{{ 'registrations.agent.exampleTitle' | t }}</h4>
+          <blockquote class="admin-registrations__agent-example-text">
+            {{ 'registrations.agent.exampleText' | t }}
+          </blockquote>
+        </div>
+
+        <div class="admin-registrations__agent-cta">
+          <p>{{ 'registrations.agent.ctaHint' | t }}</p>
+          <button class="btn btn--primary">
+            <mat-icon>chat</mat-icon>
+            {{ 'registrations.agent.openChat' | t }}
+          </button>
+        </div>
+      </div>
     }
   </div>
 </div>

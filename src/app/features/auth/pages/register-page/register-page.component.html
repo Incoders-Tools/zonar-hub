@@ -11,6 +11,25 @@
   <!-- STEP 1: Registration Form -->
   @if (step() === 'form') {
     <form [formGroup]="form" (ngSubmit)="onRequestVerification()" class="auth-form">
+      <!-- Section: Circuit -->
+      <fieldset class="auth-form__section">
+        <legend class="auth-form__section-title">{{ 'auth.section.circuit' | t }}</legend>
+
+        <div class="field">
+          <label for="reg-circuit">{{ 'auth.circuitName' | t }}</label>
+          <input id="reg-circuit" type="text" formControlName="circuitName" autocomplete="organization"
+            appNormalizeName
+            [placeholder]="'auth.circuitNamePlaceholder' | t" />
+          <span class="field__hint">{{ 'auth.circuitNameHint' | t }}</span>
+          @if (form.get('circuitName')?.hasError('required') && form.get('circuitName')?.touched) {
+            <span class="field__error">{{ 'common.required' | t }}</span>
+          }
+          @if (form.get('circuitName')?.hasError('minlength') && form.get('circuitName')?.touched) {
+            <span class="field__error">{{ 'common.minLength' | t }}</span>
+          }
+        </div>
+      </fieldset>
+
       <!-- Section: Personal info -->
       <fieldset class="auth-form__section">
         <legend class="auth-form__section-title">{{ 'auth.section.personal' | t }}</legend>

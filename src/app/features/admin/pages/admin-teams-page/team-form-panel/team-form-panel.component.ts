@@ -50,6 +50,25 @@ export class TeamFormPanelComponent implements OnInit {
 
   readonly selectedPlayerIds = signal<Set<string>>(new Set());
   readonly orderedPlayerIds = signal<string[]>([]);
+  readonly playerSearchTerm = signal('');
+
+  /** Show all players when editing (already has some), otherwise show only after typing */
+  readonly filteredPlayersForGrid = computed(() => {
+    const term = this.playerSearchTerm().trim().toLowerCase();
+    const all = this.allPlayers();
+    const selected = this.selectedPlayerIds();
+    if (selected.size > 0 || term.length >= 2) {
+      if (!term) return all.filter(p => selected.has(p.id));
+      return all.filter(p =>
+        p.fullName.toLowerCase().includes(term) || selected.has(p.id)
+      );
+    }
+    return [];
+  });
+
+  readonly showPlayerGrid = computed(() =>
+    this.playerSearchTerm().trim().length >= 2 || this.selectedPlayerIds().size > 0
+  );
 
   get isEditing(): boolean {
     return !!this.team();

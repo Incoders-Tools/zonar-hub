@@ -1,16 +1,16 @@
 <div class="players-page">
   <!-- Page Header -->
-  <div class="players-page__header">
-    <div class="players-page__title-row">
-      <div>
-        <h1 class="players-page__title">{{ 'admin.players.title' | t }}</h1>
-        <p class="players-page__subtitle">{{ 'admin.players.subtitle' | t }}</p>
-      </div>
-      <div class="players-page__header-actions">
-        <app-help-button
-          [titleKey]="'admin.players.help.title'"
-          [sections]="helpSections">
-        </app-help-button>
+  <header class="players-page__header">
+    <div class="players-page__header-left">
+      <h1 class="players-page__title">{{ 'admin.players.title' | t }}</h1>
+      <p class="players-page__subtitle">{{ 'admin.players.subtitle' | t }}</p>
+    </div>
+    <div class="players-page__header-actions">
+      <app-help-button
+        [titleKey]="'admin.players.help.title'"
+        [sections]="helpSections">
+      </app-help-button>
+      @if (activeTab() === 'list') {
         @if (hasSelection()) {
           <app-async-button
             variant="danger"
@@ -22,65 +22,249 @@
         <app-async-button variant="primary" (clicked)="openCreate()">
           {{ 'admin.players.action.create' | t }}
         </app-async-button>
-      </div>
+      }
     </div>
+  </header>
+
+  <!-- Tab navigation -->
+  <nav class="players-page__tabs" role="tablist">
+    <button
+      class="players-page__tab"
+      [class.players-page__tab--active]="activeTab() === 'list'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'list'"
+      (click)="setTab('list')">
+      <mat-icon class="players-page__tab-icon">people</mat-icon>
+      {{ 'admin.players.tabs.list' | t }}
+    </button>
+    <button
+      class="players-page__tab"
+      [class.players-page__tab--active]="activeTab() === 'importer'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'importer'"
+      (click)="setTab('importer')">
+      <mat-icon class="players-page__tab-icon">upload_file</mat-icon>
+      {{ 'admin.players.tabs.importer' | t }}
+    </button>
+    <button
+      class="players-page__tab"
+      [class.players-page__tab--active]="activeTab() === 'agent'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'agent'"
+      (click)="setTab('agent')">
+      <mat-icon class="players-page__tab-icon">smart_toy</mat-icon>
+      {{ 'admin.players.tabs.agent' | t }}
+    </button>
+  </nav>
+
+  <!-- Tab content -->
+  <div class="players-page__content">
+
+    <!-- LIST TAB -->
+    @if (activeTab() === 'list') {
+      <!-- Inline Form Panel -->
+      @if (showFormPanel()) {
+        <div class="players-page__form-panel" @slideDown #formPanel>
+          <div class="players-page__form-panel-header">
+            <h3 class="players-page__form-panel-title">
+              {{ (editingPlayer() ? 'admin.players.form.editTitle' : 'admin.players.form.createTitle') | t }}
+            </h3>
+            <button
+              class="players-page__form-panel-close"
+              (click)="closeFormPanel()"
+              [attr.aria-label]="'common.close' | t">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="players-page__form-panel-body">
+            <app-player-form-panel
+              [player]="editingPlayer()"
+              [saving]="facade.saving()"
+              [categories]="facade.categories()"
+              [genders]="facade.genders()"
+              [sports]="facade.sports()"
+              (saved)="closeFormPanel()"
+              (cancelled)="closeFormPanel()">
+            </app-player-form-panel>
+          </div>
+        </div>
+      }
+
+      <app-filter-panel
+        [fields]="filterFields()"
+        [sortFields]="sortFields"
+        [defaultSortRules]="defaultSortRules"
+        [collapsible]="true"
+        [defaultCollapsed]="true"
+        (filtersApplied)="onFiltersApplied($event)"
+        (filtersCleared)="onFiltersCleared()"
+        (sortRulesChanged)="onSortRulesChanged($event)">
+      </app-filter-panel>
+
+      <app-data-table
+        [columns]="columns"
+        [data]="tableData()"
+        [loading]="facade.loading()"
+        [error]="facade.error()"
+        [selectable]="true"
+        [paginated]="true"
+        [paginationPosition]="'both'"
+        [pageSize]="25"
+        [rowActions]="playerRowActions"
+        emptyMessageKey="admin.players.emptyState"
+        (selectionChanged)="onSelectionChanged($event)"
+        (sorted)="onSorted($event)"
+        (rowAction)="onRowActionClicked($event)">
+      </app-data-table>
+    }
+
+    <!-- IMPORTER TAB -->
+    @if (activeTab() === 'importer') {
+      <div class="players-page__importer">
+
+        @if (importerDone()) {
+          <div class="players-page__importer-success">
+            <mat-icon class="players-page__importer-success-icon">check_circle</mat-icon>
+            <h3>{{ 'players.importer.success' | t }}</h3>
+            <button class="btn btn--secondary" (click)="resetImporter()">
+              {{ 'players.importer.importMore' | t }}
+            </button>
+          </div>
+        } @else {
+
+          <!-- Zone de subida -->
+          <div class="players-page__importer-zone">
+            <mat-icon class="players-page__importer-icon">upload_file</mat-icon>
+            <h3 class="players-page__importer-title">{{ 'players.importer.title' | t }}</h3>
+            <p class="players-page__importer-desc">{{ 'players.importer.description' | t }}</p>
+          </div>
+
+          <!-- Pasos -->
+          <div class="players-page__importer-steps">
+            <!-- Paso 1: Descargar plantilla -->
+            <div class="players-page__importer-step">
+              <span class="players-page__importer-step-number">1</span>
+              <div class="players-page__importer-step-body">
+                <span class="players-page__importer-step-title">{{ 'players.importer.step1' | t }}</span>
+                <p class="players-page__importer-step-desc">{{ 'players.importer.step1Desc' | t }}</p>
+                <button class="btn btn--secondary btn--sm" (click)="downloadPlayerTemplate()">
+                  <mat-icon>download</mat-icon>
+                  {{ 'players.importer.downloadBtn' | t }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Paso 2: Completar datos -->
+            <div class="players-page__importer-step">
+              <span class="players-page__importer-step-number">2</span>
+              <div class="players-page__importer-step-body">
+                <span class="players-page__importer-step-title">{{ 'players.importer.step2' | t }}</span>
+                <p class="players-page__importer-step-desc">{{ 'players.importer.step2Desc' | t }}</p>
+              </div>
+            </div>
+
+            <!-- Paso 3: Subir archivo -->
+            <div class="players-page__importer-step">
+              <span class="players-page__importer-step-number">3</span>
+              <div class="players-page__importer-step-body">
+                <span class="players-page__importer-step-title">{{ 'players.importer.step3' | t }}</span>
+                <p class="players-page__importer-step-desc">{{ 'players.importer.step3Desc' | t }}</p>
+                <input
+                  #playerFileInput
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  class="players-page__file-input"
+                  (change)="onImporterFileSelected($event)" />
+                <button class="btn btn--primary btn--sm" (click)="triggerFileInput(playerFileInput)">
+                  <mat-icon>attach_file</mat-icon>
+                  {{ importerFileName() || ('players.importer.selectFile' | t) }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          @if (importerPreview().length > 0) {
+            <div class="players-page__importer-preview">
+              <h4 class="players-page__importer-preview-title">{{ 'players.importer.preview' | t }}</h4>
+              <p class="players-page__importer-preview-count">
+                {{ importerPreview().length }} {{ 'players.importer.rowsFound' | t }}. {{ 'players.importer.previewHint' | t }}
+              </p>
+              <div class="players-page__importer-preview-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{{ 'admin.players.form.firstName' | t }}</th>
+                      <th>{{ 'admin.players.form.lastName' | t }}</th>
+                      <th>{{ 'admin.players.column.email' | t }}</th>
+                      <th>{{ 'admin.players.form.phone' | t }}</th>
+                      <th>{{ 'admin.players.column.sport' | t }}</th>
+                      <th>{{ 'admin.players.column.category' | t }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of importerPreview(); track $index) {
+                      <tr>
+                        <td>{{ row['firstName'] }}</td>
+                        <td>{{ row['lastName'] }}</td>
+                        <td>{{ row['email'] }}</td>
+                        <td>{{ row['phone'] }}</td>
+                        <td>{{ row['sport'] }}</td>
+                        <td>{{ row['category'] }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (importerError()) {
+                <p class="players-page__importer-error">{{ importerError() | t }}</p>
+              }
+              <div class="players-page__importer-actions">
+                <button class="btn btn--secondary" (click)="resetImporter()">
+                  {{ 'common.cancel' | t }}
+                </button>
+                <app-async-button
+                  variant="primary"
+                  [loading]="importerImporting()"
+                  (clicked)="confirmImport()">
+                  {{ 'players.importer.confirmImport' | t }}
+                </app-async-button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <!-- AI AGENT TAB -->
+    @if (activeTab() === 'agent') {
+      <div class="players-page__agent">
+        <div class="players-page__agent-header">
+          <mat-icon class="players-page__agent-icon">smart_toy</mat-icon>
+          <h3 class="players-page__agent-title">{{ 'players.agent.title' | t }}</h3>
+          <p class="players-page__agent-desc">{{ 'players.agent.description' | t }}</p>
+        </div>
+
+        <div class="players-page__agent-how">
+          <h4 class="players-page__agent-how-title">{{ 'players.agent.howTitle' | t }}</h4>
+          <ol class="players-page__agent-how-list">
+            <li>{{ 'players.agent.how1' | t }}</li>
+            <li>{{ 'players.agent.how2' | t }}</li>
+            <li>{{ 'players.agent.how3' | t }}</li>
+          </ol>
+        </div>
+
+        <div class="players-page__agent-cta">
+          <p class="players-page__agent-cta-hint">{{ 'players.agent.ctaHint' | t }}</p>
+          <button class="btn btn--primary">
+            <mat-icon>chat</mat-icon>
+            {{ 'players.agent.openChat' | t }}
+          </button>
+        </div>
+      </div>
+    }
+
   </div>
-
-  <!-- Inline Form Panel -->
-  @if (showFormPanel()) {
-    <div class="players-page__form-panel" @slideDown #formPanel>
-      <div class="players-page__form-panel-header">
-        <h3 class="players-page__form-panel-title">
-          {{ (editingPlayer() ? 'admin.players.form.editTitle' : 'admin.players.form.createTitle') | t }}
-        </h3>
-        <button
-          class="players-page__form-panel-close"
-          (click)="closeFormPanel()"
-          [attr.aria-label]="'common.close' | t">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-      <div class="players-page__form-panel-body">
-        <app-player-form-panel
-          [player]="editingPlayer()"
-          [saving]="facade.saving()"
-          [categories]="facade.categories()"
-          [genders]="facade.genders()"
-          [sports]="facade.sports()"
-          (saved)="closeFormPanel()"
-          (cancelled)="closeFormPanel()">
-        </app-player-form-panel>
-      </div>
-    </div>
-  }
-
-  <!-- Filter Panel -->
-  <app-filter-panel
-    [fields]="filterFields()"
-    [sortFields]="sortFields"
-    [defaultSortRules]="defaultSortRules"
-    [collapsible]="true"
-    [defaultCollapsed]="true"
-    (filtersApplied)="onFiltersApplied($event)"
-    (filtersCleared)="onFiltersCleared()"
-    (sortRulesChanged)="onSortRulesChanged($event)">
-  </app-filter-panel>
-
-  <!-- Data Table -->
-  <app-data-table
-    [columns]="columns"
-    [data]="tableData()"
-    [loading]="facade.loading()"
-    [error]="facade.error()"
-    [selectable]="true"
-    [paginated]="true"
-    [pageSize]="25"
-    [rowActions]="playerRowActions"
-    emptyMessageKey="admin.players.emptyState"
-    (selectionChanged)="onSelectionChanged($event)"
-    (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
 </div>
 
 <!-- Delete Confirmation Dialog -->

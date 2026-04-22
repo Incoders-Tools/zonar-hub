@@ -226,6 +226,228 @@
     font-weight: 700;
     flex-shrink: 0;
   }
+
+  &__importer-tournament {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-sm);
+    width: 100%;
+    max-width: 480px;
+    align-self: center;
+  }
+
+  &__importer-tournament-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    padding: var(--zh-space-xs) var(--zh-space-md);
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-primary-soft, rgba(0, 0, 0, 0.08));
+    color: var(--zh-primary);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+  }
+
+  &__importer-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-sm);
+  }
+
+  &__importer-step-title {
+    font-weight: 600;
+    color: var(--zh-text-primary);
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__importer-step-desc {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+    margin: 0;
+  }
+
+  &__importer-step-warn {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+    font-style: italic;
+  }
+
+  &__importer-step-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  &__file-input {
+    display: none;
+  }
+
+  &__importer-preview {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-md);
+    align-self: center;
+  }
+
+  &__importer-preview-title {
+    font-size: var(--zh-font-size-md);
+    font-weight: 700;
+    margin: 0;
+    color: var(--zh-text-primary);
+  }
+
+  &__importer-preview-count {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    margin: 0;
+  }
+
+  &__importer-preview-hint {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+    margin: 0;
+    font-style: italic;
+  }
+
+  &__importer-preview-table {
+    overflow-x: auto;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--zh-font-size-sm);
+
+      th {
+        text-align: left;
+        padding: var(--zh-space-sm) var(--zh-space-md);
+        background: var(--zh-surface-subtle);
+        color: var(--zh-text-secondary);
+        font-weight: 600;
+        border-bottom: 1px solid var(--zh-border-subtle);
+      }
+
+      td {
+        padding: var(--zh-space-sm) var(--zh-space-md);
+        border-bottom: 1px solid var(--zh-border-subtle);
+        color: var(--zh-text-primary);
+      }
+    }
+  }
+
+  &__importer-actions {
+    display: flex;
+    gap: var(--zh-space-md);
+    justify-content: flex-end;
+    align-self: stretch;
+  }
+
+  &__importer-error {
+    color: var(--zh-danger);
+    font-size: var(--zh-font-size-sm);
+    margin: 0;
+    align-self: center;
+  }
+
+  &__importer-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zh-space-md);
+    padding: var(--zh-space-2xl);
+    text-align: center;
+  }
+
+  &__importer-success-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--zh-success);
+  }
+
+  // ── Agent tab ──
+  &__agent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xl);
+    align-items: center;
+    padding: var(--zh-space-2xl) var(--zh-space-xl);
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  &__agent-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zh-space-md);
+  }
+
+  &__agent-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--zh-primary);
+    opacity: 0.8;
+  }
+
+  &__agent-title {
+    font-size: var(--zh-font-size-xl);
+    font-weight: 800;
+    margin: 0;
+    color: var(--zh-text-primary);
+  }
+
+  &__agent-desc {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    margin: 0;
+    max-width: 480px;
+  }
+
+  &__agent-how {
+    text-align: left;
+    width: 100%;
+  }
+
+  &__agent-how-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-sm);
+    padding-left: var(--zh-space-lg);
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__agent-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zh-space-md);
+  }
+
+  &__agent-example {
+    text-align: left;
+    width: 100%;
+    background: var(--zh-surface-subtle);
+    border-radius: var(--zh-radius-md);
+    padding: var(--zh-space-md) var(--zh-space-lg);
+  }
+
+  &__agent-example-text {
+    font-style: italic;
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+    margin: var(--zh-space-sm) 0 0;
+    border-left: 3px solid var(--zh-primary);
+    padding-left: var(--zh-space-md);
+  }
 }
 
 // ── Status pills ──

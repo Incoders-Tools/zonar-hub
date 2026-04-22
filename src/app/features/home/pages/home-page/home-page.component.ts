@@ -64,7 +64,7 @@ export class HomePageComponent implements OnInit {
   ];
 
   readonly originTypes: FeatureCard[] = [
-    { icon: '�', titleKey: 'home.origins.circuito.title', descriptionKey: 'home.origins.circuito.description' },
+    { icon: '🏅', titleKey: 'home.origins.circuito.title', descriptionKey: 'home.origins.circuito.description' },
     { icon: '🎯', titleKey: 'home.origins.operadora.title', descriptionKey: 'home.origins.operadora.description' },
     { icon: '🎓', titleKey: 'home.origins.academia.title', descriptionKey: 'home.origins.academia.description' },
     { icon: '🏢', titleKey: 'home.origins.organizacion.title', descriptionKey: 'home.origins.organizacion.description' }
