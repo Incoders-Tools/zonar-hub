@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { SocialNetwork } from '../../../../core/models';
-import { MockSocialNetworkRepository } from '../../../../core/repositories/mock/mock-social-network.repository';
+import { ApiSocialNetworkRepository } from '../../../../core/repositories/api/api-social-network.repository';
 
 export interface SocialNetworkFilters {
   name?: string;
@@ -9,7 +9,7 @@ export interface SocialNetworkFilters {
 
 @Injectable()
 export class SocialNetworksFacadeService {
-  private readonly repository = inject(MockSocialNetworkRepository);
+  private readonly repository = inject(ApiSocialNetworkRepository);
 
   private readonly entitiesState = signal<SocialNetwork[]>([]);
   private readonly loadingState = signal(false);

@@ -252,6 +252,11 @@ export const routes: Routes = [
         data: { toolKey: 'settings' }, canActivate: [toolGuard]
       },
       {
+        path: 'system/email-templates',
+        loadComponent: () => import('./features/admin/pages/admin-email-templates-page/admin-email-templates-page.component').then(m => m.AdminEmailTemplatesPageComponent),
+        data: { toolKey: 'email-templates' }, canActivate: [toolGuard, systemAdminGuard]
+      },
+      {
         path: 'billing',
         loadComponent: () => import('./features/admin/pages/admin-billing-page/admin-billing-page.component').then(m => m.AdminBillingPageComponent),
         data: { toolKey: 'billing' }, canActivate: [toolGuard]

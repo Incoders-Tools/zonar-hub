@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AppLog } from '../../models/app-log.model';
 import { AppLogRepository } from '../app-log.repository';
 import { MOCK_APP_LOGS } from '../../data/mock/mock-app-logs';
-import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 300;

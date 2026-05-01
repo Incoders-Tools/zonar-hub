@@ -20,3 +20,4 @@ export * from './tournament-rule-set.model';
 export * from './sport-config.model';
 export * from './organization.model';
 export * from './tournament-modality.model';
+export * from './email-template.model';

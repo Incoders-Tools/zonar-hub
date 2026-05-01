@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork } from '../../models';
 import { ComplexRepository } from '../complex.repository';
-import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 400;

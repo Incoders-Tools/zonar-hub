@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Organization, OrganizationType } from '../../../../core/models';
-import { MockOrganizationRepository } from '../../../../core/repositories/mock/mock-organization.repository';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 export interface OrganizationFilters {
@@ -11,7 +12,8 @@ export interface OrganizationFilters {
 
 @Injectable()
 export class OrganizationFacadeService {
-  private readonly repo = inject(MockOrganizationRepository);
+  private readonly repo = inject(ApiOrganizationRepository);
+  private readonly auth = inject(AuthService);
   private readonly notification = inject(NotificationService);
 
   private readonly organizationsState = signal<Organization[]>([]);
@@ -87,10 +89,19 @@ export class OrganizationFacadeService {
     this.sortState.set({ key, direction });
   }
 
-  async createOrganization(data: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
+  async createOrganization(
+    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'>
+  ): Promise<boolean> {
     this.savingState.set(true);
     try {
-      await this.repo.create(data);
+      const user = this.auth.currentUser();
+      const fullData: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
+        ...data,
+        tenantId: user?.tenantId ?? '',
+        createdByUserId: user?.id ?? '',
+        logoUrl: undefined
+      };
+      await this.repo.create(fullData);
       this.notification.success('admin.organizations.toast.created');
       await this.load();
       return true;

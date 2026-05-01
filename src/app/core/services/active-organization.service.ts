@@ -2,7 +2,6 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { MockTenantRepository } from '../repositories/mock/mock-tenant.repository';
 import { Tenant } from '../models';
-import { setCurrentMockTenant } from '../data/mock/mock-tenant-context';
 
 const STORAGE_KEY = 'zh_active_organization_id';
 const PRIMARY_ORG_KEY = 'zh_primary_organization_id';
@@ -115,9 +114,6 @@ export class ActiveOrganizationService {
       this.activeOrgIdState.set(firstActive?.id ?? null);
     }
 
-    // Sync mock tenant context so mock repos serve the correct dataset
-    const resolvedOrgId = this.activeOrgIdState();
-    setCurrentMockTenant(resolvedOrgId ?? undefined);
   }
 
   /** Switch the active organization */
@@ -128,7 +124,6 @@ export class ActiveOrganizationService {
 
     this.activeOrgIdState.set(orgId);
     this.persistActiveOrgId(orgId);
-    setCurrentMockTenant(orgId);
   }
 
   /** Set the user's primary organization */
@@ -163,7 +158,6 @@ export class ActiveOrganizationService {
     const user = this.auth.currentUser();
     this.activeOrgIdState.set(orgId);
     this.primaryOrgIdState.set(orgId);
-    setCurrentMockTenant(orgId);
     if (user) {
       this.persistActiveOrgId(orgId);
       this.persistPrimaryOrgId(user.id, orgId);

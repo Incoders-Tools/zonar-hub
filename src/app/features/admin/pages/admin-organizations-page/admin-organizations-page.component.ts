@@ -161,7 +161,13 @@ export class AdminOrganizationsPageComponent implements OnInit {
     if (existing) {
       success = await this.facade.updateOrganization(existing.id, data);
     } else {
-      success = await this.facade.createOrganization(data as Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>);
+      success = await this.facade.createOrganization({
+        displayName: data.displayName ?? '',
+        legalName: data.legalName,
+        description: data.description,
+        type: data.type ?? 'circuito',
+        isActive: data.isActive ?? true
+      });
     }
     if (success) this.closeFormPanel();
   }

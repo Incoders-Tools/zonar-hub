@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../models/admin-user.model';
 import { AdminUserRepository } from '../admin-user.repository';
 import { MOCK_ADMIN_USERS } from '../../data/mock/mock-admin-users';
-import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const MOCK_DELAY = 300;

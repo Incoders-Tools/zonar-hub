@@ -1,0 +1,103 @@
+<div class="email-templates-page">
+  <div class="email-templates-page__header">
+    <div class="email-templates-page__title-row">
+      <div>
+        <h1 class="email-templates-page__title">{{ 'admin.email-templates.title' | t }}</h1>
+        <p class="email-templates-page__subtitle">{{ 'admin.email-templates.subtitle' | t }}</p>
+      </div>
+      <div class="email-templates-page__header-actions">
+        <app-help-button
+          [titleKey]="'admin.email-templates.help.title'"
+          [sections]="helpSections">
+        </app-help-button>
+      </div>
+    </div>
+  </div>
+
+  <app-filter-panel
+    [fields]="filterFields"
+    [collapsible]="true"
+    [defaultCollapsed]="true"
+    (filtersApplied)="onFiltersApplied($event)"
+    (filtersCleared)="onFiltersCleared()">
+  </app-filter-panel>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="tableData()"
+    [loading]="facade.loading()"
+    [error]="!!facade.error()"
+    [rowActions]="rowActions"
+    emptyMessageKey="admin.email-templates.emptyState"
+    (rowAction)="onRowActionClicked($event)">
+  </app-data-table>
+</div>
+
+@if (showFormPanel()) {
+  <div class="email-template-editor">
+    <app-form-shell
+      titleKey="admin.email-templates.form.title"
+      descriptionKey="admin.email-templates.form.description">
+      <form class="email-template-editor__form" [formGroup]="form" (submit)="$event.preventDefault(); onSave()">
+        <label class="email-template-editor__label" for="template-key">{{ 'admin.email-templates.form.key' | t }}</label>
+        <input id="template-key" type="text" formControlName="key" class="email-template-editor__input" />
+
+        <label class="email-template-editor__label" for="template-subject">{{ 'admin.email-templates.form.subject' | t }}</label>
+        <input
+          id="template-subject"
+          type="text"
+          formControlName="subject"
+          class="email-template-editor__input"
+          [attr.placeholder]="'admin.email-templates.form.subjectPlaceholder' | t" />
+        @if (subjectInvalid) {
+          <p class="email-template-editor__error">{{ 'admin.email-templates.error.subjectRequired' | t }}</p>
+        }
+
+        <label class="email-template-editor__label" for="template-description">{{ 'admin.email-templates.form.descriptionLabel' | t }}</label>
+        <textarea
+          id="template-description"
+          formControlName="description"
+          class="email-template-editor__textarea email-template-editor__textarea--small"
+          [attr.placeholder]="'admin.email-templates.form.descriptionPlaceholder' | t">
+        </textarea>
+
+        <label class="email-template-editor__label" for="template-html">{{ 'admin.email-templates.form.htmlBody' | t }}</label>
+        <textarea
+          id="template-html"
+          formControlName="htmlBody"
+          class="email-template-editor__textarea"
+          [attr.placeholder]="'admin.email-templates.form.htmlBodyPlaceholder' | t">
+        </textarea>
+        @if (htmlBodyInvalid) {
+          <p class="email-template-editor__error">{{ 'admin.email-templates.error.htmlBodyRequired' | t }}</p>
+        }
+
+        <label class="email-template-editor__checkbox">
+          <input type="checkbox" formControlName="isActive" />
+          <span>{{ 'admin.email-templates.form.isActive' | t }}</span>
+        </label>
+      </form>
+
+      <div class="email-template-editor__tokens">
+        <h3 class="email-template-editor__tokens-title">{{ 'admin.email-templates.form.tokensTitle' | t }}</h3>
+        <p class="email-template-editor__tokens-help">{{ 'admin.email-templates.form.tokensHelp' | t }}</p>
+      </div>
+
+      <div formActions class="email-template-editor__actions">
+        <app-async-button
+          variant="secondary"
+          [disabled]="facade.saving()"
+          (clicked)="closeFormPanel()">
+          {{ 'common.cancel' | t }}
+        </app-async-button>
+        <app-async-button
+          variant="primary"
+          [loading]="facade.saving()"
+          [disabled]="form.invalid"
+          (clicked)="onSave()">
+          {{ 'common.save' | t }}
+        </app-async-button>
+      </div>
+    </app-form-shell>
+  </div>
+}

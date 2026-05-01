@@ -9,7 +9,9 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
   template: `
     <div class="auth-layout">
       <div class="auth-layout__container">
-        <a class="auth-layout__logo" routerLink="/">{{ 'common.appName' | t }}</a>
+        <a class="auth-layout__logo" routerLink="/">
+          <img src="/uploads/zonar-hub/zonar-hub-logos/logo_horizontal_green.png" alt="Zonar Hub" />
+        </a>
         <router-outlet></router-outlet>
       </div>
     </div>
@@ -30,11 +32,16 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     .auth-layout__logo {
       display: block;
       text-align: center;
-      font-size: var(--zh-font-size-2xl);
-      font-weight: 800;
-      color: var(--zh-primary);
       text-decoration: none;
       margin-bottom: var(--zh-space-xl);
+      display: flex;
+      justify-content: center;
+
+      img {
+        height: 36px;
+        width: auto;
+        object-fit: contain;
+      }
     }
   `]
 })

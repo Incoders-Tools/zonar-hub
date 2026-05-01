@@ -11,7 +11,9 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="player-layout">
       <header class="player-header">
         <div class="player-header__inner">
-          <a class="player-header__logo" routerLink="/">{{ 'common.appName' | t }}</a>
+          <a class="player-header__logo" routerLink="/">
+            <img src="/uploads/zonar-hub/zonar-hub-logos/logo_horizontal_green.png" alt="Zonar Hub" class="player-header__logo-img" />
+          </a>
           <nav class="player-header__nav">
             <a routerLink="/player" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ 'player.dashboard' | t }}</a>
             <a routerLink="/player/registrations" routerLinkActive="active">{{ 'player.myRegistrations' | t }}</a>
@@ -43,10 +45,14 @@ import { AuthService } from '../../core/auth/auth.service';
       height: var(--zh-toolbar-height);
     }
     .player-header__logo {
-      font-size: var(--zh-font-size-xl);
-      font-weight: 800;
-      color: var(--zh-primary);
+      display: flex;
+      align-items: center;
       text-decoration: none;
+    }
+    .player-header__logo-img {
+      height: 30px;
+      width: auto;
+      object-fit: contain;
     }
     .player-header__nav {
       display: flex;

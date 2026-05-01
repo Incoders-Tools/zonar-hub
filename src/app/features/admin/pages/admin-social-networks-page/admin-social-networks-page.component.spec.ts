@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminSocialNetworksPageComponent } from './admin-social-networks-page.component';
 import { SocialNetworksFacadeService } from './social-networks-facade.service';
-import { MockSocialNetworkRepository } from '../../../../core/repositories/mock/mock-social-network.repository';
+import { ApiSocialNetworkRepository } from '../../../../core/repositories/api/api-social-network.repository';
 
 describe('AdminSocialNetworksPageComponent', () => {
   let component: AdminSocialNetworksPageComponent;
@@ -11,7 +11,7 @@ describe('AdminSocialNetworksPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminSocialNetworksPageComponent],
-      providers: [SocialNetworksFacadeService, MockSocialNetworkRepository]
+      providers: [SocialNetworksFacadeService, ApiSocialNetworkRepository]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminSocialNetworksPageComponent);

@@ -1,6 +1,5 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
@@ -10,8 +9,8 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { Sport } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { SportsFacadeService, SportFilters } from './sports-facade.service';
-import { SportsFormPanelComponent } from './sports-form-panel/sports-form-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { SportsFormPanelComponent } from './sports-form-panel/sports-form-panel.component';
 
 interface SportRow extends Record<string, unknown> {
   id: string;
@@ -33,26 +32,14 @@ interface SportRow extends Record<string, unknown> {
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
+    HelpButtonComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    SportsFormPanelComponent,
-    HelpButtonComponent
+    SportsFormPanelComponent
   ],
   providers: [SportsFacadeService],
   templateUrl: './admin-sports-page.component.html',
-  styleUrl: './admin-sports-page.component.scss',
-  animations: [
-    trigger('slideDown', [
-      transition(':enter', [
-        style({ height: 0, opacity: 0, overflow: 'hidden' }),
-        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
-      ]),
-      transition(':leave', [
-        style({ overflow: 'hidden' }),
-        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
-      ])
-    ])
-  ]
+  styleUrl: './admin-sports-page.component.scss'
 })
 export class AdminSportsPageComponent implements OnInit {
   readonly facade = inject(SportsFacadeService);
@@ -61,36 +48,28 @@ export class AdminSportsPageComponent implements OnInit {
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
-  readonly showBulkDeleteDialog = signal(false);
   readonly editingSport = signal<Sport | null>(null);
   readonly deletingId = signal<string | null>(null);
-  readonly selectedSports = signal<SportRow[]>([]);
-  readonly highlightedRowId = signal<string | null>(null);
 
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.sports.column.name', sortable: true },
+      { key: 'key', labelKey: 'admin.sports.column.key', sortable: true },
       { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false },
+      { key: 'sortOrder', labelKey: 'admin.sports.column.sortOrder', sortable: true },
       { key: 'isActive', labelKey: 'admin.sports.column.status', sortable: true, renderType: 'toggle', toggleAction: 'toggleActive' }
     ];
-    if (this.isSystemAdmin()) {
-      base.push(
-        { key: 'key', labelKey: 'admin.sports.column.key', sortable: true },
-        { key: 'sortOrder', labelKey: 'admin.sports.column.sortOrder', sortable: true }
-      );
-    }
     return base;
   });
 
   readonly sportRowActions = computed(() => {
-    if (this.isSystemAdmin()) {
-      return [
-        { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-        { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
-      ];
+    if (!this.isSystemAdmin()) {
+      return [];
     }
+
     return [
-      { icon: 'visibility', labelKey: 'common.view', action: 'view', variant: 'primary' as const }
+      { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+      { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
     ];
   });
 
@@ -117,8 +96,6 @@ export class AdminSportsPageComponent implements OnInit {
       statusVariant: s.isActive ? 'active' : 'inactive'
     }))
   );
-
-  readonly hasSelection = computed(() => this.selectedSports().length > 0);
 
   readonly helpSections: HelpSection[] = [
     { titleKey: 'admin.sports.help.section1Title', contentKey: 'admin.sports.help.section1Text' },
@@ -153,8 +130,6 @@ export class AdminSportsPageComponent implements OnInit {
       this.confirmDelete(event.row);
     } else if (event.action === 'toggleActive') {
       this.toggleSportActive(event.row);
-    } else if (event.action === 'view') {
-      this.openEdit(event.row);
     }
   }
 
@@ -190,41 +165,19 @@ export class AdminSportsPageComponent implements OnInit {
 
   async executeDelete(): Promise<void> {
     const id = this.deletingId();
-    if (id) {
-      const success = await this.facade.deleteSport(id);
-      if (success) {
-        this.showDeleteDialog.set(false);
-        this.deletingId.set(null);
-      }
+    if (!id) {
+      return;
+    }
+
+    const success = await this.facade.deleteSport(id);
+    if (success) {
+      this.cancelDelete();
     }
   }
 
   cancelDelete(): void {
     this.showDeleteDialog.set(false);
     this.deletingId.set(null);
-  }
-
-  onSelectionChanged(rows: SportRow[]): void {
-    this.selectedSports.set(rows);
-  }
-
-  openBulkDelete(): void {
-    if (this.hasSelection()) {
-      this.showBulkDeleteDialog.set(true);
-    }
-  }
-
-  async executeBulkDelete(): Promise<void> {
-    const ids = this.selectedSports().map(r => r.id);
-    const success = await this.facade.bulkDelete(ids);
-    if (success) {
-      this.showBulkDeleteDialog.set(false);
-      this.selectedSports.set([]);
-    }
-  }
-
-  cancelBulkDelete(): void {
-    this.showBulkDeleteDialog.set(false);
   }
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

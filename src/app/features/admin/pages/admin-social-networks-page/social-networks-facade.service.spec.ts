@@ -1,17 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { SocialNetworksFacadeService } from './social-networks-facade.service';
-import { MockSocialNetworkRepository } from '../../../../core/repositories/mock/mock-social-network.repository';
+import { ApiSocialNetworkRepository } from '../../../../core/repositories/api/api-social-network.repository';
 
 describe('SocialNetworksFacadeService', () => {
   let service: SocialNetworksFacadeService;
-  let repository: MockSocialNetworkRepository;
+  let repository: ApiSocialNetworkRepository;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SocialNetworksFacadeService, MockSocialNetworkRepository]
+      providers: [SocialNetworksFacadeService, ApiSocialNetworkRepository]
     });
     service = TestBed.inject(SocialNetworksFacadeService);
-    repository = TestBed.inject(MockSocialNetworkRepository);
+    repository = TestBed.inject(ApiSocialNetworkRepository);
   });
 
   it('should be created', () => {

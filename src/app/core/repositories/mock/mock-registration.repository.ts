@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { RegistrationRepository } from '../registration.repository';
 import { Registration } from '../../models/registration.model';
 import { MOCK_REGISTRATIONS } from '../../data/mock/mock-registrations';
-import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const STORAGE_COLLECTION = 'registrations';

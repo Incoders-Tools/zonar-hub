@@ -67,7 +67,6 @@ export class RegisterPageComponent implements OnInit {
 
   readonly form = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
-    circuitName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.required]],
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -138,7 +137,8 @@ export class RegisterPageComponent implements OnInit {
         return;
       }
 
-      // Move to verification step
+      // Send OTP and move to verification step
+      await this.auth.sendVerificationCode(email);
       this.step.set('verify');
       this.verificationCode.set('');
       this.codeVerified.set(false);
@@ -173,21 +173,24 @@ export class RegisterPageComponent implements OnInit {
     this.codeError.set('');
     this.attempts.update(a => a + 1);
 
-    // Simulate verification delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const MASTER_CODE = '451499';
-    if (this.verificationCode() === MASTER_CODE) {
-      this.codeVerified.set(true);
-      this.notifications.success(this.i18n.translate('verification.success'));
-    } else {
-      if (this.attempts() >= 3) {
-        this.codeError.set('verification.maxAttempts');
+    try {
+      const email = this.form.value.email ?? '';
+      const valid = await this.auth.verifyCode(email, this.verificationCode());
+      if (valid) {
+        this.codeVerified.set(true);
+        this.notifications.success(this.i18n.translate('verification.success'));
       } else {
-        this.codeError.set('verification.invalid');
+        if (this.attempts() >= 3) {
+          this.codeError.set('verification.maxAttempts');
+        } else {
+          this.codeError.set('verification.invalid');
+        }
       }
+    } catch {
+      this.codeError.set('verification.invalid');
+    } finally {
+      this.verifying.set(false);
     }
-    this.verifying.set(false);
   }
 
   backToForm(): void {
@@ -210,10 +213,10 @@ export class RegisterPageComponent implements OnInit {
 
       const session = await this.auth.register({
         fullName: this.form.value.fullName ?? '',
-        circuitName: this.form.value.circuitName ?? '',
         email,
         password: this.form.value.password ?? '',
-        phone
+        phone,
+        verificationCode: this.verificationCode()
       });
 
       // Init onboarding state for the new user

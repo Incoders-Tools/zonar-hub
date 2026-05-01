@@ -139,6 +139,7 @@ export class AdminLayoutComponent implements OnInit {
         { labelKey: 'admin.appLogs', route: '/admin/system/logs', icon: '📋', toolKey: 'app-logs' },
         { labelKey: 'admin.security', route: '/admin/system/security', icon: '🛡️', toolKey: 'security' },
         { labelKey: 'admin.settings', route: '/admin/system/settings', icon: '⚙️', toolKey: 'settings' },
+        { labelKey: 'admin.emailTemplates', route: '/admin/system/email-templates', icon: '✉️', toolKey: 'email-templates' },
         { labelKey: 'admin.billing', route: '/admin/billing', icon: '💰', toolKey: 'billing' }
       ]
     }

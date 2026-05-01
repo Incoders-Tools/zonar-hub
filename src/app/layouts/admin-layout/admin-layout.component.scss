@@ -56,6 +56,14 @@
     font-size: var(--zh-font-size-lg);
     color: var(--zh-primary);
     letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+  }
+
+  &__logo-img {
+    height: 24px;
+    width: auto;
+    object-fit: contain;
   }
 
   &__actions {
@@ -131,6 +139,23 @@
     color: var(--zh-on-primary);
     text-decoration: none;
     letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+
+    &-img {
+      height: 26px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    &-icon {
+      height: 28px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+      filter: brightness(0) invert(1);
+    }
   }
 
   &__collapse {

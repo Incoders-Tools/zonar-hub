@@ -1,0 +1,19 @@
+<svg width="400" height="120" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#165D3C" stroke-width="4">
+    <!-- Llaves -->
+    <path d="M20,30 L40,30 L40,50" />
+    <path d="M20,60 L40,60" />
+    <path d="M20,90 L40,90 L40,70" />
+    <!-- Caja Central -->
+    <rect x="40" y="45" width="30" height="30" />
+    <path d="M48,52 L62,52 L48,68 L62,68" stroke-width="2" />
+    <!-- Nodos -->
+    <path d="M70,60 L90,40" />
+    <circle cx="90" cy="40" r="4" fill="#165D3C" />
+    <path d="M70,60 L95,60" />
+    <circle cx="95" cy="60" r="4" fill="#165D3C" />
+    <path d="M70,60 L90,80" />
+    <circle cx="90" cy="80" r="4" fill="#165D3C" />
+  </g>
+  <text x="110" y="80" font-family="Arial, sans-serif" font-weight="bold" font-size="45" fill="#165D3C">Zonar Hub</text>
+</svg>

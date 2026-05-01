@@ -6,9 +6,17 @@
  * Global repos (catalogs) use a simple key.
  */
 
-import { getCurrentMockTenantId } from './mock-tenant-context';
-
 const PREFIX = 'zh_mock_';
+const TENANT_SESSION_KEY = 'zh_auth_session_tenant';
+
+export function getCurrentMockTenantId(): string | null {
+  try { return localStorage.getItem(TENANT_SESSION_KEY); } catch { return null; }
+}
+
+export function isDemoTenant(): boolean {
+  const id = getCurrentMockTenantId();
+  return id === null || id === 'tenant-1';
+}
 
 /** Build a tenant-scoped localStorage key. */
 export function tenantStorageKey(collection: string): string {

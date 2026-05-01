@@ -71,7 +71,7 @@ export interface RegisterRequest {
   password: string;
   phone?: string;
   birthDate?: string;
-  circuitName?: string;
+  verificationCode: string;
 }
 
 export interface ForgotPasswordRequest {

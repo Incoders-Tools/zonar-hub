@@ -26,28 +26,30 @@
   @if (currentStep() === 0) {
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.organization'">
-        <form [formGroup]="orgForm">
+        <form [formGroup]="orgForm" class="onboarding__form">
           <div class="form-field">
             <label class="form-field__label" for="ob-org-name">{{ 'onboarding.organization.displayName' | t }} *</label>
-            <input class="form-field__input" id="ob-org-name" type="text" formControlName="displayName"
-              [placeholder]="'onboarding.organization.displayNamePlaceholder' | t"
-              autofocus />
-            @if (orgForm.get('displayName')?.hasError('required') && orgForm.get('displayName')?.touched) {
-              <span class="form-field__error">{{ 'common.required' | t }}</span>
-            }
+            <input #orgNameInput class="form-field__input" id="ob-org-name" type="text" formControlName="displayName"
+              [placeholder]="'onboarding.organization.displayNamePlaceholder' | t" />
             <span class="form-field__hint">{{ 'onboarding.organization.hint' | t }}</span>
           </div>
 
           <hr class="onboarding__divider" />
 
-          <div class="form-field">
-            <label class="form-field__label">{{ 'onboarding.organization.type' | t }} *</label>
+          <div class="form-field onboarding__type-field">
+            <div class="onboarding__type-question">
+              <h3 class="onboarding__type-question-title">{{ 'onboarding.organization.typeQuestion' | t }}</h3>
+              <p class="onboarding__type-question-help">{{ 'onboarding.organization.typeHelp' | t }}</p>
+            </div>
             <div class="onboarding__type-grid">
               @for (opt of orgTypeOptions; track opt.value) {
                 <button type="button"
                   class="onboarding__type-card"
                   [class.onboarding__type-card--active]="isOrgTypeSelected(opt.value)"
                   (click)="selectOrgType(opt.value)">
+                  @if (isOrgTypeSelected(opt.value)) {
+                    <span class="onboarding__type-check" aria-hidden="true">✓</span>
+                  }
                   <span class="onboarding__type-icon">{{ opt.icon }}</span>
                   <span class="onboarding__type-label">{{ opt.labelKey | t }}</span>
                   <span class="onboarding__type-desc">{{ opt.descKey | t }}</span>
@@ -194,7 +196,7 @@
             <span class="form-field__hint">{{ 'onboarding.venue.courtsCountHint' | t }}</span>
           </div>
 
-          @if (courtNamesArray.length > 0) {
+          @if (courtRowsCount() > 0) {
             <div class="form-field">
               <label class="form-field__label">{{ 'onboarding.venue.courtNames' | t }}</label>
               <div class="onboarding__court-list" formArrayName="courtNames">

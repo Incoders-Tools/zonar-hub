@@ -380,6 +380,8 @@
   }
 }
 
+.players-page {
+  &__form-panel-header {
     padding-bottom: var(--zh-space-md);
     border-bottom: 1px solid var(--zh-border-subtle);
   }

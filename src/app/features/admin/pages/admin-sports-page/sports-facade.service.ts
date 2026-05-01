@@ -1,7 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Sport, TournamentModality } from '../../../../core/models';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
+import { OrganizationContextService } from '../../../../core/services/organization-context.service';
+import { TenantContextService } from '../../../../core/services/tenant-context.service';
 
 export interface SportFilters {
   name?: string;
@@ -10,8 +13,14 @@ export interface SportFilters {
 
 @Injectable()
 export class SportsFacadeService {
-  private readonly repository = inject(MockSportRepository);
+  private readonly repository = inject(ApiSportRepository);
   private readonly modalityRepository = inject(MockTournamentModalityRepository);
+  private readonly auth = inject(AuthService);
+  private readonly organizationContext = inject(OrganizationContextService);
+  private readonly tenantContext = inject(TenantContextService);
+
+  private readonly scopeState = signal<'global' | 'organization' | 'tenant'>('global');
+  private readonly scopeIdState = signal<string | null>(null);
 
   // State signals
   private readonly entitiesState = signal<Sport[]>([]);
@@ -68,8 +77,16 @@ export class SportsFacadeService {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
+      const scope = this.resolveScope();
+      this.scopeState.set(scope.type);
+      this.scopeIdState.set(scope.id ?? null);
+
       const [sports, modalities] = await Promise.all([
-        this.repository.getAll(),
+        scope.type === 'organization' && scope.id
+          ? this.repository.getForOrganization(scope.id)
+          : scope.type === 'tenant' && scope.id
+            ? this.repository.getForTenant(scope.id)
+            : this.repository.getAll(),
         this.modalityRepository.getAll()
       ]);
       this.entitiesState.set(sports);
@@ -98,6 +115,23 @@ export class SportsFacadeService {
       this.savingState.set(true);
       this.errorState.set(null);
 
+      if (this.scopeState() !== 'global') {
+        const isUpdate = 'id' in sport && !!sport.id;
+        if (!isUpdate) {
+          return false;
+        }
+
+        const updated = sport as Sport;
+        const local = this.entitiesState().map(s =>
+          s.id === updated.id ? { ...s, isActive: updated.isActive } : s
+        );
+        this.entitiesState.set(local);
+
+        const enabledSportIds = local.filter(s => s.isActive).map(s => s.id);
+        await this.persistScopedSelection(enabledSportIds);
+        return true;
+      }
+
       // Check if this is create or update based on presence of 'id'
       const isUpdate = 'id' in sport && sport.id;
 
@@ -125,6 +159,10 @@ export class SportsFacadeService {
   }
 
   async deleteSport(id: string): Promise<boolean> {
+    if (this.scopeState() !== 'global') {
+      return false;
+    }
+
     try {
       this.deletingState.set(true);
       this.errorState.set(null);
@@ -140,6 +178,10 @@ export class SportsFacadeService {
   }
 
   async bulkDelete(ids: string[]): Promise<boolean> {
+    if (this.scopeState() !== 'global') {
+      return false;
+    }
+
     try {
       this.deletingState.set(true);
       this.errorState.set(null);
@@ -200,5 +242,44 @@ export class SportsFacadeService {
   getNextSortOrder(): number {
     const max = Math.max(0, ...this.entitiesState().map(s => s.sortOrder ?? 0));
     return max + 1;
+  }
+
+  private resolveScope(): { type: 'global' | 'organization' | 'tenant'; id?: string } {
+    if (this.auth.isSystemAdmin()) {
+      return { type: 'global' };
+    }
+
+    const organizationId = this.organizationContext.organizationId();
+    if (organizationId) {
+      return { type: 'organization', id: organizationId };
+    }
+
+    const tenantId = this.auth.session()?.tenant?.id
+      ?? this.auth.currentUser()?.tenantId
+      ?? this.tenantContext.tenantId();
+
+    if (tenantId) {
+      return { type: 'tenant', id: tenantId };
+    }
+
+    return { type: 'global' };
+  }
+
+  private async persistScopedSelection(enabledSportIds: string[]): Promise<void> {
+    const scope = this.scopeState();
+    const scopeId = this.scopeIdState();
+
+    if (!scopeId) {
+      return;
+    }
+
+    if (scope === 'organization') {
+      await this.repository.setForOrganization(scopeId, enabledSportIds);
+      return;
+    }
+
+    if (scope === 'tenant') {
+      await this.repository.setForTenant(scopeId, enabledSportIds);
+    }
   }
 }

@@ -22,6 +22,14 @@
     color: var(--zh-primary);
     text-decoration: none;
     letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+
+    &-img {
+      height: 30px;
+      width: auto;
+      object-fit: contain;
+    }
   }
 
   &__hamburger {

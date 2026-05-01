@@ -1,25 +1,28 @@
 import { TestBed } from '@angular/core/testing';
 import { SportsFacadeService } from './sports-facade.service';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
+import { Sport } from '../../../../core/models';
 
 describe('SportsFacadeService', () => {
   let service: SportsFacadeService;
-  let repository: MockSportRepository;
+  let repository: ApiSportRepository;
 
-  const mockSportData = {
+  const mockSportData: Omit<Sport, 'id' | 'createdAt' | 'updatedAt'> = {
     name: 'Test Sport',
     key: 'test_sport',
     icon: '🏀',
+    iconSource: 'unicode',
+    modalityIds: [],
     sortOrder: 99,
     isActive: true
   };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SportsFacadeService, MockSportRepository]
+      providers: [SportsFacadeService, ApiSportRepository]
     });
     service = TestBed.inject(SportsFacadeService);
-    repository = TestBed.inject(MockSportRepository);
+    repository = TestBed.inject(ApiSportRepository);
   });
 
   it('should be created', () => {

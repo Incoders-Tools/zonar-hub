@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Team } from '../../models/team.model';
 import { MOCK_TEAMS } from '../../data/mock/mock-teams';
-import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const STORAGE_COLLECTION = 'teams';

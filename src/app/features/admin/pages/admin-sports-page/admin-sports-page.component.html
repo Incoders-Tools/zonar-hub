@@ -14,14 +14,6 @@
           [titleKey]="'admin.sports.help.title'"
           [sections]="helpSections">
         </app-help-button>
-        @if (isSystemAdmin() && hasSelection()) {
-          <app-async-button
-            variant="danger"
-            [loading]="facade.deleting()"
-            (clicked)="openBulkDelete()">
-            {{ 'admin.bulkDelete' | t }}
-          </app-async-button>
-        }
         @if (isSystemAdmin() && !showFormPanel()) {
           <app-async-button variant="primary" (clicked)="openCreate()">
             {{ 'admin.sports.action.create' | t }}
@@ -31,9 +23,9 @@
     </div>
   </div>
 
-  <!-- Inline Form Panel -->
-  @if (showFormPanel()) {
-    <div class="sports-page__form-panel" @slideDown>
+  <!-- Inline Form Panel (sysadmin global mode) -->
+  @if (isSystemAdmin() && showFormPanel()) {
+    <div class="sports-page__form-panel">
       <div class="sports-page__form-panel-header">
         <h3 class="sports-page__form-panel-title">
           {{ (editingSport() ? 'admin.sports.edit.title' : 'admin.sports.create.title') | t }}
@@ -72,38 +64,23 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    [selectable]="isSystemAdmin()"
-    [reorderable]="isSystemAdmin()"
+    [selectable]="false"
+    [reorderable]="false"
     [rowActions]="sportRowActions()"
     emptyMessageKey="admin.sports.emptyState"
-    (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
     (rowAction)="onRowActionClicked($event)">
   </app-data-table>
+
+  @if (showDeleteDialog()) {
+    <app-confirm-dialog
+      titleKey="admin.sports.confirm.deleteTitle"
+      messageKey="admin.sports.confirm.deleteMessage"
+      confirmLabelKey="common.delete"
+      confirmVariant="danger"
+      [loading]="facade.deleting()"
+      (confirmed)="executeDelete()"
+      (cancelled)="cancelDelete()">
+    </app-confirm-dialog>
+  }
 </div>
-
-<!-- Delete Confirmation Dialog -->
-@if (showDeleteDialog()) {
-  <app-confirm-dialog
-    titleKey="admin.sports.confirm.deleteTitle"
-    messageKey="admin.sports.confirm.deleteMessage"
-    confirmLabelKey="common.delete"
-    confirmVariant="danger"
-    [loading]="facade.deleting()"
-    (confirmed)="executeDelete()"
-    (cancelled)="cancelDelete()">
-  </app-confirm-dialog>
-}
-
-<!-- Bulk Delete Confirmation Dialog -->
-@if (showBulkDeleteDialog()) {
-  <app-confirm-dialog
-    titleKey="admin.sports.confirm.bulkDeleteTitle"
-    messageKey="admin.sports.confirm.bulkDeleteMessage"
-    confirmLabelKey="admin.bulkDelete"
-    confirmVariant="danger"
-    [loading]="facade.deleting()"
-    (confirmed)="executeBulkDelete()"
-    (cancelled)="cancelBulkDelete()">
-  </app-confirm-dialog>
-}

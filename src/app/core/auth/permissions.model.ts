@@ -53,6 +53,7 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
   { key: 'app-logs', module: 'system', labelKey: 'admin.appLogs', route: '/admin/system/logs' },
   { key: 'security', module: 'system', labelKey: 'admin.security', route: '/admin/system/security' },
   { key: 'settings', module: 'system', labelKey: 'admin.settings', route: '/admin/system/settings' },
+  { key: 'email-templates', module: 'system', labelKey: 'admin.emailTemplates', route: '/admin/system/email-templates' },
   { key: 'billing', module: 'system', labelKey: 'admin.billing', route: '/admin/billing' },
   { key: 'flyer-backgrounds', module: 'system', labelKey: 'admin.flyerBackgrounds', route: '/admin/flyer-backgrounds' },
 ];

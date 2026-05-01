@@ -2,7 +2,9 @@
   <!-- Mobile Header -->
   <header class="admin-mobile-header">
     <button class="admin-mobile-header__toggle" (click)="toggleMobileSidebar()" aria-label="Toggle menu">☰</button>
-    <span class="admin-mobile-header__title">{{ 'common.appName' | t }}</span>
+    <span class="admin-mobile-header__title">
+      <img src="/uploads/zonar-hub/zonar-hub-logos/logo_horizontal_green.png" alt="Zonar Hub" class="admin-mobile-header__logo-img" />
+    </span>
     <div class="admin-mobile-header__actions">
       <a class="admin-mobile-header__avatar" routerLink="/admin/profile">{{ userInitials() }}</a>
     </div>
@@ -11,7 +13,13 @@
   <!-- Sidebar -->
   <aside class="admin-sidebar" [class.admin-sidebar--mobile-open]="mobileSidebarOpen()">
     <div class="admin-sidebar__header">
-      <a routerLink="/" class="admin-sidebar__logo">{{ sidebarCollapsed() ? 'ZH' : ('common.appName' | t) }}</a>
+      <a routerLink="/" class="admin-sidebar__logo">
+        @if (sidebarCollapsed()) {
+          <img src="/uploads/zonar-hub/zonar-hub-logos/isotype_512.png" alt="Zonar Hub" class="admin-sidebar__logo-icon" />
+        } @else {
+          <img src="/uploads/zonar-hub/zonar-hub-logos/logo_horizontal_white.png" alt="Zonar Hub" class="admin-sidebar__logo-img" />
+        }
+      </a>
       <button class="admin-sidebar__collapse" (click)="toggleSidebar()">{{ sidebarCollapsed() ? '→' : '←' }}</button>
     </div>
 

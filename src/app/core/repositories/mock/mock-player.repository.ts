@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { PlayerRepository, PlayerSearchFilters } from '../player.repository';
 import { Player } from '../../models/player.model';
 import { MOCK_PLAYERS } from '../../data/mock/mock-players';
-import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-tenant-context';
+import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
 
 const STORAGE_COLLECTION = 'players';

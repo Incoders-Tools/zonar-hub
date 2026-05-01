@@ -1,27 +1,54 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, timeout } from 'rxjs';
+import { API_BASE_URL } from '../config/api-base-url.token';
 import { AuthSession, LoginRequest, RegisterRequest, Tenant, User, UserRole } from '../models';
-import { MOCK_USERS } from '../data/mock/mock-users';
-import { setCurrentMockTenant } from '../data/mock/mock-tenant-context';
-import { MockAdminUserRepository } from '../repositories/mock/mock-admin-user.repository';
-import { MockTenantRepository } from '../repositories/mock/mock-tenant.repository';
+import { extractApiErrorCode } from '../repositories/api/api-error.util';
 
-const MOCK_TENANT: Tenant = {
-  id: 'tenant-1',
-  name: 'Club Padel Barcelona',
-  key: 'club_padel_bcn',
-  contactEmail: 'info@clubpadelbcn.com',
-  contactPhone: '+34 93 123 4567',
-  planId: 'plan-2',
-  planType: 'pro',
-  isActive: true,
-  createdAt: '2025-01-15'
-};
+interface ApiTenantDto {
+  id: string;
+  name: string;
+  key: string;
+  contactEmail: string;
+  planId: string;
+  planType: string;
+}
+
+interface ApiUserDto {
+  id: string;
+  email: string;
+  fullName: string;
+  roleId: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  phone?: string | null;
+  birthDate?: string | null;
+  avatarUrl?: string | null;
+  tenantId?: string | null;
+  tenantIds?: string[] | null;
+  organizationId?: string | null;
+  locale?: string | null;
+  dateFormat?: string | null;
+}
+
+interface AuthApiResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresAtUtc: string;
+  user: ApiUserDto;
+  tenant?: ApiTenantDto | null;
+}
+
+const SESSION_STORAGE_KEY = 'zh_auth_session';
+const AUTH_REQUEST_TIMEOUT_MS = 15000;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly sessionState = signal<AuthSession | null>(null);
-  private readonly adminUserRepo = inject(MockAdminUserRepository);
-  private readonly tenantRepo = inject(MockTenantRepository);
+  private readonly http = inject(HttpClient);
+  private readonly apiBaseUrl = inject(API_BASE_URL);
 
   readonly session = this.sessionState.asReadonly();
   readonly isAuthenticated = computed(() => this.sessionState() !== null);
@@ -31,124 +58,217 @@ export class AuthService {
   readonly isAdmin = computed(() => this.userRole() === 'admin' || this.userRole() === 'system_admin');
   readonly isPlayer = computed(() => this.userRole() === 'player');
 
-  async login(request: LoginRequest): Promise<AuthSession> {
-    await this.delay(800);
-    const user = MOCK_USERS.find(u => u.email === request.email);
-    if (!user) {
-      throw new Error('auth.invalidCredentials');
+  constructor() {
+    const stored = this.restoreSession();
+    if (!stored) {
+      return;
     }
-    const session: AuthSession = {
-      user,
-      token: 'mock-jwt-token-' + Date.now(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      tenant: user.tenantId ? MOCK_TENANT : undefined,
-      organizationId: user.tenantId ? 'org-1' : undefined,
-      organizationName: user.tenantId ? 'Club Padel Barcelona' : undefined
-    };
-    this.sessionState.set(session);
-    setCurrentMockTenant(session.tenant?.id);
-    return session;
+
+    this.sessionState.set(stored);
+  }
+
+  async login(request: LoginRequest): Promise<AuthSession> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<AuthApiResponse>(`${this.apiBaseUrl}/auth/login`, request)
+          .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+
+      return this.buildAndSetSession(response);
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'auth.invalidCredentials'));
+    }
   }
 
   async register(request: RegisterRequest): Promise<AuthSession> {
-    await this.delay(1000);
-    const tenantName = (request.circuitName?.trim()) || (request.fullName + ' Circuit');
-    const tenantKey = tenantName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '_');
+    try {
+      const body = {
+        fullName: request.fullName,
+        email: request.email,
+        password: request.password,
+        phone: request.phone ?? null,
+        birthDate: request.birthDate ?? null,
+        verificationCode: request.verificationCode
+      };
 
-    // Create the tenant in the repository so ActiveOrganizationService can find it
-    const createdTenant = await this.tenantRepo.create({
-      name: tenantName,
-      key: tenantKey,
-      contactEmail: request.email,
-      planId: 'plan-1',
-      planType: 'starter',
-      isActive: true
-    });
-    const tenantId = createdTenant.id;
+      const response = await firstValueFrom(
+        this.http.post<AuthApiResponse>(`${this.apiBaseUrl}/auth/register`, body)
+          .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
 
-    const newUser: User = {
-      id: 'u-' + Date.now(),
-      email: request.email,
-      fullName: request.fullName,
-      phone: request.phone,
-      birthDate: request.birthDate,
-      role: 'admin',
-      roleId: 'role1',
-      tenantId,
-      tenantIds: [tenantId],
-      isActive: true,
-      createdAt: new Date().toISOString()
-    };
-    // Persist registered user in localStorage for mock persistence
-    this.persistRegisteredUser(newUser);
-    const session: AuthSession = {
-      user: newUser,
-      token: 'mock-jwt-token-' + Date.now(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      tenant: createdTenant,
-      organizationId: undefined,
-      organizationName: undefined
-    };
-    this.sessionState.set(session);
-    setCurrentMockTenant(tenantId);
+      return this.buildAndSetSession(response);
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'auth.registerError'));
+    }
+  }
 
-    // Persist user into admin users repository so it appears in ABM lists
-    this.adminUserRepo.create({
-      email: request.email,
-      fullName: request.fullName,
-      phone: request.phone,
-      roleId: 'role1'
-    }).catch(() => { /* silent — mock persistence only */ });
+  async sendVerificationCode(email: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.post(`${this.apiBaseUrl}/auth/send-verification-code`, { email })
+          .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'verification.sendError'));
+    }
+  }
 
-    return session;
+  async verifyCode(email: string, code: string): Promise<boolean> {
+    try {
+      const result = await firstValueFrom(
+        this.http.post<{ valid: boolean }>(`${this.apiBaseUrl}/auth/check-code`, { email, code })
+          .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+      return result.valid;
+    } catch {
+      return false;
+    }
   }
 
   async checkEmailExists(email: string): Promise<boolean> {
-    await this.delay(300);
-    const registered = this.getRegisteredUsers();
-    return MOCK_USERS.some(u => u.email === email) || registered.some((u: User) => u.email === email);
+    try {
+      const result = await firstValueFrom(
+        this.http.get<{ exists: boolean }>(`${this.apiBaseUrl}/auth/check-email`, {
+          params: { email }
+        }).pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+      return result.exists;
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'auth.registerError'));
+    }
   }
 
   async checkPhoneExists(phone: string): Promise<boolean> {
-    await this.delay(300);
-    const normalized = phone.replace(/[\s\-()]/g, '');
-    const registered = this.getRegisteredUsers();
-    return registered.some((u: User) => u.phone?.replace(/[\s\-()]/g, '') === normalized);
+    try {
+      const result = await firstValueFrom(
+        this.http.get<{ exists: boolean }>(`${this.apiBaseUrl}/auth/check-phone`, {
+          params: { phone }
+        }).pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+      return result.exists;
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'auth.registerError'));
+    }
   }
 
   async forgotPassword(email: string): Promise<void> {
-    await this.delay(800);
+    try {
+      const resetUrlBase = `${window.location.origin}/reset-password`;
+      await firstValueFrom(
+        this.http.post(`${this.apiBaseUrl}/auth/forgot-password`, { email, resetUrlBase })
+          .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'auth.resetError'));
+    }
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    await this.delay(800);
+    try {
+      await firstValueFrom(
+        this.http.post(`${this.apiBaseUrl}/auth/reset-password`, { token, newPassword: password })
+          .pipe(timeout(AUTH_REQUEST_TIMEOUT_MS))
+      );
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error, 'auth.resetError'));
+    }
   }
 
   logout(): void {
     this.sessionState.set(null);
-    setCurrentMockTenant(undefined);
+    this.clearSessionStorage();
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  private buildAndSetSession(response: AuthApiResponse): AuthSession {
+    const user = this.mapApiUser(response.user);
+    const tenant = response.tenant ? this.mapApiTenant(response.tenant) : undefined;
+    const session: AuthSession = {
+      user,
+      token: response.accessToken,
+      expiresAt: response.expiresAtUtc,
+      tenant,
+      organizationId: user.organizationId,
+      organizationName: tenant?.name
+    };
+
+    this.setSession(session);
+    return session;
   }
 
-  private persistRegisteredUser(user: User): void {
+  private setSession(session: AuthSession): void {
+    this.sessionState.set(session);
+
     try {
-      const existing = this.getRegisteredUsers();
-      existing.push(user);
-      localStorage.setItem('zh_registered_users', JSON.stringify(existing));
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
     } catch {
       // storage unavailable
     }
   }
 
-  private getRegisteredUsers(): User[] {
+  private clearSessionStorage(): void {
     try {
-      const raw = localStorage.getItem('zh_registered_users');
-      return raw ? JSON.parse(raw) : [];
+      localStorage.removeItem(SESSION_STORAGE_KEY);
     } catch {
-      return [];
+      // storage unavailable
     }
+  }
+
+  private restoreSession(): AuthSession | null {
+    try {
+      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<AuthSession>;
+      if (!parsed || !parsed.user || !parsed.token || !parsed.expiresAt) {
+        return null;
+      }
+
+      return parsed as AuthSession;
+    } catch {
+      return null;
+    }
+  }
+
+  private mapApiUser(user: ApiUserDto): User {
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      phone: user.phone ?? undefined,
+      birthDate: user.birthDate ?? undefined,
+      roleId: user.roleId,
+      role: this.toUserRole(user.role),
+      isActive: user.isActive,
+      avatarUrl: user.avatarUrl ?? undefined,
+      tenantId: user.tenantId ?? undefined,
+      tenantIds: user.tenantIds ?? undefined,
+      organizationId: user.organizationId ?? undefined,
+      locale: user.locale ?? undefined,
+      dateFormat: user.dateFormat ?? undefined,
+      createdAt: user.createdAt
+    };
+  }
+
+  private mapApiTenant(t: ApiTenantDto): Tenant {
+    return {
+      id: t.id,
+      name: t.name,
+      key: t.key,
+      contactEmail: t.contactEmail,
+      planId: t.planId,
+      planType: t.planType as Tenant['planType'],
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  private toUserRole(role: string): UserRole {
+    if (role === 'system_admin' || role === 'admin' || role === 'player' || role === 'viewer') {
+      return role;
+    }
+
+    return 'user';
   }
 }

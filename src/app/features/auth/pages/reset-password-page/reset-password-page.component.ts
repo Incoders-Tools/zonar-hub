@@ -1,5 +1,5 @@
-import { Component, inject, signal, DestroyRef } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, inject, signal, DestroyRef, OnInit } from '@angular/core';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -24,10 +24,11 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   templateUrl: './reset-password-page.component.html',
   styleUrl: './reset-password-page.component.scss'
 })
-export class ResetPasswordPageComponent {
+export class ResetPasswordPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
@@ -37,6 +38,9 @@ export class ResetPasswordPageComponent {
   readonly submitting = signal(false);
   readonly error = signal('');
   readonly formValid = signal(false);
+  readonly invalidLink = signal(false);
+
+  private resetToken = '';
 
   readonly form = this.fb.group({
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -47,6 +51,15 @@ export class ResetPasswordPageComponent {
     this.form.statusChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(status => this.formValid.set(status === 'VALID'));
+  }
+
+  ngOnInit(): void {
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if (!token) {
+      this.invalidLink.set(true);
+      return;
+    }
+    this.resetToken = token;
   }
 
   togglePassword(): void {
@@ -71,13 +84,13 @@ export class ResetPasswordPageComponent {
   }
 
   async onSubmit(): Promise<void> {
-    if (!this.formValid() || this.submitting()) return;
+    if (!this.formValid() || this.submitting() || this.invalidLink()) return;
     this.form.markAllAsTouched();
 
     this.submitting.set(true);
     this.error.set('');
     try {
-      await this.auth.resetPassword('mock-token', this.form.value.password ?? '');
+      await this.auth.resetPassword(this.resetToken, this.form.value.password ?? '');
       this.notifications.success(this.i18n.translate('auth.resetSuccess'));
       this.router.navigate(['/login']);
     } catch {

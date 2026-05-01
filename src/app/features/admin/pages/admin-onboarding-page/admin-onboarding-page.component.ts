@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, effect, viewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -12,8 +12,8 @@ import { OnboardingStateService } from '../../../../core/services/onboarding-sta
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
-import { MockOrganizationRepository } from '../../../../core/repositories/mock/mock-organization.repository';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { MockTenantRepository } from '../../../../core/repositories/mock/mock-tenant.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { UserPreferencesService } from '../../../../core/services/user-preferences.service';
@@ -68,8 +68,8 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly onboarding = inject(OnboardingStateService);
   private readonly auth = inject(AuthService);
   private readonly complexRepo = inject(MockComplexRepository);
-  private readonly orgRepo = inject(MockOrganizationRepository);
-  private readonly sportRepo = inject(MockSportRepository);
+  private readonly orgRepo = inject(ApiOrganizationRepository);
+  private readonly sportRepo = inject(ApiSportRepository);
   private readonly tenantRepo = inject(MockTenantRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
   private readonly tournamentService = inject(TournamentService);
@@ -82,6 +82,12 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   readonly currentStep = signal(0);
   readonly saving = signal(false);
   readonly today = new Date().toISOString().slice(0, 10);
+
+  /** Reactive count of court rows (mirrors courtNames FormArray length) */
+  readonly courtRowsCount = signal(0);
+
+  /** Auto-focus target for step 0 */
+  readonly orgNameInput = viewChild<ElementRef<HTMLInputElement>>('orgNameInput');
 
   /** Available sports loaded from repo */
   readonly availableSports = signal<Sport[]>([]);
@@ -207,6 +213,17 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     }
   });
 
+  constructor() {
+    effect(() => {
+      if (this.currentStep() === 0) {
+        const el = this.orgNameInput()?.nativeElement;
+        if (el) {
+          queueMicrotask(() => el.focus());
+        }
+      }
+    });
+  }
+
   async ngOnInit(): Promise<void> {
     this.subs.push(
       this.orgForm.statusChanges.subscribe(() => this.organizationValid.set(this.orgForm.valid)),
@@ -218,9 +235,9 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     this.venueValid.set(this.venueForm.valid);
     this.tournamentValid.set(this.tournamentForm.valid);
 
-    // Load all sports from repository (unfiltered — let user choose which to activate)
+    // Onboarding must offer only globally active sports.
     const sports = await this.sportRepo.getAll();
-    this.availableSports.set(sports);
+    this.availableSports.set(sports.filter(s => s.isActive));
 
     // Generate initial court name
     this.syncCourtNames(1);
@@ -247,6 +264,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       const idx = arr.length + 1;
       arr.push(new FormControl(`Cancha ${idx}`, { nonNullable: true }));
     }
+    this.courtRowsCount.set(arr.length);
   }
 
   /** System config actions */
@@ -331,7 +349,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
       // 1. Persist organization
       const orgValues = this.orgForm.value;
-      await this.orgRepo.create({
+      const createdOrganization = await this.orgRepo.create({
         displayName: orgValues.displayName ?? '',
         type: orgValues.type ?? 'circuito',
         isActive: true,
@@ -340,7 +358,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       });
 
       // 1b. Set this org as the active and primary organization
-      this.activeOrgService.setOnboardingOrganization(tenantId);
+      this.activeOrgService.setOnboardingOrganization(createdOrganization.id);
 
       // 2. Update tenant name from org name
       if (session?.tenant) {
@@ -378,13 +396,10 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
         });
       }
 
-      // 5. Activate selected sports, deactivate the rest
-      const allSports = await this.sportRepo.getAll();
-      for (const sport of allSports) {
-        const shouldBeActive = sportIds.includes(sport.id);
-        if (sport.isActive !== shouldBeActive) {
-          await this.sportRepo.update(sport.id, { isActive: shouldBeActive });
-        }
+      // 5. Activate selected sports for the newly created organization and tenant
+      await this.sportRepo.setForOrganization(createdOrganization.id, sportIds);
+      if (/^[0-9a-fA-F-]{36}$/.test(tenantId)) {
+        await this.sportRepo.setForTenant(tenantId, sportIds);
       }
 
       // 6. Persist tournament (if filled)
