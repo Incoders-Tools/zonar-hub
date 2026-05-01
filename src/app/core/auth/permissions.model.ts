@@ -38,8 +38,6 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
   { key: 'categories', module: 'catalog', labelKey: 'admin.categories', route: '/admin/catalogs/categories' },
   { key: 'genders', module: 'catalog', labelKey: 'admin.genders', route: '/admin/catalogs/genders' },
   { key: 'sports', module: 'catalog', labelKey: 'admin.sports', route: '/admin/catalogs/sports' },
-  { key: 'complex-services', module: 'catalog', labelKey: 'admin.complexServices', route: '/admin/catalogs/complex-services' },
-  { key: 'social-networks', module: 'catalog', labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks' },
   { key: 'tournament-statuses', module: 'catalog', labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses' },
 
   // System
@@ -66,8 +64,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'dashboard',
     'tournaments', 'tournament-eligibility-profiles', 'tournament-rules',
     'registrations', 'players', 'teams', 'draw-planner',
-    'complexes', 'categories', 'genders', 'sports', 'complex-services',
-    'social-networks', 'tournament-statuses',
+    'complexes', 'categories', 'genders', 'sports', 'tournament-statuses',
     'users', 'organizations', 'tenants',
     'settings', 'flyer-backgrounds', 'billing',
   ],

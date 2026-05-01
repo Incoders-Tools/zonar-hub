@@ -27,10 +27,14 @@
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.organization'">
         <form [formGroup]="orgForm" class="onboarding__form">
-          <div class="form-field">
+          <div class="form-field onboarding__primary-field" [class.onboarding__primary-field--spotlight]="showOrgFieldSpotlight()">
             <label class="form-field__label" for="ob-org-name">{{ 'onboarding.organization.displayName' | t }} *</label>
             <input #orgNameInput class="form-field__input" id="ob-org-name" type="text" formControlName="displayName"
+              [class.onboarding__input--spotlight]="showOrgFieldSpotlight()"
               [placeholder]="'onboarding.organization.displayNamePlaceholder' | t" />
+            @if (showOrgFieldSpotlight()) {
+              <span class="onboarding__primary-field-chip">{{ 'onboarding.organization.primaryField' | t }}</span>
+            }
             <span class="form-field__hint">{{ 'onboarding.organization.hint' | t }}</span>
           </div>
 

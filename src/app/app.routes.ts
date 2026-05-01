@@ -151,16 +151,6 @@ export const routes: Routes = [
         data: { toolKey: 'genders' }, canActivate: [toolGuard]
       },
       {
-        path: 'catalogs/complex-services',
-        loadComponent: () => import('./features/admin/pages/admin-complex-services-page/admin-complex-services-page.component').then(m => m.AdminComplexServicesPageComponent),
-        data: { toolKey: 'complex-services' }, canActivate: [toolGuard]
-      },
-      {
-        path: 'catalogs/social-networks',
-        loadComponent: () => import('./features/admin/pages/admin-social-networks-page/admin-social-networks-page.component').then(m => m.AdminSocialNetworksPageComponent),
-        data: { toolKey: 'social-networks' }, canActivate: [toolGuard]
-      },
-      {
         path: 'catalogs/tournament-statuses',
         loadComponent: () => import('./features/admin/pages/admin-tournament-statuses-page/admin-tournament-statuses-page.component').then(m => m.AdminTournamentStatusesPageComponent),
         data: { toolKey: 'tournament-statuses' }, canActivate: [toolGuard]

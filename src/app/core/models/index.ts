@@ -5,8 +5,6 @@ export * from './registration.model';
 export * from './user.model';
 export * from './admin-user.model';
 export * from './complex.model';
-export * from './complex-service.model';
-export * from './social-network.model';
 export * from './tournament-status.model';
 export * from './tournament-admin.model';
 export * from './catalog.model';

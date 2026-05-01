@@ -53,6 +53,29 @@
           </select>
         </div>
 
+        <!-- Sports -->
+        <div class="form-field">
+          <label class="form-field__label">{{ 'admin.organizations.field.sports' | t }} *</label>
+          <span class="form-field__hint">{{ 'admin.organizations.hint.sports' | t }}</span>
+
+          @if (availableSports().length === 0) {
+            <span class="form-field__hint">{{ 'admin.organizations.emptySports' | t }}</span>
+          } @else {
+            <div class="organization-form-panel__sport-grid" role="group" [attr.aria-label]="'admin.organizations.field.sports' | t">
+              @for (sport of availableSports(); track sport.id) {
+                <button
+                  type="button"
+                  class="organization-form-panel__sport-option"
+                  [class.organization-form-panel__sport-option--active]="isSportSelected(sport.id)"
+                  (click)="toggleSport(sport.id)">
+                  <span class="organization-form-panel__sport-icon">{{ sport.icon }}</span>
+                  <span class="organization-form-panel__sport-label">{{ sport.name }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
         <!-- Active -->
         <div class="form-field">
           <app-active-toggle

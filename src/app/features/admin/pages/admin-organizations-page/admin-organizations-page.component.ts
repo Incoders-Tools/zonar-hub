@@ -8,7 +8,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { Organization } from '../../../../core/models';
 import { OrganizationFacadeService, OrganizationFilters } from './organization-facade.service';
-import { OrganizationFormPanelComponent } from './organization-form-panel/organization-form-panel.component';
+import { OrganizationFormPanelComponent, OrganizationFormSubmitData } from './organization-form-panel/organization-form-panel.component';
 
 interface OrganizationRow extends Record<string, unknown> {
   id: string;
@@ -155,7 +155,7 @@ export class AdminOrganizationsPageComponent implements OnInit {
     this.editingOrganization.set(null);
   }
 
-  async onFormSubmitted(data: Partial<Organization>): Promise<void> {
+  async onFormSubmitted(data: OrganizationFormSubmitData): Promise<void> {
     const existing = this.editingOrganization();
     let success: boolean;
     if (existing) {
@@ -167,7 +167,7 @@ export class AdminOrganizationsPageComponent implements OnInit {
         description: data.description,
         type: data.type ?? 'circuito',
         isActive: data.isActive ?? true
-      });
+      }, data.selectedSportIds);
     }
     if (success) this.closeFormPanel();
   }

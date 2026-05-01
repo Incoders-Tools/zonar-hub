@@ -9,12 +9,9 @@ import { FormShellComponent } from '../../../../shared/components/form-shell/for
 import { DateInputComponent } from '../../../../shared/components/date-input/date-input.component';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
-import { TournamentService } from '../../../../core/services/tournament.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
-import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
-import { MockTenantRepository } from '../../../../core/repositories/mock/mock-tenant.repository';
+import { ApiOnboardingRepository } from '../../../../core/repositories/api/api-onboarding.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { UserPreferencesService } from '../../../../core/services/user-preferences.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -63,21 +60,20 @@ interface OrgTypeOption {
   styleUrl: './admin-onboarding-page.component.scss'
 })
 export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
+  private readonly uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
   private readonly router = inject(Router);
   private readonly notifications = inject(NotificationService);
   private readonly onboarding = inject(OnboardingStateService);
   private readonly auth = inject(AuthService);
-  private readonly complexRepo = inject(MockComplexRepository);
-  private readonly orgRepo = inject(ApiOrganizationRepository);
   private readonly sportRepo = inject(ApiSportRepository);
-  private readonly tenantRepo = inject(MockTenantRepository);
+  private readonly onboardingRepo = inject(ApiOnboardingRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
-  private readonly tournamentService = inject(TournamentService);
   protected readonly userPrefs = inject(UserPreferencesService);
   protected readonly i18n = inject(I18nService);
   protected readonly themeService = inject(ThemeService);
   protected readonly dateFormatService = inject(DateFormatService);
   private readonly subs: Subscription[] = [];
+  private orgFieldSpotlightTimeout: ReturnType<typeof setTimeout> | null = null;
 
   readonly currentStep = signal(0);
   readonly saving = signal(false);
@@ -97,6 +93,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly venueValid = signal(false);
   private readonly sportValid = signal(false);
   private readonly tournamentValid = signal(false);
+  readonly showOrgFieldSpotlight = signal(false);
 
   readonly totalSteps = 5;
 
@@ -218,7 +215,10 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       if (this.currentStep() === 0) {
         const el = this.orgNameInput()?.nativeElement;
         if (el) {
-          queueMicrotask(() => el.focus());
+          queueMicrotask(() => {
+            el.focus();
+            this.activateOrgFieldSpotlight();
+          });
         }
       }
     });
@@ -228,7 +228,12 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     this.subs.push(
       this.orgForm.statusChanges.subscribe(() => this.organizationValid.set(this.orgForm.valid)),
       this.venueForm.statusChanges.subscribe(() => this.venueValid.set(this.venueForm.valid)),
-      this.tournamentForm.statusChanges.subscribe(() => this.tournamentValid.set(this.tournamentForm.valid))
+      this.tournamentForm.statusChanges.subscribe(() => this.tournamentValid.set(this.tournamentForm.valid)),
+      this.orgForm.get('displayName')!.valueChanges.subscribe(value => {
+        if ((value ?? '').trim().length > 0) {
+          this.clearOrgFieldSpotlight();
+        }
+      })
     );
 
     this.organizationValid.set(this.orgForm.valid);
@@ -252,6 +257,30 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
+    if (this.orgFieldSpotlightTimeout) {
+      clearTimeout(this.orgFieldSpotlightTimeout);
+      this.orgFieldSpotlightTimeout = null;
+    }
+  }
+
+  private activateOrgFieldSpotlight(): void {
+    this.showOrgFieldSpotlight.set(true);
+    if (this.orgFieldSpotlightTimeout) {
+      clearTimeout(this.orgFieldSpotlightTimeout);
+    }
+
+    this.orgFieldSpotlightTimeout = setTimeout(() => {
+      this.showOrgFieldSpotlight.set(false);
+      this.orgFieldSpotlightTimeout = null;
+    }, 3400);
+  }
+
+  private clearOrgFieldSpotlight(): void {
+    if (this.orgFieldSpotlightTimeout) {
+      clearTimeout(this.orgFieldSpotlightTimeout);
+      this.orgFieldSpotlightTimeout = null;
+    }
+    this.showOrgFieldSpotlight.set(false);
   }
 
   /** Sync FormArray of court names with count */
@@ -339,86 +368,61 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   }
 
   /** Finish: persist all data and navigate */
-  async finishSetup(): Promise<void> {
+  async finishSetup(skipTournament = false): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+
     this.saving.set(true);
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 600));
       const session = this.auth.session();
-      const tenantId = session?.tenant?.id ?? 'tenant-1';
-      const userId = session?.user?.id ?? 'u-1';
+      const tenantId = session?.user?.tenantId ?? session?.tenant?.id ?? '';
+      const userId = session?.user?.id ?? '';
 
-      // 1. Persist organization
-      const orgValues = this.orgForm.value;
-      const createdOrganization = await this.orgRepo.create({
-        displayName: orgValues.displayName ?? '',
-        type: orgValues.type ?? 'circuito',
-        isActive: true,
-        tenantId,
-        createdByUserId: userId
-      });
-
-      // 1b. Set this org as the active and primary organization
-      this.activeOrgService.setOnboardingOrganization(createdOrganization.id);
-
-      // 2. Update tenant name from org name
-      if (session?.tenant) {
-        const newName = orgValues.displayName ?? session.tenant.name;
-        session.tenant.name = newName;
-        await this.tenantRepo.update(tenantId, { name: newName }).catch(() => {});
+      if (!this.uuidPattern.test(tenantId) || !this.uuidPattern.test(userId)) {
+        throw new Error('onboarding.toast.error');
       }
 
-      // 3. Persist venue (complex)
+      const orgValues = this.orgForm.value;
       const venueValues = this.venueForm.getRawValue();
       const sportIds = [...this.selectedSportIds()];
-      const createdComplex = await this.complexRepo.create({
-        name: venueValues.name,
-        key: (venueValues.name ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '_'),
-        address: venueValues.address,
-        location: venueValues.location,
-        cityId: 'city-1',
-        cityName: '',
-        sortOrder: 0,
-        preponderance: 0,
-        sportsSupported: sportIds,
-        courtsCount: venueValues.courtsCount,
-        isActive: true
-      } as any);
 
-      // 4. Persist courts with custom names
-      for (let i = 0; i < venueValues.courtNames.length; i++) {
-        await this.complexRepo.createCourt({
-          complexId: createdComplex.id,
-          name: venueValues.courtNames[i] || `Cancha ${i + 1}`,
-          surfaceType: 'indoor',
-          sportIds,
-          isActive: true,
-          isIndoor: true
-        });
-      }
-
-      // 5. Activate selected sports for the newly created organization and tenant
-      await this.sportRepo.setForOrganization(createdOrganization.id, sportIds);
-      if (/^[0-9a-fA-F-]{36}$/.test(tenantId)) {
-        await this.sportRepo.setForTenant(tenantId, sportIds);
-      }
-
-      // 6. Persist tournament (if filled)
       const tValues = this.tournamentForm.value;
-      if (tValues.name && tValues.startDate && tValues.endDate) {
-        await this.tournamentService.saveTournament({
-          name: tValues.name,
-          startDate: tValues.startDate,
-          endDate: tValues.endDate,
-          complexId: createdComplex.id,
-          complexName: venueValues.name,
-          statusId: 'ts1',
-          statusLabel: 'Próximo',
-          sportId: sportIds[0] ?? 'sp1',
-          sportName: this.availableSports().find(s => s.id === sportIds[0])?.name ?? ''
-        } as any);
-      }
+      const includeTournament = !skipTournament && !!tValues.name && !!tValues.startDate && !!tValues.endDate;
 
-      this.onboarding.completeWizard(!!tValues.name);
+      const result = await this.onboardingRepo.complete({
+        tenantId,
+        createdByUserId: userId,
+        organizationDisplayName: orgValues.displayName ?? '',
+        organizationType: orgValues.type ?? 'circuito',
+        systemSettings: {
+          locale: this.systemLocale(),
+          theme: this.systemTheme(),
+          timezone: this.systemTimezone(),
+          dateFormat: this.systemDateFormat()
+        },
+        venue: {
+          name: venueValues.name ?? '',
+          address: venueValues.address ?? '',
+          location: venueValues.location,
+          courtNames: venueValues.courtNames ?? []
+        },
+        enabledSportIds: sportIds,
+        tournament: includeTournament
+          ? {
+            name: tValues.name!,
+            startDate: tValues.startDate!,
+            endDate: tValues.endDate!
+          }
+          : null
+      });
+
+      const organizationName = orgValues.displayName ?? session?.tenant?.name ?? '';
+      this.auth.updateCurrentOrganization(result.organizationId, organizationName);
+      this.activeOrgService.setOnboardingOrganization(result.organizationId);
+
+      this.onboarding.completeWizard(includeTournament);
       this.onboarding.markOrganizationCreated();
       this.notifications.success('onboarding.toast.success');
       this.router.navigate(['/admin']);
@@ -436,8 +440,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
   /** Finish without tournament — persist org, venue, sports only */
   async finishWithoutTournament(): Promise<void> {
-    this.tournamentForm.reset();
-    await this.finishSetup();
+    await this.finishSetup(true);
   }
 
   /** Courts counter buttons */

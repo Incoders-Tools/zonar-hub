@@ -25,6 +25,9 @@ export interface AdminUserCreatePayload {
   fullName: string;
   phone?: string;
   roleId: string;
+  organizationId?: string;
+  tenantIds?: string[];
+  tenantNames?: string[];
   complexId?: string;
   profileImagePath?: string;
   password?: string;
@@ -34,6 +37,7 @@ export interface AdminUserUpdatePayload {
   fullName?: string;
   phone?: string;
   roleId?: string;
+  organizationId?: string;
   complexId?: string;
   tenantIds?: string[];
   tenantNames?: string[];

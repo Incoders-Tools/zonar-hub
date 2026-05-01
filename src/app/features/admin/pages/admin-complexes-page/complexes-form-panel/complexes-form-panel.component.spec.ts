@@ -2,8 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComplexesFormPanelComponent } from './complexes-form-panel.component';
 import { ComplexesFacadeService } from '../complexes-facade.service';
 import { MockComplexRepository } from '../../../../../core/repositories/mock/mock-complex.repository';
-import { MockComplexServiceRepository } from '../../../../../core/repositories/mock/mock-complex-service.repository';
-import { MockSocialNetworkRepository } from '../../../../../core/repositories/mock/mock-social-network.repository';
 import { Complex } from '../../../../../core/models';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -34,9 +32,7 @@ describe('ComplexesFormPanelComponent', () => {
       imports: [ComplexesFormPanelComponent, NoopAnimationsModule],
       providers: [
         ComplexesFacadeService,
-        MockComplexRepository,
-        MockComplexServiceRepository,
-        MockSocialNetworkRepository
+        MockComplexRepository
       ]
     }).compileComponents();
 
@@ -98,11 +94,4 @@ describe('ComplexesFormPanelComponent', () => {
     expect(component.form.get('key')?.value).toBe('mi_complejo_nuevo');
   });
 
-  it('should switch tabs', () => {
-    expect(component.activeFormTab()).toBe('data');
-    component.setActiveTab('services');
-    expect(component.activeFormTab()).toBe('services');
-    component.setActiveTab('social');
-    expect(component.activeFormTab()).toBe('social');
-  });
 });

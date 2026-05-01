@@ -1,4 +1,4 @@
-import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork } from '../models';
+import { Complex, Court, Availability } from '../models';
 
 export interface ComplexRepository {
   getAll(): Promise<Complex[]>;
@@ -15,9 +15,4 @@ export interface ComplexRepository {
   // Availability
   getAvailabilityByCourtId(courtId: string): Promise<Availability[]>;
   saveAvailability(courtId: string, slots: Omit<Availability, 'id' | 'courtId'>[]): Promise<Availability[]>;
-  // Assignments
-  getServiceAssignments(complexId: string): Promise<ComplexServiceAssignment[]>;
-  saveServiceAssignments(complexId: string, assignments: ComplexServiceAssignment[]): Promise<ComplexServiceAssignment[]>;
-  getSocialNetworks(complexId: string): Promise<ComplexSocialNetwork[]>;
-  saveSocialNetworks(complexId: string, networks: ComplexSocialNetwork[]): Promise<ComplexSocialNetwork[]>;
 }

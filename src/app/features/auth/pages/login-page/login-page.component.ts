@@ -85,7 +85,10 @@ export class LoginPageComponent {
       this.notifications.success(this.i18n.translate('auth.loginSuccess'));
 
       // Check onboarding state
-      this.onboarding.loadExisting(session.user.id);
+      const hasOnboardingProgress = await this.onboarding.loadExisting(session.user.id);
+      if (!hasOnboardingProgress) {
+        this.onboarding.initForUser(session.user.id);
+      }
       const isAdmin = session.user.role === 'admin' || session.user.role === 'system_admin';
       if (isAdmin && this.onboarding.needsWizard()) {
         this.router.navigate(['/admin/onboarding']);

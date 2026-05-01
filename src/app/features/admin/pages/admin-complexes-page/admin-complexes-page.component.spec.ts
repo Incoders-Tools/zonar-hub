@@ -2,8 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminComplexesPageComponent } from './admin-complexes-page.component';
 import { ComplexesFacadeService } from './complexes-facade.service';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
-import { MockComplexServiceRepository } from '../../../../core/repositories/mock/mock-complex-service.repository';
-import { MockSocialNetworkRepository } from '../../../../core/repositories/mock/mock-social-network.repository';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('AdminComplexesPageComponent', () => {
@@ -15,9 +13,7 @@ describe('AdminComplexesPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminComplexesPageComponent, NoopAnimationsModule],
       providers: [
-        MockComplexRepository,
-        MockComplexServiceRepository,
-        MockSocialNetworkRepository
+        MockComplexRepository
       ]
     }).compileComponents();
 

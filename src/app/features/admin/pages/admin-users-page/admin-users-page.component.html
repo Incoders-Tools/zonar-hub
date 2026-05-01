@@ -117,6 +117,7 @@
             [selectAllLabelKey]="'childGrid.selectAll'"
             [deselectAllLabelKey]="'childGrid.deselectAll'"
             [reorderable]="true"
+            [disabled]="!canManageOrganizationAssignments()"
             [collapsible]="true"
             [initialExpanded]="false"
             (selectionChanged)="onTenantSelectionChanged($event)"

@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(npm start *)",
-      "Bash(npx ng *)"
+      "Bash(npx ng *)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Repositories\\\\incoders\\\\zonar-hub\" -Recurse -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match 'social|complex' } | Select-Object -ExpandProperty FullName)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Repositories\\\\incoders\\\\zonar-hub\\\\src\" -Recurse -Directory | Where-Object { $_.Name -match \"i18n|lang|locale|trans\" })",
+      "Bash(xargs grep *)",
+      "Bash(Get-ChildItem \"D:\\\\Repositories\\\\incoders\\\\zonar-hub-api\" -Depth 2)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem \"D:\\\\Repositories\\\\incoders\\\\zonar-hub-api\" -Recurse -File | Select-Object FullName | Where-Object { $_.FullName -match \"Social|InMemory\" } | Format-Table -AutoSize)"
     ]
   }
 }

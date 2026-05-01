@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { TournamentStatus } from '../../../../core/models';
-import { MockTournamentStatusRepository } from '../../../../core/repositories/tournament-status.repository';
+import { MockTournamentStatusRepository } from '../../../../core/repositories/mock/mock-tournament-status.repository';
 
 export interface TournamentStatusFilters {
   name?: string;

@@ -2,6 +2,51 @@
   display: block;
 }
 
+.organization-form-panel {
+  &__sport-grid {
+    margin-top: var(--zh-space-sm);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--zh-space-sm);
+  }
+
+  &__sport-option {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-card);
+    color: var(--zh-text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zh-space-xs);
+    cursor: pointer;
+    transition: border-color var(--zh-transition-fast), transform var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+
+    &:hover {
+      border-color: var(--zh-primary);
+      transform: translateY(-1px);
+    }
+
+    &--active {
+      border-color: var(--zh-primary);
+      background: var(--zh-surface-selected);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--zh-primary) 24%, transparent);
+    }
+  }
+
+  &__sport-icon {
+    font-size: var(--zh-font-size-md);
+    line-height: 1;
+  }
+
+  &__sport-label {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+  }
+}
+
 .form-field {
   margin-bottom: var(--zh-space-md);
 

@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Organization, OrganizationType } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 export interface OrganizationFilters {
@@ -13,6 +14,7 @@ export interface OrganizationFilters {
 @Injectable()
 export class OrganizationFacadeService {
   private readonly repo = inject(ApiOrganizationRepository);
+  private readonly sportsRepo = inject(ApiSportRepository);
   private readonly auth = inject(AuthService);
   private readonly notification = inject(NotificationService);
 
@@ -90,7 +92,8 @@ export class OrganizationFacadeService {
   }
 
   async createOrganization(
-    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'>
+    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'>,
+    selectedSportIds: string[]
   ): Promise<boolean> {
     this.savingState.set(true);
     try {
@@ -101,7 +104,8 @@ export class OrganizationFacadeService {
         createdByUserId: user?.id ?? '',
         logoUrl: undefined
       };
-      await this.repo.create(fullData);
+      const created = await this.repo.create(fullData);
+      await this.sportsRepo.setForOrganization(created.id, selectedSportIds);
       this.notification.success('admin.organizations.toast.created');
       await this.load();
       return true;
@@ -113,10 +117,16 @@ export class OrganizationFacadeService {
     }
   }
 
-  async updateOrganization(id: string, data: Partial<Organization>): Promise<boolean> {
+  async updateOrganization(
+    id: string,
+    data: Partial<Organization> & { selectedSportIds?: string[] }
+  ): Promise<boolean> {
     this.savingState.set(true);
     try {
       await this.repo.update(id, data);
+      if (data.selectedSportIds) {
+        await this.sportsRepo.setForOrganization(id, data.selectedSportIds);
+      }
       this.notification.success('admin.organizations.toast.updated');
       await this.load();
       return true;

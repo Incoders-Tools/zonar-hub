@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork } from '../../models';
+import { Complex, Court, Availability } from '../../models';
 import { ComplexRepository } from '../complex.repository';
 import { getCurrentMockTenantId, isDemoTenant } from '../../data/mock/mock-persistence';
 import { tenantStorageKey, persistToStorage, loadFromStorage } from '../../data/mock/mock-persistence';
@@ -12,8 +12,6 @@ interface ComplexStorageState {
   complexes: Complex[];
   courts: Court[];
   availability: Availability[];
-  serviceAssignments: Record<string, ComplexServiceAssignment[]>;
-  socialNetworks: Record<string, ComplexSocialNetwork[]>;
   complexIdCounter: number;
   courtIdCounter: number;
   availabilityIdCounter: number;
@@ -130,37 +128,11 @@ function generateDefaultAvailability(): Availability[] {
 
 const MOCK_AVAILABILITY: Availability[] = generateDefaultAvailability();
 
-const MOCK_SERVICE_ASSIGNMENTS: Record<string, ComplexServiceAssignment[]> = {
-  cx1: [
-    { serviceId: 'cs1', isActive: true, sortOrder: 1 },
-    { serviceId: 'cs2', isActive: true, sortOrder: 2 },
-    { serviceId: 'cs3', isActive: true, sortOrder: 3 }
-  ],
-  cx2: [
-    { serviceId: 'cs1', isActive: true, sortOrder: 1 },
-    { serviceId: 'cs3', isActive: false, sortOrder: 2 }
-  ],
-  cx3: []
-};
-
-const MOCK_SOCIAL_NETWORKS: Record<string, ComplexSocialNetwork[]> = {
-  cx1: [
-    { socialNetworkId: 'sn1', profileUrl: 'https://instagram.com/padelnorte', isActive: true },
-    { socialNetworkId: 'sn2', profileUrl: 'https://facebook.com/padelnorte', isActive: true }
-  ],
-  cx2: [
-    { socialNetworkId: 'sn1', profileUrl: 'https://instagram.com/arenasur', isActive: true }
-  ],
-  cx3: []
-};
-
 @Injectable({ providedIn: 'root' })
 export class MockComplexRepository implements ComplexRepository {
   private complexes: Complex[] = [];
   private courts: Court[] = [];
   private availability: Availability[] = [];
-  private serviceAssignments: Record<string, ComplexServiceAssignment[]> = {};
-  private socialNetworks: Record<string, ComplexSocialNetwork[]> = {};
   private complexIdCounter = 0;
   private courtIdCounter = 0;
   private availabilityIdCounter = 0;
@@ -175,8 +147,6 @@ export class MockComplexRepository implements ComplexRepository {
       this.complexes = stored.complexes;
       this.courts = stored.courts;
       this.availability = stored.availability;
-      this.serviceAssignments = stored.serviceAssignments;
-      this.socialNetworks = stored.socialNetworks;
       this.complexIdCounter = stored.complexIdCounter;
       this.courtIdCounter = stored.courtIdCounter;
       this.availabilityIdCounter = stored.availabilityIdCounter;
@@ -184,8 +154,6 @@ export class MockComplexRepository implements ComplexRepository {
       this.complexes = structuredClone(MOCK_COMPLEXES);
       this.courts = structuredClone(MOCK_COURTS);
       this.availability = structuredClone(MOCK_AVAILABILITY);
-      this.serviceAssignments = structuredClone(MOCK_SERVICE_ASSIGNMENTS);
-      this.socialNetworks = structuredClone(MOCK_SOCIAL_NETWORKS);
       this.complexIdCounter = this.complexes.length;
       this.courtIdCounter = this.courts.length;
       this.availabilityIdCounter = this.availability.length;
@@ -193,8 +161,6 @@ export class MockComplexRepository implements ComplexRepository {
       this.complexes = [];
       this.courts = [];
       this.availability = [];
-      this.serviceAssignments = {};
-      this.socialNetworks = {};
       this.complexIdCounter = 0;
       this.courtIdCounter = 0;
       this.availabilityIdCounter = 0;
@@ -206,8 +172,6 @@ export class MockComplexRepository implements ComplexRepository {
       complexes: this.complexes,
       courts: this.courts,
       availability: this.availability,
-      serviceAssignments: this.serviceAssignments,
-      socialNetworks: this.socialNetworks,
       complexIdCounter: this.complexIdCounter,
       courtIdCounter: this.courtIdCounter,
       availabilityIdCounter: this.availabilityIdCounter
@@ -260,8 +224,6 @@ export class MockComplexRepository implements ComplexRepository {
     const courtIds = this.courts.filter(ct => ct.complexId === id).map(ct => ct.id);
     this.courts = this.courts.filter(ct => ct.complexId !== id);
     this.availability = this.availability.filter(av => !courtIds.includes(av.courtId));
-    delete this.serviceAssignments[id];
-    delete this.socialNetworks[id];
     this.persist();
     return this.delay(undefined);
   }
@@ -338,29 +300,4 @@ export class MockComplexRepository implements ComplexRepository {
     return this.delay(structuredClone(newSlots));
   }
 
-  // --- Service Assignments ---
-
-  async getServiceAssignments(complexId: string): Promise<ComplexServiceAssignment[]> {
-    const assignments = this.serviceAssignments[complexId] || [];
-    return this.delay(structuredClone(assignments));
-  }
-
-  async saveServiceAssignments(complexId: string, assignments: ComplexServiceAssignment[]): Promise<ComplexServiceAssignment[]> {
-    this.serviceAssignments[complexId] = structuredClone(assignments);
-    this.persist();
-    return this.delay(structuredClone(assignments));
-  }
-
-  // --- Social Networks ---
-
-  async getSocialNetworks(complexId: string): Promise<ComplexSocialNetwork[]> {
-    const networks = this.socialNetworks[complexId] || [];
-    return this.delay(structuredClone(networks));
-  }
-
-  async saveSocialNetworks(complexId: string, networks: ComplexSocialNetwork[]): Promise<ComplexSocialNetwork[]> {
-    this.socialNetworks[complexId] = structuredClone(networks);
-    this.persist();
-    return this.delay(structuredClone(networks));
-  }
 }

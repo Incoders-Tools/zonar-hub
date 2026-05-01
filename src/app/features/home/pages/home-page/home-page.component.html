@@ -25,7 +25,7 @@
     <h2 class="section__title">{{ 'home.sports.title' | t }}</h2>
     <p class="section__subtitle">{{ 'home.sports.subtitle' | t }}</p>
     <div class="sports-grid">
-      @for (sport of sportService.sports(); track sport.id) {
+      @for (sport of sports; track sport.id) {
         <div class="sport-card">
           <span class="sport-card__icon">{{ sport.icon }}</span>
           <span class="sport-card__label">{{ 'home.sport.' + sport.key | t }}</span>

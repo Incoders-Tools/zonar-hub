@@ -95,13 +95,4 @@ describe('ComplexesFacadeService', () => {
     expect(service.loadingAvailability()).toBe(false);
   });
 
-  it('should load service assignments', async () => {
-    await service.loadServiceAssignments('cx1');
-    expect(service.serviceAssignments().length).toBeGreaterThan(0);
-  });
-
-  it('should load social networks', async () => {
-    await service.loadSocialNetworks('cx1');
-    expect(service.socialNetworks().length).toBeGreaterThan(0);
-  });
 });

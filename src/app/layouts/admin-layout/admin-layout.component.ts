@@ -116,8 +116,6 @@ export class AdminLayoutComponent implements OnInit {
             { labelKey: 'admin.genders', route: '/admin/catalogs/genders', icon: '⚧', toolKey: 'genders' },
             { labelKey: 'admin.sports', route: '/admin/catalogs/sports', icon: '🏅', toolKey: 'sports' },
             { labelKey: 'admin.tournamentModalities', route: '/admin/catalogs/tournament-modalities', icon: '🎯', toolKey: 'tournament-modalities' },
-            { labelKey: 'admin.complexServices', route: '/admin/catalogs/complex-services', icon: '🔧', toolKey: 'complex-services' },
-            { labelKey: 'admin.socialNetworks', route: '/admin/catalogs/social-networks', icon: '📱', toolKey: 'social-networks' },
             { labelKey: 'admin.flyerBackgrounds', route: '/admin/flyer-backgrounds', icon: '🖼️', toolKey: 'flyer-backgrounds' },
             { labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses', icon: '📊', toolKey: 'tournament-statuses' }
           ]

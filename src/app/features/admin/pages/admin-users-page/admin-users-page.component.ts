@@ -75,6 +75,7 @@ export class AdminUsersPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly permissions = inject(PermissionService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+  readonly canManageOrganizationAssignments = this.auth.isAdmin;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -219,10 +220,13 @@ export class AdminUsersPageComponent implements OnInit {
       // Load company assignment
       if (user.tenantIds?.length) {
         this.userTenantIds.set(new Set(user.tenantIds));
+        this.orderedTenantIds.set([...user.tenantIds]);
       } else if (user.complexId) {
         this.userTenantIds.set(new Set([user.complexId]));
+        this.orderedTenantIds.set([user.complexId]);
       } else {
         this.userTenantIds.set(new Set());
+        this.orderedTenantIds.set([]);
       }
     } else {
       this.isEditing = false;
@@ -230,6 +234,7 @@ export class AdminUsersPageComponent implements OnInit {
       this.form.get('email')?.enable();
       this.userPermissions.set([...(DEFAULT_ROLE_PERMISSIONS['admin'] || [])]);
       this.userTenantIds.set(new Set());
+      this.orderedTenantIds.set([]);
     }
     this.submitted = false;
   }
@@ -292,6 +297,8 @@ export class AdminUsersPageComponent implements OnInit {
 
     // Resolve tenant assignment
     const tenantIds = Array.from(this.userTenantIds());
+    const orderedIds = this.orderedTenantIds();
+    const primaryOrganizationId = orderedIds.find(id => tenantIds.includes(id)) ?? tenantIds[0];
     const allTenants = this.facade.tenants();
     const tenantNames = tenantIds
       .map(id => allTenants.find(t => t.id === id)?.name)
@@ -305,10 +312,14 @@ export class AdminUsersPageComponent implements OnInit {
           phone: formValue.phone || undefined,
           roleId: formValue.roleId || undefined,
           isActive: formValue.isActive,
+          organizationId: primaryOrganizationId,
           tenantIds,
           tenantNames
         });
         if (success) {
+          if (existingUser.id === this.auth.currentUser()?.id) {
+            this.auth.updateCurrentOrganizationAssignments(primaryOrganizationId, tenantIds);
+          }
           this.permissions.setUserPermissions(existingUser.id, this.userPermissions());
           this.closeFormPanel();
         }
@@ -318,7 +329,10 @@ export class AdminUsersPageComponent implements OnInit {
         email: formValue.email,
         fullName: formValue.fullName,
         phone: formValue.phone || undefined,
-        roleId: formValue.roleId || ''
+        roleId: formValue.roleId || '',
+        organizationId: primaryOrganizationId,
+        tenantIds,
+        tenantNames
       });
       if (success) {
         this.closeFormPanel();

@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Complex, Court, Availability, ComplexServiceAssignment, ComplexSocialNetwork, Sport } from '../../../../core/models';
+import { Complex, Court, Availability, Sport } from '../../../../core/models';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
@@ -46,16 +46,6 @@ export class ComplexesFacadeService {
   private readonly loadingAvailabilityState = signal(false);
   private readonly savingAvailabilityState = signal(false);
 
-  // Service assignments state
-  private readonly serviceAssignmentsState = signal<ComplexServiceAssignment[]>([]);
-  private readonly loadingAssignmentsState = signal(false);
-  private readonly savingAssignmentsState = signal(false);
-
-  // Social networks state
-  private readonly socialNetworksState = signal<ComplexSocialNetwork[]>([]);
-  private readonly loadingNetworksState = signal(false);
-  private readonly savingNetworksState = signal(false);
-
   // Sports state
   private readonly sportsState = signal<Sport[]>([]);
 
@@ -74,14 +64,6 @@ export class ComplexesFacadeService {
   readonly availability = this.availabilityState;
   readonly loadingAvailability = this.loadingAvailabilityState;
   readonly savingAvailability = this.savingAvailabilityState;
-
-  readonly serviceAssignments = this.serviceAssignmentsState;
-  readonly loadingAssignments = this.loadingAssignmentsState;
-  readonly savingAssignments = this.savingAssignmentsState;
-
-  readonly socialNetworks = this.socialNetworksState;
-  readonly loadingNetworks = this.loadingNetworksState;
-  readonly savingNetworks = this.savingNetworksState;
 
   readonly sports = this.sportsState;
 
@@ -365,59 +347,4 @@ export class ComplexesFacadeService {
     }
   }
 
-  // --- Service Assignments ---
-
-  async loadServiceAssignments(complexId: string): Promise<void> {
-    try {
-      this.loadingAssignmentsState.set(true);
-      const assignments = await this.repository.getServiceAssignments(complexId);
-      this.serviceAssignmentsState.set(assignments);
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-    } finally {
-      this.loadingAssignmentsState.set(false);
-    }
-  }
-
-  async saveServiceAssignments(complexId: string, assignments: ComplexServiceAssignment[]): Promise<boolean> {
-    try {
-      this.savingAssignmentsState.set(true);
-      const saved = await this.repository.saveServiceAssignments(complexId, assignments);
-      this.serviceAssignmentsState.set(saved);
-      return true;
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-      return false;
-    } finally {
-      this.savingAssignmentsState.set(false);
-    }
-  }
-
-  // --- Social Networks ---
-
-  async loadSocialNetworks(complexId: string): Promise<void> {
-    try {
-      this.loadingNetworksState.set(true);
-      const networks = await this.repository.getSocialNetworks(complexId);
-      this.socialNetworksState.set(networks);
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-    } finally {
-      this.loadingNetworksState.set(false);
-    }
-  }
-
-  async saveSocialNetworks(complexId: string, networks: ComplexSocialNetwork[]): Promise<boolean> {
-    try {
-      this.savingNetworksState.set(true);
-      const saved = await this.repository.saveSocialNetworks(complexId, networks);
-      this.socialNetworksState.set(saved);
-      return true;
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-      return false;
-    } finally {
-      this.savingNetworksState.set(false);
-    }
-  }
 }

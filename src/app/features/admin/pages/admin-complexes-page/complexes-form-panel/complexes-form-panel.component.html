@@ -2,316 +2,170 @@
   [titleKey]="isEditing ? 'admin.complexes.edit.title' : 'admin.complexes.create.title'"
   [descriptionKey]="isEditing ? 'admin.complexes.edit.description' : 'admin.complexes.create.description'">
 
-  <!-- Tab Navigation -->
-  <div class="complexes-form__tabs">
-    <button
-        type="button"
-        class="complexes-form__tab"
-        [class.complexes-form__tab--active]="activeFormTab() === 'data'"
-        (click)="setActiveTab('data')">
-        {{ 'admin.complexes.form.tabs.data' | t }}
-      </button>
-      <button
-        type="button"
-        class="complexes-form__tab"
-        [class.complexes-form__tab--active]="activeFormTab() === 'services'"
-        (click)="setActiveTab('services')">
-        {{ 'admin.complexes.form.tabs.services' | t }}
-      </button>
-      <button
-        type="button"
-        class="complexes-form__tab"
-        [class.complexes-form__tab--active]="activeFormTab() === 'social'"
-        (click)="setActiveTab('social')">
-        {{ 'admin.complexes.form.tabs.social' | t }}
-      </button>
-    </div>
-
-  <!-- TAB: Datos -->
-  @if (activeFormTab() === 'data') {
-    <form [formGroup]="form" class="form-content" @slideDown>
-      <div class="form-grid">
-        <!-- Name Field -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.name' | t }} *</label>
-          <input
-            type="text"
-            formControlName="name"
-            [class.error]="isFieldInvalid('name')"
-            matInput
-          />
-          @if (isFieldInvalid('name')) {
-            <span class="error-message">{{ getErrorMessage('name') | t }}</span>
-          }
-        </div>
-
-        <!-- Location Field -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.location' | t }}</label>
-          <input
-            type="text"
-            formControlName="location"
-            matInput
-          />
-        </div>
-
-        <!-- Address Field -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.address' | t }}</label>
-          <input
-            type="text"
-            formControlName="address"
-            matInput
-          />
-        </div>
-
-        <!-- Description Field -->
-        <div class="form-field form-field--full">
-          <label>{{ 'admin.complexes.form.description' | t }}</label>
-          <input
-            type="text"
-            formControlName="description"
-            [class.error]="isFieldInvalid('description')"
-            matInput
-          />
-          <span class="hint">{{ 'admin.complexes.form.descriptionHint' | t }}</span>
-          @if (isFieldInvalid('description')) {
-            <span class="error-message">{{ getErrorMessage('description') | t }}</span>
-          }
-        </div>
-
-        <!-- Active Status -->
-        <div class="form-field">
-          <app-active-toggle
-            [value]="form.get('isActive')!.value"
-            mode="toggle"
-            (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
-          </app-active-toggle>
-        </div>
+  <form [formGroup]="form" class="form-content" @slideDown>
+    <div class="form-grid">
+      <!-- Name Field -->
+      <div class="form-field">
+        <label>{{ 'admin.complexes.form.name' | t }} *</label>
+        <input
+          type="text"
+          formControlName="name"
+          [class.error]="isFieldInvalid('name')"
+          matInput
+        />
+        @if (isFieldInvalid('name')) {
+          <span class="error-message">{{ getErrorMessage('name') | t }}</span>
+        }
       </div>
 
-      <!-- Technical Fields (system_admin only) -->
-      @if (isSystemAdmin()) {
-        <app-collapsible-section [titleKey]="'common.technicalFields'">
-          <div class="form-grid">
-            <!-- Key Field -->
-            <div class="form-field">
-              <label>{{ 'admin.complexes.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
-              <input
-                type="text"
-                formControlName="key"
-                [class.error]="isFieldInvalid('key')"
-                matInput
-              />
-              @if (isFieldInvalid('key')) {
-                <span class="error-message">{{ getErrorMessage('key') | t }}</span>
-              }
-            </div>
+      <!-- Location Field -->
+      <div class="form-field">
+        <label>{{ 'admin.complexes.form.location' | t }}</label>
+        <input
+          type="text"
+          formControlName="location"
+          matInput
+        />
+      </div>
 
-            <!-- Sort Order Field -->
-            <div class="form-field">
-              <label>{{ 'admin.complexes.form.sortOrder' | t }}</label>
-              <input
-                type="number"
-                formControlName="sortOrder"
-                min="0"
-                [class.error]="isFieldInvalid('sortOrder')"
-                matInput
-              />
-              @if (isFieldInvalid('sortOrder')) {
-                <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
-              }
-            </div>
+      <!-- Address Field -->
+      <div class="form-field">
+        <label>{{ 'admin.complexes.form.address' | t }}</label>
+        <input
+          type="text"
+          formControlName="address"
+          matInput
+        />
+      </div>
 
-            <!-- Preponderance Field -->
-            <div class="form-field">
-              <label>{{ 'admin.complexes.form.preponderance' | t }}</label>
-              <input
-                type="number"
-                formControlName="preponderance"
-                min="0"
-                [class.error]="isFieldInvalid('preponderance')"
-                matInput
-              />
-              @if (isFieldInvalid('preponderance')) {
-                <span class="error-message">{{ getErrorMessage('preponderance') | t }}</span>
-              }
-            </div>
-          </div>
-        </app-collapsible-section>
-      }
+      <!-- Description Field -->
+      <div class="form-field form-field--full">
+        <label>{{ 'admin.complexes.form.description' | t }}</label>
+        <input
+          type="text"
+          formControlName="description"
+          [class.error]="isFieldInvalid('description')"
+          matInput
+        />
+        <span class="hint">{{ 'admin.complexes.form.descriptionHint' | t }}</span>
+        @if (isFieldInvalid('description')) {
+          <span class="error-message">{{ getErrorMessage('description') | t }}</span>
+        }
+      </div>
 
-      <!-- Collapsible optional section -->
-      <app-collapsible-section [titleKey]="'admin.complexes.form.optional.title'">
+      <!-- Active Status -->
+      <div class="form-field">
+        <app-active-toggle
+          [value]="form.get('isActive')!.value"
+          mode="toggle"
+          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
+        </app-active-toggle>
+      </div>
+    </div>
+
+    <!-- Technical Fields (system_admin only) -->
+    @if (isSystemAdmin()) {
+      <app-collapsible-section [titleKey]="'common.technicalFields'">
         <div class="form-grid">
-          <!-- Logo Image Path -->
+          <!-- Key Field -->
           <div class="form-field">
-            <label>{{ 'admin.complexes.form.logoImagePath' | t }}</label>
+            <label>{{ 'admin.complexes.form.key' | t }} {{ isEditing ? '' : '*' }}</label>
             <input
               type="text"
-              formControlName="logoImagePath"
+              formControlName="key"
+              [class.error]="isFieldInvalid('key')"
               matInput
             />
-            <span class="hint">{{ 'admin.complexes.form.logoHint' | t }}</span>
+            @if (isFieldInvalid('key')) {
+              <span class="error-message">{{ getErrorMessage('key') | t }}</span>
+            }
           </div>
 
-          <!-- Cover Image Path -->
+          <!-- Sort Order Field -->
           <div class="form-field">
-            <label>{{ 'admin.complexes.form.coverImagePath' | t }}</label>
+            <label>{{ 'admin.complexes.form.sortOrder' | t }}</label>
             <input
-              type="text"
-              formControlName="coverImagePath"
+              type="number"
+              formControlName="sortOrder"
+              min="0"
+              [class.error]="isFieldInvalid('sortOrder')"
               matInput
             />
-            <span class="hint">{{ 'admin.complexes.form.coverHint' | t }}</span>
+            @if (isFieldInvalid('sortOrder')) {
+              <span class="error-message">{{ getErrorMessage('sortOrder') | t }}</span>
+            }
           </div>
 
-          <!-- Layout Diagram Path -->
+          <!-- Preponderance Field -->
           <div class="form-field">
-            <label>{{ 'admin.complexes.form.layoutDiagramPath' | t }}</label>
+            <label>{{ 'admin.complexes.form.preponderance' | t }}</label>
             <input
-              type="text"
-              formControlName="layoutDiagramPath"
+              type="number"
+              formControlName="preponderance"
+              min="0"
+              [class.error]="isFieldInvalid('preponderance')"
               matInput
             />
-            <span class="hint">{{ 'admin.complexes.form.layoutHint' | t }}</span>
+            @if (isFieldInvalid('preponderance')) {
+              <span class="error-message">{{ getErrorMessage('preponderance') | t }}</span>
+            }
           </div>
         </div>
       </app-collapsible-section>
+    }
 
-      <!-- Form Actions -->
-      <div formActions class="form-actions">
-        <button type="button" (click)="onCancel()" class="btn-cancel">
-          {{ 'common.cancel' | t }}
-        </button>
-        <app-async-button
-          type="submit"
-          [loading]="saving()"
-          [disabled]="form.invalid"
-          (clicked)="onSave()"
-          class="btn-save">
-          {{ (isEditing ? 'common.update' : 'common.create') | t }}
-        </app-async-button>
-      </div>
-    </form>
-  }
-
-  <!-- TAB: Servicios -->
-  @if (activeFormTab() === 'services') {
-    <div class="complexes-form__tab-content" @slideDown>
-      <p class="complexes-form__tab-description">{{ 'admin.complexes.form.servicios.description' | t }}</p>
-
-      @if (serviceRows().length === 0) {
-        <p class="complexes-form__empty">{{ 'admin.complexes.form.servicios.empty' | t }}</p>
-      } @else {
-        <div class="complexes-form__assignment-table" cdkDropList (cdkDropListDropped)="onServiceDrop($event)">
-          <div class="complexes-form__assignment-header">
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag"></span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check"></span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ 'admin.complexes.form.servicios.service' | t }}</span>
-            @if (isSystemAdmin()) {
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">{{ 'admin.complexes.form.servicios.sortOrder' | t }}</span>
-            }
-          </div>
-          @for (row of serviceRows(); track row.serviceId; let i = $index) {
-            <div class="complexes-form__assignment-row" cdkDrag>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag" cdkDragHandle>
-                <mat-icon class="complexes-form__drag-handle">drag_indicator</mat-icon>
-              </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">
-                <input type="checkbox" [checked]="row.isActive" (change)="toggleServiceActive(i)" />
-              </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">
-                @if (row.faIcon) {
-                  <mat-icon class="complexes-form__service-icon">{{ row.faIcon }}</mat-icon>
-                }
-                {{ row.name }}
-              </span>
-              @if (isSystemAdmin()) {
-                <span class="complexes-form__assignment-cell complexes-form__assignment-cell--order">
-                  <input
-                    type="number"
-                    min="0"
-                    [value]="row.sortOrder"
-                    (input)="updateServiceSortOrder(i, $any($event.target).valueAsNumber)"
-                    class="complexes-form__inline-input"
-                  />
-                </span>
-              }
-            </div>
-          }
+    <!-- Collapsible optional section -->
+    <app-collapsible-section [titleKey]="'admin.complexes.form.optional.title'">
+      <div class="form-grid">
+        <!-- Logo Image Path -->
+        <div class="form-field">
+          <label>{{ 'admin.complexes.form.logoImagePath' | t }}</label>
+          <input
+            type="text"
+            formControlName="logoImagePath"
+            matInput
+          />
+          <span class="hint">{{ 'admin.complexes.form.logoHint' | t }}</span>
         </div>
-      }
 
-      <div class="form-actions">
-        <button type="button" (click)="onCancel()" class="btn-cancel">
-          {{ 'common.cancel' | t }}
-        </button>
-        <app-async-button
-          [loading]="saving()"
-          (clicked)="onSave()"
-          class="btn-save">
-          {{ 'common.update' | t }}
-        </app-async-button>
-      </div>
-    </div>
-  }
-
-  <!-- TAB: Redes Sociales -->
-  @if (activeFormTab() === 'social') {
-    <div class="complexes-form__tab-content" @slideDown>
-      <p class="complexes-form__tab-description">{{ 'admin.complexes.form.redes.description' | t }}</p>
-
-      @if (networkRows().length === 0) {
-        <p class="complexes-form__empty">{{ 'admin.complexes.form.redes.empty' | t }}</p>
-      } @else {
-        <div class="complexes-form__assignment-table" cdkDropList (cdkDropListDropped)="onNetworkDrop($event)">
-          <div class="complexes-form__assignment-header">
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag"></span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check"></span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">{{ 'admin.complexes.form.redes.network' | t }}</span>
-            <span class="complexes-form__assignment-cell complexes-form__assignment-cell--url">{{ 'admin.complexes.form.redes.profileUrl' | t }}</span>
-          </div>
-          @for (row of networkRows(); track row.socialNetworkId; let i = $index) {
-            <div class="complexes-form__assignment-row" cdkDrag>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--drag" cdkDragHandle>
-                <mat-icon class="complexes-form__drag-handle">drag_indicator</mat-icon>
-              </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--check">
-                <input type="checkbox" [checked]="row.isActive" (change)="toggleNetworkActive(i)" />
-              </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--name">
-                @if (row.faIcon) {
-                  <mat-icon class="complexes-form__service-icon">{{ row.faIcon }}</mat-icon>
-                }
-                {{ row.name }}
-              </span>
-              <span class="complexes-form__assignment-cell complexes-form__assignment-cell--url">
-                <input
-                  type="text"
-                  [value]="row.profileUrl"
-                  (input)="updateNetworkUrl(i, $any($event.target).value)"
-                  class="complexes-form__inline-input complexes-form__inline-input--wide"
-                  [placeholder]="'admin.complexes.form.redes.urlPlaceholder' | t"
-                />
-              </span>
-            </div>
-          }
+        <!-- Cover Image Path -->
+        <div class="form-field">
+          <label>{{ 'admin.complexes.form.coverImagePath' | t }}</label>
+          <input
+            type="text"
+            formControlName="coverImagePath"
+            matInput
+          />
+          <span class="hint">{{ 'admin.complexes.form.coverHint' | t }}</span>
         </div>
-      }
 
-      <div class="form-actions">
-        <button type="button" (click)="onCancel()" class="btn-cancel">
-          {{ 'common.cancel' | t }}
-        </button>
-        <app-async-button
-          [loading]="saving()"
-          (clicked)="onSave()"
-          class="btn-save">
-          {{ 'common.update' | t }}
-        </app-async-button>
+        <!-- Layout Diagram Path -->
+        <div class="form-field">
+          <label>{{ 'admin.complexes.form.layoutDiagramPath' | t }}</label>
+          <input
+            type="text"
+            formControlName="layoutDiagramPath"
+            matInput
+          />
+          <span class="hint">{{ 'admin.complexes.form.layoutHint' | t }}</span>
+        </div>
       </div>
+    </app-collapsible-section>
+
+    <!-- Form Actions -->
+    <div formActions class="form-actions">
+      <button type="button" (click)="onCancel()" class="btn-cancel">
+        {{ 'common.cancel' | t }}
+      </button>
+      <app-async-button
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+        (clicked)="onSave()"
+        class="btn-save">
+        {{ (isEditing ? 'common.update' : 'common.create') | t }}
+      </app-async-button>
     </div>
-  }
+  </form>
 
 </app-form-shell>

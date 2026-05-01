@@ -42,6 +42,7 @@ interface AuthApiResponse {
 }
 
 const SESSION_STORAGE_KEY = 'zh_auth_session';
+const TENANT_SESSION_KEY = 'zh_auth_session_tenant';
 const AUTH_REQUEST_TIMEOUT_MS = 15000;
 
 @Injectable({ providedIn: 'root' })
@@ -64,7 +65,7 @@ export class AuthService {
       return;
     }
 
-    this.sessionState.set(stored);
+    this.setSession(stored);
   }
 
   async login(request: LoginRequest): Promise<AuthSession> {
@@ -177,6 +178,47 @@ export class AuthService {
   logout(): void {
     this.sessionState.set(null);
     this.clearSessionStorage();
+    this.clearTenantStorage();
+  }
+
+  updateCurrentOrganization(organizationId: string, organizationName?: string): void {
+    const current = this.sessionState();
+    if (!current) {
+      return;
+    }
+
+    const updated: AuthSession = {
+      ...current,
+      user: {
+        ...current.user,
+        organizationId
+      },
+      organizationId,
+      organizationName: organizationName ?? current.organizationName
+    };
+
+    this.setSession(updated);
+  }
+
+  updateCurrentOrganizationAssignments(organizationId?: string, tenantIds?: string[]): void {
+    const current = this.sessionState();
+    if (!current) {
+      return;
+    }
+
+    const nextOrgId = organizationId ?? current.user.organizationId;
+
+    const updated: AuthSession = {
+      ...current,
+      user: {
+        ...current.user,
+        organizationId: nextOrgId,
+        tenantIds: tenantIds ?? current.user.tenantIds
+      },
+      organizationId: nextOrgId
+    };
+
+    this.setSession(updated);
   }
 
   private buildAndSetSession(response: AuthApiResponse): AuthSession {
@@ -200,6 +242,12 @@ export class AuthService {
 
     try {
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      const tenantId = session.user.tenantId ?? session.tenant?.id;
+      if (tenantId) {
+        localStorage.setItem(TENANT_SESSION_KEY, tenantId);
+      } else {
+        localStorage.removeItem(TENANT_SESSION_KEY);
+      }
     } catch {
       // storage unavailable
     }
@@ -208,6 +256,14 @@ export class AuthService {
   private clearSessionStorage(): void {
     try {
       localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch {
+      // storage unavailable
+    }
+  }
+
+  private clearTenantStorage(): void {
+    try {
+      localStorage.removeItem(TENANT_SESSION_KEY);
     } catch {
       // storage unavailable
     }

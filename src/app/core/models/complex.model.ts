@@ -43,15 +43,3 @@ export interface Availability {
   isAvailable: boolean;
   overrideType?: 'blocked' | 'partial' | null;
 }
-
-export interface ComplexServiceAssignment {
-  serviceId: string;
-  isActive: boolean;
-  sortOrder: number;
-}
-
-export interface ComplexSocialNetwork {
-  socialNetworkId: string;
-  profileUrl: string;
-  isActive: boolean;
-}

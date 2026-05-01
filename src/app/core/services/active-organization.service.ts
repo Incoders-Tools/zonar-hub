@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { MockTenantRepository } from '../repositories/mock/mock-tenant.repository';
-import { Tenant } from '../models';
+import { ApiOrganizationRepository } from '../repositories/api/api-organization.repository';
+import { Organization, Tenant } from '../models';
 
 const STORAGE_KEY = 'zh_active_organization_id';
 const PRIMARY_ORG_KEY = 'zh_primary_organization_id';
@@ -20,7 +20,8 @@ const PRIMARY_ORG_KEY = 'zh_primary_organization_id';
 @Injectable({ providedIn: 'root' })
 export class ActiveOrganizationService {
   private readonly auth = inject(AuthService);
-  private readonly tenantRepo = inject(MockTenantRepository);
+  private readonly organizationRepo = inject(ApiOrganizationRepository);
+  private loadRequestId = 0;
 
   /** All organizations (tenants) in the system */
   private readonly allOrganizations = signal<Tenant[]>([]);
@@ -77,8 +78,9 @@ export class ActiveOrganizationService {
     effect(() => {
       const user = this.auth.currentUser();
       if (user) {
-        this.loadOrganizations();
+        void this.loadOrganizations();
       } else {
+        this.loadRequestId += 1;
         this.allOrganizations.set([]);
         this.activeOrgIdState.set(null);
         this.primaryOrgIdState.set(null);
@@ -87,33 +89,53 @@ export class ActiveOrganizationService {
   }
 
   /** Load organizations and set initial active org */
-  private loadOrganizations(): void {
-    const all = this.tenantRepo.getAllSync();
-    this.allOrganizations.set(all);
-
+  private async loadOrganizations(): Promise<void> {
     const user = this.auth.currentUser();
     if (!user) return;
 
+    const currentLoadId = ++this.loadRequestId;
+
+    try {
+      const organizations = user.tenantId
+        ? await this.organizationRepo.getByTenantId(user.tenantId)
+        : await this.organizationRepo.getAll();
+
+      if (currentLoadId !== this.loadRequestId) {
+        return;
+      }
+
+      this.allOrganizations.set(organizations.map(org => this.toTenant(org)));
+    } catch {
+      if (currentLoadId !== this.loadRequestId) {
+        return;
+      }
+
+      this.allOrganizations.set([]);
+    }
+
+    const currentUser = this.auth.currentUser();
+    if (!currentUser) return;
+
     // Restore primary org
-    const storedPrimary = this.getStoredPrimaryOrgId(user.id);
+    const storedPrimary = this.getStoredPrimaryOrgId(currentUser.id);
     this.primaryOrgIdState.set(storedPrimary);
 
     // Determine active org: stored selection → primary → first manageable
-    const storedActive = this.getStoredActiveOrgId(user.id);
-    const manageable = this.getManageableIds(user, all);
+    const storedActive = this.getStoredActiveOrgId(currentUser.id);
+    const all = this.allOrganizations();
+    const manageable = this.getManageableIds(currentUser, all);
 
     if (storedActive && manageable.has(storedActive)) {
       this.activeOrgIdState.set(storedActive);
     } else if (storedPrimary && manageable.has(storedPrimary)) {
       this.activeOrgIdState.set(storedPrimary);
-    } else if (user.tenantId && manageable.has(user.tenantId)) {
-      this.activeOrgIdState.set(user.tenantId);
+    } else if (currentUser.organizationId && manageable.has(currentUser.organizationId)) {
+      this.activeOrgIdState.set(currentUser.organizationId);
     } else {
       // Fall back to first manageable active org
       const firstActive = all.find(t => t.isActive && manageable.has(t.id));
       this.activeOrgIdState.set(firstActive?.id ?? null);
     }
-
   }
 
   /** Switch the active organization */
@@ -137,20 +159,7 @@ export class ActiveOrganizationService {
 
   /** Refresh the list of organizations (after CRUD operations) */
   refreshOrganizations(): void {
-    const all = this.tenantRepo.getAllSync();
-    this.allOrganizations.set(all);
-
-    // If current active org was deactivated/deleted, switch to another
-    const active = this.activeOrgIdState();
-    if (active) {
-      const stillValid = all.find(t => t.id === active && t.isActive);
-      if (!stillValid) {
-        const user = this.auth.currentUser();
-        const manageable = this.getManageableIds(user, all);
-        const first = all.find(t => t.isActive && manageable.has(t.id));
-        this.activeOrgIdState.set(first?.id ?? null);
-      }
-    }
+    void this.loadOrganizations();
   }
 
   /** Set a new org as active and primary (used during onboarding) */
@@ -172,10 +181,45 @@ export class ActiveOrganizationService {
     if (user.role === 'system_admin') {
       return new Set(all.filter(t => t.isActive).map(t => t.id));
     }
-    const ids = new Set(user.tenantIds ?? []);
-    if (user.tenantId) ids.add(user.tenantId);
-    // Filter to only active ones
+
+    const ids = new Set<string>(user.tenantIds ?? []);
+    const currentUser = this.auth.currentUser();
+    if (currentUser?.organizationId) {
+      ids.add(currentUser.organizationId);
+    }
+
+    if (ids.size === 0) {
+      return new Set(all.filter(t => t.isActive).map(t => t.id));
+    }
+
     return new Set(all.filter(t => t.isActive && ids.has(t.id)).map(t => t.id));
+  }
+
+  private toTenant(org: Organization): Tenant {
+    const sessionTenant = this.auth.session()?.tenant;
+    const email = sessionTenant?.contactEmail ?? this.auth.currentUser()?.email ?? '';
+
+    return {
+      id: org.id,
+      name: org.displayName,
+      key: this.toKey(org.displayName),
+      contactEmail: email,
+      planId: sessionTenant?.planId ?? 'plan-1',
+      planType: sessionTenant?.planType ?? 'starter',
+      isActive: org.isActive,
+      createdAt: org.createdAt,
+      updatedAt: org.updatedAt
+    };
+  }
+
+  private toKey(value: string): string {
+    return value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .replace(/\s+/g, '_');
   }
 
   private persistActiveOrgId(orgId: string): void {

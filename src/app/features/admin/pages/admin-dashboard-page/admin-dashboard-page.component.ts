@@ -10,7 +10,6 @@ import { MockComplexRepository } from '../../../../core/repositories/mock/mock-c
 import { MockAdminUserRepository } from '../../../../core/repositories/mock/mock-admin-user.repository';
 import { MockPlanRepository } from '../../../../core/repositories/mock/mock-plan.repository';
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
-import { MockSocialNetworkRepository } from '../../../../core/repositories/mock/mock-social-network.repository';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { Plan } from '../../../../core/models';
 
@@ -38,14 +37,12 @@ export class AdminDashboardPageComponent {
   private readonly complexRepo = inject(MockComplexRepository);
   private readonly planRepo = inject(MockPlanRepository);
   private readonly sportRepo = inject(MockSportRepository);
-  private readonly socialNetworkRepo = inject(MockSocialNetworkRepository);
   protected readonly onboarding = inject(OnboardingStateService);
 
   readonly currentPlan = signal<Plan | null>(null);
   readonly complexCount = signal(0);
   readonly adminCount = signal(0);
   readonly activeSportsCount = signal(0);
-  readonly socialNetworkCount = signal(0);
   readonly courtCount = signal(0);
 
   /** Setup progress checklist */
@@ -96,7 +93,6 @@ export class AdminDashboardPageComponent {
     });
     this.adminUserRepo.getAll().then(list => this.adminCount.set(list.length));
     this.sportRepo.getAll().then(list => this.activeSportsCount.set(list.filter(s => s.isActive).length));
-    this.socialNetworkRepo.getAll().then(list => this.socialNetworkCount.set(list.filter(n => n.isActive).length));
   }
 
   readonly showSetupPrompt = computed(() => this.tournamentService.tournaments().length === 0);
