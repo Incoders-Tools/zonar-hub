@@ -17,8 +17,10 @@ import { UserPreferencesService } from '../../../../core/services/user-preferenc
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ThemeService, AppTheme } from '../../../../core/theme/theme.service';
 import { DateFormatService } from '../../../../core/services/date-format.service';
+import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
+import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
 import { AppLocale } from '../../../../core/i18n/i18n.types';
-import { Sport, OrganizationType } from '../../../../core/models';
+import { Sport, OrganizationType, Complex } from '../../../../core/models';
 
 function dateRangeValidator(control: AbstractControl): ValidationErrors | null {
   const start = control.get('startDate')?.value;
@@ -67,6 +69,8 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly sportRepo = inject(ApiSportRepository);
   private readonly onboardingRepo = inject(ApiOnboardingRepository);
+  private readonly complexRepo = inject(MockComplexRepository);
+  private readonly tournamentRepo = inject(MockTournamentAdminRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
   protected readonly userPrefs = inject(UserPreferencesService);
   protected readonly i18n = inject(I18nService);
@@ -420,7 +424,23 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
       const organizationName = orgValues.displayName ?? session?.tenant?.name ?? '';
       this.auth.updateCurrentOrganization(result.organizationId, organizationName);
+      this.auth.updateCurrentOrganizationAssignments(result.organizationId, [result.organizationId]);
       this.activeOrgService.setOnboardingOrganization(result.organizationId);
+
+      await this.syncOnboardingEntitiesToLocalAdminTools(
+        result,
+        result.organizationId,
+        organizationName,
+        venueValues.name ?? '',
+        venueValues.address ?? '',
+        venueValues.location,
+        venueValues.courtNames ?? [],
+        sportIds,
+        includeTournament,
+        tValues.name ?? '',
+        tValues.startDate ?? '',
+        tValues.endDate ?? ''
+      );
 
       this.onboarding.completeWizard(includeTournament);
       this.onboarding.markOrganizationCreated();
@@ -441,6 +461,172 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   /** Finish without tournament — persist org, venue, sports only */
   async finishWithoutTournament(): Promise<void> {
     await this.finishSetup(true);
+  }
+
+  private async syncOnboardingEntitiesToLocalAdminTools(
+    result: { complexId?: string | null; tournamentId?: string | null },
+    organizationId: string,
+    organizationName: string,
+    venueName: string,
+    venueAddress: string,
+    venueLocation: string | null | undefined,
+    courtNames: string[],
+    enabledSportIds: string[],
+    includeTournament: boolean,
+    tournamentName: string,
+    tournamentStartDate: string,
+    tournamentEndDate: string
+  ): Promise<void> {
+    try {
+      const complex = await this.ensureOnboardingComplex(
+        result,
+        organizationId,
+        organizationName,
+        venueName,
+        venueAddress,
+        venueLocation,
+        courtNames,
+        enabledSportIds
+      );
+
+      if (
+        includeTournament &&
+        result.tournamentId &&
+        tournamentName.trim().length > 0 &&
+        tournamentStartDate &&
+        tournamentEndDate
+      ) {
+        await this.ensureOnboardingTournament(
+          organizationId,
+          organizationName,
+          complex,
+          venueName,
+          enabledSportIds,
+          tournamentName,
+          tournamentStartDate,
+          tournamentEndDate
+        );
+      }
+    } catch {
+      // Onboarding completion is source-of-truth in backend. Local sync is best effort only.
+    }
+  }
+
+  private async ensureOnboardingComplex(
+    result: { complexId?: string | null },
+    organizationId: string,
+    organizationName: string,
+    venueName: string,
+    venueAddress: string,
+    venueLocation: string | null | undefined,
+    courtNames: string[],
+    enabledSportIds: string[]
+  ): Promise<Complex | null> {
+    const normalizedName = venueName.trim();
+    if (!result.complexId || normalizedName.length === 0) {
+      return null;
+    }
+
+    const complexKey = this.buildEntityKey(normalizedName);
+    const existingComplexes = await this.complexRepo.getAll();
+    const existingByKey = existingComplexes.find(c => c.key === complexKey);
+
+    if (existingByKey) {
+      return existingByKey;
+    }
+
+    const nextSortOrder = Math.max(0, ...existingComplexes.map(c => c.sortOrder ?? 0)) + 1;
+    const nextPreponderance = Math.max(0, ...existingComplexes.map(c => c.preponderance ?? 0)) + 1;
+    const cityName = (venueLocation ?? '').trim() || organizationName || normalizedName;
+    const cityId = this.buildEntityKey(cityName) || 'city_default';
+
+    return this.complexRepo.create({
+      organizationId,
+      organizationName,
+      name: normalizedName,
+      key: complexKey,
+      address: venueAddress.trim(),
+      location: (venueLocation ?? '').trim() || undefined,
+      cityId,
+      cityName,
+      phone: undefined,
+      email: undefined,
+      imageUrl: undefined,
+      logoImagePath: undefined,
+      coverImagePath: undefined,
+      layoutDiagramPath: undefined,
+      description: undefined,
+      sortOrder: nextSortOrder,
+      preponderance: nextPreponderance,
+      sportsSupported: [...enabledSportIds],
+      courtsCount: courtNames.length,
+      isActive: true
+    });
+  }
+
+  private async ensureOnboardingTournament(
+    organizationId: string,
+    organizationName: string,
+    complex: Complex | null,
+    venueName: string,
+    enabledSportIds: string[],
+    tournamentName: string,
+    tournamentStartDate: string,
+    tournamentEndDate: string
+  ): Promise<void> {
+    const normalizedName = tournamentName.trim();
+    if (normalizedName.length === 0) {
+      return;
+    }
+
+    const key = this.buildEntityKey(normalizedName);
+    const existingKeys = await this.tournamentRepo.getExistingKeys();
+
+    if (existingKeys.includes(key)) {
+      return;
+    }
+
+    const selectedSport = this.availableSports().find(s => enabledSportIds.includes(s.id));
+    const complexName = (complex?.name ?? venueName.trim()) || normalizedName;
+    const complexId = complex?.id ?? 'complex_onboarding';
+
+    await this.tournamentRepo.create({
+      organizationId,
+      organizationName,
+      name: normalizedName,
+      key,
+      complexId,
+      complexName,
+      categoryId: 'category_open',
+      categoryName: 'Open',
+      genderId: 'gender_open',
+      genderLabel: 'Open',
+      tournamentTypeId: 'type_standard',
+      tournamentTypeName: 'Standard',
+      sportId: selectedSport?.id ?? enabledSportIds[0] ?? 'sport_default',
+      sportName: selectedSport?.name ?? 'Sport',
+      statusId: 'upcoming',
+      statusLabel: 'upcoming',
+      startDate: tournamentStartDate,
+      endDate: tournamentEndDate,
+      registrationStartDate: tournamentStartDate,
+      registrationEndDate: tournamentStartDate,
+      maxPairs: null,
+      description: '',
+      rules: '',
+      isActive: true,
+      selectedCourtIds: []
+    });
+  }
+
+  private buildEntityKey(value: string): string {
+    return value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .trim()
+      .replace(/\s+/g, '_');
   }
 
   /** Courts counter buttons */

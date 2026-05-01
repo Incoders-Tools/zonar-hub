@@ -156,7 +156,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
       transition: background-color 0.2s;
 
       &:hover {
-        background-color: darken(#dc3545, 10%);
+        background-color: var(--color-danger-hover, #b02a37);
       }
     }
   `]

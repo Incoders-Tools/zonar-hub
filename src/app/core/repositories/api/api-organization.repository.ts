@@ -71,9 +71,11 @@ export class ApiOrganizationRepository extends OrganizationRepository {
   }
 
   override async getByTenantId(tenantId: string): Promise<Organization[]> {
+    void tenantId;
+
     try {
       const response = await firstValueFrom(
-        this.http.get<{ items: OrganizationApiDto[] }>(`${this.endpoint}?tenantId=${tenantId}`)
+        this.http.get<{ items: OrganizationApiDto[] }>(this.endpoint)
       );
       return response.items.map(row => this.toModel(row));
     } catch (error) {

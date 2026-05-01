@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
-import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-auth-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, TranslatePipe],
+  imports: [RouterOutlet, RouterLink],
   template: `
     <div class="auth-layout">
       <div class="auth-layout__container">

@@ -43,9 +43,11 @@ export class ActiveOrganizationService {
     }
 
     const allowed = new Set(user.tenantIds ?? []);
-    if (user.tenantId) allowed.add(user.tenantId);
+    const allowedMatches = all.filter(t => t.isActive && allowed.has(t.id));
 
-    return all.filter(t => t.isActive && allowed.has(t.id));
+    return allowedMatches.length > 0
+      ? allowedMatches
+      : all.filter(t => t.isActive);
   });
 
   /** The currently active organization (full object) */
@@ -121,11 +123,14 @@ export class ActiveOrganizationService {
     this.primaryOrgIdState.set(storedPrimary);
 
     // Determine active org: stored selection → primary → first manageable
+    const currentActive = this.activeOrgIdState();
     const storedActive = this.getStoredActiveOrgId(currentUser.id);
     const all = this.allOrganizations();
-    const manageable = this.getManageableIds(currentUser, all);
+    const manageable = new Set(this.manageableOrganizations().map(org => org.id));
 
-    if (storedActive && manageable.has(storedActive)) {
+    if (currentActive && manageable.has(currentActive)) {
+      this.activeOrgIdState.set(currentActive);
+    } else if (storedActive && manageable.has(storedActive)) {
       this.activeOrgIdState.set(storedActive);
     } else if (storedPrimary && manageable.has(storedPrimary)) {
       this.activeOrgIdState.set(storedPrimary);
@@ -175,25 +180,6 @@ export class ActiveOrganizationService {
   }
 
   // ---- Private helpers ----
-
-  private getManageableIds(user: { role?: string; tenantId?: string; tenantIds?: string[] } | null, all: Tenant[]): Set<string> {
-    if (!user) return new Set();
-    if (user.role === 'system_admin') {
-      return new Set(all.filter(t => t.isActive).map(t => t.id));
-    }
-
-    const ids = new Set<string>(user.tenantIds ?? []);
-    const currentUser = this.auth.currentUser();
-    if (currentUser?.organizationId) {
-      ids.add(currentUser.organizationId);
-    }
-
-    if (ids.size === 0) {
-      return new Set(all.filter(t => t.isActive).map(t => t.id));
-    }
-
-    return new Set(all.filter(t => t.isActive && ids.has(t.id)).map(t => t.id));
-  }
 
   private toTenant(org: Organization): Tenant {
     const sessionTenant = this.auth.session()?.tenant;

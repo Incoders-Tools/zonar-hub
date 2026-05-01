@@ -8,15 +8,14 @@ export class TenantContextService {
   private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);
 
-  /** The active organization (tenant), derived from the global org context */
-  readonly tenant = computed<Tenant | null>(() => this.activeOrg.activeOrganization() ?? this.auth.session()?.tenant ?? null);
+  /** Canonical tenant context comes from authenticated session/user claims. */
+  readonly tenant = computed<Tenant | null>(() => this.auth.session()?.tenant ?? null);
   readonly tenantId = computed<string | null>(() =>
-    this.activeOrg.activeOrganization()?.id
-    ?? this.auth.session()?.tenant?.id
+    this.auth.session()?.tenant?.id
     ?? this.auth.currentUser()?.tenantId
     ?? null
   );
-  readonly tenantName = computed<string>(() => this.activeOrg.activeOrganizationName() || (this.auth.session()?.tenant?.name ?? ''));
+  readonly tenantName = computed<string>(() => this.auth.session()?.tenant?.name ?? '');
   readonly planType = computed<PlanType | null>(() => this.tenant()?.planType ?? null);
   readonly isActive = computed<boolean>(() => this.tenant()?.isActive ?? false);
   readonly hasTenant = computed<boolean>(() => this.tenantId() !== null);
