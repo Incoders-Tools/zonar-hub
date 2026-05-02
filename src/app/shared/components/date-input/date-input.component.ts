@@ -181,12 +181,21 @@ export class DateInputComponent implements ControlValueAccessor {
   }
 
   onTextInput(event: Event): void {
-    const raw = (event.target as HTMLInputElement).value;
-    const iso = this.parseDisplayToIso(raw);
+    const input = event.target as HTMLInputElement;
+    const raw = input.value;
+    
+    // Only allow numbers and common date separators
+    const sanitized = raw.replace(/[^0-9\/\-\.]/g, '');
+    if (sanitized !== raw) {
+      input.value = sanitized;
+      return;
+    }
+    
+    const iso = this.parseDisplayToIso(sanitized);
     if (iso) {
       this.isoValue.set(iso);
       this.onChange(iso);
-    } else if (raw === '') {
+    } else if (sanitized === '') {
       this.isoValue.set('');
       this.onChange('');
     }

@@ -10,6 +10,11 @@
           [titleKey]="'admin.email-templates.help.title'"
           [sections]="helpSections">
         </app-help-button>
+        @if (!showFormPanel()) {
+          <app-async-button variant="primary" (clicked)="openCreateForm()">
+            {{ 'admin.email-templates.action.create' | t }}
+          </app-async-button>
+        }
       </div>
     </div>
   </div>
@@ -100,4 +105,16 @@
       </div>
     </app-form-shell>
   </div>
+}
+
+@if (showDeleteDialog()) {
+  <app-confirm-dialog
+    [titleKey]="'admin.email-templates.delete.title'"
+    [messageKey]="'admin.email-templates.delete.message'"
+    [confirmLabelKey]="'common.delete'"
+    [confirmVariant]="'danger'"
+    [loading]="facade.saving()"
+    (confirmed)="onDelete()"
+    (cancelled)="closeDeleteDialog()">
+  </app-confirm-dialog>
 }

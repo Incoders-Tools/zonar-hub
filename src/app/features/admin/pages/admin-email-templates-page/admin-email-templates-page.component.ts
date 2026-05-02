@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { EmailTemplate } from '../../../../core/models';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DataTableColumn, DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { FilterField, FilterPanelComponent } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
@@ -35,7 +36,8 @@ interface EmailTemplateRow extends Record<string, unknown> {
     FilterPanelComponent,
     FormShellComponent,
     AsyncButtonComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ConfirmDialogComponent
   ],
   providers: [EmailTemplatesFacadeService],
   templateUrl: './admin-email-templates-page.component.html',
@@ -47,7 +49,9 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
 
   readonly facade = inject(EmailTemplatesFacadeService);
   readonly showFormPanel = signal(false);
+  readonly showDeleteDialog = signal(false);
   readonly editingTemplate = signal<EmailTemplate | null>(null);
+  readonly deletingId = signal<string | null>(null);
 
   readonly columns: DataTableColumn[] = [
     { key: 'key', labelKey: 'admin.email-templates.column.key', sortable: true },
@@ -64,7 +68,8 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
   ];
 
   readonly rowActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const }
+    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
   readonly filterFields: FilterField[] = [
@@ -129,7 +134,23 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
   onRowActionClicked(event: { action: string; row: EmailTemplateRow }): void {
     if (event.action === 'edit') {
       this.openEdit(event.row.id);
+    } else if (event.action === 'delete') {
+      this.openDeleteDialog(event.row.id);
     }
+  }
+
+  openCreateForm(): void {
+    this.editingTemplate.set(null);
+    this.submitted = false;
+    this.form.reset({
+      key: '',
+      subject: '',
+      description: '',
+      htmlBody: '',
+      isActive: true
+    });
+    this.form.get('key')?.enable();
+    this.showFormPanel.set(true);
   }
 
   openEdit(id: string): void {
@@ -147,8 +168,18 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
       htmlBody: template.htmlBody,
       isActive: template.isActive
     });
-
+    this.form.get('key')?.disable();
     this.showFormPanel.set(true);
+  }
+
+  openDeleteDialog(id: string): void {
+    this.deletingId.set(id);
+    this.showDeleteDialog.set(true);
+  }
+
+  closeDeleteDialog(): void {
+    this.showDeleteDialog.set(false);
+    this.deletingId.set(null);
   }
 
   closeFormPanel(): void {
@@ -164,22 +195,52 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
     }
 
     const current = this.editingTemplate();
-    if (!current) {
-      return;
-    }
-
     const value = this.form.getRawValue();
-    const success = await this.facade.updateTemplate(current.id, {
-      subject: value.subject,
-      description: value.description || null,
-      htmlBody: value.htmlBody,
-      isActive: value.isActive
-    });
+    
+    let success = false;
+
+    if (current) {
+      // Update existing template
+      success = await this.facade.updateTemplate(current.id, {
+        subject: value.subject,
+        description: value.description || null,
+        htmlBody: value.htmlBody,
+        isActive: value.isActive
+      });
+    } else {
+      // Create new template
+      success = await this.facade.createTemplate({
+        key: value.key,
+        subject: value.subject,
+        description: value.description || null,
+        htmlBody: value.htmlBody,
+        isActive: value.isActive
+      });
+    }
 
     if (success) {
       this.notifications.success('toast.saveSuccess');
       this.closeFormPanel();
     }
+  }
+
+  async onDelete(): Promise<void> {
+    const id = this.deletingId();
+    if (!id) {
+      return;
+    }
+
+    const success = await this.facade.deleteTemplate(id);
+
+    if (success) {
+      this.notifications.success('toast.deleteSuccess');
+      this.closeDeleteDialog();
+    }
+  }
+
+  get keyInvalid(): boolean {
+    const field = this.form.controls.key;
+    return field.invalid && (field.touched || this.submitted);
   }
 
   get subjectInvalid(): boolean {

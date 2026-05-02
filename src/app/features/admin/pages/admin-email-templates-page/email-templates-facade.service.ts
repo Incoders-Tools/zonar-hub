@@ -79,4 +79,40 @@ export class EmailTemplatesFacadeService {
       this.savingState.set(false);
     }
   }
+
+  async createTemplate(template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
+    try {
+      this.savingState.set(true);
+      this.errorState.set(null);
+
+      const created = await this.repository.create(template);
+      const next = [...this.templatesState(), created];
+      this.templatesState.set(next);
+
+      return true;
+    } catch (error) {
+      this.errorState.set((error as Error).message);
+      return false;
+    } finally {
+      this.savingState.set(false);
+    }
+  }
+
+  async deleteTemplate(id: string): Promise<boolean> {
+    try {
+      this.savingState.set(true);
+      this.errorState.set(null);
+
+      await this.repository.delete(id);
+      const next = this.templatesState().filter(item => item.id !== id);
+      this.templatesState.set(next);
+
+      return true;
+    } catch (error) {
+      this.errorState.set((error as Error).message);
+      return false;
+    } finally {
+      this.savingState.set(false);
+    }
+  }
 }

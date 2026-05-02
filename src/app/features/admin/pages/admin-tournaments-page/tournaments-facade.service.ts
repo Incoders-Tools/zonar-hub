@@ -8,6 +8,7 @@ import { MockTournamentTypeRepository } from '../../../../core/repositories/tour
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
 import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
 import { MockTournamentRuleSetRepository } from '../../../../core/repositories/mock/mock-tournament-rule-set.repository';
+import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface TournamentFilters {
@@ -26,6 +27,7 @@ export class TournamentsFacadeService {
   private readonly sportRepo = inject(MockSportRepository);
   private readonly modalityRepo = inject(MockTournamentModalityRepository);
   private readonly ruleSetRepo = inject(MockTournamentRuleSetRepository);
+  private readonly courtRepo = inject(ApiCourtRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private lastOrgId: string | null | undefined = undefined;
 
@@ -207,13 +209,19 @@ export class TournamentsFacadeService {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
+      
+      const activeOrgId = this.activeOrg.activeOrganizationId();
+      
       const [tournaments, complexes, categories, genders, tournamentTypes, sports, modalities, ruleSets] = await Promise.all([
         this.repository.getAll(),
         this.complexRepo.getAll(),
         this.categoryRepo.getAll(),
         this.genderRepo.getAll(),
         this.tournamentTypeRepo.getAll(),
-        this.sportRepo.getAll(),
+        // Load sports filtered by organization
+        activeOrgId 
+          ? this.sportRepo.getForOrganization(activeOrgId)
+          : this.sportRepo.getAll(),
         this.modalityRepo.getAll(),
         this.ruleSetRepo.getAll()
       ]);
@@ -239,7 +247,7 @@ export class TournamentsFacadeService {
     }
     try {
       this.loadingCourtsState.set(true);
-      const courts = await this.complexRepo.getCourtsByComplexId(complexId);
+      const courts = await this.courtRepo.getByComplexId(complexId);
       this.courtsForComplexState.set(courts);
     } catch {
       this.courtsForComplexState.set([]);

@@ -4,15 +4,16 @@
 
 .organization-form-panel {
   &__sport-grid {
-    margin-top: var(--zh-space-sm);
+    margin-top: var(--zh-space-md);
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: var(--zh-space-sm);
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--zh-space-md);
   }
 
   &__sport-option {
     width: 100%;
-    min-height: 44px;
+    min-height: 56px;
+    padding: var(--zh-space-sm) var(--zh-space-md);
     border: 1px solid var(--zh-border-default);
     border-radius: var(--zh-radius-md);
     background: var(--zh-surface-card);
@@ -20,7 +21,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--zh-space-xs);
+    gap: var(--zh-space-sm);
     cursor: pointer;
     transition: border-color var(--zh-transition-fast), transform var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
 
@@ -37,12 +38,12 @@
   }
 
   &__sport-icon {
-    font-size: var(--zh-font-size-md);
+    font-size: var(--zh-font-size-lg);
     line-height: 1;
   }
 
   &__sport-label {
-    font-size: var(--zh-font-size-sm);
+    font-size: var(--zh-font-size-md);
     font-weight: 600;
   }
 }

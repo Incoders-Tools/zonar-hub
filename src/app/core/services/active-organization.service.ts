@@ -66,6 +66,12 @@ export class ActiveOrganizationService {
   /** Whether an active organization is set */
   readonly hasActiveOrganization = computed<boolean>(() => this.activeOrgIdState() !== null);
 
+  /** Signal that increments whenever organization changes (for triggering reloads) */
+  private readonly organizationChangeCounter = signal(0);
+
+  /** Read-only counter for components to detect organization changes */
+  readonly organizationChanged = this.organizationChangeCounter.asReadonly();
+
   /** The user's primary organization ID */
   readonly primaryOrganizationId = this.primaryOrgIdState.asReadonly();
 
@@ -149,8 +155,21 @@ export class ActiveOrganizationService {
     const exists = manageable.some(o => o.id === orgId);
     if (!exists) return;
 
+    const previousOrgId = this.activeOrgIdState();
+    const org = manageable.find(o => o.id === orgId);
+    
     this.activeOrgIdState.set(orgId);
     this.persistActiveOrgId(orgId);
+
+    // Sync with auth session so OrganizationContextService gets the update
+    if (org) {
+      this.auth.updateCurrentOrganization(orgId, org.name);
+    }
+
+    // Notify components that organization has changed
+    if (previousOrgId !== orgId) {
+      this.organizationChangeCounter.update(count => count + 1);
+    }
   }
 
   /** Set the user's primary organization */

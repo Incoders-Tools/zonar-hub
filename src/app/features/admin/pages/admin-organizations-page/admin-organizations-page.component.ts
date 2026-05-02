@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -7,6 +7,7 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { Organization } from '../../../../core/models';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { OrganizationFacadeService, OrganizationFilters } from './organization-facade.service';
 import { OrganizationFormPanelComponent, OrganizationFormSubmitData } from './organization-form-panel/organization-form-panel.component';
 
@@ -50,6 +51,7 @@ interface OrganizationRow extends Record<string, unknown> {
 })
 export class AdminOrganizationsPageComponent implements OnInit {
   readonly facade = inject(OrganizationFacadeService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -57,6 +59,14 @@ export class AdminOrganizationsPageComponent implements OnInit {
   readonly editingOrganization = signal<Organization | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedOrganizations = signal<OrganizationRow[]>([]);
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   readonly columns: DataTableColumn[] = [
     { key: 'displayName', labelKey: 'admin.organizations.column.displayName', sortable: true },

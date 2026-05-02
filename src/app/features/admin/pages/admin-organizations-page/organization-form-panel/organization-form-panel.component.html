@@ -56,7 +56,7 @@
         <!-- Sports -->
         <div class="form-field">
           <label class="form-field__label">{{ 'admin.organizations.field.sports' | t }} *</label>
-          <span class="form-field__hint">{{ 'admin.organizations.hint.sports' | t }}</span>
+          <span class="form-field__hint" style="margin-bottom: var(--zh-space-xs);">{{ 'admin.organizations.hint.sports' | t }}</span>
 
           @if (availableSports().length === 0) {
             <span class="form-field__hint">{{ 'admin.organizations.emptySports' | t }}</span>

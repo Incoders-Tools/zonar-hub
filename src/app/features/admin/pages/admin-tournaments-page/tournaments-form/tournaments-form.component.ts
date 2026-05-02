@@ -396,6 +396,26 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     this.cancelled.emit();
   }
 
+  getCourtEmptyMessageKey(): string {
+    const complexId = this.form.get('complexId')?.value;
+    const courts = this.facade.courtsForComplex();
+    const loading = this.facade.loadingCourts();
+    
+    if (loading) {
+      return 'admin.tournaments.courts.loading';
+    }
+    
+    if (!complexId) {
+      return 'admin.tournaments.courts.selectComplex';
+    }
+    
+    if (courts.length === 0) {
+      return 'admin.tournaments.courts.noCourtsForComplex';
+    }
+    
+    return 'admin.tournaments.courts.empty';
+  }
+
   getErrorMessage(controlName: string): string {
     const control = this.form.get(controlName);
     if (!control || !this.submitted || !control.errors) {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ElementRef, viewChild } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, ElementRef, viewChild, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -10,6 +10,7 @@ import { HelpButtonComponent, HelpSection } from '../../../../shared/components/
 import { PlayerFacadeService, PlayerFilters } from './player-facade.service';
 import { PlayerFormPanelComponent } from './player-form-panel/player-form-panel.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
@@ -62,10 +63,19 @@ interface PlayerRow extends Record<string, unknown> {
 export class AdminPlayersPageComponent implements OnInit {
   readonly facade = inject(PlayerFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly tournamentService = inject(TournamentService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   // Tabs
   readonly activeTab = signal<AdminPlayersTab>('list');

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MatIcon } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { RegistrationFacadeService, RegistrationFilters } from './registration-facade.service';
 import { RegistrationFormPanelComponent } from './registration-form-panel/registration-form-panel.component';
 import { Registration, RegistrationToken } from '../../../../core/models';
@@ -72,7 +73,16 @@ interface TokenRow extends Record<string, unknown> {
 export class AdminRegistrationsPageComponent implements OnInit {
   readonly facade = inject(RegistrationFacadeService);
   private readonly tournamentService = inject(TournamentService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly i18n = inject(I18nService);
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   /** Dynamic tournament options for the filter panel */
   readonly tournamentFilterOptions = computed(() =>

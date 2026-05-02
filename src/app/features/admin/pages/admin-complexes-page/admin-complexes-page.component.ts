@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
@@ -10,6 +10,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { Complex } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { ComplexesFacadeService, ComplexFilters } from './complexes-facade.service';
 import { ComplexesFormPanelComponent } from './complexes-form-panel/complexes-form-panel.component';
 import { ComplexCourtsPanelComponent } from './complex-courts-panel/complex-courts-panel.component';
@@ -63,7 +64,16 @@ interface ComplexRow extends Record<string, unknown> {
 export class AdminComplexesPageComponent implements OnInit {
   readonly facade = inject(ComplexesFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);

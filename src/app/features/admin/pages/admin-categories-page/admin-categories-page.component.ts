@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
@@ -9,6 +9,7 @@ import { CategoryFacadeService, CategoryFilters } from './category-facade.servic
 import { CategoryFormPanelComponent } from './category-form-panel/category-form-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { Category } from '../../../../core/models';
 
 interface CategoryRow extends Record<string, unknown> {
@@ -54,7 +55,16 @@ interface CategoryRow extends Record<string, unknown> {
 export class AdminCategoriesPageComponent implements OnInit {
   readonly facade = inject(CategoryFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);

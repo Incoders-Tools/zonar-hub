@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -16,6 +16,7 @@ import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../share
 import { CollapsibleSectionComponent } from '../../../../shared/components/collapsible-section/collapsible-section.component';
 import { AdminUser } from '../../../../core/models/admin-user.model';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { DEFAULT_ROLE_PERMISSIONS } from '../../../../core/auth/permissions.model';
 import { UsersFacadeService, UsersFilters } from './users-facade.service';
@@ -73,6 +74,7 @@ export class AdminUsersPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly facade = inject(UsersFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly permissions = inject(PermissionService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
   readonly canManageOrganizationAssignments = this.auth.isAdmin;
@@ -86,6 +88,14 @@ export class AdminUsersPageComponent implements OnInit {
   readonly userPermissions = signal<string[]>([]);
   readonly userTenantIds = signal<Set<string>>(new Set());
   readonly orderedTenantIds = signal<string[]>([]);
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   readonly tenantColumns: ChildGridColumn[] = [
     { key: 'name', labelKey: 'admin.users.company.name', type: 'display' },

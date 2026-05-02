@@ -21,7 +21,7 @@ interface OrganizationApiDto {
 }
 
 interface OrganizationWriteRequest {
-  tenantId: string;
+  tenantId: string | null;
   displayName: string;
   legalName?: string;
   description?: string;

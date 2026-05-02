@@ -86,7 +86,7 @@
             [selectedIds]="selectedCourtIds()"
             [loading]="facade.loadingCourts()"
             [titleKey]="'admin.tournaments.courts.title'"
-            [emptyMessageKey]="'admin.tournaments.courts.empty'"
+            [emptyMessageKey]="getCourtEmptyMessageKey()"
             [collapsible]="true"
             [initialExpanded]="false"
             (selectionChanged)="onCourtsSelectionChanged($event)">

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -13,6 +13,7 @@ import { Tournament } from '../../../../core/models';
 import { TournamentsFacadeService, TournamentFilters } from './tournaments-facade.service';
 import { TournamentsFormComponent } from './tournaments-form/tournaments-form.component';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 
 interface TournamentRow extends Record<string, unknown> {
@@ -61,7 +62,16 @@ interface TournamentRow extends Record<string, unknown> {
 export class AdminTournamentsPageComponent implements OnInit {
   readonly facade = inject(TournamentsFacadeService);
   private readonly tenantContext = inject(TenantContextService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly router = inject(Router);
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);

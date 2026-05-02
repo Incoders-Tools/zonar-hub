@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../../../core/models/admin-user.model';
 import { Organization } from '../../../../core/models';
 import { Tenant } from '../../../../core/models/user.model';
-import { MockAdminUserRepository } from '../../../../core/repositories/mock/mock-admin-user.repository';
+import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-admin-user.repository';
 import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
@@ -16,7 +16,7 @@ export interface UsersFilters {
 
 @Injectable()
 export class UsersFacadeService {
-  private readonly repository = inject(MockAdminUserRepository);
+  private readonly repository = inject(ApiAdminUserRepository);
   private readonly organizationRepository = inject(ApiOrganizationRepository);
   private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);

@@ -28,10 +28,12 @@ export interface Court {
   id: string;
   complexId: string;
   name: string;
-  sportIds: string[];
-  surfaceType: string;
-  isIndoor: boolean;
   isActive: boolean;
+  // Optional fields for backward compatibility or future extension
+  sportIds?: string[];
+  surfaceType?: string;
+  isIndoor?: boolean;
+  createdAtUtc?: string;
 }
 
 export interface Availability {

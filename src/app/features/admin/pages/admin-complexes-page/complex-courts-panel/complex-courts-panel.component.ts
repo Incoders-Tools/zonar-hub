@@ -14,9 +14,9 @@ import { ActiveToggleComponent } from '../../../../../shared/components/active-t
 interface CourtRow extends Record<string, unknown> {
   id: string;
   name: string;
-  surfaceType: string;
+  surfaceType: string | undefined;
   surfaceTypeLabel: string;
-  isIndoor: boolean;
+  isIndoor: boolean | undefined;
   isActive: boolean;
   indoorLabel: string;
   statusLabel: string;

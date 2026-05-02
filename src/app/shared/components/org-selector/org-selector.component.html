@@ -17,28 +17,47 @@
       <div class="org-selector__dropdown-header">
         <span class="org-selector__dropdown-title">{{ 'org.selector.switch' | t }}</span>
       </div>
-      @for (org of organizations(); track org.id) {
-        <button
-          class="org-selector__option"
-          type="button"
-          role="option"
-          [class.org-selector__option--active]="org.id === activeOrgId()"
-          [class.org-selector__option--primary]="org.id === primaryOrgId()"
-          [attr.aria-selected]="org.id === activeOrgId()"
-          (click)="selectOrganization(org.id)">
-          <span class="org-selector__option-dot"
-                [class.org-selector__option-dot--active]="org.id === activeOrgId()"></span>
-          <span class="org-selector__option-info">
-            <span class="org-selector__option-name">{{ org.name }}</span>
-            @if (org.id === primaryOrgId()) {
-              <span class="org-selector__option-badge">{{ 'org.selector.primary' | t }}</span>
-            }
-          </span>
-          @if (org.id === activeOrgId()) {
-            <span class="org-selector__option-check">✓</span>
-          }
-        </button>
+
+      @if (showSearch()) {
+        <div class="org-selector__search">
+          <input
+            class="org-selector__search-input"
+            type="text"
+            [placeholder]="'org.selector.search' | t"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            (click)="$event.stopPropagation()"
+            autocomplete="off"
+            aria-label="Search organizations">
+        </div>
       }
+
+      <div class="org-selector__list">
+        @for (org of filteredOrganizations(); track org.id) {
+          <button
+            class="org-selector__option"
+            type="button"
+            role="option"
+            [class.org-selector__option--active]="org.id === activeOrgId()"
+            [class.org-selector__option--primary]="org.id === primaryOrgId()"
+            [attr.aria-selected]="org.id === activeOrgId()"
+            (click)="selectOrganization(org.id)">
+            <span class="org-selector__option-dot"
+                  [class.org-selector__option-dot--active]="org.id === activeOrgId()"></span>
+            <span class="org-selector__option-info">
+              <span class="org-selector__option-name">{{ org.name }}</span>
+              @if (org.id === primaryOrgId()) {
+                <span class="org-selector__option-badge">{{ 'org.selector.primary' | t }}</span>
+              }
+            </span>
+            @if (org.id === activeOrgId()) {
+              <span class="org-selector__option-check">✓</span>
+            }
+          </button>
+        } @empty {
+          <div class="org-selector__empty">{{ 'org.selector.noResults' | t }}</div>
+        }
+      </div>
     </div>
   }
 </div>

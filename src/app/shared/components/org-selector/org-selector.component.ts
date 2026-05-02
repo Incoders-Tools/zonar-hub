@@ -1,11 +1,12 @@
 import { Component, inject, signal, computed, HostListener, ElementRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { ActiveOrganizationService } from '../../../core/services/active-organization.service';
 
 @Component({
   selector: 'app-org-selector',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, FormsModule],
   templateUrl: './org-selector.component.html',
   styleUrl: './org-selector.component.scss'
 })
@@ -14,12 +15,23 @@ export class OrgSelectorComponent {
   private readonly elRef = inject(ElementRef);
 
   readonly isOpen = signal(false);
+  readonly searchQuery = signal('');
 
   readonly organizations = this.activeOrg.manageableOrganizations;
   readonly activeOrganization = this.activeOrg.activeOrganization;
   readonly activeOrgId = this.activeOrg.activeOrganizationId;
   readonly primaryOrgId = this.activeOrg.primaryOrganizationId;
   readonly hasMultiple = this.activeOrg.hasMultipleOrganizations;
+
+  /** Show search input when there are more than 5 organizations */
+  readonly showSearch = computed(() => this.organizations().length > 5);
+
+  /** Organizations filtered by the search query */
+  readonly filteredOrganizations = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    if (!query) return this.organizations();
+    return this.organizations().filter(o => o.name.toLowerCase().includes(query));
+  });
 
   /** First two letters of org name for avatar */
   readonly orgInitials = computed(() => {
@@ -35,17 +47,22 @@ export class OrgSelectorComponent {
   toggle(): void {
     if (this.organizations().length <= 1) return;
     this.isOpen.update(v => !v);
+    if (!this.isOpen()) {
+      this.searchQuery.set('');
+    }
   }
 
   selectOrganization(orgId: string): void {
     this.activeOrg.switchOrganization(orgId);
     this.isOpen.set(false);
+    this.searchQuery.set('');
   }
 
   @HostListener('document:click', ['$event'])
   onClickOutside(event: MouseEvent): void {
     if (!this.elRef.nativeElement.contains(event.target)) {
       this.isOpen.set(false);
+      this.searchQuery.set('');
     }
   }
 }

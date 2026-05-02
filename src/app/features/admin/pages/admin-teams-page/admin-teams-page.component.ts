@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ElementRef, viewChild } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, ElementRef, viewChild, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -9,6 +9,7 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TeamFacadeService, TeamFilters } from './team-facade.service';
 import { TeamFormPanelComponent } from './team-form-panel/team-form-panel.component';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { Team } from '../../../../core/models';
 
 interface TeamRow extends Record<string, unknown> {
@@ -54,6 +55,15 @@ interface TeamRow extends Record<string, unknown> {
 })
 export class AdminTeamsPageComponent implements OnInit {
   readonly facade = inject(TeamFacadeService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
+
+  constructor() {
+    // Reload data whenever organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      void this.facade.load();
+    });
+  }
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);

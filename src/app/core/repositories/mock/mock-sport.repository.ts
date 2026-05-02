@@ -139,4 +139,30 @@ export class MockSportRepository implements SportRepository {
   async getExistingKeys(): Promise<string[]> {
     return this.delay(this.sports.map(s => s.key));
   }
+
+  async getForOrganization(organizationId: string): Promise<Sport[]> {
+    // In mock mode, return only active sports
+    // In real implementation, this would filter by organization assignment
+    const activeSports = this.sports.filter(s => s.isActive);
+    return this.delay(structuredClone(activeSports));
+  }
+
+  async getForTenant(tenantId: string): Promise<Sport[]> {
+    // In mock mode, return only active sports
+    // In real implementation, this would filter by tenant assignment
+    const activeSports = this.sports.filter(s => s.isActive);
+    return this.delay(structuredClone(activeSports));
+  }
+
+  async setForOrganization(organizationId: string, sportIds: string[]): Promise<void> {
+    // In mock mode, this is a no-op
+    // In real implementation, this would update organization-sport associations
+    return this.delay(undefined);
+  }
+
+  async setForTenant(tenantId: string, sportIds: string[]): Promise<void> {
+    // In mock mode, this is a no-op
+    // In real implementation, this would update tenant-sport associations
+    return this.delay(undefined);
+  }
 }

@@ -28,6 +28,14 @@ interface EmailTemplateUpdateRequest {
   isActive: boolean;
 }
 
+interface EmailTemplateCreateRequest {
+  key: string;
+  subject: string;
+  htmlBody: string;
+  description: string | null;
+  isActive: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiEmailTemplateRepository implements EmailTemplateRepository {
   private readonly http = inject(HttpClient);
@@ -78,6 +86,34 @@ export class ApiEmailTemplateRepository implements EmailTemplateRepository {
       );
 
       return this.toModel(updated);
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error));
+    }
+  }
+
+  async create(template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<EmailTemplate> {
+    try {
+      const request: EmailTemplateCreateRequest = {
+        key: template.key,
+        subject: template.subject,
+        htmlBody: template.htmlBody,
+        description: template.description,
+        isActive: template.isActive
+      };
+
+      const created = await firstValueFrom(
+        this.http.post<EmailTemplateApiDto>(this.endpoint, request)
+      );
+
+      return this.toModel(created);
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error));
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete<void>(`${this.endpoint}/${id}`));
     } catch (error) {
       throw new Error(extractApiErrorCode(error));
     }

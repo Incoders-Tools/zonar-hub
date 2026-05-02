@@ -100,8 +100,8 @@ export class OrganizationFacadeService {
       const user = this.auth.currentUser();
       const fullData: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'> = {
         ...data,
-        tenantId: user?.tenantId ?? '',
-        createdByUserId: user?.id ?? '',
+        tenantId: user?.tenantId || null as unknown as string,
+        createdByUserId: user?.id || null as unknown as string,
         logoUrl: undefined
       };
       const created = await this.repo.create(fullData);

@@ -710,6 +710,8 @@ export const TRANSLATIONS: TranslationMap = {
     'org.selector.none': 'Sin organización',
     'org.selector.switch': 'Cambiar organización',
     'org.selector.primary': 'Principal',
+    'org.selector.search': 'Buscar organización...',
+    'org.selector.noResults': 'Sin resultados',
 
     // ---- Tenants (Organizations) ----
     'admin.tenants.title': 'Organizaciones',
@@ -1950,6 +1952,9 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournaments.courts.title': 'Canchas del torneo',
     'admin.tournaments.courts.subtitle': 'Seleccioná las canchas disponibles para este torneo',
     'admin.tournaments.courts.empty': 'Seleccioná un complejo para ver las canchas disponibles',
+    'admin.tournaments.courts.selectComplex': 'Seleccioná un complejo para ver las canchas disponibles',
+    'admin.tournaments.courts.noCourtsForComplex': 'El complejo seleccionado no tiene canchas configuradas',
+    'admin.tournaments.courts.loading': 'Cargando canchas...',
     'admin.tournaments.courts.column.name': 'Cancha',
     'admin.tournaments.courts.column.surfaceType': 'Superficie',
     'admin.tournaments.courts.column.isIndoor': 'Techado',
@@ -3027,6 +3032,8 @@ export const TRANSLATIONS: TranslationMap = {
     'org.selector.none': 'No organization',
     'org.selector.switch': 'Switch organization',
     'org.selector.primary': 'Primary',
+    'org.selector.search': 'Search organization...',
+    'org.selector.noResults': 'No results',
 
     // ---- Tenants (Organizations) ----
     'admin.tenants.title': 'Organizations',
@@ -4257,6 +4264,9 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournaments.courts.title': 'Tournament courts',
     'admin.tournaments.courts.subtitle': 'Select the available courts for this tournament',
     'admin.tournaments.courts.empty': 'Select a complex to see available courts',
+    'admin.tournaments.courts.selectComplex': 'Select a complex to see available courts',
+    'admin.tournaments.courts.noCourtsForComplex': 'The selected complex has no configured courts',
+    'admin.tournaments.courts.loading': 'Loading courts...',
     'admin.tournaments.courts.column.name': 'Court',
     'admin.tournaments.courts.column.surfaceType': 'Surface',
     'admin.tournaments.courts.column.isIndoor': 'Indoor',
@@ -5333,6 +5343,8 @@ export const TRANSLATIONS: TranslationMap = {
     'org.selector.none': 'Sem organização',
     'org.selector.switch': 'Trocar organização',
     'org.selector.primary': 'Principal',
+    'org.selector.search': 'Buscar organização...',
+    'org.selector.noResults': 'Sem resultados',
 
     // ---- Tenants (Organizations) ----
     'admin.tenants.title': 'Organizações',
@@ -6561,6 +6573,9 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.tournaments.courts.title': 'Quadras do torneio',
     'admin.tournaments.courts.subtitle': 'Selecione as quadras disponíveis para este torneio',
     'admin.tournaments.courts.empty': 'Selecione um complexo para ver as quadras disponíveis',
+    'admin.tournaments.courts.selectComplex': 'Selecione um complexo para ver as quadras disponíveis',
+    'admin.tournaments.courts.noCourtsForComplex': 'O complexo selecionado não tem quadras configuradas',
+    'admin.tournaments.courts.loading': 'Carregando quadras...',
     'admin.tournaments.courts.column.name': 'Quadra',
     'admin.tournaments.courts.column.surfaceType': 'Superfície',
     'admin.tournaments.courts.column.isIndoor': 'Coberta',
