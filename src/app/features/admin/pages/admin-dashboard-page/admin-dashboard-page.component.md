@@ -8,6 +8,7 @@ Main admin dashboard showing key metrics, quick actions, and system health at a 
 
 - Landing page for admin users after login
 - Shows active tournaments, registrations, players, sports, complexes, and admin user counts
+- Metrics are organization-scoped using the active organization selected in the sidebar
 - Displays a setup prompt when no tournaments exist yet
 - Links to key admin management screens
 
@@ -17,18 +18,16 @@ Routed page. No inputs or outputs.
 
 ## Dependencies
 
-- `TournamentService` — tournament counts and active tournaments
-- `RegistrationService` — registration metrics
-- `PlayerService` — player counts
-- `MockSportRepository` — sport counts
-- `MockComplexRepository` — complex counts
-- `MockAdminUserRepository` — admin user counts
+- `AdminDashboardService` — loads summary cards from `/api/admin/dashboard/summary`
+- `ActiveOrganizationService` — organization context and change signal for reload
+- `TenantContextService` and `MockPlanRepository` — plan limits for usage widgets
 
 ## States
 
 | State | Description |
 |-------|-------------|
 | Setup prompt | Shown when no tournaments exist |
+| Loading summary | Awaiting API summary load for selected organization |
 | Dashboard | Metric cards and quick actions |
 
 ## i18n keys
@@ -43,3 +42,4 @@ All tokens via `--zh-*`.
 
 - Creates successfully
 - Exposes activeTournaments and showSetupPrompt computed signals
+- Reloads summary when active organization changes

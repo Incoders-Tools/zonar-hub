@@ -32,6 +32,7 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
+    (retried)="facade.load()"
     [rowActions]="rowActions"
     emptyMessageKey="admin.email-templates.emptyState"
     (rowAction)="onRowActionClicked($event)">

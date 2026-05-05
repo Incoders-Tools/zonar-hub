@@ -57,7 +57,7 @@ describe('ComplexCourtsPanelComponent', () => {
 
   it('should emit availabilityRequested', () => {
     spyOn(component.availabilityRequested, 'emit');
-    component.onRowAction({ action: 'availability', row: { id: 'ct1', name: 'Cancha 1', surfaceType: 'sintético', isIndoor: false, isActive: true, indoorLabel: '', statusLabel: '' } });
+    component.onRowAction({ action: 'availability', row: { id: 'ct1', name: 'Cancha 1', surfaceType: 'sintético', surfaceTypeLabel: 'admin.complexes.courts.surfaceType.synthetic', isIndoor: false, isActive: true, indoorLabel: '', statusLabel: '', statusVariant: 'active' } });
     expect(component.availabilityRequested.emit).toHaveBeenCalledWith('ct1');
   });
 });

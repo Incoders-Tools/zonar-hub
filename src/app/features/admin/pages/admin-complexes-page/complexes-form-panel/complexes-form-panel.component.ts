@@ -1,4 +1,4 @@
-import { Component, inject, input, output, OnInit } from '@angular/core';
+import { Component, inject, input, output, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -8,10 +8,13 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
+import { ImageUploadComponent } from '../../../../../shared/components/image-upload/image-upload.component';
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { Complex } from '../../../../../core/models';
 import { ComplexesFacadeService } from '../complexes-facade.service';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
+import { FILE_STORAGE_REPOSITORY } from '../../../../../core/repositories/file-storage.repository';
+import { ImageOptimizationService } from '../../../../../core/services/image-optimization.service';
 
 @Component({
   selector: 'app-complexes-form-panel',
@@ -25,7 +28,8 @@ import { ActiveToggleComponent } from '../../../../../shared/components/active-t
     FormShellComponent,
     AsyncButtonComponent,
     CollapsibleSectionComponent,
-    ActiveToggleComponent
+    ActiveToggleComponent,
+    ImageUploadComponent
   ],
   templateUrl: './complexes-form-panel.component.html',
   styleUrl: './complexes-form-panel.component.scss',
@@ -46,6 +50,8 @@ export class ComplexesFormPanelComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(ComplexesFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly fileStorage = inject(FILE_STORAGE_REPOSITORY);
+  private readonly imageOptimization = inject(ImageOptimizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly complex = input<Complex | null>(null);
@@ -57,6 +63,13 @@ export class ComplexesFormPanelComponent implements OnInit {
   form!: FormGroup;
   isEditing = false;
   submitted = false;
+  /** Holds the selected logo File before it is uploaded to storage. */
+  readonly pendingLogoFile = signal<File | null>(null);
+
+  /** Current logo URL from the loaded complex (used as preview before a new file is chosen). */
+  get currentLogoUrl(): string | null {
+    return this.complex()?.logoImagePath ?? null;
+  }
 
   ngOnInit(): void {
     this.initializeForm();
@@ -165,6 +178,22 @@ export class ComplexesFormPanelComponent implements OnInit {
           courtsCount: 0
         };
 
+    // Upload pending logo file before persisting, then replace the preview URL
+    // with the permanent storage URL.
+    const logoFile = this.pendingLogoFile();
+    if (logoFile) {
+      const optimized = await this.imageOptimization.optimizeLogo(logoFile);
+      const orgId = this.complex()?.organizationId ?? 'default';
+      const entityId = (payload as Complex).id ?? 'new';
+      const storedUrl = await this.fileStorage.upload(
+        'complexes',
+        `${orgId}/${entityId}/logo.webp`,
+        optimized
+      );
+      (payload as Record<string, unknown>)['logoImagePath'] = storedUrl;
+      this.pendingLogoFile.set(null);
+    }
+
     const success = await this.facade.saveComplex(payload);
     if (success) {
       this.saved.emit();
@@ -173,6 +202,20 @@ export class ComplexesFormPanelComponent implements OnInit {
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  onLogoChanged(event: { file: File; previewUrl: string }): void {
+    this.pendingLogoFile.set(event.file);
+    // Store the preview URL so the field reflects the selection immediately.
+    // The real URL will be set after uploading to storage on save.
+    this.form.get('logoImagePath')?.setValue(event.previewUrl);
+    this.form.markAsDirty();
+  }
+
+  onLogoRemoved(): void {
+    this.pendingLogoFile.set(null);
+    this.form.get('logoImagePath')?.setValue('');
+    this.form.markAsDirty();
   }
 
   getErrorMessage(controlName: string): string {

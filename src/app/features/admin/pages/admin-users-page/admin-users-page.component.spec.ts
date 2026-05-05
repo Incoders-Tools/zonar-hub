@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminUsersPageComponent } from './admin-users-page.component';
 import { UsersFacadeService } from './users-facade.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AdminUsersPageComponent', () => {
   let component: AdminUsersPageComponent;
@@ -10,22 +11,23 @@ describe('AdminUsersPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminUsersPageComponent],
-      providers: [UsersFacadeService]
+      providers: [UsersFacadeService, provideHttpClient()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminUsersPageComponent);
     component = fixture.componentInstance;
-    facade = TestBed.inject(UsersFacadeService);
+    facade = fixture.debugElement.injector.get(UsersFacadeService);
   });
 
   it('should create', () => {
+    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
   it('should load users on init', () => {
-    spyOn(facade, 'load');
-    component.ngOnInit();
-    expect(facade.load).toHaveBeenCalled();
+    const loadSpy = spyOn(facade, 'load');
+    fixture.detectChanges();
+    expect(loadSpy).toHaveBeenCalled();
   });
 
   it('should apply filters', () => {
@@ -41,19 +43,9 @@ describe('AdminUsersPageComponent', () => {
   });
 
   it('should open create form', () => {
+    fixture.detectChanges();
     component.openCreateForm();
     expect(component.showFormPanel()).toBe(true);
     expect(component.editingUser()).toBeNull();
-  });
-
-  it('should open help dialog', () => {
-    component.openHelp();
-    expect(component.showHelpDialog()).toBe(true);
-  });
-
-  it('should close help dialog', () => {
-    component.showHelpDialog.set(true);
-    component.closeHelp();
-    expect(component.showHelpDialog()).toBe(false);
   });
 });

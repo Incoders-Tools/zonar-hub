@@ -15,6 +15,7 @@ import { TournamentsFormComponent } from './tournaments-form/tournaments-form.co
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 interface TournamentRow extends Record<string, unknown> {
   id: string;
@@ -61,6 +62,7 @@ interface TournamentRow extends Record<string, unknown> {
 })
 export class AdminTournamentsPageComponent implements OnInit {
   readonly facade = inject(TournamentsFacadeService);
+  private readonly auth = inject(AuthService);
   private readonly tenantContext = inject(TenantContextService);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly router = inject(Router);
@@ -181,6 +183,12 @@ export class AdminTournamentsPageComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (this.auth.isSystemAdmin()) {
+      this.editingTournament.set(null);
+      this.showFormPanel.set(true);
+      return;
+    }
+
     const plan = this.tenantContext.planType();
     const needsEnforcement = !plan || plan === 'starter';
     if (needsEnforcement && this.facade.entities().length >= 1) {

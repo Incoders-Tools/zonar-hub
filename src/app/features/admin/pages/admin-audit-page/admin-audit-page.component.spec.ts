@@ -15,7 +15,7 @@ describe('AdminAuditPageComponent', () => {
 
     fixture = TestBed.createComponent(AdminAuditPageComponent);
     component = fixture.componentInstance;
-    facade = TestBed.inject(AuditFacadeService);
+    facade = fixture.debugElement.injector.get(AuditFacadeService);
   });
 
   it('should create', () => {
@@ -44,16 +44,5 @@ describe('AdminAuditPageComponent', () => {
     const rows = [{ id: 'log1', timestamp: '', userId: '', action: '', entityType: '', entityId: '', changes: '' }];
     component.onSelectionChanged(rows);
     expect(component.selectedLogs()).toEqual(rows);
-  });
-
-  it('should open help dialog', () => {
-    component.openHelp();
-    expect(component.showHelpDialog()).toBe(true);
-  });
-
-  it('should close help dialog', () => {
-    component.showHelpDialog.set(true);
-    component.closeHelp();
-    expect(component.showHelpDialog()).toBe(false);
   });
 });

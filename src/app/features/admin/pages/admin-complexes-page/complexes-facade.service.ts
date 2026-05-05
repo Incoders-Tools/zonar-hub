@@ -74,9 +74,9 @@ export class ComplexesFacadeService {
 
     let result = [...complexes];
 
-    // Filter by active organization
+    // Filter by active organization — only show complexes that belong to the selected org
     if (activeOrgId) {
-      result = result.filter(c => !c.organizationId || c.organizationId === activeOrgId);
+      result = result.filter(c => c.organizationId === activeOrgId);
     }
 
     // Filter by name
@@ -116,9 +116,12 @@ export class ComplexesFacadeService {
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
+      const activeOrgId = this.activeOrg.activeOrganizationId();
       const [complexes, sports] = await Promise.all([
         this.repository.getAll(),
-        this.sportRepository.getAll()
+        activeOrgId
+          ? this.sportRepository.getForOrganization(activeOrgId)
+          : this.sportRepository.getAll()
       ]);
       this.entitiesState.set(complexes);
       this.sportsState.set(sports.filter(s => s.isActive));

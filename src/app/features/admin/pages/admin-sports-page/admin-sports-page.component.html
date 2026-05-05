@@ -64,6 +64,7 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
+    (retried)="facade.load()"
     [selectable]="false"
     [reorderable]="false"
     [rowActions]="sportRowActions()"

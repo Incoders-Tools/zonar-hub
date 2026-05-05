@@ -89,9 +89,9 @@ export class TournamentsFacadeService {
 
     let result = [...tournaments];
 
-    // Filter by active organization
+    // Filter by active organization — only show tournaments that belong to the selected org
     if (activeOrgId) {
-      result = result.filter(t => !t.organizationId || t.organizationId === activeOrgId);
+      result = result.filter(t => t.organizationId === activeOrgId);
     }
 
     if (filters.name?.trim()) {

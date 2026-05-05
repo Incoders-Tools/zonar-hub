@@ -6,6 +6,13 @@ import { AsyncButtonComponent } from '../../../../../shared/components/async-but
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 import { Organization, OrganizationType, Sport } from '../../../../../core/models';
+
+interface OrgTypeOption {
+  value: OrganizationType;
+  labelKey: string;
+  descKey: string;
+  icon: string;
+}
 import { ApiSportRepository } from '../../../../../core/repositories/api/api-sport.repository';
 
 export interface OrganizationFormSubmitData {
@@ -40,13 +47,23 @@ export class OrganizationFormPanelComponent implements OnInit, OnDestroy {
   readonly isEditing = computed(() => this.organization() !== null);
   readonly titleKey = computed(() => this.isEditing() ? 'admin.organizations.form.edit' : 'admin.organizations.form.create');
 
-  readonly typeOptions: { value: OrganizationType; labelKey: string }[] = [
-    { value: 'estandar', labelKey: 'organization.type.estandar' },
-    { value: 'circuito', labelKey: 'organization.type.circuito' },
-    { value: 'academia', labelKey: 'organization.type.academia' },
-    { value: 'operadora', labelKey: 'organization.type.operadora' },
-    { value: 'marca', labelKey: 'organization.type.marca' }
+  readonly typeOptions: OrgTypeOption[] = [
+    { value: 'estandar', labelKey: 'organization.type.estandar', descKey: 'organization.type.estandar.desc', icon: '🏢' },
+    { value: 'circuito', labelKey: 'organization.type.circuito', descKey: 'organization.type.circuito.desc', icon: '🏆' },
+    { value: 'academia', labelKey: 'organization.type.academia', descKey: 'organization.type.academia.desc', icon: '🎓' },
+    { value: 'operadora', labelKey: 'organization.type.operadora', descKey: 'organization.type.operadora.desc', icon: '🎯' },
+    { value: 'marca', labelKey: 'organization.type.marca', descKey: 'organization.type.marca.desc', icon: '🏷️' }
   ];
+
+  selectOrgType(type: OrganizationType): void {
+    this.form.get('type')!.setValue(type);
+    this.form.markAsDirty();
+    this.formDirty.set(true);
+  }
+
+  isOrgTypeSelected(type: OrganizationType): boolean {
+    return this.form.get('type')!.value === type;
+  }
 
   /** Track form state via signals so computed can react */
   private readonly formValid = signal(false);

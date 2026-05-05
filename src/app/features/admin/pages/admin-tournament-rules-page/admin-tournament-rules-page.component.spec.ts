@@ -4,6 +4,7 @@ import { TournamentRulesFacadeService } from './tournament-rules-facade.service'
 import { MockTournamentRuleSetRepository } from '../../../../core/repositories/mock/mock-tournament-rule-set.repository';
 import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AdminTournamentRulesPageComponent', () => {
   let component: AdminTournamentRulesPageComponent;
@@ -17,7 +18,8 @@ describe('AdminTournamentRulesPageComponent', () => {
         TournamentRulesFacadeService,
         MockTournamentRuleSetRepository,
         MockTournamentTypeRepository,
-        provideNoopAnimations()
+        provideNoopAnimations(),
+        provideHttpClient()
       ]
     }).compileComponents();
 
@@ -50,7 +52,7 @@ describe('AdminTournamentRulesPageComponent', () => {
   });
 
   it('should open delete confirmation', () => {
-    const mockRow = { id: 'trs1', tournamentTypeName: 'Round Robin', isActive: true, statusLabel: '', createdAt: '' };
+    const mockRow = { id: 'trs1', tournamentTypeName: 'Round Robin', isActive: true, statusLabel: '', statusVariant: 'active', createdAt: '' };
     component.confirmDelete(mockRow);
     expect(component.showDeleteDialog()).toBe(true);
     expect(component.deletingId()).toBe('trs1');

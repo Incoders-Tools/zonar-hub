@@ -4,6 +4,7 @@ import { AdminPlayersPageComponent } from './admin-players-page.component';
 import { PlayerFacadeService } from './player-facade.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AdminPlayersPageComponent', () => {
   let component: AdminPlayersPageComponent;
@@ -28,7 +29,7 @@ describe('AdminPlayersPageComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [AdminPlayersPageComponent],
-      providers: [I18nService, provideNoopAnimations()]
+      providers: [I18nService, provideNoopAnimations(), provideHttpClient()]
     })
     .overrideComponent(AdminPlayersPageComponent, {
       set: {
@@ -65,7 +66,13 @@ describe('AdminPlayersPageComponent', () => {
 
   it('should apply filters through facade', () => {
     component.onFiltersApplied({ search: 'test', isActive: 'true' });
-    expect(facadeSpy.applyFilters).toHaveBeenCalledWith({ search: 'test', isActive: 'true' });
+    expect(facadeSpy.applyFilters).toHaveBeenCalledWith({
+      search: 'test',
+      genderId: undefined,
+      categoryId: undefined,
+      sportId: undefined,
+      isActive: 'true'
+    });
   });
 
   it('should clear filters through facade', () => {
@@ -77,7 +84,7 @@ describe('AdminPlayersPageComponent', () => {
     const row = {
       id: 'p1', name: 'John Doe', email: 'john@test.com',
       categoryName: 'A', genderLabel: 'Male', sportName: 'Padel',
-      ranking: 1, isActive: true, statusLabel: 'active'
+      ranking: 1, isActive: true, statusLabel: 'active', statusVariant: 'active'
     };
     component.confirmDelete(row);
     expect(component.showDeleteDialog()).toBe(true);
@@ -88,7 +95,7 @@ describe('AdminPlayersPageComponent', () => {
     const row = {
       id: 'p1', name: 'John Doe', email: 'john@test.com',
       categoryName: 'A', genderLabel: 'Male', sportName: 'Padel',
-      ranking: 1, isActive: true, statusLabel: ''
+      ranking: 1, isActive: true, statusLabel: '', statusVariant: 'active'
     };
     component.confirmDelete(row);
     component.cancelDelete();
@@ -98,8 +105,8 @@ describe('AdminPlayersPageComponent', () => {
 
   it('should track selection changes', () => {
     const rows = [
-      { id: 'p1', name: 'A', email: 'a@test.com', categoryName: 'A', genderLabel: 'M', sportName: 'P', ranking: 1, isActive: true, statusLabel: '' },
-      { id: 'p2', name: 'B', email: 'b@test.com', categoryName: 'B', genderLabel: 'F', sportName: 'P', ranking: 2, isActive: true, statusLabel: '' }
+      { id: 'p1', name: 'A', email: 'a@test.com', categoryName: 'A', genderLabel: 'M', sportName: 'P', ranking: 1, isActive: true, statusLabel: '', statusVariant: 'active' },
+      { id: 'p2', name: 'B', email: 'b@test.com', categoryName: 'B', genderLabel: 'F', sportName: 'P', ranking: 2, isActive: true, statusLabel: '', statusVariant: 'active' }
     ];
     component.onSelectionChanged(rows);
     expect(component.hasSelection()).toBe(true);
@@ -113,7 +120,7 @@ describe('AdminPlayersPageComponent', () => {
 
   it('should open bulk delete with selection', () => {
     component.onSelectionChanged([
-      { id: 'p1', name: 'A', email: 'a@test.com', categoryName: 'A', genderLabel: 'M', sportName: 'P', ranking: 1, isActive: true, statusLabel: '' }
+      { id: 'p1', name: 'A', email: 'a@test.com', categoryName: 'A', genderLabel: 'M', sportName: 'P', ranking: 1, isActive: true, statusLabel: '', statusVariant: 'active' }
     ]);
     component.openBulkDelete();
     expect(component.showBulkDeleteDialog()).toBe(true);

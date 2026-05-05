@@ -3,6 +3,7 @@ import { AdminComplexesPageComponent } from './admin-complexes-page.component';
 import { ComplexesFacadeService } from './complexes-facade.service';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AdminComplexesPageComponent', () => {
   let component: AdminComplexesPageComponent;
@@ -13,7 +14,8 @@ describe('AdminComplexesPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminComplexesPageComponent, NoopAnimationsModule],
       providers: [
-        MockComplexRepository
+        MockComplexRepository,
+        provideHttpClient()
       ]
     }).compileComponents();
 
@@ -72,20 +74,20 @@ describe('AdminComplexesPageComponent', () => {
   });
 
   it('should confirm delete', () => {
-    component.confirmDelete({ id: 'cx1', name: 'Test', key: 'test', location: '', sortOrder: 1, preponderance: 1, courtsCount: 0, statusLabel: '', isActive: true });
+    component.confirmDelete({ id: 'cx1', name: 'Test', key: 'test', location: '', sortOrder: 1, preponderance: 1, courtsCount: 0, statusLabel: '', statusVariant: 'active', isActive: true });
     expect(component.showDeleteDialog()).toBe(true);
     expect(component.deletingId()).toBe('cx1');
   });
 
   it('should cancel delete', () => {
-    component.confirmDelete({ id: 'cx1', name: 'Test', key: 'test', location: '', sortOrder: 1, preponderance: 1, courtsCount: 0, statusLabel: '', isActive: true });
+    component.confirmDelete({ id: 'cx1', name: 'Test', key: 'test', location: '', sortOrder: 1, preponderance: 1, courtsCount: 0, statusLabel: '', statusVariant: 'active', isActive: true });
     component.cancelDelete();
     expect(component.showDeleteDialog()).toBe(false);
     expect(component.deletingId()).toBeNull();
   });
 
   it('should handle selection changes', () => {
-    const row = { id: 'cx1', name: 'Test', key: 'test', location: '', sortOrder: 1, preponderance: 1, courtsCount: 0, statusLabel: '', isActive: true };
+    const row = { id: 'cx1', name: 'Test', key: 'test', location: '', sortOrder: 1, preponderance: 1, courtsCount: 0, statusLabel: '', statusVariant: 'active', isActive: true };
     component.onSelectionChanged([row]);
     expect(component.hasSelection()).toBe(true);
   });

@@ -30,7 +30,7 @@ describe('AvailabilitySelectorComponent', () => {
   });
 
   it('should emit change on toggle', () => {
-    const spy = jest.spyOn(component.changed, 'emit');
+    const spy = spyOn(component.changed, 'emit');
     component.toggleSlot(1, 'afternoon');
     expect(spy).toHaveBeenCalled();
   });

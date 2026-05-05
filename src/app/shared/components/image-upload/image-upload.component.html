@@ -1,6 +1,7 @@
 <div class="image-upload"
   [class.image-upload--disabled]="disabled()"
-  [class.image-upload--drag-over]="isDragOver()">
+  [class.image-upload--drag-over]="isDragOver()"
+  [class.image-upload--compact]="compact()">
 
   @if (displayUrl()) {
     <div class="image-upload__preview">

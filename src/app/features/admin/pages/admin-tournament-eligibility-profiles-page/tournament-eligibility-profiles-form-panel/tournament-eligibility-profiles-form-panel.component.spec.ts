@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { TournamentEligibilityProfilesFormPanelComponent } from './tournament-eligibility-profiles-form-panel.component';
 import { TournamentEligibilityProfilesFacadeService } from '../tournament-eligibility-profiles-facade.service';
-import { MockTournamentEligibilityProfileRepository } from '../../../../../../core/repositories/mock/mock-tournament-eligibility-profile.repository';
+import { MockTournamentEligibilityProfileRepository } from '../../../../../core/repositories/tournament-admin.repository';
+import { AuthService } from '../../../../../core/auth/auth.service';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 
 describe('TournamentEligibilityProfilesFormPanelComponent', () => {
   let component: TournamentEligibilityProfilesFormPanelComponent;
@@ -10,7 +13,13 @@ describe('TournamentEligibilityProfilesFormPanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TournamentEligibilityProfilesFormPanelComponent],
-      providers: [TournamentEligibilityProfilesFacadeService, MockTournamentEligibilityProfileRepository]
+      providers: [
+        I18nService,
+        provideNoopAnimations(),
+        TournamentEligibilityProfilesFacadeService,
+        MockTournamentEligibilityProfileRepository,
+        { provide: AuthService, useValue: { isSystemAdmin: () => false } }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TournamentEligibilityProfilesFormPanelComponent);

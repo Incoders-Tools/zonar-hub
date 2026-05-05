@@ -1,8 +1,8 @@
-<div class="chatbot">
+<div class="chatbot" [class.chatbot--embedded]="mode === 'embedded'" [class.chatbot--floating]="mode === 'floating'">
   @if (isOpen()) {
-    <div class="chatbot__panel">
+    <div class="chatbot__panel" [class.chatbot__panel--embedded]="mode === 'embedded'">
       <div class="chatbot__header">
-        @if (chatMode()) {
+        @if (chatMode() && mode === 'floating') {
           <button class="chatbot__back" type="button" (click)="backToFaq()" [attr.aria-label]="'chatbot.chat.back' | t">
             ←
           </button>
@@ -74,11 +74,13 @@
     </div>
   }
 
-  <button class="chatbot__trigger" type="button" (click)="toggle()" [attr.aria-label]="'chatbot.title' | t">
-    @if (isOpen()) {
-      ✕
-    } @else {
-      💬
-    }
-  </button>
+  @if (mode === 'floating') {
+    <button class="chatbot__trigger" type="button" (click)="toggle()" [attr.aria-label]="'chatbot.title' | t">
+      @if (isOpen()) {
+        ✕
+      } @else {
+        💬
+      }
+    </button>
+  }
 </div>

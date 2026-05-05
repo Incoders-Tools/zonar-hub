@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ElementRef, viewChild, effect } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, ElementRef, viewChild, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -7,6 +7,7 @@ import { FilterPanelComponent, FilterField, SortOption, SortRule } from '../../.
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { ChatbotBubbleComponent, ChatbotMode } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
 import { PlayerFacadeService, PlayerFilters } from './player-facade.service';
 import { PlayerFormPanelComponent } from './player-form-panel/player-form-panel.component';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -16,7 +17,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { Player } from '../../../../core/models';
 
-export type AdminPlayersTab = 'list' | 'importer' | 'agent';
+export type AdminPlayersTab = 'list' | 'agent' | 'importer';
 
 interface PlayerRow extends Record<string, unknown> {
   id: string;
@@ -42,7 +43,8 @@ interface PlayerRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     PlayerFormPanelComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ChatbotBubbleComponent
   ],
   providers: [PlayerFacadeService],
   templateUrl: './admin-players-page.component.html',
@@ -60,7 +62,7 @@ interface PlayerRow extends Record<string, unknown> {
     ])
   ]
 })
-export class AdminPlayersPageComponent implements OnInit {
+export class AdminPlayersPageComponent implements OnInit, OnDestroy {
   readonly facade = inject(PlayerFacadeService);
   private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);
@@ -80,9 +82,14 @@ export class AdminPlayersPageComponent implements OnInit {
   // Tabs
   readonly activeTab = signal<AdminPlayersTab>('list');
 
+  // Embedded chatbot state
+  readonly showEmbeddedChat = signal(false);
+  readonly chatbotMode = signal<ChatbotMode>('floating');
+
   // Importer state
   readonly importerFile = signal<File | null>(null);
   readonly importerFileName = signal('');
+  readonly importerProcessing = signal(false);
   readonly importerImporting = signal(false);
   readonly importerPreview = signal<Record<string, unknown>[]>([]);
   readonly importerDone = signal(false);
@@ -188,6 +195,12 @@ export class AdminPlayersPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.facade.load();
+  }
+
+  ngOnDestroy(): void {
+    if (this.chatbotMode() === 'embedded') {
+      window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', { detail: { mode: 'floating' } }));
+    }
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -297,6 +310,27 @@ export class AdminPlayersPageComponent implements OnInit {
 
   setTab(tab: AdminPlayersTab): void {
     this.activeTab.set(tab);
+    if (tab !== 'agent') {
+      this.showEmbeddedChat.set(false);
+      if (this.chatbotMode() === 'embedded') {
+        this.chatbotMode.set('floating');
+        window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', { detail: { mode: 'floating' } }));
+      }
+    }
+  }
+
+  openEmbeddedChat(): void {
+    this.showEmbeddedChat.set(true);
+    this.chatbotMode.set('embedded');
+    window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', { detail: { mode: 'embedded' } }));
+  }
+
+  onChatbotModeChanged(mode: ChatbotMode): void {
+    if (mode === 'floating') {
+      this.showEmbeddedChat.set(false);
+      this.chatbotMode.set('floating');
+      window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', { detail: { mode: 'floating' } }));
+    }
   }
 
   // ---- Importer ----
@@ -308,13 +342,28 @@ export class AdminPlayersPageComponent implements OnInit {
     this.importerFileName.set(file?.name ?? '');
     this.importerError.set('');
     this.importerDone.set(false);
+    this.importerProcessing.set(false);
     this.importerPreview.set([]);
-    if (file) {
-      // Simulate parsing: show a placeholder preview
+  }
+
+  async processImporterFile(): Promise<void> {
+    if (!this.importerFile() || this.importerProcessing()) return;
+
+    this.importerProcessing.set(true);
+    this.importerError.set('');
+    this.importerPreview.set([]);
+
+    try {
+      // Simulate parse stage before applying import.
+      await new Promise(resolve => setTimeout(resolve, 1200));
       this.importerPreview.set([
         { firstName: 'Ana', lastName: 'García', email: 'ana@example.com', phone: '+54911000001', sport: 'Pádel', category: 'A', gender: 'Femenino' },
         { firstName: 'Carlos', lastName: 'López', email: 'carlos@example.com', phone: '+54911000002', sport: 'Pádel', category: 'B', gender: 'Masculino' }
       ]);
+    } catch {
+      this.importerError.set('players.importer.error');
+    } finally {
+      this.importerProcessing.set(false);
     }
   }
 
@@ -338,7 +387,7 @@ export class AdminPlayersPageComponent implements OnInit {
   }
 
   async confirmImport(): Promise<void> {
-    if (!this.importerFile() || this.importerImporting()) return;
+    if (!this.importerFile() || this.importerPreview().length === 0 || this.importerImporting()) return;
     this.importerImporting.set(true);
     this.importerError.set('');
     try {
@@ -356,6 +405,7 @@ export class AdminPlayersPageComponent implements OnInit {
   resetImporter(): void {
     this.importerFile.set(null);
     this.importerFileName.set('');
+    this.importerProcessing.set(false);
     this.importerPreview.set([]);
     this.importerDone.set(false);
     this.importerError.set('');

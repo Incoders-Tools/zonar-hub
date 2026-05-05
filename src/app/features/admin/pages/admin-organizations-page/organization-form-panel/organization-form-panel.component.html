@@ -42,15 +42,20 @@
 
         <!-- Type -->
         <div class="form-field">
-          <label class="form-field__label" for="org-type">{{ 'admin.organizations.field.type' | t }} *</label>
-          <select
-            class="form-field__select"
-            id="org-type"
-            formControlName="type">
+          <label class="form-field__label">{{ 'admin.organizations.field.type' | t }} *</label>
+          <div class="organization-form-panel__type-grid" role="group" [attr.aria-label]="'admin.organizations.field.type' | t">
             @for (opt of typeOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.labelKey | t }}</option>
+              <button
+                type="button"
+                class="organization-form-panel__type-option"
+                [class.organization-form-panel__type-option--active]="isOrgTypeSelected(opt.value)"
+                (click)="selectOrgType(opt.value)">
+                <span class="organization-form-panel__type-icon">{{ opt.icon }}</span>
+                <span class="organization-form-panel__type-label">{{ opt.labelKey | t }}</span>
+                <span class="organization-form-panel__type-desc">{{ opt.descKey | t }}</span>
+              </button>
             }
-          </select>
+          </div>
         </div>
 
         <!-- Sports -->

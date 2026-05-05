@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, effect } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, effect } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { AuthService } from '../../core/auth/auth.service';
@@ -35,7 +35,7 @@ interface AdminNavGroup {
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
-export class AdminLayoutComponent implements OnInit {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
   protected readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
@@ -45,7 +45,12 @@ export class AdminLayoutComponent implements OnInit {
   protected readonly sidebarCollapsed = signal(false);
   protected readonly mobileSidebarOpen = signal(false);
   protected readonly showTour = signal(false);
-  protected readonly showChatbot = computed(() => this.userPrefs.effective().showChatbot);
+  protected readonly chatbotEmbedded = signal(false);
+  protected readonly showChatbot = computed(() => 
+    this.userPrefs.effective().showChatbot && !this.chatbotEmbedded()
+  );
+
+  private readonly switchChatbotModeHandler = (e: Event) => this.handleSwitchChatbotMode(e as CustomEvent);
 
   constructor() {
     // Watch for tour state changes reactively (handles skip-onboarding → tour trigger)
@@ -54,6 +59,25 @@ export class AdminLayoutComponent implements OnInit {
         setTimeout(() => this.showTour.set(true), 600);
       }
     });
+  }
+
+  ngOnInit(): void {
+    const user = this.auth.currentUser();
+    if (user) {
+      this.userPrefs.applyEffectiveSettings();
+      this.onboarding.loadExisting(user.id);
+    }
+
+    window.addEventListener('zh-switch-chatbot-mode', this.switchChatbotModeHandler);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('zh-switch-chatbot-mode', this.switchChatbotModeHandler);
+  }
+
+  private handleSwitchChatbotMode(event: CustomEvent): void {
+    const { mode } = event.detail || {};
+    this.chatbotEmbedded.set(mode === 'embedded');
   }
 
   readonly tourSteps: TourStep[] = [
@@ -187,14 +211,6 @@ export class AdminLayoutComponent implements OnInit {
 
   toggleMobileSidebar(): void {
     this.mobileSidebarOpen.update(v => !v);
-  }
-
-  ngOnInit(): void {
-    const user = this.auth.currentUser();
-    if (user) {
-      this.userPrefs.applyEffectiveSettings();
-      this.onboarding.loadExisting(user.id);
-    }
   }
 
   onTourCompleted(): void {

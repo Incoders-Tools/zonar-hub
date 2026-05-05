@@ -365,6 +365,27 @@
     font-weight: 700;
   }
 
+  &__court-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--zh-radius-full);
+    background: transparent;
+    color: var(--zh-text-muted);
+    font-size: var(--zh-font-size-sm);
+    cursor: pointer;
+    transition: background var(--zh-transition-fast), color var(--zh-transition-fast);
+    flex-shrink: 0;
+
+    &:hover {
+      background: color-mix(in srgb, var(--zh-error) 12%, transparent);
+      color: var(--zh-error);
+    }
+  }
+
   // Sport grid
   &__sport-grid {
     display: grid;

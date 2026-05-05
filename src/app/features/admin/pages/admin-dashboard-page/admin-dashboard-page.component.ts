@@ -1,15 +1,10 @@
 import { Component, inject, computed, signal, effect } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { TournamentService } from '../../../../core/services/tournament.service';
-import { RegistrationService } from '../../../../core/services/registration.service';
-import { PlayerService } from '../../../../core/services/player.service';
+import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
-import { MockAdminUserRepository } from '../../../../core/repositories/mock/mock-admin-user.repository';
 import { MockPlanRepository } from '../../../../core/repositories/mock/mock-plan.repository';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { Plan } from '../../../../core/models';
 
@@ -28,22 +23,18 @@ interface SetupCheckItem {
   styleUrl: './admin-dashboard-page.component.scss'
 })
 export class AdminDashboardPageComponent {
-  protected readonly tournamentService = inject(TournamentService);
-  protected readonly registrationService = inject(RegistrationService);
-  protected readonly playerService = inject(PlayerService);
+  protected readonly dashboardService = inject(AdminDashboardService);
   protected readonly tenantContext = inject(TenantContextService);
   protected readonly activeOrg = inject(ActiveOrganizationService);
-  private readonly adminUserRepo = inject(MockAdminUserRepository);
-  private readonly complexRepo = inject(MockComplexRepository);
   private readonly planRepo = inject(MockPlanRepository);
-  private readonly sportRepo = inject(MockSportRepository);
   protected readonly onboarding = inject(OnboardingStateService);
 
   readonly currentPlan = signal<Plan | null>(null);
-  readonly complexCount = signal(0);
-  readonly adminCount = signal(0);
-  readonly activeSportsCount = signal(0);
-  readonly courtCount = signal(0);
+  readonly summary = this.dashboardService.summary;
+  readonly complexCount = computed(() => this.summary().complexCount);
+  readonly adminCount = computed(() => this.summary().adminCount);
+  readonly activeSportsCount = computed(() => this.summary().activeSportsCount);
+  readonly courtCount = computed(() => this.summary().courtCount);
 
   /** Setup progress checklist */
   readonly setupChecklist = computed<SetupCheckItem[]>(() => {
@@ -76,6 +67,12 @@ export class AdminDashboardPageComponent {
 
   constructor() {
     effect(() => {
+      this.activeOrg.organizationChanged();
+      const organizationId = this.activeOrg.activeOrganizationId();
+      void this.dashboardService.loadSummary(organizationId);
+    });
+
+    effect(() => {
       const planId = this.tenantContext.tenant()?.planId;
       if (planId) {
         this.planRepo.getById(planId).then(plan => this.currentPlan.set(plan)).catch(() => this.currentPlan.set(null));
@@ -83,31 +80,25 @@ export class AdminDashboardPageComponent {
         this.currentPlan.set(null);
       }
     });
-
-    this.complexRepo.getAll().then(list => {
-      this.complexCount.set(list.length);
-      // Sum courts across all complexes
-      let total = 0;
-      list.forEach(c => { total += c.courtsCount ?? 0; });
-      this.courtCount.set(total);
-    });
-    this.adminUserRepo.getAll().then(list => this.adminCount.set(list.length));
-    this.sportRepo.getAll().then(list => this.activeSportsCount.set(list.filter(s => s.isActive).length));
   }
 
-  readonly showSetupPrompt = computed(() => this.tournamentService.tournaments().length === 0);
+  readonly showSetupPrompt = computed(() => {
+    const progress = this.onboarding.progress();
+    return progress !== null && !progress.wizardCompleted;
+  });
 
-  readonly activeTournaments = computed(() =>
-    this.tournamentService.tournaments().filter(t => t.statusId === 'ts1' || t.statusId === 'ts2').length
-  );
+  readonly wizardInProgress = computed(() => {
+    const progress = this.onboarding.progress();
+    return progress !== null && !progress.wizardCompleted && (progress.wizardStep ?? 0) > 0;
+  });
 
-  readonly finishedTournaments = computed(() =>
-    this.tournamentService.tournaments().filter(t => t.statusId === 'ts3').length
-  );
+  readonly activeTournaments = computed(() => this.summary().activeTournaments);
 
-  readonly totalPlayers = computed(() => this.playerService.players().length);
-  readonly totalRegistrations = computed(() => this.registrationService.registrations().length);
-  readonly totalTournaments = computed(() => this.tournamentService.tournaments().length);
+  readonly finishedTournaments = computed(() => this.summary().finishedTournaments);
+
+  readonly totalPlayers = computed(() => this.summary().totalPlayers);
+  readonly totalRegistrations = computed(() => this.summary().totalRegistrations);
+  readonly totalTournaments = computed(() => this.summary().totalTournaments);
 
   /** Usage progress: tournaments */
   readonly tournamentUsage = computed(() => {

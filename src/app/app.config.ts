@@ -9,9 +9,13 @@ import { tenantHeaderInterceptor } from './core/auth/tenant-header.interceptor';
 import { ApiAdminUserRepository } from './core/repositories/api/api-admin-user.repository';
 import { ApiSportRepository } from './core/repositories/api/api-sport.repository';
 import { ApiTournamentStatusRepository } from './core/repositories/api/api-tournament-status.repository';
+import { ApiTournamentModalityRepository } from './core/repositories/api/api-tournament-modality.repository';
 import { MockAdminUserRepository } from './core/repositories/mock/mock-admin-user.repository';
 import { MockSportRepository } from './core/repositories/mock/mock-sport.repository';
 import { MockTournamentStatusRepository } from './core/repositories/mock/mock-tournament-status.repository';
+import { MockTournamentModalityRepository } from './core/repositories/mock/mock-tournament-modality.repository';
+import { MockFileStorageRepository } from './core/repositories/mock/mock-file-storage.repository';
+import { FILE_STORAGE_REPOSITORY } from './core/repositories/file-storage.repository';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,6 +25,9 @@ export const appConfig: ApplicationConfig = {
     { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-rounded' } },
     { provide: MockAdminUserRepository, useExisting: ApiAdminUserRepository },
     { provide: MockSportRepository, useExisting: ApiSportRepository },
-    { provide: MockTournamentStatusRepository, useExisting: ApiTournamentStatusRepository }
+    { provide: MockTournamentStatusRepository, useExisting: ApiTournamentStatusRepository },
+    { provide: MockTournamentModalityRepository, useExisting: ApiTournamentModalityRepository },
+    // File storage — swap MockFileStorageRepository for ApiFileStorageRepository when the API endpoint is ready
+    { provide: FILE_STORAGE_REPOSITORY, useExisting: MockFileStorageRepository }
   ]
 };

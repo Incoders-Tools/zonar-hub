@@ -103,7 +103,7 @@
             variant="primary"
             [disabled]="!canSubmit"
             [loading]="saving()">
-            {{ (isEditing ? 'common.save' : 'common.create') | t }}
+            {{ (isEditing ? 'common.update' : 'common.create') | t }}
           </app-async-button>
         </div>
     </form>

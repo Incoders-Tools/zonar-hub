@@ -51,7 +51,8 @@ export class UsersFacadeService {
         return false;
       }
 
-      // Filter by active organization
+      // Filter by active organization.
+      // Users with no org assignment are always visible so admins can assign them later.
       if (activeOrgId) {
         const assignedOrganizations = new Set<string>();
         if (user.organizationId) {
@@ -61,7 +62,7 @@ export class UsersFacadeService {
           assignedOrganizations.add(id);
         }
 
-        if (assignedOrganizations.size === 0 || !assignedOrganizations.has(activeOrgId)) {
+        if (assignedOrganizations.size > 0 && !assignedOrganizations.has(activeOrgId)) {
           return false;
         }
       }

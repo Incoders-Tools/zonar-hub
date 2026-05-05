@@ -144,6 +144,7 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
+    (retried)="facade.load()"
     [selectable]="true"
     [reorderable]="true"
     [rowActions]="ruleSetRowActions"

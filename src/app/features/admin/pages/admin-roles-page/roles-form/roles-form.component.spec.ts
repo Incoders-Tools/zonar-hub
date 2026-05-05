@@ -51,8 +51,8 @@ describe('RolesFormComponent', () => {
       name: 'test_role',
       description: 'Test role description',
       isActive: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     fixture.componentRef.setInput('role', mockRole);
@@ -70,8 +70,8 @@ describe('RolesFormComponent', () => {
       name: 'admin',
       description: 'Admin role',
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     fixture.componentRef.setInput('role', systemRole);

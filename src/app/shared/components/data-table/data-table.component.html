@@ -2,7 +2,7 @@
   @if (loading()) {
     <app-loading-state [showMessage]="true"></app-loading-state>
   } @else if (error()) {
-    <app-error-state></app-error-state>
+    <app-error-state (retried)="retried.emit()"></app-error-state>
   } @else if (data().length === 0) {
     <app-empty-state></app-empty-state>
   } @else {

@@ -15,7 +15,7 @@ describe('AdminAppLogsPageComponent', () => {
 
     fixture = TestBed.createComponent(AdminAppLogsPageComponent);
     component = fixture.componentInstance;
-    facade = TestBed.inject(AppLogsFacadeService);
+    facade = fixture.debugElement.injector.get(AppLogsFacadeService);
   });
 
   it('should create', () => {
@@ -50,16 +50,5 @@ describe('AdminAppLogsPageComponent', () => {
     const rows = [{ id: 'log1', createdAt: '', level: '', origin: '', category: '', message: '', resolved: '' }];
     component.onSelectionChanged(rows);
     expect(component.selectedLogs()).toEqual(rows);
-  });
-
-  it('should open help dialog', () => {
-    component.openHelp();
-    expect(component.showHelpDialog()).toBe(true);
-  });
-
-  it('should close help dialog', () => {
-    component.showHelpDialog.set(true);
-    component.closeHelp();
-    expect(component.showHelpDialog()).toBe(false);
   });
 });

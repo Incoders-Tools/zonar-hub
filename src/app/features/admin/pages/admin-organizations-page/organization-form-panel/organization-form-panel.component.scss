@@ -3,6 +3,57 @@
 }
 
 .organization-form-panel {
+  &__type-grid {
+    margin-top: var(--zh-space-sm);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: var(--zh-space-sm);
+  }
+
+  &__type-option {
+    width: 100%;
+    padding: var(--zh-space-sm);
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-card);
+    color: var(--zh-text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    cursor: pointer;
+    transition: border-color var(--zh-transition-fast), transform var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+    text-align: center;
+
+    &:hover {
+      border-color: var(--zh-primary);
+      transform: translateY(-1px);
+    }
+
+    &--active {
+      border-color: var(--zh-primary);
+      background: var(--zh-surface-selected);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--zh-primary) 24%, transparent);
+    }
+  }
+
+  &__type-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  &__type-label {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  &__type-desc {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+    line-height: 1.3;
+  }
+
   &__sport-grid {
     margin-top: var(--zh-space-md);
     display: grid;

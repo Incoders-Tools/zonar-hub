@@ -88,11 +88,10 @@ describe('FilterPanelComponent', () => {
     it('should clear sort rules on clear()', () => {
       component.addSortRule();
       component.addSortRule();
-      let emitted: SortRule[] | null = null;
-      component.sortRulesChanged.subscribe(rules => emitted = rules);
+      const emitSpy = spyOn(component.sortRulesChanged, 'emit').and.callThrough();
       component.clear();
       expect(component.sortRules.length).toBe(0);
-      expect(emitted).toEqual([]);
+      expect(emitSpy).toHaveBeenCalledWith([]);
     });
 
     it('should initialize with defaultSortRules', () => {

@@ -61,7 +61,7 @@
   }
 
   &__logo-img {
-    height: 24px;
+    height: 64px;
     width: auto;
     object-fit: contain;
   }
@@ -128,9 +128,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--zh-space-md) var(--zh-space-md);
+    padding: var(--zh-space-sm) var(--zh-space-md);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    min-height: 56px;
+    height: 64px;
+    flex-shrink: 0;
   }
 
   &__logo {
@@ -143,14 +144,14 @@
     align-items: center;
 
     &-img {
-      height: 26px;
+      height: 40px;
       width: auto;
       object-fit: contain;
       display: block;
     }
 
     &-icon {
-      height: 28px;
+      height: 40px;
       width: auto;
       object-fit: contain;
       display: block;

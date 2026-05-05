@@ -47,6 +47,7 @@ export class DataTableComponent<T extends Record<string, unknown>> {
   readonly selectionChanged = output<T[]>();
   readonly sorted = output<{ key: string; direction: 'asc' | 'desc' }>();
   readonly rowAction = output<{ action: string; row: T }>();
+  readonly retried = output<void>();
 
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);

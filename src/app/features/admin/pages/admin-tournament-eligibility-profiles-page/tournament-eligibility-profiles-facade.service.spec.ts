@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { TournamentEligibilityProfilesFacadeService } from './tournament-eligibility-profiles-facade.service';
-import { MockTournamentEligibilityProfileRepository } from '../../../../core/repositories/mock/mock-tournament-eligibility-profile.repository';
+import { MockTournamentEligibilityProfileRepository } from '../../../../core/repositories/tournament-admin.repository';
 
 describe('TournamentEligibilityProfilesFacadeService', () => {
   let service: TournamentEligibilityProfilesFacadeService;
@@ -19,6 +19,15 @@ describe('TournamentEligibilityProfilesFacadeService', () => {
   });
 
   it('should load profiles', async () => {
+    await repository.create({
+      name: 'Open Profile',
+      key: 'open_profile',
+      description: 'Seeded profile',
+      sortOrder: 1,
+      isActive: true,
+      slots: []
+    });
+
     await service.load();
     expect(service.entities().length).toBeGreaterThan(0);
   });

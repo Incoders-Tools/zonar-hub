@@ -1,4 +1,4 @@
-import { Component, inject, signal, ElementRef, viewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, ElementRef, viewChild, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { I18nService } from '../../../core/i18n/i18n.service';
@@ -14,6 +14,9 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+export type ChatbotMode = 'floating' | 'embedded';
+export type ChatbotContext = 'general' | 'registrations' | 'players' | 'tournaments';
+
 @Component({
   selector: 'app-chatbot-bubble',
   standalone: true,
@@ -21,7 +24,11 @@ interface ChatMessage {
   templateUrl: './chatbot-bubble.component.html',
   styleUrl: './chatbot-bubble.component.scss'
 })
-export class ChatbotBubbleComponent implements OnInit, OnDestroy {
+export class ChatbotBubbleComponent implements OnInit, OnChanges, OnDestroy {
+  @Input() mode: ChatbotMode = 'floating';
+  @Input() context: ChatbotContext = 'general';
+  @Output() modeChanged = new EventEmitter<ChatbotMode>();
+
   readonly isOpen = signal(false);
   readonly selectedFaq = signal<number | null>(null);
   readonly chatMode = signal(false);
@@ -33,6 +40,25 @@ export class ChatbotBubbleComponent implements OnInit, OnDestroy {
   private readonly i18nService = inject(I18nService);
   private readonly openChatbotHandler = (e: Event) => this.handleOpenChatbot(e as CustomEvent);
 
+  /** Track whether chatbot was visible before entering embedded mode */
+  private wasVisibleBeforeEmbedded = false;
+
+  constructor() {}
+
+  /** Get context-specific greeting message */
+  private getGreetingForContext(): string {
+    switch (this.context) {
+      case 'registrations':
+        return this.i18nService.translate('chatbot.registrations.greeting');
+      case 'players':
+        return this.i18nService.translate('chatbot.players.greeting');
+      case 'tournaments':
+        return this.i18nService.translate('chatbot.tournaments.greeting');
+      default:
+        return this.i18nService.translate('chatbot.chat.greeting');
+    }
+  }
+
   readonly faqs: ChatbotFaq[] = [
     { questionKey: 'chatbot.faq.q1', answerKey: 'chatbot.faq.a1' },
     { questionKey: 'chatbot.faq.q2', answerKey: 'chatbot.faq.a2' },
@@ -43,6 +69,12 @@ export class ChatbotBubbleComponent implements OnInit, OnDestroy {
   ];
 
   toggle(): void {
+    // In embedded mode, toggle means close and return to floating
+    if (this.mode === 'embedded') {
+      this.modeChanged.emit('floating');
+      return;
+    }
+
     this.isOpen.update(v => !v);
     if (!this.isOpen()) {
       this.selectedFaq.set(null);
@@ -50,8 +82,38 @@ export class ChatbotBubbleComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Switches to embedded mode while preserving chatbot visibility state.
+   * @param wasVisible Whether the chatbot was visible before switching to embedded
+   */
+  switchToEmbedded(wasVisible: boolean): void {
+    this.wasVisibleBeforeEmbedded = wasVisible;
+    this.mode = 'embedded';
+    this.modeChanged.emit('embedded');
+  }
+
+  /**
+   * Switches back to floating mode and restores previous visibility.
+   */
+  switchToFloating(): void {
+    this.mode = 'floating';
+    this.isOpen.set(this.wasVisibleBeforeEmbedded);
+    if (!this.isOpen()) {
+      this.chatMode.set(false);
+      this.selectedFaq.set(null);
+    }
+    this.modeChanged.emit('floating');
+  }
+
   ngOnInit(): void {
     window.addEventListener('zh-open-chatbot', this.openChatbotHandler);
+    this.ensureEmbeddedOpenState();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['mode']) {
+      this.ensureEmbeddedOpenState();
+    }
   }
 
   ngOnDestroy(): void {
@@ -66,7 +128,7 @@ export class ChatbotBubbleComponent implements OnInit, OnDestroy {
     if (this.messages().length === 0) {
       this.messages.set([{
         role: 'bot',
-        text: this.i18nService.translate('chatbot.chat.greeting'),
+        text: this.getGreetingForContext(),
         timestamp: new Date()
       }]);
     }
@@ -103,7 +165,7 @@ export class ChatbotBubbleComponent implements OnInit, OnDestroy {
     if (this.messages().length === 0) {
       this.messages.set([{
         role: 'bot',
-        text: this.i18nService.translate('chatbot.chat.greeting'),
+        text: this.getGreetingForContext(),
         timestamp: new Date()
       }]);
     }
@@ -184,5 +246,22 @@ export class ChatbotBubbleComponent implements OnInit, OnDestroy {
     }
 
     return this.i18nService.translate('chatbot.chat.reply.default');
+  }
+
+  private ensureEmbeddedOpenState(): void {
+    if (this.mode !== 'embedded') {
+      return;
+    }
+
+    this.isOpen.set(true);
+    this.chatMode.set(true);
+
+    if (this.messages().length === 0) {
+      this.messages.set([{
+        role: 'bot',
+        text: this.getGreetingForContext(),
+        timestamp: new Date()
+      }]);
+    }
   }
 }

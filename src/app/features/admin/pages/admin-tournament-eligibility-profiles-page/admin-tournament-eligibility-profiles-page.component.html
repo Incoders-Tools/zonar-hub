@@ -65,6 +65,7 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
+    (retried)="facade.load()"
     [selectable]="true"
     [paginated]="true"
     [pageSize]="10"

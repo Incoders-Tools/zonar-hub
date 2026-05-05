@@ -39,21 +39,21 @@
     </button>
     <button
       class="players-page__tab"
-      [class.players-page__tab--active]="activeTab() === 'importer'"
-      role="tab"
-      [attr.aria-selected]="activeTab() === 'importer'"
-      (click)="setTab('importer')">
-      <mat-icon class="players-page__tab-icon">upload_file</mat-icon>
-      {{ 'admin.players.tabs.importer' | t }}
-    </button>
-    <button
-      class="players-page__tab"
       [class.players-page__tab--active]="activeTab() === 'agent'"
       role="tab"
       [attr.aria-selected]="activeTab() === 'agent'"
       (click)="setTab('agent')">
       <mat-icon class="players-page__tab-icon">smart_toy</mat-icon>
       {{ 'admin.players.tabs.agent' | t }}
+    </button>
+    <button
+      class="players-page__tab"
+      [class.players-page__tab--active]="activeTab() === 'importer'"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'importer'"
+      (click)="setTab('importer')">
+      <mat-icon class="players-page__tab-icon">upload_file</mat-icon>
+      {{ 'admin.players.tabs.importer' | t }}
     </button>
   </nav>
 
@@ -106,6 +106,7 @@
         [data]="tableData()"
         [loading]="facade.loading()"
         [error]="facade.error()"
+        (retried)="facade.load()"
         [selectable]="true"
         [paginated]="true"
         [paginationPosition]="'both'"
@@ -175,10 +176,27 @@
                   accept=".xlsx,.xls,.csv"
                   class="players-page__file-input"
                   (change)="onImporterFileSelected($event)" />
-                <button class="btn btn--primary btn--sm" (click)="triggerFileInput(playerFileInput)">
-                  <mat-icon>attach_file</mat-icon>
-                  {{ importerFileName() || ('players.importer.selectFile' | t) }}
-                </button>
+                <div class="players-page__importer-step-actions">
+                  <button class="btn btn--primary btn--sm" (click)="triggerFileInput(playerFileInput)">
+                    <mat-icon>attach_file</mat-icon>
+                    {{ 'players.importer.selectFile' | t }}
+                  </button>
+
+                  @if (importerFileName()) {
+                    <span class="players-page__importer-file-chip">
+                      <mat-icon>description</mat-icon>
+                      {{ importerFileName() }}
+                    </span>
+                  }
+
+                  <app-async-button
+                    variant="secondary"
+                    [disabled]="!importerFile()"
+                    [loading]="importerProcessing()"
+                    (clicked)="processImporterFile()">
+                    {{ 'players.importer.processFile' | t }}
+                  </app-async-button>
+                </div>
               </div>
             </div>
           </div>
@@ -238,29 +256,39 @@
 
     <!-- AI AGENT TAB -->
     @if (activeTab() === 'agent') {
-      <div class="players-page__agent">
-        <div class="players-page__agent-header">
-          <mat-icon class="players-page__agent-icon">smart_toy</mat-icon>
-          <h3 class="players-page__agent-title">{{ 'players.agent.title' | t }}</h3>
-          <p class="players-page__agent-desc">{{ 'players.agent.description' | t }}</p>
-        </div>
+      <div class="players-page__agent" [class.players-page__agent--embedded]="showEmbeddedChat()">
+        @if (!showEmbeddedChat()) {
+          <div class="players-page__agent-header">
+            <mat-icon class="players-page__agent-icon">smart_toy</mat-icon>
+            <h3 class="players-page__agent-title">{{ 'players.agent.title' | t }}</h3>
+            <p class="players-page__agent-desc">{{ 'players.agent.description' | t }}</p>
+          </div>
 
-        <div class="players-page__agent-how">
-          <h4 class="players-page__agent-how-title">{{ 'players.agent.howTitle' | t }}</h4>
-          <ol class="players-page__agent-how-list">
-            <li>{{ 'players.agent.how1' | t }}</li>
-            <li>{{ 'players.agent.how2' | t }}</li>
-            <li>{{ 'players.agent.how3' | t }}</li>
-          </ol>
-        </div>
+          <div class="players-page__agent-how">
+            <h4 class="players-page__agent-how-title">{{ 'players.agent.howTitle' | t }}</h4>
+            <ol class="players-page__agent-how-list">
+              <li>{{ 'players.agent.how1' | t }}</li>
+              <li>{{ 'players.agent.how2' | t }}</li>
+              <li>{{ 'players.agent.how3' | t }}</li>
+            </ol>
+          </div>
 
-        <div class="players-page__agent-cta">
-          <p class="players-page__agent-cta-hint">{{ 'players.agent.ctaHint' | t }}</p>
-          <button class="btn btn--primary">
-            <mat-icon>chat</mat-icon>
-            {{ 'players.agent.openChat' | t }}
-          </button>
-        </div>
+          <div class="players-page__agent-cta">
+            <p class="players-page__agent-cta-hint">{{ 'players.agent.ctaHint' | t }}</p>
+            <button class="players-page__agent-open-chat" (click)="openEmbeddedChat()">
+              <mat-icon>chat</mat-icon>
+              {{ 'players.agent.openChat' | t }}
+            </button>
+          </div>
+        } @else {
+          <div class="players-page__agent-chat">
+            <app-chatbot-bubble
+              [mode]="chatbotMode()"
+              [context]="'players'"
+              (modeChanged)="onChatbotModeChanged($event)">
+            </app-chatbot-bubble>
+          </div>
+        }
       </div>
     }
 

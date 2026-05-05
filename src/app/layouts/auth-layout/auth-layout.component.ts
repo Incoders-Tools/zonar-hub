@@ -37,7 +37,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       justify-content: center;
 
       img {
-        height: 36px;
+        height: 64px;
         width: auto;
         object-fit: contain;
       }

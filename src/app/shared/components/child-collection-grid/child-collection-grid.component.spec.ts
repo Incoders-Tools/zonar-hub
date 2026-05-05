@@ -118,10 +118,9 @@ describe('ChildCollectionGridComponent', () => {
     });
 
     it('should emit rowRemoved on remove', () => {
-      let emittedIndex: number | null = null;
-      component.rowRemoved.subscribe(i => emittedIndex = i);
+      const emitSpy = spyOn(component.rowRemoved, 'emit').and.callThrough();
       component.removeRow(1);
-      expect(emittedIndex).toBe(1);
+      expect(emitSpy).toHaveBeenCalledWith(1);
     });
 
     it('should respect maxRows', () => {

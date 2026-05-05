@@ -3,6 +3,7 @@ import { Organization, OrganizationType } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
+import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-admin-user.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 export interface OrganizationFilters {
@@ -15,6 +16,7 @@ export interface OrganizationFilters {
 export class OrganizationFacadeService {
   private readonly repo = inject(ApiOrganizationRepository);
   private readonly sportsRepo = inject(ApiSportRepository);
+  private readonly adminUserRepo = inject(ApiAdminUserRepository);
   private readonly auth = inject(AuthService);
   private readonly notification = inject(NotificationService);
 
@@ -106,6 +108,25 @@ export class OrganizationFacadeService {
       };
       const created = await this.repo.create(fullData);
       await this.sportsRepo.setForOrganization(created.id, selectedSportIds);
+
+      // Auto-assign the new org to the admin who created it
+      const currentUser = this.auth.currentUser();
+      if (currentUser) {
+        const existingIds = new Set<string>([
+          ...(currentUser.tenantIds ?? []),
+          ...(currentUser.tenantId ? [currentUser.tenantId] : []),
+          ...(currentUser.organizationId ? [currentUser.organizationId] : [])
+        ]);
+        existingIds.add(created.id);
+        const updatedTenantIds = Array.from(existingIds);
+        try {
+          await this.adminUserRepo.update(currentUser.id, { tenantIds: updatedTenantIds });
+          this.auth.updateCurrentOrganizationAssignments(undefined, updatedTenantIds);
+        } catch {
+          // Non-critical — org was created, assignment is best-effort
+        }
+      }
+
       this.notification.success('admin.organizations.toast.created');
       await this.load();
       return true;

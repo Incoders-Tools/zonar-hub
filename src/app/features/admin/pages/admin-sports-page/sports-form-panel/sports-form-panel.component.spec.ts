@@ -3,6 +3,8 @@ import { SportsFormPanelComponent } from './sports-form-panel.component';
 import { SportsFacadeService } from '../sports-facade.service';
 import { MockSportRepository } from '../../../../../core/repositories/mock/mock-sport.repository';
 import { Sport } from '../../../../../core/models';
+import { provideHttpClient } from '@angular/common/http';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('SportsFormPanelComponent', () => {
   let component: SportsFormPanelComponent;
@@ -15,6 +17,7 @@ describe('SportsFormPanelComponent', () => {
     key: 'padel',
     icon: '🎾',
     iconSource: 'unicode',
+    modalityIds: [],
     sortOrder: 1,
     isActive: true,
     createdAt: '2024-01-01T00:00:00Z',
@@ -24,7 +27,7 @@ describe('SportsFormPanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SportsFormPanelComponent],
-      providers: [SportsFacadeService, MockSportRepository]
+      providers: [SportsFacadeService, MockSportRepository, provideHttpClient(), provideNoopAnimations()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SportsFormPanelComponent);

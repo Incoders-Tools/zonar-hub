@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminOnboardingPageComponent } from './admin-onboarding-page.component';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AdminOnboardingPageComponent', () => {
   let component: AdminOnboardingPageComponent;
@@ -7,7 +8,8 @@ describe('AdminOnboardingPageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminOnboardingPageComponent]
+      imports: [AdminOnboardingPageComponent],
+      providers: [provideHttpClient()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminOnboardingPageComponent);
@@ -24,7 +26,7 @@ describe('AdminOnboardingPageComponent', () => {
   });
 
   it('should advance to next step when form is valid', () => {
-    component.complexForm.patchValue({ name: 'My Complex', address: '123 St', city: 'Barcelona' });
+    component.orgForm.patchValue({ displayName: 'My Organization', type: 'circuito' });
     component.nextStep();
     expect(component.currentStep()).toBe(1);
   });

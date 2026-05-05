@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, effect, viewChild } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MatIcon } from '@angular/material/icon';
@@ -14,8 +14,9 @@ import { RegistrationFormPanelComponent } from './registration-form-panel/regist
 import { Registration, RegistrationToken } from '../../../../core/models';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
+import { ChatbotBubbleComponent, ChatbotMode } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
 
-export type AdminRegistrationsTab = 'list' | 'importer' | 'tokens' | 'agent' | 'agent';
+export type AdminRegistrationsTab = 'list' | 'agent' | 'importer' | 'tokens';
 
 interface RegistrationRow extends Record<string, unknown> {
   id: string;
@@ -52,7 +53,8 @@ interface TokenRow extends Record<string, unknown> {
     AsyncButtonComponent,
     HelpButtonComponent,
     RegistrationFormPanelComponent,
-    SocialSharePreviewComponent
+    SocialSharePreviewComponent,
+    ChatbotBubbleComponent
   ],
   providers: [RegistrationFacadeService],
   templateUrl: './admin-registrations-page.component.html',
@@ -70,7 +72,7 @@ interface TokenRow extends Record<string, unknown> {
     ])
   ]
 })
-export class AdminRegistrationsPageComponent implements OnInit {
+export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
   readonly facade = inject(RegistrationFacadeService);
   private readonly tournamentService = inject(TournamentService);
   private readonly activeOrg = inject(ActiveOrganizationService);
@@ -104,11 +106,16 @@ export class AdminRegistrationsPageComponent implements OnInit {
   // Importer state
   readonly importerFile = signal<File | null>(null);
   readonly importerFileName = signal('');
+  readonly importerProcessing = signal(false);
   readonly importerImporting = signal(false);
   readonly importerPreview = signal<Record<string, unknown>[]>([]);
   readonly importerDone = signal(false);
   readonly importerTournamentId = signal('');
   readonly importerError = signal('');
+
+  // Agent tab state
+  readonly showEmbeddedChat = signal(false);
+  readonly chatbotMode = signal<ChatbotMode>('floating');
 
   readonly helpSections: HelpSection[] = [
     { titleKey: 'registrations.help.section1Title', contentKey: 'registrations.help.section1Text' },
@@ -246,8 +253,25 @@ export class AdminRegistrationsPageComponent implements OnInit {
     this.facade.load();
   }
 
+  ngOnDestroy(): void {
+    if (this.chatbotMode() === 'embedded') {
+      window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
+        detail: { mode: 'floating', source: 'registrations' }
+      }));
+    }
+  }
+
   setTab(tab: AdminRegistrationsTab): void {
     this.activeTab.set(tab);
+    if (tab !== 'agent') {
+      this.showEmbeddedChat.set(false);
+      if (this.chatbotMode() === 'embedded') {
+        this.chatbotMode.set('floating');
+        window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
+          detail: { mode: 'floating', source: 'registrations' }
+        }));
+      }
+    }
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -366,6 +390,30 @@ export class AdminRegistrationsPageComponent implements OnInit {
     this.sharePayload.set(null);
   }
 
+  // Agent tab methods
+  openEmbeddedChat(): void {
+    this.showEmbeddedChat.set(true);
+    this.chatbotMode.set('embedded');
+    
+    // Get reference to the main chatbot instance (if visible) and hide it
+    window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
+      detail: { mode: 'embedded', source: 'registrations' }
+    }));
+  }
+
+  onChatbotModeChanged(mode: ChatbotMode): void {
+    if (mode === 'floating') {
+      // User closed the embedded chat
+      this.showEmbeddedChat.set(false);
+      this.chatbotMode.set('floating');
+      
+      // Notify main chatbot to restore
+      window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
+        detail: { mode: 'floating', source: 'registrations' }
+      }));
+    }
+  }
+
   private getSourceLabelKey(source: string): string {
     const map: Record<string, string> = {
       wizard: 'registrations.source.wizard',
@@ -384,13 +432,28 @@ export class AdminRegistrationsPageComponent implements OnInit {
     this.importerFileName.set(file?.name ?? '');
     this.importerError.set('');
     this.importerDone.set(false);
+    this.importerProcessing.set(false);
     this.importerPreview.set([]);
-    if (file) {
-      // Simulate parsing: show placeholder preview (pending real Excel parsing)
+  }
+
+  async processImporterFile(): Promise<void> {
+    if (!this.importerFile() || !this.importerTournamentId() || this.importerProcessing()) return;
+
+    this.importerProcessing.set(true);
+    this.importerError.set('');
+    this.importerPreview.set([]);
+
+    try {
+      // Simulate parsing stage before import confirmation.
+      await new Promise(resolve => setTimeout(resolve, 1200));
       this.importerPreview.set([
         { participants: 'García Ana / López Carlos', phone: '+54911000001', availability: 'Sábados y Domingos - Mañana' },
         { participants: 'Martínez Sofía / Rodríguez Juan', phone: '+54911000002', availability: 'Sábados - Todo el día' }
       ]);
+    } catch {
+      this.importerError.set('registrations.importer.error');
+    } finally {
+      this.importerProcessing.set(false);
     }
   }
 
@@ -422,7 +485,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
   }
 
   async confirmImport(): Promise<void> {
-    if (!this.importerFile() || this.importerImporting()) return;
+    if (!this.importerFile() || this.importerPreview().length === 0 || this.importerImporting()) return;
     this.importerImporting.set(true);
     this.importerError.set('');
     try {
@@ -439,6 +502,7 @@ export class AdminRegistrationsPageComponent implements OnInit {
   resetImporter(): void {
     this.importerFile.set(null);
     this.importerFileName.set('');
+    this.importerProcessing.set(false);
     this.importerPreview.set([]);
     this.importerDone.set(false);
     this.importerError.set('');

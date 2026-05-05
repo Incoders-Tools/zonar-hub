@@ -37,11 +37,10 @@ export class HomePageComponent implements OnInit {
   readonly showTutorial = signal(false);
 
   readonly sports = [
-    { id: '1c65fdf8-76fc-4a91-a2b5-1d70791bfde1', key: 'padel',      icon: '🎾' },
-    { id: 'f57e77a7-24ba-4fd3-a0d3-0b89df6222d2', key: 'tenis',      icon: '🎾' },
-    { id: '293aabec-31db-4f5a-9e22-8eb218f4d11a', key: 'futbol',     icon: '⚽' },
-    { id: '725d42b7-2298-4f55-acf4-4ab99f910fd2', key: 'rugby',      icon: '🏉' },
-    { id: '0f4f3d79-7e34-4df2-ae2f-93986db2b09c', key: 'pickleball', icon: '🏓' },
+    { id: '1c65fdf8-76fc-4a91-a2b5-1d70791bfde1', key: 'padel',  icon: '🎾' },
+    { id: 'f57e77a7-24ba-4fd3-a0d3-0b89df6222d2', key: 'tenis',  icon: '🎾' },
+    { id: '293aabec-31db-4f5a-9e22-8eb218f4d11a', key: 'futbol', icon: '⚽' },
+    { id: '725d42b7-2298-4f55-acf4-4ab99f910fd2', key: 'rugby',  icon: '🏉' },
   ] as const;
   readonly expandedFaq = signal<number | null>(null);
   readonly billingCycle = signal<'monthly' | 'annual'>('monthly');

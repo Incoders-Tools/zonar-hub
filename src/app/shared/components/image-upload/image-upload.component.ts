@@ -19,6 +19,8 @@ export class ImageUploadComponent implements OnDestroy {
   readonly maxSizeMb = input(5);
   readonly enableOptimization = input(true);
   readonly disabled = input(false);
+  /** Renders a smaller dropzone suitable for inline form fields (e.g. logo). */
+  readonly compact = input(false);
 
   readonly imageChanged = output<{ file: File; previewUrl: string }>();
   readonly imageRemoved = output<void>();

@@ -26,6 +26,7 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
+    (retried)="facade.load()"
     [rowActions]="rowActions"
     emptyMessageKey="admin.plans.emptyState"
     (sorted)="onSorted($event)"

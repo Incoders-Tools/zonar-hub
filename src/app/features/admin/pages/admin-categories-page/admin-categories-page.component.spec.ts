@@ -3,6 +3,7 @@ import { AdminCategoriesPageComponent } from './admin-categories-page.component'
 import { CategoryFacadeService } from './category-facade.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AdminCategoriesPageComponent', () => {
   let component: AdminCategoriesPageComponent;
@@ -24,7 +25,7 @@ describe('AdminCategoriesPageComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [AdminCategoriesPageComponent],
-      providers: [I18nService]
+      providers: [I18nService, provideHttpClient()]
     })
     .overrideComponent(AdminCategoriesPageComponent, {
       set: {
@@ -52,17 +53,6 @@ describe('AdminCategoriesPageComponent', () => {
     expect(component.editingCategory()).toBeNull();
   });
 
-  it('should open help dialog', () => {
-    component.openHelp();
-    expect(component.showHelpDialog()).toBe(true);
-  });
-
-  it('should close help dialog', () => {
-    component.openHelp();
-    component.closeHelp();
-    expect(component.showHelpDialog()).toBe(false);
-  });
-
   it('should apply filters through facade', () => {
     component.onFiltersApplied({ name: 'test', isActive: 'true' });
     expect(facadeSpy.applyFilters).toHaveBeenCalledWith({ name: 'test', isActive: 'true' });
@@ -74,14 +64,24 @@ describe('AdminCategoriesPageComponent', () => {
   });
 
   it('should open delete confirmation', () => {
-    const row = { id: 'cat1', name: 'Test', shortName: 'T', key: 'test', level: 1, isActive: true, sortOrder: 1, statusLabel: 'active' };
+    const row = {
+      id: 'cat1',
+      name: 'Test',
+      shortName: 'T',
+      key: 'test',
+      level: 1,
+      isActive: true,
+      sortOrder: 1,
+      statusLabel: 'active',
+      statusVariant: 'active'
+    };
     component.confirmDelete(row);
     expect(component.showDeleteDialog()).toBe(true);
     expect(component.deletingId()).toBe('cat1');
   });
 
   it('should cancel delete', () => {
-    component.confirmDelete({ id: 'cat1', name: 'T', shortName: 'T', key: 't', level: 1, isActive: true, sortOrder: 1, statusLabel: '' });
+    component.confirmDelete({ id: 'cat1', name: 'T', shortName: 'T', key: 't', level: 1, isActive: true, sortOrder: 1, statusLabel: '', statusVariant: 'active' });
     component.cancelDelete();
     expect(component.showDeleteDialog()).toBe(false);
     expect(component.deletingId()).toBeNull();
@@ -89,8 +89,8 @@ describe('AdminCategoriesPageComponent', () => {
 
   it('should track selection changes', () => {
     const rows = [
-      { id: 'cat1', name: 'A', shortName: 'A', key: 'a', level: 1, isActive: true, sortOrder: 1, statusLabel: '' },
-      { id: 'cat2', name: 'B', shortName: 'B', key: 'b', level: 2, isActive: true, sortOrder: 2, statusLabel: '' }
+      { id: 'cat1', name: 'A', shortName: 'A', key: 'a', level: 1, isActive: true, sortOrder: 1, statusLabel: '', statusVariant: 'active' },
+      { id: 'cat2', name: 'B', shortName: 'B', key: 'b', level: 2, isActive: true, sortOrder: 2, statusLabel: '', statusVariant: 'active' }
     ];
     component.onSelectionChanged(rows);
     expect(component.hasSelection()).toBe(true);
@@ -103,7 +103,7 @@ describe('AdminCategoriesPageComponent', () => {
   });
 
   it('should open bulk delete with selection', () => {
-    component.onSelectionChanged([{ id: 'cat1', name: 'A', shortName: 'A', key: 'a', level: 1, isActive: true, sortOrder: 1, statusLabel: '' }]);
+    component.onSelectionChanged([{ id: 'cat1', name: 'A', shortName: 'A', key: 'a', level: 1, isActive: true, sortOrder: 1, statusLabel: '', statusVariant: 'active' }]);
     component.openBulkDelete();
     expect(component.showBulkDeleteDialog()).toBe(true);
   });

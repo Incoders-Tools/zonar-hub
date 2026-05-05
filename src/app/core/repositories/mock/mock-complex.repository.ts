@@ -208,6 +208,19 @@ export class MockComplexRepository implements ComplexRepository {
     return this.delay(structuredClone(newComplex));
   }
 
+  async createWithId(id: string, complex: Omit<Complex, 'id' | 'createdAt' | 'updatedAt'>): Promise<Complex> {
+    this.ensureSeed();
+    const now = new Date().toISOString();
+    const newComplex: Complex = { ...complex, id, createdAt: now, updatedAt: now };
+    const existing = this.complexes.findIndex(c => c.id === id);
+    if (existing !== -1) {
+      return this.delay(structuredClone(this.complexes[existing]));
+    }
+    this.complexes.push(newComplex);
+    this.persist();
+    return this.delay(structuredClone(newComplex));
+  }
+
   async update(id: string, changes: Partial<Complex>): Promise<Complex> {
     const idx = this.complexes.findIndex(c => c.id === id);
     if (idx === -1) {

@@ -16,7 +16,7 @@
         </div>
       </div>
       <a class="setup-banner__cta" routerLink="/admin/onboarding">
-        {{ 'onboarding.banner.cta' | t }}
+        {{ (wizardInProgress() ? 'onboarding.banner.ctaResume' : 'onboarding.banner.cta') | t }}
       </a>
     </div>
   }

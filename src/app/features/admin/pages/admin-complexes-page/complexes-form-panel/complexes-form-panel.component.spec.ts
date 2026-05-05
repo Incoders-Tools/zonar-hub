@@ -94,4 +94,53 @@ describe('ComplexesFormPanelComponent', () => {
     expect(component.form.get('key')?.value).toBe('mi_complejo_nuevo');
   });
 
+  it('should set pendingLogoFile and update logoImagePath when logo is changed', () => {
+    fixture.detectChanges();
+    component.ngOnInit();
+
+    const mockFile = new File([''], 'logo.png', { type: 'image/png' });
+    const mockPreviewUrl = 'blob:http://localhost/test-preview';
+
+    component.onLogoChanged({ file: mockFile, previewUrl: mockPreviewUrl });
+
+    expect(component.pendingLogoFile()).toBe(mockFile);
+    expect(component.form.get('logoImagePath')?.value).toBe(mockPreviewUrl);
+    expect(component.form.dirty).toBe(true);
+  });
+
+  it('should clear pendingLogoFile and reset logoImagePath when logo is removed', () => {
+    fixture.detectChanges();
+    component.ngOnInit();
+
+    // First set a file
+    const mockFile = new File([''], 'logo.png', { type: 'image/png' });
+    component.onLogoChanged({ file: mockFile, previewUrl: 'blob:http://localhost/test' });
+
+    // Then remove it
+    component.onLogoRemoved();
+
+    expect(component.pendingLogoFile()).toBeNull();
+    expect(component.form.get('logoImagePath')?.value).toBe('');
+  });
+
+  it('should return existing logo URL from complex as currentLogoUrl', () => {
+    TestBed.runInInjectionContext(() => {
+      fixture.componentRef.setInput('complex', { ...mockComplex, logoImagePath: 'https://cdn.example.com/logo.png' });
+    });
+    fixture.detectChanges();
+    component.ngOnInit();
+
+    expect(component.currentLogoUrl).toBe('https://cdn.example.com/logo.png');
+  });
+
+  it('should return null for currentLogoUrl when complex has no logo', () => {
+    TestBed.runInInjectionContext(() => {
+      fixture.componentRef.setInput('complex', mockComplex);
+    });
+    fixture.detectChanges();
+    component.ngOnInit();
+
+    expect(component.currentLogoUrl).toBeNull();
+  });
+
 });

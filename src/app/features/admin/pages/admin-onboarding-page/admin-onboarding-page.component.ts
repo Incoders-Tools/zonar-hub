@@ -244,6 +244,12 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     this.venueValid.set(this.venueForm.valid);
     this.tournamentValid.set(this.tournamentForm.valid);
 
+    // Restore wizard step if user abandoned and came back
+    const savedStep = this.onboarding.wizardStep();
+    if (savedStep > 0) {
+      this.currentStep.set(savedStep);
+    }
+
     // Onboarding must offer only globally active sports.
     const sports = await this.sportRepo.getAll();
     this.availableSports.set(sports.filter(s => s.isActive));
@@ -529,10 +535,10 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
     const complexKey = this.buildEntityKey(normalizedName);
     const existingComplexes = await this.complexRepo.getAll();
-    const existingByKey = existingComplexes.find(c => c.key === complexKey);
+    const existingById = existingComplexes.find(c => c.id === result.complexId);
 
-    if (existingByKey) {
-      return existingByKey;
+    if (existingById) {
+      return existingById;
     }
 
     const nextSortOrder = Math.max(0, ...existingComplexes.map(c => c.sortOrder ?? 0)) + 1;
@@ -540,7 +546,8 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     const cityName = (venueLocation ?? '').trim() || organizationName || normalizedName;
     const cityId = this.buildEntityKey(cityName) || 'city_default';
 
-    return this.complexRepo.create({
+    // Use the API complex UUID so courts loaded via ApiCourtRepository can be found
+    const complex = await this.complexRepo.createWithId(result.complexId, {
       organizationId,
       organizationName,
       name: normalizedName,
@@ -562,6 +569,19 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       courtsCount: courtNames.length,
       isActive: true
     });
+
+    // Sync court names into the mock so the ABM courts panel can display them
+    for (const courtName of courtNames) {
+      if (courtName.trim()) {
+        await this.complexRepo.createCourt({
+          complexId: result.complexId,
+          name: courtName.trim(),
+          isActive: true
+        });
+      }
+    }
+
+    return complex;
   }
 
   private async ensureOnboardingTournament(
@@ -640,5 +660,14 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     const ctrl = this.venueForm.get('courtsCount')!;
     const current = ctrl.value ?? 1;
     if (current > 1) ctrl.setValue(current - 1);
+  }
+
+  removeCourt(index: number): void {
+    const arr = this.courtNamesArray;
+    if (arr.length > 1) {
+      arr.removeAt(index);
+      this.venueForm.get('courtsCount')!.setValue(arr.length, { emitEvent: false });
+      this.courtRowsCount.set(arr.length);
+    }
   }
 }

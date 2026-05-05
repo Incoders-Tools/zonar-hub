@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { PlayerFormPanelComponent } from './player-form-panel.component';
 import { PlayerFacadeService } from '../player-facade.service';
 import { I18nService } from '../../../../../core/i18n/i18n.service';
@@ -25,6 +26,7 @@ describe('PlayerFormPanelComponent', () => {
       imports: [PlayerFormPanelComponent, ReactiveFormsModule],
       providers: [
         I18nService,
+        provideNoopAnimations(),
         { provide: PlayerFacadeService, useValue: facadeSpy }
       ]
     }).compileComponents();

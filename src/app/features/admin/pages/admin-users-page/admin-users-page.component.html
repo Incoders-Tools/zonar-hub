@@ -132,7 +132,7 @@
             <app-async-button
               [loading]="facade.saving()"
               (clicked)="onFormSave()">
-              {{ (isEditing ? 'common.save' : 'common.create') | t }}
+              {{ (isEditing ? 'common.update' : 'common.create') | t }}
             </app-async-button>
           </div>
         </form>
@@ -155,6 +155,7 @@
     [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
+    (retried)="facade.load()"
     [selectable]="true"
     [rowActions]="rowActions"
     [rowActionsFilter]="userRowActionsFilter"
