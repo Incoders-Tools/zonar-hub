@@ -1,9 +1,10 @@
-import { Injectable, inject, computed, signal } from '@angular/core';
+import { Injectable, inject, computed, signal, effect } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { I18nService } from '../i18n/i18n.service';
 import { ThemeService, AppTheme } from '../theme/theme.service';
 import { DateFormatService } from './date-format.service';
 import { AppLocale } from '../i18n/i18n.types';
+import { ApiSystemSettingRepository } from '../repositories/api/api-system-setting.repository';
 
 /**
  * User-level preference overrides.
@@ -31,6 +32,13 @@ export interface EffectiveSettings {
 const USER_PREFS_KEY = 'zh_user_preferences';
 const SYSTEM_DEFAULTS_KEY = 'zh_system_settings';
 
+const REMOTE_SETTING_KEYS = {
+  locale: 'preferences.locale',
+  theme: 'preferences.theme',
+  dateFormat: 'preferences.date_format',
+  timezone: 'preferences.timezone'
+} as const;
+
 const FACTORY_DEFAULTS: EffectiveSettings = {
   locale: 'es',
   theme: 'court-energy' as AppTheme,
@@ -55,6 +63,8 @@ export class UserPreferencesService {
   private readonly i18n = inject(I18nService);
   private readonly themeService = inject(ThemeService);
   private readonly dateFormatService = inject(DateFormatService);
+  private readonly settingsRepository = inject(ApiSystemSettingRepository);
+  private lastHydrationIdentity: string | null = null;
 
   /** System-wide defaults (admin-configured) */
   private readonly systemDefaults = signal<EffectiveSettings>(this.loadSystemDefaults());
@@ -83,6 +93,24 @@ export class UserPreferencesService {
     };
   });
 
+  constructor() {
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (!user) {
+        this.lastHydrationIdentity = null;
+        return;
+      }
+
+      const identity = `${user.id}:${user.tenantId ?? ''}`;
+      if (identity === this.lastHydrationIdentity) {
+        return;
+      }
+
+      this.lastHydrationIdentity = identity;
+      void this.hydrateFromRemote(user.id, user.tenantId);
+    });
+  }
+
   /** Apply the effective settings to the actual runtime services */
   applyEffectiveSettings(): void {
     const settings = this.effective();
@@ -100,6 +128,7 @@ export class UserPreferencesService {
     const next = { ...current, ...partial };
     this.systemDefaults.set(next);
     this.persistSystemDefaults(next);
+    void this.upsertSystemDefaultsRemote(next);
   }
 
   getSystemDefaults(): EffectiveSettings {
@@ -121,6 +150,7 @@ export class UserPreferencesService {
 
     // Re-apply
     this.applyEffectiveSettings();
+    void this.upsertCurrentUserPrefsRemote(userId, all[userId]);
   }
 
   /** Clear a specific preference for the current user (revert to system default) */
@@ -136,6 +166,7 @@ export class UserPreferencesService {
     this.userPrefsMap.set(all);
     this.persistUserPrefs(all);
     this.applyEffectiveSettings();
+    void this.clearCurrentUserPrefRemote(userId, key);
   }
 
   /** Clear all preferences for the current user */
@@ -148,6 +179,163 @@ export class UserPreferencesService {
     this.userPrefsMap.set(all);
     this.persistUserPrefs(all);
     this.applyEffectiveSettings();
+    void this.clearAllCurrentUserPrefsRemote(userId);
+  }
+
+  private async hydrateFromRemote(userId: string, tenantId?: string): Promise<void> {
+    try {
+      const [
+        tenantLocale,
+        tenantTheme,
+        tenantDateFormat,
+        tenantTimezone,
+        userLocale,
+        userTheme,
+        userDateFormat,
+        userTimezone
+      ] = await Promise.all([
+        tenantId ? this.settingsRepository.getTenantSetting(REMOTE_SETTING_KEYS.locale, tenantId) : Promise.resolve(null),
+        tenantId ? this.settingsRepository.getTenantSetting(REMOTE_SETTING_KEYS.theme, tenantId) : Promise.resolve(null),
+        tenantId ? this.settingsRepository.getTenantSetting(REMOTE_SETTING_KEYS.dateFormat, tenantId) : Promise.resolve(null),
+        tenantId ? this.settingsRepository.getTenantSetting(REMOTE_SETTING_KEYS.timezone, tenantId) : Promise.resolve(null),
+        this.settingsRepository.getUserSetting(REMOTE_SETTING_KEYS.locale, userId, tenantId),
+        this.settingsRepository.getUserSetting(REMOTE_SETTING_KEYS.theme, userId, tenantId),
+        this.settingsRepository.getUserSetting(REMOTE_SETTING_KEYS.dateFormat, userId, tenantId),
+        this.settingsRepository.getUserSetting(REMOTE_SETTING_KEYS.timezone, userId, tenantId)
+      ]);
+
+      const defaults = this.systemDefaults();
+      const nextDefaults: EffectiveSettings = {
+        ...defaults,
+        locale: this.toLocale(tenantLocale) ?? defaults.locale,
+        theme: this.toTheme(tenantTheme) ?? defaults.theme,
+        dateFormat: tenantDateFormat ?? defaults.dateFormat,
+        timezone: tenantTimezone ?? defaults.timezone
+      };
+
+      this.systemDefaults.set(nextDefaults);
+      this.persistSystemDefaults(nextDefaults);
+
+      const all = { ...this.userPrefsMap() };
+      const existing = all[userId] ?? {
+        locale: null,
+        theme: null,
+        dateFormat: null,
+        timezone: null,
+        showChatbot: null
+      };
+
+      all[userId] = {
+        ...existing,
+        locale: this.toLocale(userLocale) ?? existing.locale,
+        theme: this.toTheme(userTheme) ?? existing.theme,
+        dateFormat: userDateFormat ?? existing.dateFormat,
+        timezone: userTimezone ?? existing.timezone
+      };
+
+      this.userPrefsMap.set(all);
+      this.persistUserPrefs(all);
+      this.applyEffectiveSettings();
+    } catch {
+      // Keep local behavior if backend preference sync is unavailable.
+    }
+  }
+
+  private async upsertSystemDefaultsRemote(next: EffectiveSettings): Promise<void> {
+    const tenantId = this.auth.currentUser()?.tenantId;
+    if (!tenantId) return;
+
+    try {
+      await Promise.all([
+        this.settingsRepository.upsertTenantSetting(REMOTE_SETTING_KEYS.locale, next.locale, tenantId),
+        this.settingsRepository.upsertTenantSetting(REMOTE_SETTING_KEYS.theme, next.theme, tenantId),
+        this.settingsRepository.upsertTenantSetting(REMOTE_SETTING_KEYS.dateFormat, next.dateFormat, tenantId),
+        this.settingsRepository.upsertTenantSetting(REMOTE_SETTING_KEYS.timezone, next.timezone, tenantId)
+      ]);
+    } catch {
+      // Keep local behavior if backend preference sync is unavailable.
+    }
+  }
+
+  private async upsertCurrentUserPrefsRemote(userId: string, prefs: UserPreferences): Promise<void> {
+    const tenantId = this.auth.currentUser()?.tenantId;
+    const tasks: Promise<void>[] = [];
+
+    if (prefs.locale) {
+      tasks.push(this.settingsRepository.upsertUserSetting(REMOTE_SETTING_KEYS.locale, prefs.locale, userId, tenantId));
+    }
+    if (prefs.theme) {
+      tasks.push(this.settingsRepository.upsertUserSetting(REMOTE_SETTING_KEYS.theme, prefs.theme, userId, tenantId));
+    }
+    if (prefs.dateFormat) {
+      tasks.push(this.settingsRepository.upsertUserSetting(REMOTE_SETTING_KEYS.dateFormat, prefs.dateFormat, userId, tenantId));
+    }
+    if (prefs.timezone) {
+      tasks.push(this.settingsRepository.upsertUserSetting(REMOTE_SETTING_KEYS.timezone, prefs.timezone, userId, tenantId));
+    }
+
+    if (tasks.length === 0) {
+      return;
+    }
+
+    try {
+      await Promise.all(tasks);
+    } catch {
+      // Keep local behavior if backend preference sync is unavailable.
+    }
+  }
+
+  private async clearCurrentUserPrefRemote(userId: string, key: keyof UserPreferences): Promise<void> {
+    const remoteKey = this.toRemoteKey(key);
+    if (!remoteKey) {
+      return;
+    }
+
+    const tenantId = this.auth.currentUser()?.tenantId;
+    try {
+      await this.settingsRepository.deleteUserSetting(remoteKey, userId, tenantId);
+    } catch {
+      // Keep local behavior if backend preference sync is unavailable.
+    }
+  }
+
+  private async clearAllCurrentUserPrefsRemote(userId: string): Promise<void> {
+    const tenantId = this.auth.currentUser()?.tenantId;
+    try {
+      await Promise.all([
+        this.settingsRepository.deleteUserSetting(REMOTE_SETTING_KEYS.locale, userId, tenantId),
+        this.settingsRepository.deleteUserSetting(REMOTE_SETTING_KEYS.theme, userId, tenantId),
+        this.settingsRepository.deleteUserSetting(REMOTE_SETTING_KEYS.dateFormat, userId, tenantId),
+        this.settingsRepository.deleteUserSetting(REMOTE_SETTING_KEYS.timezone, userId, tenantId)
+      ]);
+    } catch {
+      // Keep local behavior if backend preference sync is unavailable.
+    }
+  }
+
+  private toRemoteKey(key: keyof UserPreferences): string | null {
+    switch (key) {
+      case 'locale':
+        return REMOTE_SETTING_KEYS.locale;
+      case 'theme':
+        return REMOTE_SETTING_KEYS.theme;
+      case 'dateFormat':
+        return REMOTE_SETTING_KEYS.dateFormat;
+      case 'timezone':
+        return REMOTE_SETTING_KEYS.timezone;
+      default:
+        return null;
+    }
+  }
+
+  private toLocale(value: string | null): AppLocale | null {
+    return value === 'es' || value === 'en' || value === 'pt' ? value : null;
+  }
+
+  private toTheme(value: string | null): AppTheme | null {
+    return value === 'court-energy' || value === 'clay-match' || value === 'night-arena'
+      ? value
+      : null;
   }
 
   // ─── Persistence ───

@@ -388,7 +388,7 @@
     }
 
     &--danger {
-      background: var(--zh-error);
+      background: var(--zh-error, #dc2626);
     }
   }
 }

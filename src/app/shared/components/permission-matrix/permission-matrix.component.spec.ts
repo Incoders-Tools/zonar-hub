@@ -73,11 +73,11 @@ describe('PermissionMatrixComponent', () => {
 
   it('should toggle module expansion', () => {
     const module = component.moduleGroups()[0].module;
-    expect(component.isExpanded(module)).toBe(true);
-    component.toggleExpand(module);
     expect(component.isExpanded(module)).toBe(false);
     component.toggleExpand(module);
     expect(component.isExpanded(module)).toBe(true);
+    component.toggleExpand(module);
+    expect(component.isExpanded(module)).toBe(false);
   });
 
   it('should detect fully selected module', () => {
@@ -92,7 +92,10 @@ describe('PermissionMatrixComponent', () => {
     if (group.tools.length > 1) {
       component.selectedTools.set([group.tools[0].key]);
       expect(component.isModulePartiallySelected(group.module)).toBe(true);
+      return;
     }
+
+    expect(component.isModulePartiallySelected(group.module)).toBe(false);
   });
 
   it('should toggle entire module on', () => {
@@ -129,5 +132,18 @@ describe('PermissionMatrixComponent', () => {
     });
     fixture.detectChanges();
     expect(component.availableTools().length).toBe(2);
+  });
+
+  it('should not toggle disabled tools', () => {
+    TestBed.runInInjectionContext(() => {
+      fixture.componentRef.setInput('disabledToolKeys', ['dashboard']);
+    });
+    fixture.detectChanges();
+
+    const event = new Event('change');
+    Object.defineProperty(event, 'stopPropagation', { value: jasmine.createSpy() });
+    component.toggleTool('dashboard', event);
+
+    expect(component.selectedTools()).not.toContain('dashboard');
   });
 });

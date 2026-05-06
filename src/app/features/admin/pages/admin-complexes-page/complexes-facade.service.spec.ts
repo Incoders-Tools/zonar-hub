@@ -1,13 +1,24 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { ComplexesFacadeService } from './complexes-facade.service';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
+import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
+
+const adminDashboardSpy = jasmine.createSpyObj<AdminDashboardService>('AdminDashboardService', ['loadSummary']);
+adminDashboardSpy.loadSummary.and.returnValue(Promise.resolve());
 
 describe('ComplexesFacadeService', () => {
   let service: ComplexesFacadeService;
 
   beforeEach(() => {
+    localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [ComplexesFacadeService, MockComplexRepository]
+      providers: [
+        ComplexesFacadeService,
+        MockComplexRepository,
+        provideHttpClient(),
+        { provide: AdminDashboardService, useValue: adminDashboardSpy }
+      ]
     });
     service = TestBed.inject(ComplexesFacadeService);
   });

@@ -31,7 +31,7 @@
             [indeterminate]="isModulePartiallySelected(group.module)"
             (change)="toggleModule(group.module, $event)"
             (click)="$event.stopPropagation()"
-            [disabled]="disabled()" />
+            [disabled]="isModuleSelectionDisabled(group.module)" />
           <span>{{ group.labelKey | t }}</span>
         </label>
         <span class="permission-matrix__module-count">
@@ -42,12 +42,12 @@
       @if (isExpanded(group.module)) {
         <div class="permission-matrix__tools">
           @for (tool of group.tools; track tool.key) {
-            <label class="permission-matrix__tool">
+            <label class="permission-matrix__tool" [class.permission-matrix__tool--disabled]="isToolDisabled(tool.key)">
               <input
                 type="checkbox"
                 [checked]="isToolSelected(tool.key)"
                 (change)="toggleTool(tool.key, $event)"
-                [disabled]="disabled()" />
+                [disabled]="isToolDisabled(tool.key)" />
               <span>{{ tool.labelKey | t }}</span>
             </label>
           }

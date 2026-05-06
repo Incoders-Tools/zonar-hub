@@ -46,6 +46,7 @@ import { UsersFacadeService } from '../users-facade.service';
               <option value="role001">{{ 'admin.users.role.systemAdmin' | t }}</option>
               <option value="role002">{{ 'admin.users.role.admin' | t }}</option>
               <option value="role003">{{ 'admin.users.role.viewer' | t }}</option>
+              <option value="role004">{{ 'admin.users.role.editor' | t }}</option>
             </select>
           </div>
           <div class="form-group">

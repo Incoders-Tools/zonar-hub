@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { AdminProfilePageComponent } from './admin-profile-page.component';
 
 describe('AdminProfilePageComponent', () => {
@@ -7,7 +8,8 @@ describe('AdminProfilePageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminProfilePageComponent]
+      imports: [AdminProfilePageComponent],
+      providers: [provideHttpClient()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminProfilePageComponent);

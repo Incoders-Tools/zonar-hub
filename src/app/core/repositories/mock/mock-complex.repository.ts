@@ -248,6 +248,7 @@ export class MockComplexRepository implements ComplexRepository {
   // --- Courts ---
 
   async getCourtsByComplexId(complexId: string): Promise<Court[]> {
+    this.ensureSeed();
     const filtered = this.courts.filter(ct => ct.complexId === complexId);
     return this.delay(structuredClone(filtered));
   }
@@ -295,6 +296,7 @@ export class MockComplexRepository implements ComplexRepository {
   // --- Availability ---
 
   async getAvailabilityByCourtId(courtId: string): Promise<Availability[]> {
+    this.ensureSeed();
     const filtered = this.availability.filter(av => av.courtId === courtId);
     return this.delay(structuredClone(filtered));
   }

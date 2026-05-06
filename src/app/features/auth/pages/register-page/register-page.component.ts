@@ -225,7 +225,7 @@ export class RegisterPageComponent implements OnInit {
       this.notifications.success(this.i18n.translate('auth.registerSuccess'));
 
       // Redirect to onboarding wizard
-      const target = session.user.role === 'admin' || session.user.role === 'system_admin'
+      const target = session.user.role === 'admin' || session.user.role === 'system_admin' || session.user.role === 'editor'
         ? '/admin/onboarding'
         : '/player';
       this.router.navigate([target]);

@@ -89,11 +89,11 @@ export class LoginPageComponent {
       if (!hasOnboardingProgress) {
         this.onboarding.initForUser(session.user.id);
       }
-      const isAdmin = session.user.role === 'admin' || session.user.role === 'system_admin';
-      if (isAdmin && this.onboarding.needsWizard()) {
+      const isAdminAreaUser = session.user.role === 'admin' || session.user.role === 'system_admin' || session.user.role === 'editor';
+      if (isAdminAreaUser && this.onboarding.needsWizard()) {
         this.router.navigate(['/admin/onboarding']);
       } else {
-        const target = isAdmin ? '/admin' : '/player';
+        const target = isAdminAreaUser ? '/admin' : '/player';
         this.router.navigate([target]);
       }
     } catch {

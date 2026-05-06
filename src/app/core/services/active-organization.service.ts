@@ -22,6 +22,7 @@ export class ActiveOrganizationService {
   private readonly auth = inject(AuthService);
   private readonly organizationRepo = inject(ApiOrganizationRepository);
   private loadRequestId = 0;
+  private readonly organizationTenantById = new Map<string, string>();
 
   /** All organizations (tenants) in the system */
   private readonly allOrganizations = signal<Tenant[]>([]);
@@ -42,12 +43,16 @@ export class ActiveOrganizationService {
       return all.filter(t => t.isActive);
     }
 
-    const allowed = new Set(user.tenantIds ?? []);
-    const allowedMatches = all.filter(t => t.isActive && allowed.has(t.id));
+    const assigned = new Set(user.tenantIds ?? []);
+    if (user.organizationId) {
+      assigned.add(user.organizationId);
+    }
 
-    return allowedMatches.length > 0
-      ? allowedMatches
-      : all.filter(t => t.isActive);
+    if (assigned.size === 0) {
+      return [];
+    }
+
+    return all.filter(t => t.isActive && assigned.has(t.id));
   });
 
   /** The currently active organization (full object) */
@@ -89,6 +94,7 @@ export class ActiveOrganizationService {
         void this.loadOrganizations();
       } else {
         this.loadRequestId += 1;
+        this.organizationTenantById.clear();
         this.allOrganizations.set([]);
         this.activeOrgIdState.set(null);
         this.primaryOrgIdState.set(null);
@@ -112,12 +118,18 @@ export class ActiveOrganizationService {
         return;
       }
 
+      this.organizationTenantById.clear();
+      for (const organization of organizations) {
+        this.organizationTenantById.set(organization.id, organization.tenantId);
+      }
+
       this.allOrganizations.set(organizations.map(org => this.toTenant(org)));
     } catch {
       if (currentLoadId !== this.loadRequestId) {
         return;
       }
 
+      this.organizationTenantById.clear();
       this.allOrganizations.set([]);
     }
 
@@ -134,19 +146,21 @@ export class ActiveOrganizationService {
     const all = this.allOrganizations();
     const manageable = new Set(this.manageableOrganizations().map(org => org.id));
 
-    if (currentActive && manageable.has(currentActive)) {
+    if (currentUser.organizationId && manageable.has(currentUser.organizationId)) {
+      this.activeOrgIdState.set(currentUser.organizationId);
+    } else if (currentActive && manageable.has(currentActive)) {
       this.activeOrgIdState.set(currentActive);
     } else if (storedActive && manageable.has(storedActive)) {
       this.activeOrgIdState.set(storedActive);
     } else if (storedPrimary && manageable.has(storedPrimary)) {
       this.activeOrgIdState.set(storedPrimary);
-    } else if (currentUser.organizationId && manageable.has(currentUser.organizationId)) {
-      this.activeOrgIdState.set(currentUser.organizationId);
     } else {
       // Fall back to first manageable active org
       const firstActive = all.find(t => t.isActive && manageable.has(t.id));
       this.activeOrgIdState.set(firstActive?.id ?? null);
     }
+
+    this.syncTenantContext(this.activeOrgIdState());
   }
 
   /** Switch the active organization */
@@ -160,6 +174,7 @@ export class ActiveOrganizationService {
     
     this.activeOrgIdState.set(orgId);
     this.persistActiveOrgId(orgId);
+    this.syncTenantContext(orgId);
 
     // Sync with auth session so OrganizationContextService gets the update
     if (org) {
@@ -190,6 +205,7 @@ export class ActiveOrganizationService {
   setOnboardingOrganization(orgId: string): void {
     const user = this.auth.currentUser();
     this.activeOrgIdState.set(orgId);
+    this.syncTenantContext(orgId);
     this.primaryOrgIdState.set(orgId);
     if (user) {
       this.persistActiveOrgId(orgId);
@@ -252,5 +268,19 @@ export class ActiveOrganizationService {
     try {
       return localStorage.getItem(`${PRIMARY_ORG_KEY}_${userId}`);
     } catch { return null; }
+  }
+
+  private syncTenantContext(organizationId: string | null): void {
+    if (!organizationId) {
+      this.auth.updateTenantContext(this.auth.currentUser()?.tenantId ?? this.auth.session()?.tenant?.id ?? null);
+      return;
+    }
+
+    const tenantId = this.organizationTenantById.get(organizationId)
+      ?? this.auth.currentUser()?.tenantId
+      ?? this.auth.session()?.tenant?.id
+      ?? null;
+
+    this.auth.updateTenantContext(tenantId);
   }
 }

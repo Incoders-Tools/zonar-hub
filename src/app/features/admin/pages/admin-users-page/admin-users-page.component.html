@@ -80,6 +80,7 @@
                 }
                 <option value="role002">{{ 'admin.users.role.admin' | t }}</option>
                 <option value="role003">{{ 'admin.users.role.viewer' | t }}</option>
+                <option value="role004">{{ 'admin.users.role.editor' | t }}</option>
               </select>
             </div>
 
@@ -93,17 +94,6 @@
               <span class="hint">{{ 'admin.users.form.isActiveHint' | t }}</span>
             </div>
           </div>
-
-          <!-- Permissions -->
-          <app-collapsible-section
-            [titleKey]="'admin.users.form.permissions'"
-            [initialExpanded]="false">
-            <p class="users-page__permissions-hint">{{ 'admin.users.form.permissionsHint' | t }}</p>
-            <app-permission-matrix
-              [value]="userPermissions()"
-              (changed)="onPermissionsChanged($event)">
-            </app-permission-matrix>
-          </app-collapsible-section>
 
           <!-- Company Assignment -->
           <app-child-collection-grid
@@ -124,12 +114,73 @@
             (selectionReordered)="onTenantOrderChanged($event)">
           </app-child-collection-grid>
 
+          <!-- Permissions -->
+          <app-collapsible-section
+            [titleKey]="'admin.users.form.permissions'"
+            [initialExpanded]="true">
+            <p class="users-page__permissions-hint">{{ 'admin.users.form.permissionsHint' | t }}</p>
+
+            @if (selectedTenantItems().length === 0) {
+              <p class="users-page__permissions-empty">{{ 'admin.users.permissions.emptyOrgSelection' | t }}</p>
+            } @else {
+              <div class="users-page__permissions-toolbar">
+                <div class="form-field users-page__permissions-field">
+                  <label>{{ 'admin.users.permissions.organizationSelector' | t }}</label>
+                  <select
+                    [value]="selectedPermissionOrganizationId() ?? ''"
+                    (change)="onPermissionOrganizationChanged($any($event.target).value)">
+                    <option value="">{{ 'admin.users.permissions.selectOrganization' | t }}</option>
+                    @for (tenant of selectedTenantItems(); track tenant.id) {
+                      <option [value]="tenant.id">{{ tenant.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-field users-page__permissions-field users-page__permissions-field--copy">
+                  <label>{{ 'admin.users.permissions.copyFrom' | t }}</label>
+                  <div class="users-page__permissions-copy-row">
+                    <select
+                      [value]="copySourceOrganizationId()"
+                      (change)="onCopySourceOrganizationChanged($any($event.target).value)">
+                      <option value="">{{ 'admin.users.permissions.selectSourceOrganization' | t }}</option>
+                      @for (tenant of selectedTenantItems(); track tenant.id) {
+                        <option [value]="tenant.id" [disabled]="tenant.id === selectedPermissionOrganizationId()">
+                          {{ tenant.name }}
+                        </option>
+                      }
+                    </select>
+                    <button
+                      type="button"
+                      class="users-page__copy-button"
+                      (click)="copyPermissionsFromOrganization()"
+                      [disabled]="!canCopyPermissions()">
+                      {{ 'admin.users.permissions.copyAction' | t }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <app-permission-matrix
+                [moduleCatalog]="permissionCatalog()"
+                [value]="selectedOrganizationPermissionTools()"
+                [disabled]="loadingUserPermissions() || loadingPermissionCatalog()"
+                [disabledToolKeys]="disabledToolKeys()"
+                (changed)="onPermissionsChanged($event)">
+              </app-permission-matrix>
+
+              @if (!hasValidPermissionSelection()) {
+                <span class="error-message">{{ 'admin.users.permissions.invalidSelection' | t }}</span>
+              }
+            }
+          </app-collapsible-section>
+
           <!-- Actions -->
           <div class="form-actions">
             <button type="button" class="btn-cancel" (click)="closeFormPanel()">
               {{ 'common.cancel' | t }}
             </button>
             <app-async-button
+              [disabled]="form.invalid || !hasValidPermissionSelection()"
               [loading]="facade.saving()"
               (clicked)="onFormSave()">
               {{ (isEditing ? 'common.update' : 'common.create') | t }}

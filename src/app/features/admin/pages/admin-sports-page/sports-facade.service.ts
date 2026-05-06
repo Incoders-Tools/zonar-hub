@@ -245,13 +245,13 @@ export class SportsFacadeService {
   }
 
   private resolveScope(): { type: 'global' | 'organization' | 'tenant'; id?: string } {
-    if (this.auth.isSystemAdmin()) {
-      return { type: 'global' };
-    }
-
     const organizationId = this.organizationContext.organizationId();
     if (organizationId) {
       return { type: 'organization', id: organizationId };
+    }
+
+    if (this.auth.isSystemAdmin()) {
+      return { type: 'global' };
     }
 
     const tenantId = this.auth.session()?.tenant?.id

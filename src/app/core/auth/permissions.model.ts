@@ -19,6 +19,17 @@ export interface UserPermissions {
   allowedTools: string[];
 }
 
+export const SYSTEM_ADMIN_ONLY_TOOLS = [
+  'roles',
+  'plans',
+  'actions',
+  'audit',
+  'app-logs',
+  'security',
+  'email-templates',
+  'billing'
+] as const;
+
 /** All tools registered in the platform */
 export const PLATFORM_TOOLS: ToolPermission[] = [
   // Dashboard
@@ -39,6 +50,8 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
   { key: 'genders', module: 'catalog', labelKey: 'admin.genders', route: '/admin/catalogs/genders' },
   { key: 'sports', module: 'catalog', labelKey: 'admin.sports', route: '/admin/catalogs/sports' },
   { key: 'tournament-statuses', module: 'catalog', labelKey: 'admin.tournamentStatuses', route: '/admin/catalogs/tournament-statuses' },
+  { key: 'tournament-modalities', module: 'catalog', labelKey: 'admin.tournamentModalities', route: '/admin/catalogs/tournament-modalities' },
+  { key: 'flyer-backgrounds', module: 'catalog', labelKey: 'admin.flyerBackgrounds', route: '/admin/flyer-backgrounds' },
 
   // System
   { key: 'users', module: 'system', labelKey: 'admin.users', route: '/admin/system/users' },
@@ -53,7 +66,6 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
   { key: 'settings', module: 'system', labelKey: 'admin.settings', route: '/admin/system/settings' },
   { key: 'email-templates', module: 'system', labelKey: 'admin.emailTemplates', route: '/admin/system/email-templates' },
   { key: 'billing', module: 'system', labelKey: 'admin.billing', route: '/admin/billing' },
-  { key: 'flyer-backgrounds', module: 'system', labelKey: 'admin.flyerBackgrounds', route: '/admin/flyer-backgrounds' },
 ];
 
 /** Default tool permissions per role */
@@ -64,9 +76,16 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'dashboard',
     'tournaments', 'tournament-eligibility-profiles', 'tournament-rules',
     'registrations', 'players', 'teams', 'draw-planner',
-    'complexes', 'categories', 'genders', 'sports', 'tournament-statuses',
+    'complexes', 'categories', 'genders', 'sports', 'tournament-statuses', 'tournament-modalities',
     'users', 'organizations', 'tenants',
     'settings', 'flyer-backgrounds', 'billing',
+  ],
+
+  editor: [
+    'dashboard',
+    'tournaments', 'tournament-eligibility-profiles', 'tournament-rules',
+    'registrations', 'players', 'teams', 'draw-planner',
+    'complexes', 'categories', 'genders', 'sports', 'tournament-statuses', 'tournament-modalities',
   ],
 
   user: [

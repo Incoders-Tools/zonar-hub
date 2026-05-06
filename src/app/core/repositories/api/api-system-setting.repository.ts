@@ -34,6 +34,8 @@ interface UpdateSystemSettingRequest {
   userId?: string | null;
 }
 
+const GLOBAL_SCOPE = 0;
+const TENANT_SCOPE = 1;
 const USER_SCOPE = 2;
 
 @Injectable({ providedIn: 'root' })
@@ -45,33 +47,20 @@ export class ApiSystemSettingRepository {
     return `${this.apiBaseUrl}/system-settings`;
   }
 
+  async getTenantSetting(key: string, tenantId: string): Promise<string | null> {
+    return this.getScopedSettingValue(key, TENANT_SCOPE, tenantId, undefined);
+  }
+
   async getUserSetting(
     key: string,
     userId: string,
     tenantId?: string
   ): Promise<string | null> {
-    try {
-      const params = new URLSearchParams({
-        scope: String(USER_SCOPE),
-        userId,
-        key,
-        page: '1',
-        pageSize: '1'
-      });
+    return this.getScopedSettingValue(key, USER_SCOPE, tenantId, userId);
+  }
 
-      if (tenantId) {
-        params.set('tenantId', tenantId);
-      }
-
-      const response = await firstValueFrom(
-        this.http.get<SystemSettingListResponse>(`${this.endpoint}?${params.toString()}`)
-      );
-
-      const item = response.items?.[0];
-      return item?.value ?? null;
-    } catch {
-      return null;
-    }
+  async upsertTenantSetting(key: string, value: string, tenantId: string): Promise<void> {
+    await this.upsertScopedSetting(key, value, TENANT_SCOPE, tenantId, undefined);
   }
 
   async upsertUserSetting(
@@ -80,16 +69,51 @@ export class ApiSystemSettingRepository {
     userId: string,
     tenantId?: string
   ): Promise<void> {
-    const existing = await this.findUserSetting(key, userId, tenantId);
+    await this.upsertScopedSetting(key, value, USER_SCOPE, tenantId, userId);
+  }
+
+  async deleteTenantSetting(key: string, tenantId: string): Promise<void> {
+    await this.deleteScopedSetting(key, TENANT_SCOPE, tenantId, undefined);
+  }
+
+  async deleteUserSetting(key: string, userId: string, tenantId?: string): Promise<void> {
+    await this.deleteScopedSetting(key, USER_SCOPE, tenantId, userId);
+  }
+
+  private async getScopedSettingValue(
+    key: string,
+    scope: number,
+    tenantId?: string,
+    userId?: string
+  ): Promise<string | null> {
+    const existing = await this.findScopedSetting(key, scope, tenantId, userId);
+    return existing?.value ?? null;
+  }
+
+  private async upsertScopedSetting(
+    key: string,
+    value: string,
+    scope: number,
+    tenantId?: string,
+    userId?: string
+  ): Promise<void> {
+    const existing = await this.findScopedSetting(key, scope, tenantId, userId);
 
     if (!existing) {
       const request: CreateSystemSettingRequest = {
         key,
         value,
-        scope: USER_SCOPE,
-        userId,
+        scope,
         tenantId: tenantId ?? null
       };
+
+      if (scope === USER_SCOPE) {
+        request.userId = userId ?? null;
+      }
+
+      if (scope === GLOBAL_SCOPE) {
+        request.tenantId = null;
+      }
 
       try {
         await firstValueFrom(this.http.post<SystemSettingDto>(this.endpoint, request));
@@ -102,10 +126,17 @@ export class ApiSystemSettingRepository {
 
     const request: UpdateSystemSettingRequest = {
       value,
-      scope: USER_SCOPE,
-      userId,
+      scope,
       tenantId: tenantId ?? null
     };
+
+    if (scope === USER_SCOPE) {
+      request.userId = userId ?? null;
+    }
+
+    if (scope === GLOBAL_SCOPE) {
+      request.tenantId = null;
+    }
 
     try {
       await firstValueFrom(this.http.put<SystemSettingDto>(`${this.endpoint}/${existing.id}`, request));
@@ -114,23 +145,32 @@ export class ApiSystemSettingRepository {
     }
   }
 
-  private async findUserSetting(
+  private async deleteScopedSetting(
     key: string,
-    userId: string,
-    tenantId?: string
+    scope: number,
+    tenantId?: string,
+    userId?: string
+  ): Promise<void> {
+    const existing = await this.findScopedSetting(key, scope, tenantId, userId);
+    if (!existing) {
+      return;
+    }
+
+    try {
+      await firstValueFrom(this.http.delete<void>(`${this.endpoint}/${existing.id}`));
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error));
+    }
+  }
+
+  private async findScopedSetting(
+    key: string,
+    scope: number,
+    tenantId?: string,
+    userId?: string
   ): Promise<SystemSettingDto | null> {
     try {
-      const params = new URLSearchParams({
-        scope: String(USER_SCOPE),
-        userId,
-        key,
-        page: '1',
-        pageSize: '1'
-      });
-
-      if (tenantId) {
-        params.set('tenantId', tenantId);
-      }
+      const params = this.buildScopedQueryParams(key, scope, tenantId, userId);
 
       const response = await firstValueFrom(
         this.http.get<SystemSettingListResponse>(`${this.endpoint}?${params.toString()}`)
@@ -140,5 +180,29 @@ export class ApiSystemSettingRepository {
     } catch {
       return null;
     }
+  }
+
+  private buildScopedQueryParams(
+    key: string,
+    scope: number,
+    tenantId?: string,
+    userId?: string
+  ): URLSearchParams {
+    const params = new URLSearchParams({
+      scope: String(scope),
+      key,
+      page: '1',
+      pageSize: '1'
+    });
+
+    if (tenantId) {
+      params.set('tenantId', tenantId);
+    }
+
+    if (scope === USER_SCOPE && userId) {
+      params.set('userId', userId);
+    }
+
+    return params;
   }
 }

@@ -3,6 +3,7 @@ import { Complex, Court, Availability, Sport } from '../../../../core/models';
 import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
 import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
+import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
 
 export interface ComplexFilters {
   name?: string;
@@ -14,6 +15,7 @@ export class ComplexesFacadeService {
   private readonly repository = inject(MockComplexRepository);
   private readonly sportRepository = inject(MockSportRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
+  private readonly adminDashboard = inject(AdminDashboardService);
   private lastOrgId: string | null | undefined = undefined;
 
   constructor() {
@@ -162,6 +164,11 @@ export class ComplexesFacadeService {
       } else {
         const created = await this.repository.create(complex as Omit<Complex, 'id' | 'createdAt' | 'updatedAt'>);
         this.entitiesState.set([...this.entitiesState(), created]);
+        // Refresh dashboard so the onboarding checklist reflects the new complex
+        const activeOrgId = this.activeOrg.activeOrganizationId();
+        if (activeOrgId) {
+          this.adminDashboard.loadSummary(activeOrgId);
+        }
       }
 
       return true;

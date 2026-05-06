@@ -1,59 +1,106 @@
-import { Injectable, inject, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { AuthService } from './auth.service';
+import { ActiveOrganizationService } from '../services/active-organization.service';
+import { ApiPermissionRepository } from '../repositories/api/api-permission.repository';
+import { PermissionModule, PermissionTool } from '../models';
 import {
   DEFAULT_ROLE_PERMISSIONS,
   PLATFORM_TOOLS,
   ToolPermission,
-  UserPermissions,
   AppModule,
-  getToolsByModule,
+  SYSTEM_ADMIN_ONLY_TOOLS,
 } from './permissions.model';
 
-const STORAGE_KEY = 'zh_user_permissions';
-
 /**
- * Centralized permission resolution service.
+ * Centralized permission resolution service backed by the API.
  *
- * Resolves effective tool access for the current user by merging:
- * 1. Default permissions for the user's role
- * 2. Per-user overrides stored by administrators
- *
- * Provides computed signals for use in guards, directives, and templates.
+ * Effective permissions are resolved by active organization so guards,
+ * menu visibility, and directives react to organization switches.
  */
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
   private readonly auth = inject(AuthService);
+  private readonly activeOrganization = inject(ActiveOrganizationService);
+  private readonly repository = inject(ApiPermissionRepository);
 
-  /** Per-user permission overrides (admin-managed) */
-  private readonly overrides = signal<UserPermissions[]>(this.loadOverrides());
+  private readonly catalogState = signal<PermissionModule[]>([]);
+  private readonly allowedToolsState = signal<string[]>([]);
+  private readonly isLoadingState = signal(false);
+  private readonly loadErrorState = signal<string | null>(null);
 
-  /** Effective tool keys the current user has access to.
-   *
-   * Role defaults act as the minimum baseline. Per-user overrides are merged
-   * additively so that tools added to a role's defaults are always visible,
-   * even for users who had an override saved before the new tool was introduced.
-   */
-  readonly allowedTools = computed<string[]>(() => {
+  private loadingPromise: Promise<void> | null = null;
+  private loadedScopeKey: string | null = null;
+
+  readonly permissionCatalog = this.catalogState.asReadonly();
+  readonly loading = this.isLoadingState.asReadonly();
+  readonly error = this.loadErrorState.asReadonly();
+
+  constructor() {
+    effect(() => {
+      const user = this.auth.currentUser();
+      const activeOrganizationId = this.activeOrganization.activeOrganizationId() ?? user?.organizationId ?? null;
+
+      if (!user) {
+        this.catalogState.set([]);
+        this.allowedToolsState.set([]);
+        this.loadedScopeKey = null;
+        this.loadingPromise = null;
+        return;
+      }
+
+      void this.ensureLoaded(activeOrganizationId);
+    });
+  }
+
+  async ensureLoaded(organizationId?: string | null): Promise<void> {
     const user = this.auth.currentUser();
-    if (!user) return [];
-    const role = user.role;
-    const roleDefaults = new Set(DEFAULT_ROLE_PERMISSIONS[role] ?? []);
-
-    const override = this.overrides().find(o => o.userId === user.id);
-    if (override) {
-      // Merge: role defaults are always included; override adds extra tools
-      const merged = new Set([...roleDefaults, ...override.allowedTools]);
-      return Array.from(merged);
+    if (!user) {
+      this.catalogState.set([]);
+      this.allowedToolsState.set([]);
+      this.loadedScopeKey = null;
+      return;
     }
 
-    // No override — use role defaults
-    return DEFAULT_ROLE_PERMISSIONS[role] ?? [];
+    const scopeKey = `${user.id}:${organizationId ?? ''}`;
+    if (this.loadedScopeKey === scopeKey && this.catalogState().length > 0) {
+      return;
+    }
+
+    if (this.loadingPromise) {
+      return this.loadingPromise;
+    }
+
+    this.loadingPromise = this.loadFromApi(scopeKey, organizationId ?? undefined)
+      .finally(() => {
+        this.loadingPromise = null;
+      });
+
+    return this.loadingPromise;
+  }
+
+  /** Effective tool keys for the active user + organization scope. */
+  readonly allowedTools = computed<string[]>(() => {
+    return this.allowedToolsState();
   });
 
   /** All platform tools the current user has access to */
   readonly allowedToolDefinitions = computed<ToolPermission[]>(() => {
     const keys = new Set(this.allowedTools());
-    return PLATFORM_TOOLS.filter(t => keys.has(t.key));
+    const dynamic = this.catalogState();
+
+    if (dynamic.length > 0) {
+      return dynamic
+        .flatMap(module => module.tools)
+        .filter(tool => keys.has(tool.key))
+        .map(tool => ({
+          key: tool.key,
+          module: tool.moduleKey as AppModule,
+          labelKey: tool.labelKey,
+          route: tool.route
+        }));
+    }
+
+    return PLATFORM_TOOLS.filter(tool => keys.has(tool.key));
   });
 
   /** Whether the current user has access to a specific tool */
@@ -67,18 +114,18 @@ export class PermissionService {
   }
 
   /** Whether the current user has access to any tool in a module */
-  hasModule(module: AppModule): boolean {
-    const moduleTools = getToolsByModule(module);
+  hasModule(module: string): boolean {
+    const moduleTools = this.getToolsForModule(module);
     const allowed = new Set(this.allowedTools());
-    return moduleTools.some(t => allowed.has(t.key));
+    return moduleTools.some(tool => allowed.has(tool.key));
   }
 
   /** Computed signal for checking module-level access */
-  hasModuleSignal(module: AppModule) {
+  hasModuleSignal(module: string) {
     return computed(() => {
-      const moduleTools = getToolsByModule(module);
+      const moduleTools = this.getToolsForModule(module);
       const allowed = new Set(this.allowedTools());
-      return moduleTools.some(t => allowed.has(t.key));
+      return moduleTools.some(tool => allowed.has(tool.key));
     });
   }
 
@@ -90,49 +137,110 @@ export class PermissionService {
     return this.allowedTools().length > 0;
   });
 
-  /** Update per-user permission overrides (admin action) */
-  setUserPermissions(userId: string, allowedTools: string[]): void {
-    const current = [...this.overrides()];
-    const existingIdx = current.findIndex(o => o.userId === userId);
-    if (existingIdx >= 0) {
-      current[existingIdx] = { userId, allowedTools };
-    } else {
-      current.push({ userId, allowedTools });
-    }
-    this.overrides.set(current);
-    this.persistOverrides(current);
-  }
-
-  /** Remove per-user override (revert to role defaults) */
-  removeUserOverride(userId: string): void {
-    const updated = this.overrides().filter(o => o.userId !== userId);
-    this.overrides.set(updated);
-    this.persistOverrides(updated);
-  }
-
-  /** Get permissions for a specific user (for admin management) */
-  getUserPermissions(userId: string): UserPermissions | null {
-    return this.overrides().find(o => o.userId === userId) ?? null;
-  }
-
   /** Get the allowed tools visible within a given module */
-  getModuleTools(module: AppModule): ToolPermission[] {
+  getModuleTools(module: string): ToolPermission[] {
     const allowed = new Set(this.allowedTools());
-    return getToolsByModule(module).filter(t => allowed.has(t.key));
+    return this.getToolsForModule(module)
+      .filter(tool => allowed.has(tool.key))
+      .map(tool => ({
+        key: tool.key,
+        module: tool.moduleKey as AppModule,
+        labelKey: tool.labelKey,
+        route: tool.route
+      }));
   }
 
-  private persistOverrides(data: UserPermissions[]): void {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch { /* storage unavailable */ }
-  }
+  private async loadFromApi(scopeKey: string, organizationId?: string): Promise<void> {
+    this.isLoadingState.set(true);
+    this.loadErrorState.set(null);
 
-  private loadOverrides(): UserPermissions[] {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      const [catalog, effective] = await Promise.all([
+        this.repository.getCatalog(),
+        this.repository.getEffectivePermissions(organizationId)
+      ]);
+
+      this.catalogState.set(this.normalizeCatalog(catalog.modules));
+      this.allowedToolsState.set(this.normalizeTools(effective.toolKeys));
+      this.loadedScopeKey = scopeKey;
     } catch {
-      return [];
+      // Fallback for local/dev scenarios where permission endpoints are not reachable.
+      const user = this.auth.currentUser();
+      const roleDefaults = user ? [...(DEFAULT_ROLE_PERMISSIONS[user.role] ?? [])] : [];
+      this.catalogState.set(this.buildFallbackCatalog());
+      this.allowedToolsState.set(this.normalizeTools(roleDefaults));
+      this.loadedScopeKey = scopeKey;
+      this.loadErrorState.set('permissions.loadError');
+    } finally {
+      this.isLoadingState.set(false);
     }
+  }
+
+  private getToolsForModule(module: string): PermissionTool[] {
+    const dynamic = this.catalogState();
+    if (dynamic.length > 0) {
+      return dynamic
+        .find(group => group.key === module)
+        ?.tools ?? [];
+    }
+
+    return PLATFORM_TOOLS
+      .filter(tool => tool.module === module)
+      .map(tool => ({
+        key: tool.key,
+        moduleKey: tool.module,
+        labelKey: tool.labelKey,
+        route: tool.route,
+        sortOrder: 0,
+        isSystemAdminOnly: SYSTEM_ADMIN_ONLY_TOOLS.includes(tool.key as typeof SYSTEM_ADMIN_ONLY_TOOLS[number]),
+        isActive: true
+      }));
+  }
+
+  private normalizeCatalog(modules: PermissionModule[]): PermissionModule[] {
+    return modules
+      .filter(module => module.isActive)
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map(module => ({
+        ...module,
+        tools: module.tools
+          .filter(tool => tool.isActive)
+          .sort((left, right) => left.sortOrder - right.sortOrder)
+      }));
+  }
+
+  private normalizeTools(tools: string[]): string[] {
+    return [...new Set(tools.map(tool => tool.trim().toLowerCase()))];
+  }
+
+  private buildFallbackCatalog(): PermissionModule[] {
+    const groups = new Map<string, PermissionModule>();
+
+    for (const tool of PLATFORM_TOOLS) {
+      const existing = groups.get(tool.module);
+      const normalizedTool: PermissionTool = {
+        key: tool.key,
+        moduleKey: tool.module,
+        labelKey: tool.labelKey,
+        route: tool.route,
+        sortOrder: 0,
+        isSystemAdminOnly: SYSTEM_ADMIN_ONLY_TOOLS.includes(tool.key as typeof SYSTEM_ADMIN_ONLY_TOOLS[number]),
+        isActive: true
+      };
+
+      if (existing) {
+        existing.tools = [...existing.tools, normalizedTool];
+      } else {
+        groups.set(tool.module, {
+          key: tool.module,
+          labelKey: `admin.permissions.module.${tool.module}`,
+          sortOrder: 0,
+          isActive: true,
+          tools: [normalizedTool]
+        });
+      }
+    }
+
+    return [...groups.values()];
   }
 }

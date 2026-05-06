@@ -17,8 +17,9 @@ import { CollapsibleSectionComponent } from '../../../../shared/components/colla
 import { AdminUser } from '../../../../core/models/admin-user.model';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
-import { PermissionService } from '../../../../core/auth/permission.service';
-import { DEFAULT_ROLE_PERMISSIONS } from '../../../../core/auth/permissions.model';
+import { ApiPermissionRepository } from '../../../../core/repositories/api/api-permission.repository';
+import { PermissionModule, UserOrganizationPermissionAssignment } from '../../../../core/models';
+import { DEFAULT_ROLE_PERMISSIONS, SYSTEM_ADMIN_ONLY_TOOLS } from '../../../../core/auth/permissions.model';
 import { UsersFacadeService, UsersFilters } from './users-facade.service';
 
 interface UserRow extends Record<string, unknown> {
@@ -75,7 +76,7 @@ export class AdminUsersPageComponent implements OnInit {
   readonly facade = inject(UsersFacadeService);
   private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);
-  private readonly permissions = inject(PermissionService);
+  private readonly permissionRepository = inject(ApiPermissionRepository);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
   readonly canManageOrganizationAssignments = this.auth.isAdmin;
 
@@ -85,9 +86,74 @@ export class AdminUsersPageComponent implements OnInit {
   readonly selectedUsers = signal<UserRow[]>([]);
   readonly editingUser = signal<AdminUser | null>(null);
   readonly deletingId = signal<string | null>(null);
-  readonly userPermissions = signal<string[]>([]);
   readonly userTenantIds = signal<Set<string>>(new Set());
   readonly orderedTenantIds = signal<string[]>([]);
+  readonly permissionCatalog = signal<PermissionModule[]>([]);
+  readonly permissionsByOrganization = signal<Record<string, string[]>>({});
+  readonly selectedPermissionOrganizationId = signal<string | null>(null);
+  readonly copySourceOrganizationId = signal<string>('');
+  readonly loadingPermissionCatalog = signal(false);
+  readonly loadingUserPermissions = signal(false);
+
+  readonly selectedOrganizationPermissionTools = computed(() => {
+    const organizationId = this.selectedPermissionOrganizationId();
+    if (!organizationId) {
+      return [];
+    }
+
+    return this.permissionsByOrganization()[organizationId] ?? [];
+  });
+
+  readonly selectedTenantItems = computed(() => {
+    const selected = this.userTenantIds();
+    const order = this.orderedTenantIds();
+    const orderIndex = new Map(order.map((id, index) => [id, index]));
+
+    return this.tenantItems()
+      .filter(tenant => selected.has(tenant.id))
+      .sort((left, right) => {
+        const leftIndex = orderIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER;
+        const rightIndex = orderIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER;
+        return leftIndex - rightIndex;
+      });
+  });
+
+  readonly restrictedToolKeys = computed(() => {
+    const catalog = this.permissionCatalog();
+    if (catalog.length === 0) {
+      return [...SYSTEM_ADMIN_ONLY_TOOLS];
+    }
+
+    return catalog
+      .flatMap(module => module.tools)
+      .filter(tool => tool.isSystemAdminOnly)
+      .map(tool => tool.key);
+  });
+
+  readonly disabledToolKeys = computed(() => {
+    const roleId = this.form?.get('roleId')?.value as string | undefined;
+    if (roleId === 'role001') {
+      return [];
+    }
+
+    return this.restrictedToolKeys();
+  });
+
+  readonly canCopyPermissions = computed(() => {
+    const source = this.copySourceOrganizationId();
+    const target = this.selectedPermissionOrganizationId();
+    return !!source && !!target && source !== target;
+  });
+
+  readonly hasValidPermissionSelection = computed(() => {
+    const organizations = this.selectedTenantItems();
+    if (organizations.length === 0) {
+      return true;
+    }
+
+    const matrix = this.permissionsByOrganization();
+    return organizations.every(org => (matrix[org.id]?.length ?? 0) > 0);
+  });
 
   constructor() {
     // Reload data whenever organization changes
@@ -103,17 +169,7 @@ export class AdminUsersPageComponent implements OnInit {
   ];
 
   readonly tenantItems = computed(() => {
-    const all = this.facade.tenants().filter(t => t.isActive);
-    const user = this.auth.currentUser();
-    // Admins only see their assigned tenants
-    if (user && user.role !== 'system_admin' && user.tenantIds?.length) {
-      const allowed = new Set(user.tenantIds);
-      return all.filter(t => allowed.has(t.id));
-    }
-    if (user && user.role !== 'system_admin' && user.tenantId) {
-      return all.filter(t => t.id === user.tenantId);
-    }
-    return all;
+    return this.facade.tenants().filter(t => t.isActive);
   });
 
   form!: FormGroup;
@@ -146,11 +202,13 @@ export class AdminUsersPageComponent implements OnInit {
       ? [
           { value: 'role001', labelKey: 'admin.users.role.systemAdmin' },
           { value: 'role002', labelKey: 'admin.users.role.admin' },
-          { value: 'role003', labelKey: 'admin.users.role.viewer' }
+          { value: 'role003', labelKey: 'admin.users.role.viewer' },
+          { value: 'role004', labelKey: 'admin.users.role.editor' }
         ]
       : [
           { value: 'role002', labelKey: 'admin.users.role.admin' },
-          { value: 'role003', labelKey: 'admin.users.role.viewer' }
+          { value: 'role003', labelKey: 'admin.users.role.viewer' },
+          { value: 'role004', labelKey: 'admin.users.role.editor' }
         ];
     return [
       { key: 'search', labelKey: 'admin.users.filter.search', type: 'text' as const },
@@ -187,12 +245,14 @@ export class AdminUsersPageComponent implements OnInit {
     { titleKey: 'admin.users.help.roles', items: [
       'admin.users.help.roleSystemAdmin',
       'admin.users.help.roleAdmin',
+      'admin.users.help.roleEditor',
       'admin.users.help.roleViewer'
     ]}
   ];
 
   ngOnInit(): void {
     this.initializeForm();
+    void this.loadPermissionCatalog();
   }
 
   private initializeForm(): void {
@@ -200,12 +260,17 @@ export class AdminUsersPageComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       fullName: ['', [Validators.required]],
       phone: [''],
-      roleId: [''],
+      roleId: ['role002', [Validators.required]],
       isActive: [true]
+    });
+
+    this.form.get('roleId')?.valueChanges.subscribe(() => {
+      this.applyRoleRestrictionsToPermissions();
+      this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
     });
   }
 
-  private populateForm(): void {
+  private async populateForm(): Promise<void> {
     const user = this.editingUser();
     if (user) {
       this.isEditing = true;
@@ -213,19 +278,10 @@ export class AdminUsersPageComponent implements OnInit {
         email: user.email,
         fullName: user.fullName,
         phone: user.phone || '',
-        roleId: user.roleId || '',
+        roleId: user.roleId || 'role002',
         isActive: user.isActive
       });
       this.form.get('email')?.disable();
-
-      // Load permission overrides or role defaults
-      const override = this.permissions.getUserPermissions(user.id);
-      if (override) {
-        this.userPermissions.set([...override.allowedTools]);
-      } else {
-        const roleKey = user.role || 'admin';
-        this.userPermissions.set([...(DEFAULT_ROLE_PERMISSIONS[roleKey] || [])]);
-      }
 
       // Load company assignment
       if (user.tenantIds?.length) {
@@ -238,14 +294,20 @@ export class AdminUsersPageComponent implements OnInit {
         this.userTenantIds.set(new Set());
         this.orderedTenantIds.set([]);
       }
+
+      await this.loadUserPermissions(user.id);
     } else {
       this.isEditing = false;
-      this.form.reset({ email: '', fullName: '', phone: '', roleId: '', isActive: true });
+      this.form.reset({ email: '', fullName: '', phone: '', roleId: 'role002', isActive: true });
       this.form.get('email')?.enable();
-      this.userPermissions.set([...(DEFAULT_ROLE_PERMISSIONS['admin'] || [])]);
       this.userTenantIds.set(new Set());
       this.orderedTenantIds.set([]);
+      this.permissionsByOrganization.set({});
+      this.selectedPermissionOrganizationId.set(null);
+      this.copySourceOrganizationId.set('');
     }
+
+    this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
     this.submitted = false;
   }
 
@@ -281,7 +343,7 @@ export class AdminUsersPageComponent implements OnInit {
   openCreateForm(): void {
     this.editingUser.set(null);
     this.showFormPanel.set(true);
-    this.populateForm();
+    void this.populateForm();
   }
 
   openEditForm(row: UserRow): void {
@@ -289,7 +351,7 @@ export class AdminUsersPageComponent implements OnInit {
     if (user) {
       this.editingUser.set(user);
       this.showFormPanel.set(true);
-      this.populateForm();
+      void this.populateForm();
     }
   }
 
@@ -301,7 +363,7 @@ export class AdminUsersPageComponent implements OnInit {
 
   async onFormSave(): Promise<void> {
     this.submitted = true;
-    if (!this.form.valid) return;
+    if (!this.form.valid || !this.hasValidPermissionSelection()) return;
 
     const formValue = this.form.getRawValue();
 
@@ -313,6 +375,7 @@ export class AdminUsersPageComponent implements OnInit {
     const tenantNames = tenantIds
       .map(id => allTenants.find(t => t.id === id)?.name)
       .filter((n): n is string => !!n);
+    const permissionsByOrganization = this.buildPermissionsPayload(tenantIds);
 
     if (this.isEditing) {
       const existingUser = this.editingUser();
@@ -324,13 +387,13 @@ export class AdminUsersPageComponent implements OnInit {
           isActive: formValue.isActive,
           organizationId: primaryOrganizationId,
           tenantIds,
-          tenantNames
+          tenantNames,
+          permissionsByOrganization
         });
         if (success) {
           if (existingUser.id === this.auth.currentUser()?.id) {
             this.auth.updateCurrentOrganizationAssignments(primaryOrganizationId, tenantIds);
           }
-          this.permissions.setUserPermissions(existingUser.id, this.userPermissions());
           this.closeFormPanel();
         }
       }
@@ -342,7 +405,8 @@ export class AdminUsersPageComponent implements OnInit {
         roleId: formValue.roleId || '',
         organizationId: primaryOrganizationId,
         tenantIds,
-        tenantNames
+        tenantNames,
+        permissionsByOrganization
       });
       if (success) {
         this.closeFormPanel();
@@ -351,15 +415,172 @@ export class AdminUsersPageComponent implements OnInit {
   }
 
   onPermissionsChanged(tools: string[]): void {
-    this.userPermissions.set(tools);
+    const organizationId = this.selectedPermissionOrganizationId();
+    if (!organizationId) {
+      return;
+    }
+
+    this.permissionsByOrganization.update(current => ({
+      ...current,
+      [organizationId]: this.normalizeToolKeys(tools)
+    }));
   }
 
   onTenantSelectionChanged(ids: Set<string>): void {
     this.userTenantIds.set(ids);
+    this.syncPermissionOrganizations(Array.from(ids));
   }
 
   onTenantOrderChanged(orderedIds: string[]): void {
     this.orderedTenantIds.set(orderedIds);
+    this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
+  }
+
+  onPermissionOrganizationChanged(organizationId: string): void {
+    this.selectedPermissionOrganizationId.set(organizationId || null);
+  }
+
+  onCopySourceOrganizationChanged(organizationId: string): void {
+    this.copySourceOrganizationId.set(organizationId);
+  }
+
+  copyPermissionsFromOrganization(): void {
+    if (!this.canCopyPermissions()) {
+      return;
+    }
+
+    const sourceId = this.copySourceOrganizationId();
+    const targetId = this.selectedPermissionOrganizationId();
+    if (!sourceId || !targetId) {
+      return;
+    }
+
+    const matrix = this.permissionsByOrganization();
+    const sourceTools = matrix[sourceId] ?? [];
+
+    this.permissionsByOrganization.update(current => ({
+      ...current,
+      [targetId]: this.normalizeToolKeys(sourceTools)
+    }));
+  }
+
+  private async loadPermissionCatalog(): Promise<void> {
+    this.loadingPermissionCatalog.set(true);
+    try {
+      const catalog = await this.permissionRepository.getCatalog();
+      this.permissionCatalog.set(catalog.modules);
+      this.applyRoleRestrictionsToPermissions();
+      this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
+    } catch {
+      this.permissionCatalog.set([]);
+    } finally {
+      this.loadingPermissionCatalog.set(false);
+    }
+  }
+
+  private async loadUserPermissions(userId: string): Promise<void> {
+    this.loadingUserPermissions.set(true);
+    try {
+      const response = await this.permissionRepository.getUserPermissions(userId);
+      const map = response.permissionsByOrganization.reduce<Record<string, string[]>>((acc, item) => {
+        acc[item.organizationId] = this.normalizeToolKeys(item.toolKeys);
+        return acc;
+      }, {});
+
+      this.permissionsByOrganization.set(map);
+    } catch {
+      this.permissionsByOrganization.set({});
+    } finally {
+      this.loadingUserPermissions.set(false);
+    }
+  }
+
+  private syncPermissionOrganizations(organizationIds: string[]): void {
+    const roleId = (this.form?.get('roleId')?.value as string | undefined) ?? 'role002';
+    const defaults = this.defaultToolsForRole(roleId);
+    const selected = new Set(organizationIds);
+    const preferredOrder = this.orderedTenantIds().filter(id => selected.has(id));
+    const effectiveOrder = [
+      ...preferredOrder,
+      ...organizationIds.filter(id => !preferredOrder.includes(id))
+    ];
+
+    const next: Record<string, string[]> = {};
+    const current = this.permissionsByOrganization();
+
+    for (const organizationId of effectiveOrder) {
+      next[organizationId] = this.normalizeToolKeys(current[organizationId] ?? defaults);
+    }
+
+    this.permissionsByOrganization.set(next);
+
+    const activePermissionOrg = this.selectedPermissionOrganizationId();
+    if (!activePermissionOrg || !selected.has(activePermissionOrg)) {
+      this.selectedPermissionOrganizationId.set(effectiveOrder[0] ?? null);
+    }
+
+    const source = this.copySourceOrganizationId();
+    if (source && !selected.has(source)) {
+      this.copySourceOrganizationId.set('');
+    }
+  }
+
+  private applyRoleRestrictionsToPermissions(): void {
+    const roleId = (this.form?.get('roleId')?.value as string | undefined) ?? 'role002';
+    if (roleId === 'role001') {
+      return;
+    }
+
+    const restricted = new Set(this.restrictedToolKeys());
+    this.permissionsByOrganization.update(current => {
+      const next: Record<string, string[]> = {};
+      for (const [organizationId, tools] of Object.entries(current)) {
+        next[organizationId] = tools.filter(tool => !restricted.has(tool));
+      }
+      return next;
+    });
+  }
+
+  private buildPermissionsPayload(organizationIds: string[]): UserOrganizationPermissionAssignment[] {
+    const matrix = this.permissionsByOrganization();
+    return organizationIds.map(organizationId => ({
+      organizationId,
+      toolKeys: this.normalizeToolKeys(matrix[organizationId] ?? this.defaultToolsForRole(this.form.get('roleId')?.value || 'role002'))
+    }));
+  }
+
+  private normalizeToolKeys(toolKeys: string[]): string[] {
+    const roleId = (this.form?.get('roleId')?.value as string | undefined) ?? 'role002';
+    const restricted = new Set(this.restrictedToolKeys());
+    const normalized = [...new Set(toolKeys.map(tool => tool.trim()).filter(Boolean))];
+
+    if (roleId === 'role001') {
+      return normalized;
+    }
+
+    return normalized.filter(tool => !restricted.has(tool));
+  }
+
+  private defaultToolsForRole(roleId: string): string[] {
+    const roleKey = this.toRoleName(roleId);
+    return this.normalizeToolKeys([...(DEFAULT_ROLE_PERMISSIONS[roleKey] ?? [])]);
+  }
+
+  private toRoleName(roleId: string): string {
+    switch (roleId) {
+      case 'role001':
+        return 'system_admin';
+      case 'role003':
+        return 'viewer';
+      case 'role004':
+        return 'editor';
+      case 'role005':
+        return 'user';
+      case 'role006':
+        return 'player';
+      default:
+        return 'admin';
+    }
   }
 
   isFieldInvalid(controlName: string): boolean {

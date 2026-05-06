@@ -32,7 +32,7 @@ export const adminOrUserGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const role = auth.userRole();
-  if (role === 'system_admin' || role === 'admin' || role === 'user') {
+  if (role === 'system_admin' || role === 'admin' || role === 'editor' || role === 'user') {
     return true;
   }
   if (auth.isAuthenticated()) {
@@ -45,12 +45,13 @@ export const adminOrUserGuard: CanActivateFn = () => {
  * Guard that checks tool-level permission.
  * Expects route data: { toolKey: 'some-tool-key' }
  */
-export const toolGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
+export const toolGuard: CanActivateFn = async (route: ActivatedRouteSnapshot) => {
   const permissions = inject(PermissionService);
   const router = inject(Router);
   const toolKey = route.data?.['toolKey'] as string | undefined;
 
   if (!toolKey) return true;
+  await permissions.ensureLoaded();
   if (permissions.hasTool(toolKey)) return true;
 
   return router.createUrlTree(['/admin']);
@@ -90,7 +91,7 @@ export const guestGuard: CanActivateFn = () => {
     return true;
   }
   const role = auth.userRole();
-  if (role === 'system_admin' || role === 'admin' || role === 'user') {
+  if (role === 'system_admin' || role === 'admin' || role === 'editor' || role === 'user') {
     return router.createUrlTree(['/admin']);
   }
   if (role === 'player') {

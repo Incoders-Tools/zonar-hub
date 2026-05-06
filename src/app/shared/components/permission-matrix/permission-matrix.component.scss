@@ -142,6 +142,15 @@
       accent-color: var(--zh-primary);
       cursor: pointer;
     }
+
+    &--disabled {
+      color: var(--zh-text-muted);
+      cursor: not-allowed;
+
+      input[type='checkbox'] {
+        cursor: not-allowed;
+      }
+    }
   }
 }
 

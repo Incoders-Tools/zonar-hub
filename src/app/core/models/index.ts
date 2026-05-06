@@ -20,3 +20,4 @@ export * from './organization.model';
 export * from './tournament-modality.model';
 export * from './email-template.model';
 export * from './admin-dashboard-summary.model';
+export * from './permission.model';

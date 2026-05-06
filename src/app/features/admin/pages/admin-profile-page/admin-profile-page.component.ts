@@ -62,6 +62,7 @@ export class AdminProfilePageComponent implements OnInit {
     switch (role) {
       case 'system_admin': return 'admin.profile.role.systemAdmin';
       case 'admin': return 'admin.profile.role.admin';
+      case 'editor': return 'admin.profile.role.editor';
       case 'player': return 'admin.profile.role.player';
       case 'viewer': return 'admin.profile.role.viewer';
       default: return 'admin.profile.role.unknown';

@@ -53,7 +53,7 @@ export class UsersFacadeService {
 
       // Filter by active organization.
       // Users with no org assignment are always visible so admins can assign them later.
-      if (activeOrgId) {
+      if (activeOrgId && !this.auth.isSystemAdmin()) {
         const assignedOrganizations = new Set<string>();
         if (user.organizationId) {
           assignedOrganizations.add(user.organizationId);
@@ -223,7 +223,9 @@ export class UsersFacadeService {
       ? availableOrganizations
         .filter(org => assignedOrgIds.has(org.id))
         .map(org => org.name)
-      : availableOrganizations.map(org => org.name);
+      : this.auth.isSystemAdmin()
+        ? availableOrganizations.map(org => org.name)
+        : [];
 
     const fallbackOrgId = current.organizationId ?? this.activeOrg.activeOrganizationId() ?? undefined;
     const fallbackOrgName = this.activeOrg.activeOrganizationName() || undefined;
@@ -250,10 +252,20 @@ export class UsersFacadeService {
     }
 
     const merged = [...users];
+    const existing = merged[existingIndex];
     merged[existingIndex] = {
-      ...merged[existingIndex],
-      ...currentAsAdminUser,
-      updatedAt: merged[existingIndex].updatedAt
+      ...existing,
+      roleId: existing.roleId || currentAsAdminUser.roleId,
+      roleName: existing.roleName || currentAsAdminUser.roleName,
+      role: existing.role || currentAsAdminUser.role,
+      organizationId: existing.organizationId ?? currentAsAdminUser.organizationId,
+      organizationName: existing.organizationName ?? currentAsAdminUser.organizationName,
+      tenantIds: existing.tenantIds && existing.tenantIds.length > 0
+        ? existing.tenantIds
+        : currentAsAdminUser.tenantIds,
+      tenantNames: existing.tenantNames && existing.tenantNames.length > 0
+        ? existing.tenantNames
+        : currentAsAdminUser.tenantNames
     };
     return merged;
   }
@@ -266,43 +278,18 @@ export class UsersFacadeService {
       return active.map(org => this.toTenant(org));
     }
 
-    const knownIds = new Set<string>(user.tenantIds ?? []);
-    if (user.tenantId) {
-      knownIds.add(user.tenantId);
-    }
+    const assignedIds = new Set(user.tenantIds ?? []);
     if (user.organizationId) {
-      knownIds.add(user.organizationId);
+      assignedIds.add(user.organizationId);
     }
 
-    const visible = knownIds.size > 0
-      ? active.filter(org => knownIds.has(org.id))
-      : active;
+    if (assignedIds.size === 0) {
+      return [];
+    }
 
-    const fromApi = visible.map(org => this.toTenant(org));
-    const knownFromSession = (user.tenantIds ?? []).map((id, index) => {
-      const knownName = id;
-      return {
-        id,
-        name: knownName,
-        key: this.toKey(knownName),
-        contactEmail: user.email,
-        planId: 'plan-1',
-        planType: 'starter',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      } satisfies Tenant;
-    });
-
-    const merged = new Map<string, Tenant>();
-    fromApi.forEach(tenant => merged.set(tenant.id, tenant));
-    knownFromSession.forEach(tenant => {
-      if (!merged.has(tenant.id)) {
-        merged.set(tenant.id, tenant);
-      }
-    });
-
-    return Array.from(merged.values());
+    return active
+      .filter(org => assignedIds.has(org.id))
+      .map(org => this.toTenant(org));
   }
 
   private toTenant(org: Organization): Tenant {
@@ -334,6 +321,8 @@ export class UsersFacadeService {
         return { roleId: 'role001', roleName: 'system_admin' };
       case 'viewer':
         return { roleId: 'role003', roleName: 'viewer' };
+      case 'editor':
+        return { roleId: 'role004', roleName: 'editor' };
       default:
         return { roleId: 'role002', roleName: 'admin' };
     }

@@ -7,7 +7,7 @@ export interface Role {
   updatedAt: Date;
 }
 
-export const SYSTEM_ROLE_NAMES = ['system_admin', 'admin', 'user', 'viewer'];
+export const SYSTEM_ROLE_NAMES = ['system_admin', 'admin', 'editor', 'user', 'viewer', 'player'];
 
 export function isSystemRole(name: string): boolean {
   return SYSTEM_ROLE_NAMES.includes(name.toLowerCase());

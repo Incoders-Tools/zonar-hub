@@ -11,6 +11,10 @@ User management component for system administrators. Provides complete CRUD oper
 - Filter users by search, role, and active status
 - Sort by any column
 - Role-based access control
+- Organization assignment list uses tenant scope for non-sysadmin users (all active tenant organizations)
+- Permissions are configured per assigned organization using a dynamic API catalog
+- Permission matrix supports selecting an organization target and copying permissions from another assigned organization
+- System-admin-only tools are disabled automatically for non-system-admin roles
 - Help dialog explaining user roles and permissions
 - Responsive design with Material Design 3
 
@@ -51,6 +55,7 @@ User management component for system administrators. Provides complete CRUD oper
 - admin.users.role.systemAdmin
 - admin.users.role.admin
 - admin.users.role.viewer
+- admin.users.role.editor
 - admin.users.action.create
 - admin.users.action.bulkDelete
 - admin.users.form.create
@@ -60,6 +65,13 @@ User management component for system administrators. Provides complete CRUD oper
 - admin.users.form.phone
 - admin.users.form.role
 - admin.users.form.isActive
+- admin.users.permissions.organizationSelector
+- admin.users.permissions.selectOrganization
+- admin.users.permissions.copyFrom
+- admin.users.permissions.selectSourceOrganization
+- admin.users.permissions.copyAction
+- admin.users.permissions.emptyOrgSelection
+- admin.users.permissions.invalidSelection
 - admin.users.confirm.deleteTitle
 - admin.users.confirm.deleteMessage
 - admin.users.confirm.bulkDeleteTitle
@@ -69,6 +81,7 @@ User management component for system administrators. Provides complete CRUD oper
 - admin.users.help.roles
 - admin.users.help.roleSystemAdmin
 - admin.users.help.roleAdmin
+- admin.users.help.roleEditor
 - admin.users.help.roleViewer
 
 ## Usage

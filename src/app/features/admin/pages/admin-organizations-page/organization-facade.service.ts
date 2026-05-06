@@ -3,8 +3,8 @@ import { Organization, OrganizationType } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
-import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-admin-user.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface OrganizationFilters {
   name?: string;
@@ -16,8 +16,8 @@ export interface OrganizationFilters {
 export class OrganizationFacadeService {
   private readonly repo = inject(ApiOrganizationRepository);
   private readonly sportsRepo = inject(ApiSportRepository);
-  private readonly adminUserRepo = inject(ApiAdminUserRepository);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly notification = inject(NotificationService);
 
   private readonly organizationsState = signal<Organization[]>([]);
@@ -114,17 +114,13 @@ export class OrganizationFacadeService {
       if (currentUser) {
         const existingIds = new Set<string>([
           ...(currentUser.tenantIds ?? []),
-          ...(currentUser.tenantId ? [currentUser.tenantId] : []),
           ...(currentUser.organizationId ? [currentUser.organizationId] : [])
         ]);
         existingIds.add(created.id);
         const updatedTenantIds = Array.from(existingIds);
-        try {
-          await this.adminUserRepo.update(currentUser.id, { tenantIds: updatedTenantIds });
-          this.auth.updateCurrentOrganizationAssignments(undefined, updatedTenantIds);
-        } catch {
-          // Non-critical — org was created, assignment is best-effort
-        }
+        this.auth.updateCurrentOrganizationAssignments(created.id, updatedTenantIds);
+        this.auth.updateCurrentOrganization(created.id, created.displayName);
+        this.activeOrg.setOnboardingOrganization(created.id);
       }
 
       this.notification.success('admin.organizations.toast.created');

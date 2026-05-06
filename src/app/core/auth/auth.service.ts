@@ -221,6 +221,18 @@ export class AuthService {
     this.setSession(updated);
   }
 
+  updateTenantContext(tenantId?: string | null): void {
+    try {
+      if (tenantId) {
+        localStorage.setItem(TENANT_SESSION_KEY, tenantId);
+      } else {
+        localStorage.removeItem(TENANT_SESSION_KEY);
+      }
+    } catch {
+      // storage unavailable
+    }
+  }
+
   private buildAndSetSession(response: AuthApiResponse): AuthSession {
     const user = this.mapApiUser(response.user);
     const tenant = response.tenant ? this.mapApiTenant(response.tenant) : undefined;
@@ -321,7 +333,7 @@ export class AuthService {
   }
 
   private toUserRole(role: string): UserRole {
-    if (role === 'system_admin' || role === 'admin' || role === 'player' || role === 'viewer') {
+    if (role === 'system_admin' || role === 'admin' || role === 'editor' || role === 'player' || role === 'viewer') {
       return role;
     }
 

@@ -20,6 +20,11 @@ export interface AdminUser {
   updatedAt?: string;
 }
 
+export interface AdminUserPermissionByOrganization {
+  organizationId: string;
+  toolKeys: string[];
+}
+
 export interface AdminUserCreatePayload {
   email: string;
   fullName: string;
@@ -30,6 +35,7 @@ export interface AdminUserCreatePayload {
   tenantNames?: string[];
   complexId?: string;
   profileImagePath?: string;
+  permissionsByOrganization?: AdminUserPermissionByOrganization[];
   password?: string;
 }
 
@@ -42,5 +48,6 @@ export interface AdminUserUpdatePayload {
   tenantIds?: string[];
   tenantNames?: string[];
   profileImagePath?: string;
+  permissionsByOrganization?: AdminUserPermissionByOrganization[];
   isActive?: boolean;
 }

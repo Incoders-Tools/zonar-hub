@@ -15,6 +15,12 @@ interface SetupCheckItem {
   icon: string;
 }
 
+interface UsageProgress {
+  current: number;
+  max: number | null;
+  percent: number;
+}
+
 @Component({
   selector: 'app-admin-dashboard-page',
   standalone: true,
@@ -101,28 +107,19 @@ export class AdminDashboardPageComponent {
   readonly totalTournaments = computed(() => this.summary().totalTournaments);
 
   /** Usage progress: tournaments */
-  readonly tournamentUsage = computed(() => {
-    const plan = this.currentPlan();
-    const current = this.totalTournaments();
-    const max = plan?.maxTournaments ?? null;
-    return { current, max, percent: max ? Math.min(100, Math.round((current / max) * 100)) : 0 };
-  });
+  readonly tournamentUsage = computed(() =>
+    this.toUsageProgress(this.totalTournaments(), this.currentPlan()?.maxTournaments ?? null)
+  );
 
   /** Usage progress: admins */
-  readonly adminUsage = computed(() => {
-    const plan = this.currentPlan();
-    const current = this.adminCount();
-    const max = plan?.maxAdmins ?? null;
-    return { current, max, percent: max ? Math.min(100, Math.round((current / max) * 100)) : 0 };
-  });
+  readonly adminUsage = computed(() =>
+    this.toUsageProgress(this.adminCount(), this.currentPlan()?.maxAdmins ?? null)
+  );
 
   /** Usage progress: complexes */
-  readonly complexUsage = computed(() => {
-    const plan = this.currentPlan();
-    const current = this.complexCount();
-    const max = plan?.maxComplexes ?? null;
-    return { current, max, percent: max ? Math.min(100, Math.round((current / max) * 100)) : 0 };
-  });
+  readonly complexUsage = computed(() =>
+    this.toUsageProgress(this.complexCount(), this.currentPlan()?.maxComplexes ?? null)
+  );
 
   /** Registration fill rate */
   readonly registrationFillRate = computed(() => {
@@ -131,4 +128,38 @@ export class AdminDashboardPageComponent {
     if (total === 0) return 0;
     return Math.round((registered / total) * 100);
   });
+
+  private toUsageProgress(currentRaw: unknown, maxRaw: unknown): UsageProgress {
+    const current = this.toNonNegativeNumber(currentRaw);
+    const max = this.toPositiveNumberOrNull(maxRaw);
+
+    if (max === null) {
+      return { current, max: null, percent: 0 };
+    }
+
+    const rawPercent = (current / max) * 100;
+    const clampedPercent = Number.isFinite(rawPercent)
+      ? Math.max(0, Math.min(100, Math.round(rawPercent)))
+      : 0;
+
+    return {
+      current,
+      max,
+      percent: current >= max ? 100 : clampedPercent
+    };
+  }
+
+  private toNonNegativeNumber(value: unknown): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }
+
+  private toPositiveNumberOrNull(value: unknown): number | null {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null;
+    }
+
+    return parsed;
+  }
 }

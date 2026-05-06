@@ -37,6 +37,7 @@ interface CreateAdminUserRequest {
   roleId: string;
   organizationId?: string;
   tenantIds?: string[];
+  permissionsByOrganization?: { organizationId: string; toolKeys: string[] }[];
   password?: string;
 }
 
@@ -46,6 +47,7 @@ interface UpdateAdminUserRequest {
   roleId?: string;
   organizationId?: string;
   tenantIds?: string[];
+  permissionsByOrganization?: { organizationId: string; toolKeys: string[] }[];
   isActive?: boolean;
 }
 
@@ -84,6 +86,7 @@ export class ApiAdminUserRepository implements AdminUserRepository {
         roleId: data.roleId,
         organizationId: data.organizationId,
         tenantIds: data.tenantIds,
+        permissionsByOrganization: data.permissionsByOrganization,
         password: data.password
       };
 
@@ -102,6 +105,7 @@ export class ApiAdminUserRepository implements AdminUserRepository {
         roleId: data.roleId,
         organizationId: data.organizationId,
         tenantIds: data.tenantIds,
+        permissionsByOrganization: data.permissionsByOrganization,
         isActive: data.isActive
       };
 
