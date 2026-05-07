@@ -17,7 +17,7 @@
 
         <div class="field">
           <label for="reg-name">{{ 'auth.fullName' | t }}</label>
-          <input id="reg-name" type="text" formControlName="fullName" autocomplete="name"
+          <input #fullNameInput id="reg-name" type="text" formControlName="fullName" autocomplete="name"
             appNormalizeName
             [placeholder]="'auth.fullNamePlaceholder' | t" />
           @if (form.get('fullName')?.hasError('required') && form.get('fullName')?.touched) {

@@ -86,8 +86,10 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   /** Reactive count of court rows (mirrors courtNames FormArray length) */
   readonly courtRowsCount = signal(0);
 
-  /** Auto-focus target for step 0 */
+  /** Auto-focus targets per step */
   readonly orgNameInput = viewChild<ElementRef<HTMLInputElement>>('orgNameInput');
+  readonly venueNameInput = viewChild<ElementRef<HTMLInputElement>>('venueNameInput');
+  readonly tournamentNameInput = viewChild<ElementRef<HTMLInputElement>>('tournamentNameInput');
 
   /** Available sports loaded from repo */
   readonly availableSports = signal<Sport[]>([]);
@@ -229,15 +231,19 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    // Auto-focus the first editable field of each step as soon as it becomes
+    // visible, so the user can type without an extra click.
     effect(() => {
-      if (this.currentStep() === 0) {
-        const el = this.orgNameInput()?.nativeElement;
-        if (el) {
-          queueMicrotask(() => {
-            el.focus();
-            this.activateOrgFieldSpotlight();
-          });
-        }
+      const step = this.currentStep();
+      if (step === 0) {
+        queueMicrotask(() => {
+          this.orgNameInput()?.nativeElement?.focus();
+          this.activateOrgFieldSpotlight();
+        });
+      } else if (step === 2) {
+        queueMicrotask(() => this.venueNameInput()?.nativeElement?.focus());
+      } else if (step === 4) {
+        queueMicrotask(() => this.tournamentNameInput()?.nativeElement?.focus());
       }
     });
   }

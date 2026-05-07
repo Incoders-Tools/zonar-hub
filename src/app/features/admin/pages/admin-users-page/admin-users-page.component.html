@@ -142,7 +142,7 @@
                     <select
                       [value]="copySourceUserId()"
                       (change)="onCopySourceUserChanged($any($event.target).value)"
-                      [disabled]="availableSourceUsers().length === 0">
+                      [disabled]="availableSourceUsers().length === 0 || replicatingPermissions()">
                       <option value="">
                         {{ (availableSourceUsers().length === 0
                           ? 'admin.users.permissions.noSourceUsers'
@@ -152,22 +152,28 @@
                         <option [value]="sourceUser.id">{{ sourceUser.fullName }} ({{ sourceUser.email }})</option>
                       }
                     </select>
-                    <button
-                      type="button"
-                      class="users-page__copy-button"
-                      (click)="copyPermissionsFromUser()"
-                      [disabled]="!canCopyPermissionsFromUser()">
+                    <app-async-button
+                      variant="secondary"
+                      [loading]="replicatingPermissions()"
+                      [disabled]="!canCopyPermissionsFromUser() || replicatingPermissions()"
+                      (clicked)="copyPermissionsFromUser()">
                       {{ 'admin.users.permissions.replicateAction' | t }}
-                    </button>
+                    </app-async-button>
                   </div>
-                  <span class="form-field__hint">{{ 'admin.users.permissions.replicateHint' | t }}</span>
+                  <span class="form-field__hint">
+                    @if (replicatingPermissions()) {
+                      {{ 'admin.users.permissions.replicating' | t }}
+                    } @else {
+                      {{ 'admin.users.permissions.replicateHint' | t }}
+                    }
+                  </span>
                 </div>
               </div>
 
               <app-permission-matrix
                 [moduleCatalog]="visiblePermissionCatalog()"
                 [value]="selectedOrganizationPermissionTools()"
-                [disabled]="loadingUserPermissions() || loadingPermissionCatalog()"
+                [disabled]="loadingUserPermissions() || loadingPermissionCatalog() || replicatingPermissions()"
                 [disabledToolKeys]="disabledToolKeys()"
                 (changed)="onPermissionsChanged($event)">
               </app-permission-matrix>

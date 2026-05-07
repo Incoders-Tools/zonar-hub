@@ -98,6 +98,7 @@ export class AdminUsersPageComponent implements OnInit {
   readonly copySourceUserId = signal<string>('');
   readonly loadingPermissionCatalog = signal(false);
   readonly loadingUserPermissions = signal(false);
+  readonly replicatingPermissions = signal(false);
 
   readonly selectedOrganizationPermissionTools = computed(() => {
     const organizationId = this.selectedPermissionOrganizationId();
@@ -604,12 +605,13 @@ export class AdminUsersPageComponent implements OnInit {
    * the goal is "give this user the same toolkit as the source".
    */
   async copyPermissionsFromUser(): Promise<void> {
-    if (!this.canCopyPermissionsFromUser()) return;
+    if (!this.canCopyPermissionsFromUser() || this.replicatingPermissions()) return;
 
     const sourceUserId = this.copySourceUserId();
     const targetOrgId = this.selectedPermissionOrganizationId();
     if (!sourceUserId || !targetOrgId) return;
 
+    this.replicatingPermissions.set(true);
     try {
       const sourcePermissions = await this.permissionRepository.getUserPermissions(sourceUserId);
       const assignments = sourcePermissions.permissionsByOrganization;
@@ -623,8 +625,11 @@ export class AdminUsersPageComponent implements OnInit {
         ...current,
         [targetOrgId]: this.normalizeToolKeys(sourceTools)
       }));
+      this.notifications.success(this.i18n.translate('admin.users.permissions.replicateSuccess'));
     } catch {
-      // notification handled upstream by the HTTP interceptor
+      // HTTP interceptor surfaces the actual error toast
+    } finally {
+      this.replicatingPermissions.set(false);
     }
   }
 

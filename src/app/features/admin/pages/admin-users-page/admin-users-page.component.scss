@@ -105,7 +105,8 @@
 .users-page__permissions-hint {
   font-size: var(--zh-font-size-sm);
   color: var(--zh-text-muted);
-  margin: 0;
+  margin: 0 0 var(--zh-space-md);
+  line-height: 1.5;
 }
 
 .users-page__permissions-empty {

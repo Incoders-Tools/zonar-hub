@@ -141,8 +141,24 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
       name: ['', [Validators.required]],
       key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
       description: [''],
-      sortOrder: ['', [Validators.min(0)]],
+      sortOrder: [0, [Validators.min(0)]],
       isActive: [true]
+    });
+
+    // Auto-generate the key from the name in create mode so non-sysadmin
+    // users don't need to fill the technical-fields collapsable to make the
+    // form valid. The control still exists and travels in the request.
+    this.form.get('name')?.valueChanges.subscribe((name: string | null) => {
+      if (this.isEditing) return;
+      const generated = (name ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+      this.form.get('key')?.setValue(generated, { emitEvent: false });
     });
   }
 

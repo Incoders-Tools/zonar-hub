@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, DestroyRef, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, signal, computed, DestroyRef, OnInit, viewChild } from '@angular/core';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -32,7 +32,9 @@ type RegisterStep = 'form' | 'verify';
   templateUrl: './register-page.component.html',
   styleUrl: './register-page.component.scss'
 })
-export class RegisterPageComponent implements OnInit {
+export class RegisterPageComponent implements OnInit, AfterViewInit {
+  readonly fullNameInput = viewChild<ElementRef<HTMLInputElement>>('fullNameInput');
+
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -85,6 +87,12 @@ export class RegisterPageComponent implements OnInit {
     if (plan && ['starter', 'pro', 'enterprise', 'single_use', 'singleUse'].includes(plan)) {
       this.selectedPlan.set(plan === 'single_use' ? 'singleUse' : plan);
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Drop the user's caret on the first field as soon as the form is visible
+    // so they can start typing without an extra click.
+    queueMicrotask(() => this.fullNameInput()?.nativeElement?.focus());
   }
 
   togglePassword(): void {
