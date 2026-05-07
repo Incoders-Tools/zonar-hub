@@ -8,7 +8,6 @@ import { BracketService } from '../../../../core/services/bracket.service';
 import { DrawPlannerService } from '../../../../core/services/draw-planner.service';
 import { Tournament, TournamentBracket, DrawPlannerResult } from '../../../../core/models';
 import { TournamentBracketComponent } from '../../../../shared/components/tournament-bracket/tournament-bracket.component';
-import { MOCK_REGISTRATIONS } from '../../../../core/data/mock/mock-registrations';
 
 export type TournamentTab = 'bracket' | 'results' | 'participants';
 
@@ -65,17 +64,10 @@ export class TournamentDetailPageComponent implements OnInit {
       this.bracket.set(this.bracketService.getBracketByTournament(id));
       this.drawResult.set(this.drawService.getPublicDraw(id));
 
-      const participants = MOCK_REGISTRATIONS
-        .filter(r => r.tournamentId === id && r.statusId === 'rs1')
-        .map((r, i) => ({
-          id: r.id,
-          names: r.participants.length > 0
-            ? r.participants.map(p => p.playerName)
-            : [r.player1Name, r.player2Name].filter(Boolean),
-          category: `${r.categoryName} ${r.genderLabel}`,
-          seed: i < 4 ? i + 1 : undefined
-        }));
-      this.confirmedParticipants.set(participants);
+      // Confirmed participants come from the registrations API. Until the
+      // public tournament-detail flow is wired to that endpoint we render
+      // an empty list rather than seeding from mocks.
+      this.confirmedParticipants.set([]);
 
       this.loading.set(false);
     });

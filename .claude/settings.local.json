@@ -32,7 +32,9 @@
       "Bash(rm -f scripts/strip-i18n-keys.cjs)",
       "Bash(node rename-ns.cjs)",
       "Bash(dotnet build *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(git checkout *)"
     ]
   }
 }
