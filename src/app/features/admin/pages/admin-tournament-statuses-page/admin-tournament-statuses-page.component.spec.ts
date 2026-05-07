@@ -1,32 +1,34 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminTournamentStatusesPageComponent } from './admin-tournament-statuses-page.component';
 import { TournamentStatusesFacadeService } from './tournament-statuses-facade.service';
-import { MockTournamentStatusRepository } from '../../../../core/repositories/mock/mock-tournament-status.repository';
+import { ApiTournamentStatusRepository } from '../../../../core/repositories/api/api-tournament-status.repository';
+import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
 
 describe('AdminTournamentStatusesPageComponent', () => {
   let component: AdminTournamentStatusesPageComponent;
   let fixture: ComponentFixture<AdminTournamentStatusesPageComponent>;
-  let facade: TournamentStatusesFacadeService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminTournamentStatusesPageComponent],
-      providers: [TournamentStatusesFacadeService, MockTournamentStatusRepository]
+      providers: [
+        TournamentStatusesFacadeService,
+        ApiTournamentStatusRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
+        provideHttpClient(),
+        provideHttpClientTesting()
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminTournamentStatusesPageComponent);
     component = fixture.componentInstance;
-    facade = TestBed.inject(TournamentStatusesFacadeService);
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
-  });
-
-  it('should load statuses on init', async () => {
-    await facade.load();
-    expect(facade.entities().length).toBeGreaterThan(0);
   });
 
   it('should open form dialog for create', () => {

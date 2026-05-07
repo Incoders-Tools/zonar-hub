@@ -1,0 +1,21 @@
+<div class="session-timeout-overlay" role="dialog" aria-modal="true" aria-labelledby="session-timeout-title">
+  <div class="session-timeout-dialog">
+    <div class="session-timeout-dialog__icon" aria-hidden="true">⏱️</div>
+    <h2 class="session-timeout-dialog__title" id="session-timeout-title">{{ 'session.timeout.title' | t }}</h2>
+    <p class="session-timeout-dialog__message">{{ 'session.timeout.message' | t }}</p>
+    <div
+      class="session-timeout-dialog__countdown"
+      [class.session-timeout-dialog__countdown--urgent]="isUrgent()"
+      aria-live="polite">
+      {{ formattedCountdown() }}
+    </div>
+    <div class="session-timeout-dialog__actions">
+      <button type="button" class="session-timeout-dialog__btn-logout" (click)="timeout.logout()">
+        {{ 'session.timeout.logout' | t }}
+      </button>
+      <button type="button" class="session-timeout-dialog__btn-continue" (click)="timeout.continueSession()" autofocus>
+        {{ 'session.timeout.stayLoggedIn' | t }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -77,6 +77,13 @@ export class ActiveOrganizationService {
   /** Read-only counter for components to detect organization changes */
   readonly organizationChanged = this.organizationChangeCounter.asReadonly();
 
+  /** True while a switch is in progress so the shell can display a loader */
+  private readonly switchingState = signal(false);
+  readonly isSwitching = this.switchingState.asReadonly();
+
+  /** Configurable settle window for the post-switch overlay (ms). */
+  private static readonly SWITCH_SETTLE_MS = 700;
+
   /** The user's primary organization ID */
   readonly primaryOrganizationId = this.primaryOrgIdState.asReadonly();
 
@@ -170,8 +177,12 @@ export class ActiveOrganizationService {
     if (!exists) return;
 
     const previousOrgId = this.activeOrgIdState();
+    if (previousOrgId === orgId) return;
+
     const org = manageable.find(o => o.id === orgId);
-    
+
+    this.switchingState.set(true);
+
     this.activeOrgIdState.set(orgId);
     this.persistActiveOrgId(orgId);
     this.syncTenantContext(orgId);
@@ -182,9 +193,13 @@ export class ActiveOrganizationService {
     }
 
     // Notify components that organization has changed
-    if (previousOrgId !== orgId) {
-      this.organizationChangeCounter.update(count => count + 1);
-    }
+    this.organizationChangeCounter.update(count => count + 1);
+
+    // Give downstream facades a deterministic settle window before clearing
+    // the overlay so users see the transition rather than a flicker.
+    setTimeout(() => {
+      this.switchingState.set(false);
+    }, ActiveOrganizationService.SWITCH_SETTLE_MS);
   }
 
   /** Set the user's primary organization */

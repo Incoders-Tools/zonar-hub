@@ -57,19 +57,24 @@ export class AdminTeamsPageComponent implements OnInit {
   readonly facade = inject(TeamFacadeService);
   private readonly activeOrg = inject(ActiveOrganizationService);
 
-  constructor() {
-    // Reload data whenever organization changes
-    effect(() => {
-      this.activeOrg.organizationChanged();
-      void this.facade.load();
-    });
-  }
-
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingTeam = signal<Team | null>(null);
   readonly deletingId = signal<string | null>(null);
+
+  constructor() {
+    // Reload data and reset transient UI whenever the active organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.showBulkDeleteDialog.set(false);
+      this.editingTeam.set(null);
+      this.deletingId.set(null);
+      void this.facade.load();
+    });
+  }
   readonly selectedTeams = signal<TeamRow[]>([]);
   readonly formPanelRef = viewChild<ElementRef>('formPanel');
 

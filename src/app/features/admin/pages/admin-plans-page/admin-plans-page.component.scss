@@ -35,6 +35,107 @@
   }
 }
 
+.plans-page {
+  &__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--zh-space-lg);
+    margin-top: var(--zh-space-lg);
+  }
+
+  &__card {
+    position: relative;
+    border: 1px solid var(--zh-border-color);
+    border-radius: var(--zh-radius-lg);
+    padding: var(--zh-space-lg);
+    background: var(--zh-surface);
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-md);
+
+    &--current {
+      border-color: var(--zh-color-primary);
+      box-shadow: 0 0 0 2px var(--zh-color-primary-light, rgba(0,128,0,0.15));
+    }
+  }
+
+  &__current-badge {
+    display: inline-block;
+    background: var(--zh-color-primary);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--zh-radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__card-name {
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    color: var(--zh-text-primary);
+    margin: 0;
+  }
+
+  &__card-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  &__price-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--zh-color-primary);
+    line-height: 1;
+  }
+
+  &__price-suffix {
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+
+  &__card-limits {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--zh-border-color);
+    padding-top: var(--zh-space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xs);
+  }
+
+  &__card-limits li {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__limit-label {
+    color: var(--zh-text-secondary);
+  }
+
+  &__limit-value {
+    font-weight: 600;
+    color: var(--zh-text-primary);
+  }
+
+  &__card-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--zh-border-color);
+    padding-top: var(--zh-space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+}
+
 @media (max-width: 599px) {
   .plans-page {
     padding: var(--zh-space-md);
@@ -46,6 +147,10 @@
     &__header-actions {
       width: 100%;
       justify-content: flex-end;
+    }
+
+    &__cards {
+      grid-template-columns: 1fr;
     }
   }
 }

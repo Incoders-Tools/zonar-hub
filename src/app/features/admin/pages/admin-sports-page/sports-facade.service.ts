@@ -110,45 +110,70 @@ export class SportsFacadeService {
     this.sortState.set(sortOption);
   }
 
+  /**
+   * Persist the global catalog entry. Restricted to system_admin.
+   * Always hits POST /api/admin/sports or PUT /api/admin/sports/{id}, regardless of scope.
+   */
   async saveSport(sport: Sport | Omit<Sport, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
     try {
       this.savingState.set(true);
       this.errorState.set(null);
 
-      if (this.scopeState() !== 'global') {
-        const isUpdate = 'id' in sport && !!sport.id;
-        if (!isUpdate) {
-          return false;
-        }
+      if (!this.auth.isSystemAdmin()) {
+        return false;
+      }
 
-        const updated = sport as Sport;
+      const isUpdate = 'id' in sport && sport.id;
+
+      if (isUpdate) {
+        await this.repository.update((sport as Sport).id, sport);
+      } else {
+        await this.repository.create(sport as Omit<Sport, 'id' | 'createdAt' | 'updatedAt'>);
+      }
+
+      // Reload from the active scope so the list reflects the canonical view
+      // (organization-enabled flags, tenant filtering, etc.)
+      await this.load();
+      return true;
+    } catch (error) {
+      this.errorState.set((error as Error).message);
+      return false;
+    } finally {
+      this.savingState.set(false);
+    }
+  }
+
+  /**
+   * Toggle the active flag honoring the current scope:
+   * - global   → updates the catalog entry's isActive (PUT /api/admin/sports/{id})
+   * - org      → updates the organization's enabledSportIds list
+   * - tenant   → updates the tenant's enabledSportIds list
+   */
+  async toggleSportEnabled(sportId: string, nextActive: boolean): Promise<boolean> {
+    const scope = this.scopeState();
+    const scopeId = this.scopeIdState();
+
+    try {
+      this.savingState.set(true);
+      this.errorState.set(null);
+
+      if (scope === 'organization' || scope === 'tenant') {
+        if (!scopeId) return false;
         const local = this.entitiesState().map(s =>
-          s.id === updated.id ? { ...s, isActive: updated.isActive } : s
+          s.id === sportId ? { ...s, isActive: nextActive } : s
         );
         this.entitiesState.set(local);
-
         const enabledSportIds = local.filter(s => s.isActive).map(s => s.id);
         await this.persistScopedSelection(enabledSportIds);
         return true;
       }
 
-      // Check if this is create or update based on presence of 'id'
-      const isUpdate = 'id' in sport && sport.id;
-
-      if (isUpdate) {
-        const updated = await this.repository.update((sport as Sport).id, sport);
-        // Update in local state
-        const idx = this.entitiesState().findIndex(s => s.id === (sport as Sport).id);
-        if (idx !== -1) {
-          const updatedSports = [...this.entitiesState()];
-          updatedSports[idx] = updated;
-          this.entitiesState.set(updatedSports);
-        }
-      } else {
-        const created = await this.repository.create(sport as Omit<Sport, 'id' | 'createdAt' | 'updatedAt'>);
-        this.entitiesState.set([...this.entitiesState(), created]);
-      }
-
+      const sport = this.entitiesState().find(s => s.id === sportId);
+      if (!sport) return false;
+      await this.repository.update(sport.id, { ...sport, isActive: nextActive });
+      this.entitiesState.set(
+        this.entitiesState().map(s => (s.id === sportId ? { ...s, isActive: nextActive } : s))
+      );
       return true;
     } catch (error) {
       this.errorState.set((error as Error).message);
@@ -236,6 +261,27 @@ export class SportsFacadeService {
       return this.entitiesState().some(s => s.sortOrder === sortOrder);
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Fetch the canonical catalog entry (global) for editing.
+   * In org/tenant scope the listing endpoint omits fields like modalityIds, so
+   * we resolve them from the global endpoint when sysadmin opens the form.
+   */
+  async getCatalogSport(id: string): Promise<Sport | undefined> {
+    if (!this.auth.isSystemAdmin()) {
+      return this.entitiesState().find(s => s.id === id);
+    }
+
+    if (this.scopeState() === 'global') {
+      return this.entitiesState().find(s => s.id === id);
+    }
+
+    try {
+      return await this.repository.getById(id);
+    } catch {
+      return this.entitiesState().find(s => s.id === id);
     }
   }
 

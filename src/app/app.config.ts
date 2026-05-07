@@ -20,7 +20,6 @@ import { MockComplexRepository } from './core/repositories/mock/mock-complex.rep
 import { MockGenderRepository } from './core/repositories/mock/mock-gender.repository';
 import { MockRoleRepository } from './core/repositories/mock/mock-role.repository';
 import { MockSportRepository } from './core/repositories/mock/mock-sport.repository';
-import { MockTournamentStatusRepository } from './core/repositories/mock/mock-tournament-status.repository';
 import { MockTournamentModalityRepository } from './core/repositories/mock/mock-tournament-modality.repository';
 import { MockFileStorageRepository } from './core/repositories/mock/mock-file-storage.repository';
 import { FILE_STORAGE_REPOSITORY } from './core/repositories/file-storage.repository';
@@ -33,7 +32,6 @@ export const appConfig: ApplicationConfig = {
     { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-rounded' } },
     { provide: MockAdminUserRepository, useExisting: ApiAdminUserRepository },
     { provide: MockSportRepository, useExisting: ApiSportRepository },
-    { provide: MockTournamentStatusRepository, useExisting: ApiTournamentStatusRepository },
     { provide: MockTournamentModalityRepository, useExisting: ApiTournamentModalityRepository },
     { provide: MockComplexRepository, useExisting: ApiComplexRepository },
     { provide: MockGenderRepository, useExisting: ApiGenderRepository },

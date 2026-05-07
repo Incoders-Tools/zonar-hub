@@ -202,11 +202,6 @@ export const routes: Routes = [
         data: { toolKey: 'roles' }, canActivate: [toolGuard]
       },
       {
-        path: 'system/tenants',
-        loadComponent: () => import('./features/admin/pages/admin-tenants-page/admin-tenants-page.component').then(m => m.AdminTenantsPageComponent),
-        data: { toolKey: 'tenants' }, canActivate: [toolGuard]
-      },
-      {
         path: 'system/organizations',
         loadComponent: () => import('./features/admin/pages/admin-organizations-page/admin-organizations-page.component').then(m => m.AdminOrganizationsPageComponent),
         data: { toolKey: 'organizations' }, canActivate: [toolGuard]

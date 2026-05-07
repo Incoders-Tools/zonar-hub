@@ -20,7 +20,13 @@
           <img src="/uploads/zonar-hub/zonar-hub-logos/logo_horizontal_white.png" alt="Zonar Hub" class="admin-sidebar__logo-img" />
         }
       </a>
-      <button class="admin-sidebar__collapse" (click)="toggleSidebar()">{{ sidebarCollapsed() ? '→' : '←' }}</button>
+      <button
+        class="admin-sidebar__collapse"
+        (click)="toggleSidebar()"
+        [title]="(sidebarCollapsed() ? 'admin.nav.expand' : 'admin.nav.collapse') | t"
+        [attr.aria-label]="(sidebarCollapsed() ? 'admin.nav.expand' : 'admin.nav.collapse') | t">
+        {{ sidebarCollapsed() ? '▶' : '◀' }}
+      </button>
     </div>
 
     <!-- Organization Selector -->
@@ -126,6 +132,7 @@
         @if (!sidebarCollapsed()) {
           <span class="admin-sidebar__user-info">
             <span class="admin-sidebar__user-name">{{ auth.currentUser()?.fullName }}</span>
+            <span class="admin-sidebar__user-role">{{ userRoleLabelKey() | t }}</span>
             <span class="admin-sidebar__user-email">{{ auth.currentUser()?.email }}</span>
           </span>
         }
@@ -167,6 +174,25 @@
   <!-- Chatbot -->
   @if (showChatbot()) {
     <app-chatbot-bubble></app-chatbot-bubble>
+  }
+
+  <!-- Session timeout warning -->
+  @if (sessionTimeout.showWarning()) {
+    <app-session-timeout-dialog></app-session-timeout-dialog>
+  }
+
+  <!-- Organization switch overlay -->
+  @if (activeOrg.isSwitching()) {
+    <div class="admin-org-switching" role="status" aria-live="polite">
+      <div class="admin-org-switching__panel">
+        <app-progress-bar
+          [progress]="100"
+          titleKey="admin.org.switching.title"
+          messageKey="admin.org.switching.message"
+          [showPercentage]="false">
+        </app-progress-bar>
+      </div>
+    </div>
   }
 
   <!-- Mobile Bottom Navigation -->

@@ -3,35 +3,83 @@
     <div class="plans-page__title-row">
       <div>
         <h1 class="plans-page__title">{{ 'admin.plans.title' | t }}</h1>
-        <p class="plans-page__subtitle">{{ 'admin.plans.subtitle' | t }}</p>
+        <p class="plans-page__subtitle">
+          {{ (isSystemAdmin() ? 'admin.plans.subtitle' : 'admin.plans.cards.subtitle') | t }}
+        </p>
       </div>
-      <div class="plans-page__header-actions">
-        <app-async-button variant="primary" (clicked)="openCreate()">
-          {{ 'admin.plans.action.create' | t }}
-        </app-async-button>
-      </div>
+      @if (isSystemAdmin()) {
+        <div class="plans-page__header-actions">
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'admin.plans.action.create' | t }}
+          </app-async-button>
+        </div>
+      }
     </div>
   </div>
 
-  <app-filter-panel
-    [fields]="filterFields"
-    [collapsible]="true"
-    [defaultCollapsed]="true"
-    (filtersApplied)="onFiltersApplied($event)"
-    (filtersCleared)="onFiltersCleared()">
-  </app-filter-panel>
+  @if (isSystemAdmin()) {
+    <app-filter-panel
+      [fields]="filterFields"
+      [collapsible]="true"
+      [defaultCollapsed]="true"
+      (filtersApplied)="onFiltersApplied($event)"
+      (filtersCleared)="onFiltersCleared()">
+    </app-filter-panel>
 
-  <app-data-table
-    [columns]="columns"
-    [data]="tableData()"
-    [loading]="facade.loading()"
-    [error]="!!facade.error()"
-    (retried)="facade.load()"
-    [rowActions]="rowActions"
-    emptyMessageKey="admin.plans.emptyState"
-    (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    <app-data-table
+      [columns]="columns"
+      [data]="tableData()"
+      [loading]="facade.loading()"
+      [error]="!!facade.error()"
+      (retried)="facade.load()"
+      [rowActions]="rowActions"
+      emptyMessageKey="admin.plans.emptyState"
+      (sorted)="onSorted($event)"
+      (rowAction)="onRowActionClicked($event)">
+    </app-data-table>
+  } @else {
+    <div class="plans-page__cards">
+      @for (plan of activePlans(); track plan.id) {
+        <div class="plans-page__card" [class.plans-page__card--current]="isCurrentPlan(plan)">
+          @if (isCurrentPlan(plan)) {
+            <span class="plans-page__current-badge">{{ 'admin.plans.cards.currentPlan' | t }}</span>
+          }
+          <h2 class="plans-page__card-name">{{ plan.name }}</h2>
+          <div class="plans-page__card-price">
+            @if (formatCardPrice(plan).amount) {
+              <span class="plans-page__price-amount">{{ formatCardPrice(plan).amount }}</span>
+            }
+            <span class="plans-page__price-suffix">{{ formatCardPrice(plan).suffix | t }}</span>
+          </div>
+          <ul class="plans-page__card-limits">
+            <li>
+              <span class="plans-page__limit-label">{{ 'admin.plans.cards.tournaments' | t }}</span>
+              <span class="plans-page__limit-value">{{ formatLimitValue(plan.maxTournaments) }}</span>
+            </li>
+            <li>
+              <span class="plans-page__limit-label">{{ 'admin.plans.cards.admins' | t }}</span>
+              <span class="plans-page__limit-value">{{ formatLimitValue(plan.maxAdmins) }}</span>
+            </li>
+            <li>
+              <span class="plans-page__limit-label">{{ 'admin.plans.cards.complexes' | t }}</span>
+              <span class="plans-page__limit-value">{{ formatLimitValue(plan.maxComplexes) }}</span>
+            </li>
+            <li>
+              <span class="plans-page__limit-label">{{ 'admin.plans.cards.courts' | t }}</span>
+              <span class="plans-page__limit-value">{{ formatLimitValue(plan.maxCourts) }}</span>
+            </li>
+          </ul>
+          @if (plan.features?.length) {
+            <ul class="plans-page__card-features">
+              @for (feature of plan.features; track feature) {
+                <li>✓ {{ feature }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  }
 </div>
 
 @if (showFormPanel()) {

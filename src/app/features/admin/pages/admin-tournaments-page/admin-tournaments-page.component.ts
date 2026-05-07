@@ -67,19 +67,24 @@ export class AdminTournamentsPageComponent implements OnInit {
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly router = inject(Router);
 
-  constructor() {
-    // Reload data whenever organization changes
-    effect(() => {
-      this.activeOrg.organizationChanged();
-      void this.facade.load();
-    });
-  }
-
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingTournament = signal<Tournament | null>(null);
   readonly deletingId = signal<string | null>(null);
+
+  constructor() {
+    // Reload data and reset transient UI whenever the active organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.showBulkDeleteDialog.set(false);
+      this.editingTournament.set(null);
+      this.deletingId.set(null);
+      void this.facade.load();
+    });
+  }
   readonly selectedTournaments = signal<TournamentRow[]>([]);
   readonly highlightedRowId = signal<string | null>(null);
   readonly sharePayload = signal<SocialSharePayload | null>(null);

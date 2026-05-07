@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIcon } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { EmailTemplate } from '../../../../core/models';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -9,7 +11,6 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DataTableColumn, DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
 import { FilterField, FilterPanelComponent } from '../../../../shared/components/filter-panel/filter-panel.component';
-import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { EmailTemplateFilters, EmailTemplatesFacadeService } from './email-templates-facade.service';
@@ -31,17 +32,29 @@ interface EmailTemplateRow extends Record<string, unknown> {
     ReactiveFormsModule,
     MatInputModule,
     MatCheckboxModule,
+    MatIcon,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
-    FormShellComponent,
     AsyncButtonComponent,
     HelpButtonComponent,
     ConfirmDialogComponent
   ],
   providers: [EmailTemplatesFacadeService],
   templateUrl: './admin-email-templates-page.component.html',
-  styleUrl: './admin-email-templates-page.component.scss'
+  styleUrl: './admin-email-templates-page.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: 0, opacity: 0, overflow: 'hidden' }),
+        animate('250ms ease-out', style({ height: '*', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        style({ overflow: 'hidden' }),
+        animate('200ms ease-in', style({ height: 0, opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class AdminEmailTemplatesPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -105,7 +118,7 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
   );
 
   readonly form = this.fb.nonNullable.group({
-    key: [{ value: '', disabled: true }, [Validators.required]],
+    key: ['', [Validators.required]],
     subject: ['', [Validators.required]],
     description: [''],
     htmlBody: ['', [Validators.required]],

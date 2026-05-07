@@ -10,14 +10,13 @@ import { AsyncButtonComponent } from '../../../../shared/components/async-button
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentModality } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ModalitiesFacadeService, ModalityFilters } from './modalities-facade.service';
 import { ModalitiesFormPanelComponent } from './modalities-form-panel/modalities-form-panel.component';
 
 interface ModalityRow extends Record<string, unknown> {
   id: string;
-  nameEs: string;
-  nameEn: string;
-  namePt: string;
+  name: string;
   key: string;
   sortOrder: number;
   isActive: boolean;
@@ -58,6 +57,7 @@ interface ModalityRow extends Record<string, unknown> {
 export class AdminTournamentModalitiesPageComponent implements OnInit {
   readonly facade = inject(ModalitiesFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(I18nService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly showFormPanel = signal(false);
@@ -69,9 +69,7 @@ export class AdminTournamentModalitiesPageComponent implements OnInit {
 
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [
-      { key: 'nameEs', labelKey: 'admin.modalities.column.nameEs', sortable: true },
-      { key: 'nameEn', labelKey: 'admin.modalities.column.nameEn', sortable: true },
-      { key: 'namePt', labelKey: 'admin.modalities.column.namePt', sortable: true },
+      { key: 'name', labelKey: 'admin.modalities.column.name', sortable: true },
       { key: 'isActive', labelKey: 'admin.modalities.column.status', sortable: true, renderType: 'toggle', toggleAction: 'toggleActive' }
     ];
     if (this.isSystemAdmin()) {
@@ -106,12 +104,17 @@ export class AdminTournamentModalitiesPageComponent implements OnInit {
     }
   ];
 
+  private resolveLocaleName(m: TournamentModality): string {
+    const locale = this.i18n.locale();
+    if (locale === 'en') return m.nameEn;
+    if (locale === 'pt') return m.namePt;
+    return m.nameEs;
+  }
+
   readonly tableData = computed<ModalityRow[]>(() =>
     this.facade.filteredModalities().map(m => ({
       id: m.id,
-      nameEs: m.nameEs,
-      nameEn: m.nameEn,
-      namePt: m.namePt,
+      name: this.resolveLocaleName(m),
       key: m.key,
       sortOrder: m.sortOrder,
       isActive: m.isActive,

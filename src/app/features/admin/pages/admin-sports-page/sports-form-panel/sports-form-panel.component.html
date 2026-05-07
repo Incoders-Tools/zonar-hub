@@ -63,7 +63,7 @@
     <app-child-collection-grid
       mode="select"
       [titleKey]="'admin.sports.form.modalitiesTitle'"
-      [columns]="modalityColumns"
+      [columns]="modalityColumns()"
       [items]="activeModalities()"
       [selectedIds]="selectedModalityIds()"
       [initialOrderedIds]="orderedModalityIds()"

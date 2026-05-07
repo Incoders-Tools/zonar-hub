@@ -21,13 +21,11 @@ export interface UserPermissions {
 
 export const SYSTEM_ADMIN_ONLY_TOOLS = [
   'roles',
-  'plans',
   'actions',
   'audit',
   'app-logs',
   'security',
-  'email-templates',
-  'billing'
+  'email-templates'
 ] as const;
 
 /** All tools registered in the platform */
@@ -56,7 +54,6 @@ export const PLATFORM_TOOLS: ToolPermission[] = [
   // System
   { key: 'users', module: 'system', labelKey: 'admin.users', route: '/admin/system/users' },
   { key: 'roles', module: 'system', labelKey: 'admin.roles', route: '/admin/system/roles' },
-  { key: 'tenants', module: 'system', labelKey: 'admin.tenants', route: '/admin/system/tenants' },
   { key: 'organizations', module: 'system', labelKey: 'admin.organizations', route: '/admin/system/organizations' },
   { key: 'plans', module: 'system', labelKey: 'admin.plans', route: '/admin/system/plans' },
   { key: 'actions', module: 'system', labelKey: 'admin.nav.actions', route: '/admin/system/actions' },
@@ -77,8 +74,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'tournaments', 'tournament-eligibility-profiles', 'tournament-rules',
     'registrations', 'players', 'teams', 'draw-planner',
     'complexes', 'categories', 'genders', 'sports', 'tournament-statuses', 'tournament-modalities',
-    'users', 'organizations', 'tenants',
-    'settings', 'flyer-backgrounds', 'billing',
+    'users', 'organizations',
+    'settings', 'flyer-backgrounds', 'billing', 'plans',
   ],
 
   editor: [

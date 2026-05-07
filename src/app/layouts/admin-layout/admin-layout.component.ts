@@ -3,12 +3,16 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { AuthService } from '../../core/auth/auth.service';
 import { PermissionService } from '../../core/auth/permission.service';
+import { SessionTimeoutService } from '../../core/auth/session-timeout.service';
 import { UserPreferencesService } from '../../core/services/user-preferences.service';
 import { OnboardingStateService } from '../../core/services/onboarding-state.service';
 import { ActiveOrganizationService } from '../../core/services/active-organization.service';
+import { SportContextService } from '../../core/services/sport-context.service';
 import { GuidedTourComponent, TourStep } from '../../shared/components/guided-tour/guided-tour.component';
 import { ChatbotBubbleComponent } from '../../shared/components/chatbot-bubble/chatbot-bubble.component';
 import { OrgSelectorComponent } from '../../shared/components/org-selector/org-selector.component';
+import { SessionTimeoutDialogComponent } from '../../shared/components/session-timeout-dialog/session-timeout-dialog.component';
+import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
 
 interface AdminNavItem {
   labelKey: string;
@@ -31,17 +35,19 @@ interface AdminNavGroup {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, GuidedTourComponent, ChatbotBubbleComponent, OrgSelectorComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, GuidedTourComponent, ChatbotBubbleComponent, OrgSelectorComponent, SessionTimeoutDialogComponent, ProgressBarComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
   protected readonly permissions = inject(PermissionService);
+  protected readonly sessionTimeout = inject(SessionTimeoutService);
   private readonly router = inject(Router);
   protected readonly onboarding = inject(OnboardingStateService);
   private readonly userPrefs = inject(UserPreferencesService);
   protected readonly activeOrg = inject(ActiveOrganizationService);
+  private readonly sportContext = inject(SportContextService);
   protected readonly sidebarCollapsed = signal(false);
   protected readonly mobileSidebarOpen = signal(false);
   protected readonly showTour = signal(false);
@@ -68,10 +74,12 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.onboarding.loadExisting(user.id);
     }
 
+    this.sessionTimeout.startMonitoring();
     window.addEventListener('zh-switch-chatbot-mode', this.switchChatbotModeHandler);
   }
 
   ngOnDestroy(): void {
+    this.sessionTimeout.stopMonitoring();
     window.removeEventListener('zh-switch-chatbot-mode', this.switchChatbotModeHandler);
   }
 
@@ -95,6 +103,18 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase() || '??';
+  });
+
+  protected readonly userRoleLabelKey = computed(() => {
+    const role = this.auth.currentUser()?.role;
+    const map: Record<string, string> = {
+      system_admin: 'admin.profile.role.systemAdmin',
+      admin: 'admin.profile.role.admin',
+      editor: 'admin.profile.role.editor',
+      player: 'admin.profile.role.player',
+      viewer: 'admin.profile.role.viewer'
+    };
+    return role ? (map[role] ?? 'admin.profile.role.unknown') : 'admin.profile.role.unknown';
   });
 
   readonly dashboardItem: AdminNavItem = {
@@ -167,13 +187,18 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     }
   ];
 
-  /** Nav groups filtered by current user's permissions */
+  /** Nav groups filtered by current user's permissions and org sport configuration */
   readonly filteredNavGroups = computed<AdminNavGroup[]>(() => {
     const allowed = new Set(this.permissions.allowedTools());
+    const hasTeamModality = this.sportContext.hasTeamModality();
+
     return this.navGroups
       .map(group => {
         const filteredItems = group.items
           .map(item => {
+            // Hide teams nav item when org has no team-modality sport
+            if (item.toolKey === 'teams' && !hasTeamModality) return null;
+
             // Sub-menu: filter children
             if (item.isSubMenu && item.children) {
               const filteredChildren = item.children.filter(child =>

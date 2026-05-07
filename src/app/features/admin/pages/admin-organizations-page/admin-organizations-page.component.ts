@@ -61,9 +61,15 @@ export class AdminOrganizationsPageComponent implements OnInit {
   readonly selectedOrganizations = signal<OrganizationRow[]>([]);
 
   constructor() {
-    // Reload data whenever organization changes
+    // Reload data and reset transient UI whenever the active organization changes
     effect(() => {
       this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.showBulkDeleteDialog.set(false);
+      this.editingOrganization.set(null);
+      this.deletingId.set(null);
+      this.selectedOrganizations.set([]);
       void this.facade.load();
     });
   }

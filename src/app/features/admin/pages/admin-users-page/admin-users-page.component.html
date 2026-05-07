@@ -158,10 +158,36 @@
                     </button>
                   </div>
                 </div>
+
+                <div class="form-field users-page__permissions-field users-page__permissions-field--copy">
+                  <label>{{ 'admin.users.permissions.copyFromUser' | t }}</label>
+                  <div class="users-page__permissions-copy-row">
+                    <select
+                      [value]="copySourceUserId()"
+                      (change)="onCopySourceUserChanged($any($event.target).value)"
+                      [disabled]="availableSourceUsers().length === 0">
+                      <option value="">
+                        {{ (availableSourceUsers().length === 0
+                          ? 'admin.users.permissions.noSourceUsers'
+                          : 'admin.users.permissions.selectSourceUser') | t }}
+                      </option>
+                      @for (sourceUser of availableSourceUsers(); track sourceUser.id) {
+                        <option [value]="sourceUser.id">{{ sourceUser.fullName }} ({{ sourceUser.email }})</option>
+                      }
+                    </select>
+                    <button
+                      type="button"
+                      class="users-page__copy-button"
+                      (click)="copyPermissionsFromUser()"
+                      [disabled]="!canCopyPermissionsFromUser()">
+                      {{ 'admin.users.permissions.copyAction' | t }}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <app-permission-matrix
-                [moduleCatalog]="permissionCatalog()"
+                [moduleCatalog]="visiblePermissionCatalog()"
                 [value]="selectedOrganizationPermissionTools()"
                 [disabled]="loadingUserPermissions() || loadingPermissionCatalog()"
                 [disabledToolKeys]="disabledToolKeys()"
@@ -240,5 +266,18 @@
     [loading]="facade.deleting()"
     (confirmed)="executeBulkDelete()"
     (cancelled)="cancelBulkDelete()">
+  </app-confirm-dialog>
+}
+
+<!-- Role Defaults Suggestion Dialog -->
+@if (showRoleDefaultsDialog()) {
+  <app-confirm-dialog
+    titleKey="admin.users.roleDefaults.title"
+    messageKey="admin.users.roleDefaults.message"
+    confirmLabelKey="admin.users.roleDefaults.confirm"
+    cancelLabelKey="admin.users.roleDefaults.dismiss"
+    confirmVariant="primary"
+    (confirmed)="acceptRoleDefaults()"
+    (cancelled)="dismissRoleDefaults()">
   </app-confirm-dialog>
 }

@@ -1,10 +1,13 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { Plan } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { PlanFacadeService, PlanFilters } from './plan-facade.service';
 import { PlanFormPanelComponent } from './plan-form-panel/plan-form-panel.component';
 
@@ -23,6 +26,7 @@ interface PlanRow extends Record<string, unknown> {
   selector: 'app-admin-plans-page',
   standalone: true,
   imports: [
+    CommonModule,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
@@ -36,6 +40,13 @@ interface PlanRow extends Record<string, unknown> {
 })
 export class AdminPlansPageComponent implements OnInit {
   readonly facade = inject(PlanFacadeService);
+  private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
+  readonly isSystemAdmin = this.auth.isSystemAdmin;
+
+  readonly currentOrgPlanId = computed(() => this.activeOrg.activeOrganization()?.planId ?? null);
+
+  readonly activePlans = computed(() => this.facade.plans().filter(p => p.isActive));
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -93,6 +104,21 @@ export class AdminPlansPageComponent implements OnInit {
     if (p.priceMonthly === 0) return 'Free';
     if (p.priceMonthly !== null) return `$${p.priceMonthly}/mo`;
     return '—';
+  }
+
+  formatCardPrice(p: Plan): { amount: string; suffix: string } {
+    if (p.priceMonthly === 0) return { amount: '', suffix: 'admin.plans.cards.free' };
+    if (p.priceSingleUse !== null) return { amount: `$${p.priceSingleUse}`, suffix: 'admin.plans.cards.perTournament' };
+    if (p.priceMonthly !== null) return { amount: `$${p.priceMonthly}`, suffix: 'admin.plans.cards.perMonth' };
+    return { amount: '', suffix: 'admin.plans.cards.contactSales' };
+  }
+
+  formatLimitValue(val: number | null): string {
+    return val === null ? '∞' : String(val);
+  }
+
+  isCurrentPlan(plan: Plan): boolean {
+    return plan.id === this.currentOrgPlanId();
   }
 
   onFiltersApplied(filters: Record<string, string>): void {

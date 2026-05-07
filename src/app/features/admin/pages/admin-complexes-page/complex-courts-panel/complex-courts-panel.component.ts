@@ -125,7 +125,7 @@ export class ComplexCourtsPanelComponent {
     this.courtForm = this.fb.group({
       name: [court?.name || '', [Validators.required]],
       sportIds: [court?.sportIds || []],
-      surfaceType: [court?.surfaceType || 'sintético'],
+      surfaceType: [court?.surfaceType || 'synthetic'],
       isIndoor: [court?.isIndoor ?? false],
       isActive: [court?.isActive ?? true]
     });

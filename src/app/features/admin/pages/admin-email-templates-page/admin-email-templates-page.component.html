@@ -19,6 +19,99 @@
     </div>
   </div>
 
+  @if (showFormPanel()) {
+    <div class="email-templates-page__form-panel" @slideDown>
+      <div class="email-templates-page__form-panel-header">
+        <h3 class="email-templates-page__form-panel-title">
+          {{ (editingTemplate() ? 'admin.email-templates.form.edit' : 'admin.email-templates.form.create') | t }}
+        </h3>
+        <button
+          type="button"
+          class="email-templates-page__form-panel-close"
+          (click)="closeFormPanel()"
+          [attr.aria-label]="'common.close' | t">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="email-templates-page__form-panel-body">
+        <form class="form-content" [formGroup]="form" (submit)="$event.preventDefault(); onSave()">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="template-key">{{ 'admin.email-templates.form.key' | t }}</label>
+              <input id="template-key" type="text" formControlName="key" />
+              @if (keyInvalid) {
+                <span class="error-message">{{ 'common.required' | t }}</span>
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="template-subject">{{ 'admin.email-templates.form.subject' | t }} *</label>
+              <input
+                id="template-subject"
+                type="text"
+                formControlName="subject"
+                [placeholder]="'admin.email-templates.form.subjectPlaceholder' | t"
+                [class.error]="subjectInvalid" />
+              @if (subjectInvalid) {
+                <span class="error-message">{{ 'admin.email-templates.error.subjectRequired' | t }}</span>
+              }
+            </div>
+
+            <div class="form-field form-field--full">
+              <label for="template-description">{{ 'admin.email-templates.form.descriptionLabel' | t }}</label>
+              <textarea
+                id="template-description"
+                formControlName="description"
+                rows="2"
+                [placeholder]="'admin.email-templates.form.descriptionPlaceholder' | t">
+              </textarea>
+            </div>
+
+            <div class="form-field form-field--full">
+              <label for="template-html">{{ 'admin.email-templates.form.htmlBody' | t }} *</label>
+              <textarea
+                id="template-html"
+                formControlName="htmlBody"
+                rows="12"
+                [placeholder]="'admin.email-templates.form.htmlBodyPlaceholder' | t"
+                [class.error]="htmlBodyInvalid">
+              </textarea>
+              @if (htmlBodyInvalid) {
+                <span class="error-message">{{ 'admin.email-templates.error.htmlBodyRequired' | t }}</span>
+              }
+            </div>
+
+            <div class="form-field form-field--full">
+              <label class="form-checkbox">
+                <input type="checkbox" formControlName="isActive" />
+                <span>{{ 'admin.email-templates.form.isActive' | t }}</span>
+              </label>
+            </div>
+
+            <div class="form-field form-field--full">
+              <h4 class="email-templates-page__tokens-title">{{ 'admin.email-templates.form.tokensTitle' | t }}</h4>
+              <p class="email-templates-page__tokens-help">{{ 'admin.email-templates.form.tokensHelp' | t }}</p>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="closeFormPanel()" [disabled]="facade.saving()">
+              {{ 'common.cancel' | t }}
+            </button>
+            <app-async-button
+              variant="primary"
+              [loading]="facade.saving()"
+              [disabled]="form.invalid"
+              (clicked)="onSave()">
+              {{ (editingTemplate() ? 'common.update' : 'common.create') | t }}
+            </app-async-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
   <app-filter-panel
     [fields]="filterFields"
     [collapsible]="true"
@@ -38,75 +131,6 @@
     (rowAction)="onRowActionClicked($event)">
   </app-data-table>
 </div>
-
-@if (showFormPanel()) {
-  <div class="email-template-editor">
-    <app-form-shell
-      titleKey="admin.email-templates.form.title"
-      descriptionKey="admin.email-templates.form.description">
-      <form class="email-template-editor__form" [formGroup]="form" (submit)="$event.preventDefault(); onSave()">
-        <label class="email-template-editor__label" for="template-key">{{ 'admin.email-templates.form.key' | t }}</label>
-        <input id="template-key" type="text" formControlName="key" class="email-template-editor__input" />
-
-        <label class="email-template-editor__label" for="template-subject">{{ 'admin.email-templates.form.subject' | t }}</label>
-        <input
-          id="template-subject"
-          type="text"
-          formControlName="subject"
-          class="email-template-editor__input"
-          [attr.placeholder]="'admin.email-templates.form.subjectPlaceholder' | t" />
-        @if (subjectInvalid) {
-          <p class="email-template-editor__error">{{ 'admin.email-templates.error.subjectRequired' | t }}</p>
-        }
-
-        <label class="email-template-editor__label" for="template-description">{{ 'admin.email-templates.form.descriptionLabel' | t }}</label>
-        <textarea
-          id="template-description"
-          formControlName="description"
-          class="email-template-editor__textarea email-template-editor__textarea--small"
-          [attr.placeholder]="'admin.email-templates.form.descriptionPlaceholder' | t">
-        </textarea>
-
-        <label class="email-template-editor__label" for="template-html">{{ 'admin.email-templates.form.htmlBody' | t }}</label>
-        <textarea
-          id="template-html"
-          formControlName="htmlBody"
-          class="email-template-editor__textarea"
-          [attr.placeholder]="'admin.email-templates.form.htmlBodyPlaceholder' | t">
-        </textarea>
-        @if (htmlBodyInvalid) {
-          <p class="email-template-editor__error">{{ 'admin.email-templates.error.htmlBodyRequired' | t }}</p>
-        }
-
-        <label class="email-template-editor__checkbox">
-          <input type="checkbox" formControlName="isActive" />
-          <span>{{ 'admin.email-templates.form.isActive' | t }}</span>
-        </label>
-      </form>
-
-      <div class="email-template-editor__tokens">
-        <h3 class="email-template-editor__tokens-title">{{ 'admin.email-templates.form.tokensTitle' | t }}</h3>
-        <p class="email-template-editor__tokens-help">{{ 'admin.email-templates.form.tokensHelp' | t }}</p>
-      </div>
-
-      <div formActions class="email-template-editor__actions">
-        <app-async-button
-          variant="secondary"
-          [disabled]="facade.saving()"
-          (clicked)="closeFormPanel()">
-          {{ 'common.cancel' | t }}
-        </app-async-button>
-        <app-async-button
-          variant="primary"
-          [loading]="facade.saving()"
-          [disabled]="form.invalid"
-          (clicked)="onSave()">
-          {{ 'common.save' | t }}
-        </app-async-button>
-      </div>
-    </app-form-shell>
-  </div>
-}
 
 @if (showDeleteDialog()) {
   <app-confirm-dialog

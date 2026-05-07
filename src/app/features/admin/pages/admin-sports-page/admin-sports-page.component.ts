@@ -54,9 +54,11 @@ export class AdminSportsPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
 
   constructor() {
-    // Reload data whenever organization changes
+    // Reload data and reset transient UI whenever the active organization changes
     effect(() => {
       this.activeOrg.organizationChanged();
+      this.closeFormPanel();
+      this.cancelDelete();
       void this.facade.load();
     });
   }
@@ -148,8 +150,8 @@ export class AdminSportsPageComponent implements OnInit {
     this.showFormPanel.set(true);
   }
 
-  openEdit(row: SportRow): void {
-    const sport = this.facade.filteredSports().find(s => s.id === row.id);
+  async openEdit(row: SportRow): Promise<void> {
+    const sport = await this.facade.getCatalogSport(row.id);
     if (sport) {
       this.editingSport.set(sport);
       this.showFormPanel.set(true);
@@ -164,7 +166,7 @@ export class AdminSportsPageComponent implements OnInit {
   async toggleSportActive(row: SportRow): Promise<void> {
     const sport = this.facade.filteredSports().find(s => s.id === row.id);
     if (sport) {
-      await this.facade.saveSport({ ...sport, isActive: !sport.isActive });
+      await this.facade.toggleSportEnabled(sport.id, !sport.isActive);
     }
   }
 

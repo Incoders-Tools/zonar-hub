@@ -10,6 +10,7 @@ import { AsyncButtonComponent } from '../../../../../shared/components/async-but
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../../shared/components/child-collection-grid/child-collection-grid.component';
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 import { Sport, TournamentModality } from '../../../../../core/models';
 import { SportsFacadeService } from '../sports-facade.service';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
@@ -39,6 +40,7 @@ export class SportsFormPanelComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(SportsFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(I18nService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly sport = input<Sport | null>(null);
@@ -52,10 +54,11 @@ export class SportsFormPanelComponent implements OnInit {
   isEditing = false;
   submitted = false;
 
-  readonly modalityColumns: ChildGridColumn[] = [
-    { key: 'nameEs', labelKey: 'admin.sports.form.modalityNameEs', type: 'display' },
-    { key: 'nameEn', labelKey: 'admin.sports.form.modalityNameEn', type: 'display' }
-  ];
+  readonly modalityColumns = computed<ChildGridColumn[]>(() => {
+    const locale = this.i18n.locale();
+    const nameKey = locale === 'en' ? 'nameEn' : locale === 'pt' ? 'namePt' : 'nameEs';
+    return [{ key: nameKey, labelKey: 'admin.modalities.column.name', type: 'display' as const }];
+  });
 
   readonly activeModalities = computed(() =>
     this.modalities().filter(m => m.isActive)

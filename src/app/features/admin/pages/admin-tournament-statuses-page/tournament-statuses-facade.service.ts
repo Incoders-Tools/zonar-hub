@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { TournamentStatus } from '../../../../core/models';
-import { MockTournamentStatusRepository } from '../../../../core/repositories/mock/mock-tournament-status.repository';
+import { ApiTournamentStatusRepository } from '../../../../core/repositories/api/api-tournament-status.repository';
 
 export interface TournamentStatusFilters {
   name?: string;
@@ -9,7 +9,7 @@ export interface TournamentStatusFilters {
 
 @Injectable()
 export class TournamentStatusesFacadeService {
-  private readonly repository = inject(MockTournamentStatusRepository);
+  private readonly repository = inject(ApiTournamentStatusRepository);
 
   // State signals
   private readonly entitiesState = signal<TournamentStatus[]>([]);

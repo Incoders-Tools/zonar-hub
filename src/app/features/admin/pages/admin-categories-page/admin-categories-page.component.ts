@@ -58,20 +58,26 @@ export class AdminCategoriesPageComponent implements OnInit {
   private readonly activeOrg = inject(ActiveOrganizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
-  constructor() {
-    // Reload data whenever organization changes
-    effect(() => {
-      this.activeOrg.organizationChanged();
-      void this.facade.load();
-    });
-  }
-
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingCategory = signal<Category | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedCategories = signal<CategoryRow[]>([]);
+
+  constructor() {
+    // Reload data and reset transient UI whenever the active organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.showBulkDeleteDialog.set(false);
+      this.editingCategory.set(null);
+      this.deletingId.set(null);
+      this.selectedCategories.set([]);
+      void this.facade.load();
+    });
+  }
 
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [

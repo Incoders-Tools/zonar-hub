@@ -67,19 +67,24 @@ export class AdminComplexesPageComponent implements OnInit {
   private readonly activeOrg = inject(ActiveOrganizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
-  constructor() {
-    // Reload data whenever organization changes
-    effect(() => {
-      this.activeOrg.organizationChanged();
-      void this.facade.load();
-    });
-  }
-
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingComplex = signal<Complex | null>(null);
   readonly deletingId = signal<string | null>(null);
+
+  constructor() {
+    // Reload data and reset transient UI whenever the active organization changes
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.showBulkDeleteDialog.set(false);
+      this.editingComplex.set(null);
+      this.deletingId.set(null);
+      void this.facade.load();
+    });
+  }
   readonly selectedComplexes = signal<ComplexRow[]>([]);
 
   // Courts panel state

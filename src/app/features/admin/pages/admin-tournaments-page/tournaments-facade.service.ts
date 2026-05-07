@@ -89,9 +89,11 @@ export class TournamentsFacadeService {
 
     let result = [...tournaments];
 
-    // Filter by active organization — only show tournaments that belong to the selected org
+    // Filter by active organization. Tournaments without an explicit organizationId
+    // (legacy / mock seed data) pass through so that admins and sysadmins can still
+    // operate on them; real records persisted with organizationId are filtered strictly.
     if (activeOrgId) {
-      result = result.filter(t => t.organizationId === activeOrgId);
+      result = result.filter(t => !t.organizationId || t.organizationId === activeOrgId);
     }
 
     if (filters.name?.trim()) {

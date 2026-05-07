@@ -92,6 +92,7 @@ export class AdminUsersPageComponent implements OnInit {
   readonly permissionsByOrganization = signal<Record<string, string[]>>({});
   readonly selectedPermissionOrganizationId = signal<string | null>(null);
   readonly copySourceOrganizationId = signal<string>('');
+  readonly copySourceUserId = signal<string>('');
   readonly loadingPermissionCatalog = signal(false);
   readonly loadingUserPermissions = signal(false);
 
@@ -139,10 +140,37 @@ export class AdminUsersPageComponent implements OnInit {
     return this.restrictedToolKeys();
   });
 
+  readonly visiblePermissionCatalog = computed(() => {
+    const roleId = this.form?.get('roleId')?.value as string | undefined;
+    if (roleId === 'role001') {
+      return this.permissionCatalog();
+    }
+
+    const hidden = new Set(this.restrictedToolKeys());
+    return this.permissionCatalog().map(mod => ({
+      ...mod,
+      tools: mod.tools.filter(tool => !hidden.has(tool.key))
+    })).filter(mod => mod.tools.length > 0);
+  });
+
   readonly canCopyPermissions = computed(() => {
     const source = this.copySourceOrganizationId();
     const target = this.selectedPermissionOrganizationId();
     return !!source && !!target && source !== target;
+  });
+
+  /** Users from the active organization that can act as a permission source */
+  readonly availableSourceUsers = computed(() => {
+    const activeOrgId = this.activeOrg.activeOrganizationId();
+    if (!activeOrgId) return [];
+    const editingId = this.editingUser()?.id;
+    return this.facade.users()
+      .filter(u => (u.tenantIds ?? []).some(id => id === activeOrgId))
+      .filter(u => u.id !== editingId);
+  });
+
+  readonly canCopyPermissionsFromUser = computed(() => {
+    return !!this.copySourceUserId() && !!this.selectedPermissionOrganizationId();
   });
 
   readonly hasValidPermissionSelection = computed(() => {
@@ -156,9 +184,13 @@ export class AdminUsersPageComponent implements OnInit {
   });
 
   constructor() {
-    // Reload data whenever organization changes
+    // Reload data and reset transient UI whenever the active organization changes
     effect(() => {
       this.activeOrg.organizationChanged();
+      this.closeFormPanel();
+      this.closeDeleteDialog();
+      this.closeBulkDeleteDialog();
+      this.dismissRoleDefaults();
       void this.facade.load();
     });
   }
@@ -186,6 +218,7 @@ export class AdminUsersPageComponent implements OnInit {
 
   readonly rowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+    { icon: 'content_copy', labelKey: 'admin.users.action.duplicate', action: 'duplicate', variant: 'primary' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
@@ -255,6 +288,12 @@ export class AdminUsersPageComponent implements OnInit {
     void this.loadPermissionCatalog();
   }
 
+  private previousRoleId: string | null = null;
+  private suppressRolePrompt = false;
+
+  readonly showRoleDefaultsDialog = signal(false);
+  readonly pendingRoleId = signal<string | null>(null);
+
   private initializeForm(): void {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -264,13 +303,58 @@ export class AdminUsersPageComponent implements OnInit {
       isActive: [true]
     });
 
-    this.form.get('roleId')?.valueChanges.subscribe(() => {
+    this.previousRoleId = this.form.get('roleId')?.value ?? null;
+
+    this.form.get('roleId')?.valueChanges.subscribe(newRoleId => {
       this.applyRoleRestrictionsToPermissions();
       this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
+      this.maybePromptRoleDefaults(newRoleId as string | null);
+      this.previousRoleId = newRoleId as string | null;
     });
   }
 
+  /**
+   * After a role change, offer to populate the permission matrix with the
+   * defaults associated to the new role. Only fires when at least one
+   * organization is already assigned to the user (per spec).
+   */
+  private maybePromptRoleDefaults(newRoleId: string | null): void {
+    if (this.suppressRolePrompt) return;
+    if (!newRoleId) return;
+    if (newRoleId === this.previousRoleId) return;
+    if (this.userTenantIds().size === 0) return;
+
+    this.pendingRoleId.set(newRoleId);
+    this.showRoleDefaultsDialog.set(true);
+  }
+
+  acceptRoleDefaults(): void {
+    const targetRoleId = this.pendingRoleId();
+    if (!targetRoleId) {
+      this.dismissRoleDefaults();
+      return;
+    }
+
+    const defaults = this.defaultToolsForRole(targetRoleId);
+    const tenantIds = Array.from(this.userTenantIds());
+    this.permissionsByOrganization.update(current => {
+      const next: Record<string, string[]> = { ...current };
+      for (const tenantId of tenantIds) {
+        next[tenantId] = this.normalizeToolKeys(defaults);
+      }
+      return next;
+    });
+
+    this.dismissRoleDefaults();
+  }
+
+  dismissRoleDefaults(): void {
+    this.showRoleDefaultsDialog.set(false);
+    this.pendingRoleId.set(null);
+  }
+
   private async populateForm(): Promise<void> {
+    this.suppressRolePrompt = true;
     const user = this.editingUser();
     if (user) {
       this.isEditing = true;
@@ -309,6 +393,8 @@ export class AdminUsersPageComponent implements OnInit {
 
     this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
     this.submitted = false;
+    this.previousRoleId = (this.form.get('roleId')?.value as string | null) ?? null;
+    this.suppressRolePrompt = false;
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
@@ -337,6 +423,8 @@ export class AdminUsersPageComponent implements OnInit {
       this.openEditForm(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
+    } else if (event.action === 'duplicate') {
+      this.openDuplicateForm(event.row);
     }
   }
 
@@ -353,6 +441,55 @@ export class AdminUsersPageComponent implements OnInit {
       this.showFormPanel.set(true);
       void this.populateForm();
     }
+  }
+
+  /**
+   * Opens the create form pre-populated with the source user's role,
+   * organizations, and per-org permission matrix. Sensitive fields
+   * (email, name, phone, security state) are intentionally cleared
+   * so the admin enters them explicitly for the new user.
+   */
+  async openDuplicateForm(row: UserRow): Promise<void> {
+    const source = this.facade.users().find(u => u.id === row.id);
+    if (!source) return;
+
+    this.editingUser.set(null);
+    this.showFormPanel.set(true);
+    await this.populateForm();
+
+    this.suppressRolePrompt = true;
+    this.form.patchValue({
+      email: '',
+      fullName: '',
+      phone: '',
+      roleId: source.roleId || 'role002',
+      isActive: source.isActive ?? true
+    });
+
+    const tenantIds = source.tenantIds?.length
+      ? [...source.tenantIds]
+      : source.complexId
+        ? [source.complexId]
+        : [];
+    this.userTenantIds.set(new Set(tenantIds));
+    this.orderedTenantIds.set([...tenantIds]);
+
+    try {
+      const sourcePermissions = await this.permissionRepository.getUserPermissions(source.id);
+      const matrix = sourcePermissions.permissionsByOrganization.reduce<Record<string, string[]>>((acc, item) => {
+        if (tenantIds.includes(item.organizationId)) {
+          acc[item.organizationId] = this.normalizeToolKeys(item.toolKeys);
+        }
+        return acc;
+      }, {});
+      this.permissionsByOrganization.set(matrix);
+    } catch {
+      this.permissionsByOrganization.set({});
+    }
+
+    this.syncPermissionOrganizations(tenantIds);
+    this.previousRoleId = (this.form.get('roleId')?.value as string | null) ?? null;
+    this.suppressRolePrompt = false;
   }
 
   closeFormPanel(): void {
@@ -444,6 +581,31 @@ export class AdminUsersPageComponent implements OnInit {
     this.copySourceOrganizationId.set(organizationId);
   }
 
+  onCopySourceUserChanged(userId: string): void {
+    this.copySourceUserId.set(userId);
+  }
+
+  async copyPermissionsFromUser(): Promise<void> {
+    if (!this.canCopyPermissionsFromUser()) return;
+
+    const sourceUserId = this.copySourceUserId();
+    const targetOrgId = this.selectedPermissionOrganizationId();
+    if (!sourceUserId || !targetOrgId) return;
+
+    try {
+      const sourcePermissions = await this.permissionRepository.getUserPermissions(sourceUserId);
+      const sourceTools = sourcePermissions.permissionsByOrganization
+        .find(p => p.organizationId === targetOrgId)?.toolKeys ?? [];
+
+      this.permissionsByOrganization.update(current => ({
+        ...current,
+        [targetOrgId]: this.normalizeToolKeys(sourceTools)
+      }));
+    } catch {
+      // notification handled upstream by the HTTP interceptor
+    }
+  }
+
   copyPermissionsFromOrganization(): void {
     if (!this.canCopyPermissions()) {
       return;
@@ -468,7 +630,11 @@ export class AdminUsersPageComponent implements OnInit {
     this.loadingPermissionCatalog.set(true);
     try {
       const catalog = await this.permissionRepository.getCatalog();
-      this.permissionCatalog.set(catalog.modules);
+      const deduplicated = catalog.modules.map(mod => ({
+        ...mod,
+        tools: mod.tools.filter((tool, index, arr) => arr.findIndex(t => t.key === tool.key) === index)
+      }));
+      this.permissionCatalog.set(deduplicated);
       this.applyRoleRestrictionsToPermissions();
       this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
     } catch {

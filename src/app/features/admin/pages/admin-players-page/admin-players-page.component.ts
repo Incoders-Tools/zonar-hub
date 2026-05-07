@@ -72,9 +72,12 @@ export class AdminPlayersPageComponent implements OnInit, OnDestroy {
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   constructor() {
-    // Reload data whenever organization changes
+    // Reload data and reset transient UI whenever the active organization changes
     effect(() => {
       this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.editingPlayer.set(null);
       void this.facade.load();
     });
   }

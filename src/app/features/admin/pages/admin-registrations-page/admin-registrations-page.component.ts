@@ -79,9 +79,12 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
   private readonly i18n = inject(I18nService);
 
   constructor() {
-    // Reload data whenever organization changes
+    // Reload data and reset transient UI whenever the active organization changes
     effect(() => {
       this.activeOrg.organizationChanged();
+      this.showFormPanel.set(false);
+      this.showDeleteDialog.set(false);
+      this.editingRegistration.set(null);
       void this.facade.load();
     });
   }
