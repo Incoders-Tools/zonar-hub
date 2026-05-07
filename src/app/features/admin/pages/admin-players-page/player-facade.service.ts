@@ -1,9 +1,9 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Player, Category, Gender, Sport } from '../../../../core/models';
 import { MockPlayerRepository } from '../../../../core/repositories/mock/mock-player.repository';
-import { MockCategoryRepository } from '../../../../core/repositories/mock/mock-category.repository';
-import { MockGenderRepository } from '../../../../core/repositories/mock/mock-gender.repository';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
+import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
@@ -19,9 +19,9 @@ export interface PlayerFilters {
 @Injectable()
 export class PlayerFacadeService {
   private readonly repo = inject(MockPlayerRepository);
-  private readonly categoryRepo = inject(MockCategoryRepository);
-  private readonly genderRepo = inject(MockGenderRepository);
-  private readonly sportRepo = inject(MockSportRepository);
+  private readonly categoryRepo = inject(ApiCategoryRepository);
+  private readonly genderRepo = inject(ApiGenderRepository);
+  private readonly sportRepo = inject(ApiSportRepository);
   private readonly notification = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly activeOrg = inject(ActiveOrganizationService);

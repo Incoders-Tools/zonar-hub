@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Complex, Court, Availability, Sport } from '../../../../core/models';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
+import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
 
@@ -12,8 +12,8 @@ export interface ComplexFilters {
 
 @Injectable()
 export class ComplexesFacadeService {
-  private readonly repository = inject(MockComplexRepository);
-  private readonly sportRepository = inject(MockSportRepository);
+  private readonly repository = inject(ApiComplexRepository);
+  private readonly sportRepository = inject(ApiSportRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly adminDashboard = inject(AdminDashboardService);
   private lastOrgId: string | null | undefined = undefined;

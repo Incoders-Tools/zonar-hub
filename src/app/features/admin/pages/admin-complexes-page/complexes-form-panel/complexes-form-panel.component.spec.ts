@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComplexesFormPanelComponent } from './complexes-form-panel.component';
 import { ComplexesFacadeService } from '../complexes-facade.service';
-import { MockComplexRepository } from '../../../../../core/repositories/mock/mock-complex.repository';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ApiComplexRepository } from '../../../../../core/repositories/api/api-complex.repository';
+import { API_BASE_URL } from '../../../../../core/config/api-base-url.token';
 import { Complex } from '../../../../../core/models';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -32,7 +35,10 @@ describe('ComplexesFormPanelComponent', () => {
       imports: [ComplexesFormPanelComponent, NoopAnimationsModule],
       providers: [
         ComplexesFacadeService,
-        MockComplexRepository
+        ApiComplexRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
+        provideHttpClient(),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
 

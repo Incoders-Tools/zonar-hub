@@ -21,7 +21,9 @@
       "PowerShell(Get-ChildItem -Path \"D:\\\\Repositories\\\\incoders\\\\zonar-hub\\\\src\\\\app\\\\shared\\\\components\" -Force | Where-Object { $_.PSIsContainer } | Select-Object -First 30 | % { $_.Name })",
       "Bash(echo \"EXIT_CODE: $?\")",
       "Bash(xargs -I{} grep -H \"^namespace\" {})",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(grep -v \"\\\\.spec\\\\.ts$\")"
     ]
   }
 }

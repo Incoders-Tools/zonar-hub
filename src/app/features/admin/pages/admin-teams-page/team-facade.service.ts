@@ -1,8 +1,8 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Team, Sport, Category, Player } from '../../../../core/models';
 import { MockTeamRepository } from '../../../../core/repositories/mock/mock-team.repository';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
-import { MockCategoryRepository } from '../../../../core/repositories/mock/mock-category.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
+import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
 import { MockPlayerRepository } from '../../../../core/repositories/mock/mock-player.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -18,8 +18,8 @@ export interface TeamFilters {
 @Injectable()
 export class TeamFacadeService {
   private readonly repo = inject(MockTeamRepository);
-  private readonly sportRepo = inject(MockSportRepository);
-  private readonly categoryRepo = inject(MockCategoryRepository);
+  private readonly sportRepo = inject(ApiSportRepository);
+  private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly playerRepo = inject(MockPlayerRepository);
   private readonly notification = inject(NotificationService);
   private readonly i18n = inject(I18nService);

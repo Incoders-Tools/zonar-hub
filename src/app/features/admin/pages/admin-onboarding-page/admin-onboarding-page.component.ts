@@ -17,7 +17,7 @@ import { UserPreferencesService } from '../../../../core/services/user-preferenc
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ThemeService, AppTheme } from '../../../../core/theme/theme.service';
 import { DateFormatService } from '../../../../core/services/date-format.service';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
+import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
 import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
 import { AppLocale } from '../../../../core/i18n/i18n.types';
 import { Sport, OrganizationType, Complex } from '../../../../core/models';
@@ -69,7 +69,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly sportRepo = inject(ApiSportRepository);
   private readonly onboardingRepo = inject(ApiOnboardingRepository);
-  private readonly complexRepo = inject(MockComplexRepository);
+  private readonly complexRepo = inject(ApiComplexRepository);
   private readonly tournamentRepo = inject(MockTournamentAdminRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
   protected readonly userPrefs = inject(UserPreferencesService);
@@ -520,68 +520,23 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
   private async ensureOnboardingComplex(
     result: { complexId?: string | null },
-    organizationId: string,
-    organizationName: string,
+    _organizationId: string,
+    _organizationName: string,
     venueName: string,
-    venueAddress: string,
-    venueLocation: string | null | undefined,
-    courtNames: string[],
-    enabledSportIds: string[]
+    _venueAddress: string,
+    _venueLocation: string | null | undefined,
+    _courtNames: string[],
+    _enabledSportIds: string[]
   ): Promise<Complex | null> {
-    const normalizedName = venueName.trim();
-    if (!result.complexId || normalizedName.length === 0) {
+    if (!result.complexId || venueName.trim().length === 0) {
       return null;
     }
 
-    const complexKey = this.buildEntityKey(normalizedName);
+    // The complex (and its courts) are persisted by the onboarding endpoint
+    // server-side; we only need to surface it locally for the wizard's
+    // remaining steps to reference.
     const existingComplexes = await this.complexRepo.getAll();
-    const existingById = existingComplexes.find(c => c.id === result.complexId);
-
-    if (existingById) {
-      return existingById;
-    }
-
-    const nextSortOrder = Math.max(0, ...existingComplexes.map(c => c.sortOrder ?? 0)) + 1;
-    const nextPreponderance = Math.max(0, ...existingComplexes.map(c => c.preponderance ?? 0)) + 1;
-    const cityName = (venueLocation ?? '').trim() || organizationName || normalizedName;
-    const cityId = this.buildEntityKey(cityName) || 'city_default';
-
-    // Use the API complex UUID so courts loaded via ApiCourtRepository can be found
-    const complex = await this.complexRepo.createWithId(result.complexId, {
-      organizationId,
-      organizationName,
-      name: normalizedName,
-      key: complexKey,
-      address: venueAddress.trim(),
-      location: (venueLocation ?? '').trim() || undefined,
-      cityId,
-      cityName,
-      phone: undefined,
-      email: undefined,
-      imageUrl: undefined,
-      logoImagePath: undefined,
-      coverImagePath: undefined,
-      layoutDiagramPath: undefined,
-      description: undefined,
-      sortOrder: nextSortOrder,
-      preponderance: nextPreponderance,
-      sportsSupported: [...enabledSportIds],
-      courtsCount: courtNames.length,
-      isActive: true
-    });
-
-    // Sync court names into the mock so the ABM courts panel can display them
-    for (const courtName of courtNames) {
-      if (courtName.trim()) {
-        await this.complexRepo.createCourt({
-          complexId: result.complexId,
-          name: courtName.trim(),
-          isActive: true
-        });
-      }
-    }
-
-    return complex;
+    return existingComplexes.find(c => c.id === result.complexId) ?? null;
   }
 
   private async ensureOnboardingTournament(

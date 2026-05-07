@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { Sport, TournamentModality } from '../../../../core/models';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
-import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
+import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
 import { OrganizationContextService } from '../../../../core/services/organization-context.service';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 
@@ -14,7 +14,7 @@ export interface SportFilters {
 @Injectable()
 export class SportsFacadeService {
   private readonly repository = inject(ApiSportRepository);
-  private readonly modalityRepository = inject(MockTournamentModalityRepository);
+  private readonly modalityRepository = inject(ApiTournamentModalityRepository);
   private readonly auth = inject(AuthService);
   private readonly organizationContext = inject(OrganizationContextService);
   private readonly tenantContext = inject(TenantContextService);

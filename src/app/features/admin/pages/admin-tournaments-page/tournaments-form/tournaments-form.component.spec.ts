@@ -2,11 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TournamentsFormComponent } from './tournaments-form.component';
 import { TournamentsFacadeService } from '../tournaments-facade.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTournamentAdminRepository } from '../../../../../core/repositories/mock/mock-tournament-admin.repository';
-import { MockComplexRepository } from '../../../../../core/repositories/mock/mock-complex.repository';
-import { MockCategoryRepository } from '../../../../../core/repositories/mock/mock-category.repository';
-import { MockGenderRepository } from '../../../../../core/repositories/mock/mock-gender.repository';
+import { ApiComplexRepository } from '../../../../../core/repositories/api/api-complex.repository';
+import { ApiCategoryRepository } from '../../../../../core/repositories/api/api-category.repository';
+import { ApiGenderRepository } from '../../../../../core/repositories/api/api-gender.repository';
 import { MockTournamentTypeRepository } from '../../../../../core/repositories/tournament-admin.repository';
+import { API_BASE_URL } from '../../../../../core/config/api-base-url.token';
 import { Tournament } from '../../../../../core/models';
 
 describe('TournamentsFormComponent', () => {
@@ -46,10 +49,13 @@ describe('TournamentsFormComponent', () => {
       providers: [
         TournamentsFacadeService,
         MockTournamentAdminRepository,
-        MockComplexRepository,
-        MockCategoryRepository,
-        MockGenderRepository,
-        MockTournamentTypeRepository
+        ApiComplexRepository,
+        ApiCategoryRepository,
+        ApiGenderRepository,
+        MockTournamentTypeRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
+        provideHttpClient(),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
 

@@ -1,12 +1,12 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality, TournamentRuleSet } from '../../../../core/models';
 import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
-import { MockCategoryRepository } from '../../../../core/repositories/mock/mock-category.repository';
-import { MockGenderRepository } from '../../../../core/repositories/mock/mock-gender.repository';
+import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
+import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
+import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
 import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
-import { MockSportRepository } from '../../../../core/repositories/mock/mock-sport.repository';
-import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
+import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
 import { MockTournamentRuleSetRepository } from '../../../../core/repositories/mock/mock-tournament-rule-set.repository';
 import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
@@ -20,12 +20,12 @@ export interface TournamentFilters {
 @Injectable()
 export class TournamentsFacadeService {
   private readonly repository = inject(MockTournamentAdminRepository);
-  private readonly complexRepo = inject(MockComplexRepository);
-  private readonly categoryRepo = inject(MockCategoryRepository);
-  private readonly genderRepo = inject(MockGenderRepository);
+  private readonly complexRepo = inject(ApiComplexRepository);
+  private readonly categoryRepo = inject(ApiCategoryRepository);
+  private readonly genderRepo = inject(ApiGenderRepository);
   private readonly tournamentTypeRepo = inject(MockTournamentTypeRepository);
-  private readonly sportRepo = inject(MockSportRepository);
-  private readonly modalityRepo = inject(MockTournamentModalityRepository);
+  private readonly sportRepo = inject(ApiSportRepository);
+  private readonly modalityRepo = inject(ApiTournamentModalityRepository);
   private readonly ruleSetRepo = inject(MockTournamentRuleSetRepository);
   private readonly courtRepo = inject(ApiCourtRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);

@@ -6,7 +6,10 @@ import { TournamentService } from '../../../../../core/services/tournament.servi
 import { RegistrationStrategyService } from '../../../../../core/services/registration-strategy.service';
 import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
 import { MockEligibilityProfileRepository } from '../../../../../core/repositories/mock/mock-eligibility-profile.repository';
-import { MockCategoryRepository } from '../../../../../core/repositories/mock/mock-category.repository';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ApiCategoryRepository } from '../../../../../core/repositories/api/api-category.repository';
+import { API_BASE_URL } from '../../../../../core/config/api-base-url.token';
 import { Registration } from '../../../../../core/models/registration.model';
 
 describe('RegistrationFormPanelComponent', () => {
@@ -45,7 +48,10 @@ describe('RegistrationFormPanelComponent', () => {
         RegistrationStrategyService,
         EligibilityValidationService,
         MockEligibilityProfileRepository,
-        MockCategoryRepository
+        ApiCategoryRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
+        provideHttpClient(),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
 

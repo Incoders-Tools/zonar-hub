@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Gender } from '../../../../core/models';
-import { MockGenderRepository } from '../../../../core/repositories/mock/mock-gender.repository';
+import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
@@ -11,7 +11,7 @@ export interface GenderFilters {
 
 @Injectable()
 export class GenderFacadeService {
-  private readonly repo = inject(MockGenderRepository);
+  private readonly repo = inject(ApiGenderRepository);
   private readonly notification = inject(NotificationService);
   private readonly i18n = inject(I18nService);
 

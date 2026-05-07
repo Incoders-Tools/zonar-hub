@@ -13,7 +13,7 @@ import { RegistrationStrategyService } from '../../../../../core/services/regist
 import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
 import { MockEligibilityProfileRepository } from '../../../../../core/repositories/mock/mock-eligibility-profile.repository';
 import { TournamentService } from '../../../../../core/services/tournament.service';
-import { MockCategoryRepository } from '../../../../../core/repositories/mock/mock-category.repository';
+import { ApiCategoryRepository } from '../../../../../core/repositories/api/api-category.repository';
 import { RegistrationService } from '../../../../../core/services/registration.service';
 import { RegistrationFacadeService } from '../registration-facade.service';
 import { Registration, RegistrationParticipant, RegistrationSource } from '../../../../../core/models/registration.model';
@@ -45,7 +45,7 @@ export class RegistrationFormPanelComponent implements OnInit {
   private readonly eligibilityService = inject(EligibilityValidationService);
   private readonly eligibilityRepo = inject(MockEligibilityProfileRepository);
   private readonly tournamentService = inject(TournamentService);
-  private readonly categoryRepo = inject(MockCategoryRepository);
+  private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly registrationService = inject(RegistrationService);
   private readonly facade = inject(RegistrationFacadeService);
 

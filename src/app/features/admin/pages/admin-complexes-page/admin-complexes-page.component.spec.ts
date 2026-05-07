@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminComplexesPageComponent } from './admin-complexes-page.component';
 import { ComplexesFacadeService } from './complexes-facade.service';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
+import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
+import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('AdminComplexesPageComponent', () => {
   let component: AdminComplexesPageComponent;
@@ -14,8 +16,10 @@ describe('AdminComplexesPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminComplexesPageComponent, NoopAnimationsModule],
       providers: [
-        MockComplexRepository,
-        provideHttpClient()
+        ApiComplexRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
+        provideHttpClient(),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
 

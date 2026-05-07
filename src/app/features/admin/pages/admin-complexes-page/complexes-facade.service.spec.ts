@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComplexesFacadeService } from './complexes-facade.service';
-import { MockComplexRepository } from '../../../../core/repositories/mock/mock-complex.repository';
+import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
+import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
 
 const adminDashboardSpy = jasmine.createSpyObj<AdminDashboardService>('AdminDashboardService', ['loadSummary']);
@@ -15,8 +17,10 @@ describe('ComplexesFacadeService', () => {
     TestBed.configureTestingModule({
       providers: [
         ComplexesFacadeService,
-        MockComplexRepository,
+        ApiComplexRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
         provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: AdminDashboardService, useValue: adminDashboardSpy }
       ]
     });

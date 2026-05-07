@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SportsFormPanelComponent } from './sports-form-panel.component';
 import { SportsFacadeService } from '../sports-facade.service';
-import { MockSportRepository } from '../../../../../core/repositories/mock/mock-sport.repository';
+import { ApiSportRepository } from '../../../../../core/repositories/api/api-sport.repository';
 import { Sport } from '../../../../../core/models';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { API_BASE_URL } from '../../../../../core/config/api-base-url.token';
 
 describe('SportsFormPanelComponent', () => {
   let component: SportsFormPanelComponent;
@@ -27,7 +29,14 @@ describe('SportsFormPanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SportsFormPanelComponent],
-      providers: [SportsFacadeService, MockSportRepository, provideHttpClient(), provideNoopAnimations()]
+      providers: [
+        SportsFacadeService,
+        ApiSportRepository,
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations()
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SportsFormPanelComponent);

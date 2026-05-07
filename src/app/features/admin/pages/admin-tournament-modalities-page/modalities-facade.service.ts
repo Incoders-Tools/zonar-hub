@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { TournamentModality } from '../../../../core/models';
-import { MockTournamentModalityRepository } from '../../../../core/repositories/mock/mock-tournament-modality.repository';
+import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
 
 export interface ModalityFilters {
   name?: string;
@@ -9,7 +9,7 @@ export interface ModalityFilters {
 
 @Injectable()
 export class ModalitiesFacadeService {
-  private readonly repository = inject(MockTournamentModalityRepository);
+  private readonly repository = inject(ApiTournamentModalityRepository);
 
   private readonly entitiesState = signal<TournamentModality[]>([]);
   private readonly loadingState = signal(false);

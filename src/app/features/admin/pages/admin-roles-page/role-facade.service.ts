@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Role, isSystemRole, RoleCreatePayload, RoleUpdatePayload } from '../../../../core/models';
-import { MockRoleRepository } from '../../../../core/repositories/mock/mock-role.repository';
+import { ApiRoleRepository } from '../../../../core/repositories/api/api-role.repository';
 
 export interface RoleFilters {
   name?: string;
@@ -9,7 +9,7 @@ export interface RoleFilters {
 
 @Injectable()
 export class RoleFacadeService {
-  private readonly repository = inject(MockRoleRepository);
+  private readonly repository = inject(ApiRoleRepository);
 
   readonly roles = signal<Role[]>([]);
   readonly loading = signal(false);

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Category } from '../../../../core/models';
-import { MockCategoryRepository } from '../../../../core/repositories/mock/mock-category.repository';
+import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 
@@ -11,7 +11,7 @@ export interface CategoryFilters {
 
 @Injectable()
 export class CategoryFacadeService {
-  private readonly repo = inject(MockCategoryRepository);
+  private readonly repo = inject(ApiCategoryRepository);
   private readonly notification = inject(NotificationService);
   private readonly i18n = inject(I18nService);
 
