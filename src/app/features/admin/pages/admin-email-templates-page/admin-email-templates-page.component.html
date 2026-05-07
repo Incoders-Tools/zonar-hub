@@ -69,24 +69,59 @@
             </div>
 
             <div class="form-field form-field--full">
-              <label for="template-html">{{ 'admin.email-templates.form.htmlBody' | t }} *</label>
-              <textarea
-                id="template-html"
-                formControlName="htmlBody"
-                rows="12"
-                [placeholder]="'admin.email-templates.form.htmlBodyPlaceholder' | t"
-                [class.error]="htmlBodyInvalid">
-              </textarea>
+              <div class="email-templates-page__editor-header">
+                <label for="template-html">{{ 'admin.email-templates.form.htmlBody' | t }} *</label>
+                <div class="email-templates-page__editor-tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="htmlEditorTab() === 'code'"
+                    class="email-templates-page__editor-tab"
+                    [class.email-templates-page__editor-tab--active]="htmlEditorTab() === 'code'"
+                    (click)="setHtmlEditorTab('code')">
+                    {{ 'admin.email-templates.editor.codeTab' | t }}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="htmlEditorTab() === 'preview'"
+                    class="email-templates-page__editor-tab"
+                    [class.email-templates-page__editor-tab--active]="htmlEditorTab() === 'preview'"
+                    (click)="setHtmlEditorTab('preview')">
+                    {{ 'admin.email-templates.editor.previewTab' | t }}
+                  </button>
+                </div>
+              </div>
+
+              @if (htmlEditorTab() === 'code') {
+                <textarea
+                  id="template-html"
+                  formControlName="htmlBody"
+                  rows="14"
+                  [placeholder]="'admin.email-templates.form.htmlBodyPlaceholder' | t"
+                  [class.error]="htmlBodyInvalid">
+                </textarea>
+              } @else {
+                <iframe
+                  class="email-templates-page__preview-frame"
+                  sandbox="allow-same-origin"
+                  [srcdoc]="form.get('htmlBody')?.value || ''"
+                  [attr.title]="'admin.email-templates.editor.previewTab' | t">
+                </iframe>
+              }
+
               @if (htmlBodyInvalid) {
                 <span class="error-message">{{ 'admin.email-templates.error.htmlBodyRequired' | t }}</span>
               }
             </div>
 
             <div class="form-field form-field--full">
-              <label class="form-checkbox">
-                <input type="checkbox" formControlName="isActive" />
-                <span>{{ 'admin.email-templates.form.isActive' | t }}</span>
-              </label>
+              <app-active-toggle
+                [value]="form.get('isActive')!.value"
+                mode="toggle"
+                (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
+              </app-active-toggle>
+              <span class="hint">{{ 'admin.email-templates.form.isActiveHint' | t }}</span>
             </div>
 
             <div class="form-field form-field--full">

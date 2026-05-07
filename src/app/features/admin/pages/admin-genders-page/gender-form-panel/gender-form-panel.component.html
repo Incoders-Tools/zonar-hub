@@ -16,37 +16,6 @@
           <span class="form-field__hint">{{ 'genders.form.nameHint' | t }}</span>
         </div>
 
-        <!-- Key Field (Admin Only) -->
-        @if (isAdmin()) {
-          <div class="form-field">
-            <label class="form-field__label" for="gender-key">{{ 'genders.form.key' | t }}</label>
-            <input
-              class="form-field__input form-field__input--mono"
-              id="gender-key"
-              type="text"
-              formControlName="key"
-              [placeholder]="'genders.form.keyPlaceholder' | t" />
-            <span class="form-field__hint">{{ 'genders.form.keyHint' | t }}</span>
-            @if (keyConflict()) {
-              <span class="form-field__error">{{ 'genders.form.keyConflict' | t }}</span>
-            }
-          </div>
-        }
-
-        <!-- Sort Order Field (Admin Only) -->
-        @if (isAdmin()) {
-        <div class="form-field">
-          <label class="form-field__label" for="gender-sort-order">{{ 'genders.form.sortOrder' | t }}</label>
-          <input
-            class="form-field__input"
-            id="gender-sort-order"
-            type="number"
-            formControlName="sortOrder"
-            min="0"
-            [placeholder]="'genders.form.sortOrderPlaceholder' | t" />
-        </div>
-        }
-
         <!-- Is Active Toggle -->
         <div class="form-field">
           <app-active-toggle
@@ -56,6 +25,38 @@
           </app-active-toggle>
           <span class="form-field__hint">{{ 'genders.form.isActiveHint' | t }}</span>
         </div>
+
+        <!-- Technical Fields (Sysadmin only, last in form) -->
+        @if (isAdmin()) {
+          <app-collapsible-section
+            [titleKey]="'common.technicalFields'"
+            [initialExpanded]="false">
+            <div class="form-field">
+              <label class="form-field__label" for="gender-key">{{ 'genders.form.key' | t }}</label>
+              <input
+                class="form-field__input form-field__input--mono"
+                id="gender-key"
+                type="text"
+                formControlName="key"
+                [placeholder]="'genders.form.keyPlaceholder' | t" />
+              <span class="form-field__hint">{{ 'genders.form.keyHint' | t }}</span>
+              @if (keyConflict()) {
+                <span class="form-field__error">{{ 'genders.form.keyConflict' | t }}</span>
+              }
+            </div>
+
+            <div class="form-field">
+              <label class="form-field__label" for="gender-sort-order">{{ 'genders.form.sortOrder' | t }}</label>
+              <input
+                class="form-field__input"
+                id="gender-sort-order"
+                type="number"
+                formControlName="sortOrder"
+                min="0"
+                [placeholder]="'genders.form.sortOrderPlaceholder' | t" />
+            </div>
+          </app-collapsible-section>
+        }
 
         <!-- Actions -->
         <div formActions class="form-actions">

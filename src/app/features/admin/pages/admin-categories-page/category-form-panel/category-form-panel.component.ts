@@ -7,6 +7,7 @@ import { EntityKeyService } from '../../../../../shared/services/entity-key.serv
 import { CategoryFacadeService } from '../category-facade.service';
 import { Category } from '../../../../../core/models';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
+import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { AuthService } from '../../../../../core/auth/auth.service';
 
 function categoryNameValidator(control: AbstractControl): ValidationErrors | null {
@@ -18,7 +19,7 @@ function categoryNameValidator(control: AbstractControl): ValidationErrors | nul
 @Component({
   selector: 'app-category-form-panel',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, FormShellComponent, AsyncButtonComponent, ActiveToggleComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, FormShellComponent, AsyncButtonComponent, ActiveToggleComponent, CollapsibleSectionComponent],
   templateUrl: './category-form-panel.component.html',
   styleUrl: './category-form-panel.component.scss'
 })

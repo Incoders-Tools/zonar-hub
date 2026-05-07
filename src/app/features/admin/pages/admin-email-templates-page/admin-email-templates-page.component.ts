@@ -2,11 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIcon } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { EmailTemplate } from '../../../../core/models';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { DataTableColumn, DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
@@ -14,6 +14,8 @@ import { FilterField, FilterPanelComponent } from '../../../../shared/components
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { EmailTemplateFilters, EmailTemplatesFacadeService } from './email-templates-facade.service';
+
+type HtmlEditorTab = 'code' | 'preview';
 
 interface EmailTemplateRow extends Record<string, unknown> {
   id: string;
@@ -31,11 +33,11 @@ interface EmailTemplateRow extends Record<string, unknown> {
     CommonModule,
     ReactiveFormsModule,
     MatInputModule,
-    MatCheckboxModule,
     MatIcon,
     TranslatePipe,
     DataTableComponent,
     FilterPanelComponent,
+    ActiveToggleComponent,
     AsyncButtonComponent,
     HelpButtonComponent,
     ConfirmDialogComponent
@@ -65,6 +67,11 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
   readonly showDeleteDialog = signal(false);
   readonly editingTemplate = signal<EmailTemplate | null>(null);
   readonly deletingId = signal<string | null>(null);
+  readonly htmlEditorTab = signal<HtmlEditorTab>('code');
+
+  setHtmlEditorTab(tab: HtmlEditorTab): void {
+    this.htmlEditorTab.set(tab);
+  }
 
   readonly columns: DataTableColumn[] = [
     { key: 'key', labelKey: 'admin.email-templates.column.key', sortable: true },
@@ -163,6 +170,7 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
       isActive: true
     });
     this.form.get('key')?.enable();
+    this.htmlEditorTab.set('code');
     this.showFormPanel.set(true);
   }
 
@@ -182,6 +190,7 @@ export class AdminEmailTemplatesPageComponent implements OnInit {
       isActive: template.isActive
     });
     this.form.get('key')?.disable();
+    this.htmlEditorTab.set('code');
     this.showFormPanel.set(true);
   }
 

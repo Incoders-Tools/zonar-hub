@@ -6,11 +6,11 @@
   }
 
   &__digit {
-    width: 48px;
-    height: 56px;
+    width: 56px;
+    height: 64px;
     text-align: center;
-    font-size: var(--zh-font-size-xl);
-    font-weight: 700;
+    font-size: 1.75rem;
+    font-weight: 800;
     font-family: monospace;
     border: 2px solid var(--zh-border-default);
     border-radius: var(--zh-radius-md);
@@ -18,17 +18,18 @@
     color: var(--zh-text-primary);
     caret-color: var(--zh-primary);
     outline: none;
-    transition: border-color var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+    transition: border-color var(--zh-transition-fast), box-shadow var(--zh-transition-fast), transform var(--zh-transition-fast);
 
     &:focus,
     &--active {
       border-color: var(--zh-primary);
-      box-shadow: 0 0 0 3px var(--zh-primary-alpha-20, rgba(59, 130, 246, 0.15));
+      box-shadow: 0 0 0 4px var(--zh-primary-alpha-20, rgba(59, 130, 246, 0.25));
+      transform: translateY(-1px);
     }
 
     &--filled {
       border-color: var(--zh-primary);
-      background: var(--zh-primary-alpha-10, rgba(59, 130, 246, 0.06));
+      background: var(--zh-primary-alpha-10, rgba(59, 130, 246, 0.08));
     }
 
     &:disabled {
@@ -52,8 +53,8 @@
 
 @media (max-width: 400px) {
   .otp-input__digit {
-    width: 40px;
-    height: 48px;
+    width: 44px;
+    height: 52px;
     font-size: var(--zh-font-size-lg);
   }
 }

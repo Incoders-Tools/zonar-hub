@@ -7,12 +7,13 @@ import { EntityKeyService } from '../../../../../shared/services/entity-key.serv
 import { GenderFacadeService } from '../gender-facade.service';
 import { Gender } from '../../../../../core/models';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
+import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { AuthService } from '../../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-gender-form-panel',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, FormShellComponent, AsyncButtonComponent, ActiveToggleComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, FormShellComponent, AsyncButtonComponent, ActiveToggleComponent, CollapsibleSectionComponent],
   templateUrl: './gender-form-panel.component.html',
   styleUrl: './gender-form-panel.component.scss'
 })

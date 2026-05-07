@@ -113,7 +113,7 @@ export class AdminComplexesPageComponent implements OnInit {
 
   readonly complexRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'sports_tennis', labelKey: 'admin.complexes.action.courts', action: 'courts', variant: 'default' as const },
+    { icon: 'stadium', labelKey: 'admin.complexes.action.courts', action: 'courts', variant: 'default' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 

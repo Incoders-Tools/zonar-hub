@@ -63,7 +63,48 @@
       </div>
     </div>
 
-    <!-- Technical Fields (system_admin only) -->
+    <!-- Collapsible optional section -->
+    <app-collapsible-section [titleKey]="'admin.complexes.form.optional.title'">
+      <div class="form-grid">
+        <!-- Logo Image Upload -->
+        <div class="form-field">
+          <label>{{ 'admin.complexes.form.logoImagePath' | t }}</label>
+          <app-image-upload
+            [currentImageUrl]="currentLogoUrl"
+            [compact]="true"
+            [maxSizeMb]="2"
+            (imageChanged)="onLogoChanged($event)"
+            (imageRemoved)="onLogoRemoved()">
+          </app-image-upload>
+          <span class="hint">{{ 'admin.complexes.form.logoHint' | t }}</span>
+        </div>
+
+        <!-- Cover Image Path -->
+        <div class="form-field">
+          <label>{{ 'admin.complexes.form.coverImagePath' | t }}</label>
+          <input
+            type="text"
+            formControlName="coverImagePath"
+            matInput
+          />
+          <span class="hint">{{ 'admin.complexes.form.coverHint' | t }}</span>
+        </div>
+
+        <!-- Layout Diagram Path -->
+        <div class="form-field">
+          <label>{{ 'admin.complexes.form.layoutDiagramPath' | t }}</label>
+          <input
+            type="text"
+            formControlName="layoutDiagramPath"
+            matInput
+          />
+          <span class="hint">{{ 'admin.complexes.form.layoutHint' | t }}</span>
+        </div>
+      </div>
+    </app-collapsible-section>
+
+    <!-- Technical Fields (system_admin only, last in form). Values always
+         travel in the request even if the section is collapsed/hidden. -->
     @if (isSystemAdmin()) {
       <app-collapsible-section [titleKey]="'common.technicalFields'">
         <div class="form-grid">
@@ -113,46 +154,6 @@
         </div>
       </app-collapsible-section>
     }
-
-    <!-- Collapsible optional section -->
-    <app-collapsible-section [titleKey]="'admin.complexes.form.optional.title'">
-      <div class="form-grid">
-        <!-- Logo Image Upload -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.logoImagePath' | t }}</label>
-          <app-image-upload
-            [currentImageUrl]="currentLogoUrl"
-            [compact]="true"
-            [maxSizeMb]="2"
-            (imageChanged)="onLogoChanged($event)"
-            (imageRemoved)="onLogoRemoved()">
-          </app-image-upload>
-          <span class="hint">{{ 'admin.complexes.form.logoHint' | t }}</span>
-        </div>
-
-        <!-- Cover Image Path -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.coverImagePath' | t }}</label>
-          <input
-            type="text"
-            formControlName="coverImagePath"
-            matInput
-          />
-          <span class="hint">{{ 'admin.complexes.form.coverHint' | t }}</span>
-        </div>
-
-        <!-- Layout Diagram Path -->
-        <div class="form-field">
-          <label>{{ 'admin.complexes.form.layoutDiagramPath' | t }}</label>
-          <input
-            type="text"
-            formControlName="layoutDiagramPath"
-            matInput
-          />
-          <span class="hint">{{ 'admin.complexes.form.layoutHint' | t }}</span>
-        </div>
-      </div>
-    </app-collapsible-section>
 
     <!-- Form Actions -->
     <div formActions class="form-actions">

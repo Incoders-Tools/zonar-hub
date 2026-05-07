@@ -195,11 +195,22 @@
         <div class="auth-error">{{ error() | t }}</div>
       }
 
+      <!-- Indeterminate progress while we provision the account -->
+      @if (submitting()) {
+        <div class="auth-form__progress" role="status" aria-live="polite">
+          <div class="auth-form__progress-track">
+            <div class="auth-form__progress-bar"></div>
+          </div>
+          <span class="auth-form__progress-label">{{ 'auth.creatingAccount' | t }}</span>
+        </div>
+      }
+
       <div class="auth-form__button-group">
         <button
           type="button"
           class="btn btn--secondary"
-          (click)="backToForm()">
+          (click)="backToForm()"
+          [disabled]="submitting()">
           {{ 'common.back' | t }}
         </button>
         <button

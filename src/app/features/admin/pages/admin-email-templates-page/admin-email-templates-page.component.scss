@@ -82,6 +82,56 @@
     }
   }
 
+  &__editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zh-space-md);
+    flex-wrap: wrap;
+  }
+
+  &__editor-tabs {
+    display: inline-flex;
+    border: 1px solid var(--zh-border-subtle);
+    border-radius: var(--zh-radius-md);
+    overflow: hidden;
+    background: var(--zh-surface-muted, var(--zh-surface-elevated));
+  }
+
+  &__editor-tab {
+    border: none;
+    background: transparent;
+    color: var(--zh-text-secondary);
+    padding: 6px 14px;
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &--active {
+      background: var(--zh-primary, #2563eb);
+      color: var(--zh-on-primary, #fff);
+    }
+
+    &:hover:not(&--active) {
+      background: var(--zh-surface-elevated);
+      color: var(--zh-text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--zh-focus-ring, var(--zh-primary, #2563eb));
+      outline-offset: 2px;
+    }
+  }
+
+  &__preview-frame {
+    width: 100%;
+    min-height: 320px;
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-card, #fff);
+  }
+
   &__tokens-title {
     margin: 0 0 var(--zh-space-xs);
     color: var(--zh-text-primary);

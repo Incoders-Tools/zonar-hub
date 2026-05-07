@@ -144,7 +144,9 @@ export class RegisterPageComponent implements OnInit {
       this.codeVerified.set(false);
       this.codeError.set('');
       this.attempts.set(0);
-      this.notifications.info(this.i18n.translate('verification.codeSentToast'));
+      // Toast lingers a couple of extra seconds so the user notices the
+      // verification field they just landed on.
+      this.notifications.info(this.i18n.translate('verification.codeSentToast'), 5000);
     } catch {
       this.error.set('auth.registerError');
     } finally {
