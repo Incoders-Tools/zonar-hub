@@ -42,23 +42,60 @@
       <div class="tournament-statuses-page__form-panel-body">
         <form [formGroup]="form" class="form-content">
           <div class="form-grid">
-            <!-- Name -->
-            <div class="form-field form-field--full">
-              <label>{{ 'admin.tournament-statuses.form.name' | t }} *</label>
-              <input type="text" formControlName="name"
-                [placeholder]="'admin.tournament-statuses.form.namePlaceholder' | t"
-                [class.error]="isFieldInvalid('name')">
-              @if (isFieldInvalid('name')) {
-                <span class="error-message">{{ 'common.required' | t }}</span>
-              }
-            </div>
+            @if (isSystemAdmin()) {
+              <!-- Sysadmin: edit all 3 locales -->
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.nameEs' | t }} *</label>
+                <input type="text" formControlName="nameEs"
+                  [placeholder]="'admin.tournament-statuses.form.namePlaceholder' | t"
+                  [class.error]="isFieldInvalid('nameEs')">
+                @if (isFieldInvalid('nameEs')) {
+                  <span class="error-message">{{ 'common.required' | t }}</span>
+                }
+              </div>
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.nameEn' | t }} *</label>
+                <input type="text" formControlName="nameEn"
+                  [placeholder]="'admin.tournament-statuses.form.namePlaceholder' | t">
+              </div>
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.namePt' | t }} *</label>
+                <input type="text" formControlName="namePt"
+                  [placeholder]="'admin.tournament-statuses.form.namePlaceholder' | t">
+              </div>
 
-            <!-- Description -->
-            <div class="form-field form-field--full">
-              <label>{{ 'admin.tournament-statuses.form.description' | t }}</label>
-              <input type="text" formControlName="description"
-                [placeholder]="'admin.tournament-statuses.form.descriptionPlaceholder' | t">
-            </div>
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.descriptionEs' | t }}</label>
+                <input type="text" formControlName="descriptionEs"
+                  [placeholder]="'admin.tournament-statuses.form.descriptionPlaceholder' | t">
+              </div>
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.descriptionEn' | t }}</label>
+                <input type="text" formControlName="descriptionEn"
+                  [placeholder]="'admin.tournament-statuses.form.descriptionPlaceholder' | t">
+              </div>
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.descriptionPt' | t }}</label>
+                <input type="text" formControlName="descriptionPt"
+                  [placeholder]="'admin.tournament-statuses.form.descriptionPlaceholder' | t">
+              </div>
+            } @else {
+              <!-- Admin: edit only the locale of their preference -->
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.name' | t }} *</label>
+                <input type="text" [formControlName]="localeNameControlName()"
+                  [placeholder]="'admin.tournament-statuses.form.namePlaceholder' | t"
+                  [class.error]="isFieldInvalid(localeNameControlName())">
+                @if (isFieldInvalid(localeNameControlName())) {
+                  <span class="error-message">{{ 'common.required' | t }}</span>
+                }
+              </div>
+              <div class="form-field form-field--full">
+                <label>{{ 'admin.tournament-statuses.form.description' | t }}</label>
+                <input type="text" [formControlName]="localeDescriptionControlName()"
+                  [placeholder]="'admin.tournament-statuses.form.descriptionPlaceholder' | t">
+              </div>
+            }
 
             <!-- Active -->
             <div class="form-field">

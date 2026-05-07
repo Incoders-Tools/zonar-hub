@@ -10,6 +10,8 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { CollapsibleSectionComponent } from '../../../../shared/components/collapsible-section/collapsible-section.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
+import { AppLocale } from '../../../../core/i18n/i18n.types';
 import { TournamentStatus } from '../../../../core/models';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentStatusesFacadeService, TournamentStatusFilters } from './tournament-statuses-facade.service';
@@ -62,7 +64,9 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly facade = inject(TournamentStatusesFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(I18nService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
+  readonly activeLocale = this.i18n.locale;
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -138,17 +142,21 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
 
   private initializeForm(): void {
     this.form = this.fb.group({
-      name: ['', [Validators.required]],
-      key: ['', [Validators.required, Validators.pattern(/^[a-z_]+$/)]],
-      description: [''],
+      key: ['', [Validators.required, Validators.pattern(/^[a-z0-9_]+$/)]],
+      nameEs: [''],
+      nameEn: [''],
+      namePt: [''],
+      descriptionEs: [''],
+      descriptionEn: [''],
+      descriptionPt: [''],
       sortOrder: [0, [Validators.min(0)]],
       isActive: [true]
     });
 
-    // Auto-generate the key from the name in create mode so non-sysadmin
-    // users don't need to fill the technical-fields collapsable to make the
-    // form valid. The control still exists and travels in the request.
-    this.form.get('name')?.valueChanges.subscribe((name: string | null) => {
+    // Auto-generate the technical key from the active locale's name in
+    // create mode so non-sysadmin users don't have to fill it manually.
+    const localeNameControl = this.localeNameControl();
+    localeNameControl?.valueChanges.subscribe((name: string | null) => {
       if (this.isEditing) return;
       const generated = (name ?? '')
         .toLowerCase()
@@ -162,21 +170,46 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
     });
   }
 
+  private localeNameControl() {
+    const locale = this.activeLocale();
+    return this.form?.get(this.localeNameControlName(locale));
+  }
+
+  localeNameControlName(locale: AppLocale = this.activeLocale()): 'nameEs' | 'nameEn' | 'namePt' {
+    return locale === 'en' ? 'nameEn' : locale === 'pt' ? 'namePt' : 'nameEs';
+  }
+
+  localeDescriptionControlName(
+    locale: AppLocale = this.activeLocale()
+  ): 'descriptionEs' | 'descriptionEn' | 'descriptionPt' {
+    return locale === 'en' ? 'descriptionEn' : locale === 'pt' ? 'descriptionPt' : 'descriptionEs';
+  }
+
   private populateForm(): void {
     const status = this.editingStatus();
     if (status) {
       this.isEditing = true;
       this.form.patchValue({
-        name: status.name,
         key: status.key,
-        description: status.description || '',
-        sortOrder: status.sortOrder || '',
+        nameEs: status.nameEs ?? '',
+        nameEn: status.nameEn ?? '',
+        namePt: status.namePt ?? '',
+        descriptionEs: status.descriptionEs ?? '',
+        descriptionEn: status.descriptionEn ?? '',
+        descriptionPt: status.descriptionPt ?? '',
+        sortOrder: status.sortOrder ?? 0,
         isActive: status.isActive
       });
       this.form.get('key')?.disable();
     } else {
       this.isEditing = false;
-      this.form.reset({ name: '', key: '', description: '', sortOrder: this.facade.getNextSortOrder(), isActive: true });
+      this.form.reset({
+        key: '',
+        nameEs: '', nameEn: '', namePt: '',
+        descriptionEs: '', descriptionEn: '', descriptionPt: '',
+        sortOrder: this.facade.getNextSortOrder(),
+        isActive: true
+      });
       this.form.get('key')?.enable();
     }
     this.submitted = false;
@@ -229,18 +262,28 @@ export class AdminTournamentStatusesPageComponent implements OnInit {
 
     const formValue = this.form.getRawValue();
 
+    // Non-sysadmin users only edit their active locale field; mirror the
+    // value into the other locales so the row keeps NOT NULL columns happy.
+    if (!this.isSystemAdmin()) {
+      const activeLocaleName = formValue[this.localeNameControlName()];
+      const fallbackName = activeLocaleName?.trim() || formValue.nameEs || formValue.nameEn || formValue.namePt || '';
+      formValue.nameEs = formValue.nameEs?.trim() || fallbackName;
+      formValue.nameEn = formValue.nameEn?.trim() || fallbackName;
+      formValue.namePt = formValue.namePt?.trim() || fallbackName;
+    }
+
+    const localeName = formValue[this.localeNameControlName()];
+    if (!localeName || !`${localeName}`.trim()) {
+      this.form.get(this.localeNameControlName())?.setErrors({ required: true });
+      return;
+    }
+
     if (!this.isEditing) {
       const keyExists = await this.facade.checkKeyExists(formValue.key);
       if (keyExists) {
         this.form.get('key')?.setErrors({ keyExists: true });
         return;
       }
-    }
-
-    const nameExists = await this.facade.checkNameExists(formValue.name, this.editingStatus()?.id);
-    if (nameExists) {
-      this.form.get('name')?.setErrors({ nameExists: true });
-      return;
     }
 
     const payload = this.isEditing
