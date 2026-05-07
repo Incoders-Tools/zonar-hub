@@ -226,6 +226,11 @@ export const TRANSLATIONS: TranslationMap = {
     'home.pricing.enterprise.scope4': 'Desarrollo a medida (NO white-label)',
     'home.pricing.cta.starter': 'Empezar gratis',
     'home.pricing.cta.pro': 'Elegir Pro',
+    'plans.cta.select': 'Elegir plan',
+    'plans.cta.upgrade': 'Mejorar plan',
+    'plans.cta.contactSales': 'Contactar ventas',
+    'plans.cta.current': 'Plan actual',
+    'plans.currentPlan': 'Tu plan',
     'home.pricing.cta.enterprise': 'Contactar ventas',
 
     // ---- Tournaments ----
@@ -2582,6 +2587,11 @@ export const TRANSLATIONS: TranslationMap = {
     'home.pricing.enterprise.scope3': 'Social media integration',
     'home.pricing.enterprise.scope4': 'Custom-built (NOT white-label)',
     'home.pricing.cta.starter': 'Start free',
+    'plans.cta.select': 'Choose plan',
+    'plans.cta.upgrade': 'Upgrade plan',
+    'plans.cta.contactSales': 'Contact sales',
+    'plans.cta.current': 'Current plan',
+    'plans.currentPlan': 'Your plan',
     'home.pricing.cta.pro': 'Choose Pro',
     'home.pricing.cta.enterprise': 'Contact sales',
 
@@ -4920,6 +4930,11 @@ export const TRANSLATIONS: TranslationMap = {
     'home.pricing.enterprise.scope3': 'Integração com redes sociais',
     'home.pricing.enterprise.scope4': 'Desenvolvimento sob medida (NÃO white-label)',
     'home.pricing.cta.starter': 'Comecar gratis',
+    'plans.cta.select': 'Escolher plano',
+    'plans.cta.upgrade': 'Atualizar plano',
+    'plans.cta.contactSales': 'Falar com vendas',
+    'plans.cta.current': 'Plano atual',
+    'plans.currentPlan': 'Seu plano',
     'home.pricing.cta.pro': 'Escolher Pro',
     'home.pricing.cta.enterprise': 'Contatar vendas',
 

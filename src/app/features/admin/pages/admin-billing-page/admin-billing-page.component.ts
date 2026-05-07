@@ -2,6 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { PlansPricingComponent, PricingPlanKey } from '../../../../shared/components/plans-pricing/plans-pricing.component';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -9,7 +10,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 @Component({
   selector: 'app-admin-billing-page',
   standalone: true,
-  imports: [TranslatePipe, AsyncButtonComponent, ReactiveFormsModule],
+  imports: [TranslatePipe, AsyncButtonComponent, ReactiveFormsModule, PlansPricingComponent],
   templateUrl: './admin-billing-page.component.html',
   styleUrl: './admin-billing-page.component.scss'
 })
@@ -115,6 +116,28 @@ export class AdminBillingPageComponent {
     const plan = this.tenantContext.planType();
     return plan ? (this.planFeatures[plan] ?? []) : [];
   });
+
+  /** Map the tenant's plan type to a key the shared pricing component understands. */
+  readonly currentPlanKey = computed<PricingPlanKey | null>(() => {
+    const plan = this.tenantContext.planType();
+    if (plan === 'pro' || plan === 'enterprise') return plan;
+    if (plan === 'starter' || plan === 'single_use') return 'starter';
+    return null;
+  });
+
+  /** Default highlighted plan in the upgrade view: pro for starter, enterprise for pro. */
+  readonly recommendedPlan = computed<PricingPlanKey>(() => {
+    return this.currentPlanKey() === 'pro' ? 'enterprise' : 'pro';
+  });
+
+  onPlanSelected(plan: PricingPlanKey): void {
+    if (plan === this.currentPlanKey()) return;
+    if (plan === 'enterprise') {
+      this.contactSales();
+      return;
+    }
+    void this.upgradePlan(plan);
+  }
 
   async upgradePlan(targetPlan: string): Promise<void> {
     this.upgrading.set(true);

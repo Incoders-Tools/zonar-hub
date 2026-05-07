@@ -23,6 +23,7 @@ export interface Plan {
   priceAnnual: number | null;
   priceSingleUse: number | null;
   maxTournaments: number | null;
+  maxRegistrations: number | null;
   maxAdmins: number;
   maxComplexes: number;
   maxCourts: number;

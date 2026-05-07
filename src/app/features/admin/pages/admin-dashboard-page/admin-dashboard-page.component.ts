@@ -111,6 +111,11 @@ export class AdminDashboardPageComponent {
     this.toUsageProgress(this.totalTournaments(), this.currentPlan()?.maxTournaments ?? null)
   );
 
+  /** Usage progress: registrations (data scoped to active organization). */
+  readonly registrationUsage = computed(() =>
+    this.toUsageProgress(this.totalRegistrations(), this.currentPlan()?.maxRegistrations ?? null)
+  );
+
   /** Usage progress: admins */
   readonly adminUsage = computed(() =>
     this.toUsageProgress(this.adminCount(), this.currentPlan()?.maxAdmins ?? null)

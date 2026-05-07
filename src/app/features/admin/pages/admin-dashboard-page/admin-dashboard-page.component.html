@@ -100,6 +100,21 @@
             </div>
           </div>
         }
+        <!-- Registrations usage (data scoped to active organization) -->
+        @if (registrationUsage().max !== null) {
+          <div class="usage-card">
+            <div class="usage-card__header">
+              <span class="usage-card__label">{{ 'admin.registrations' | t }}</span>
+              <span class="usage-card__count">{{ registrationUsage().current }} / {{ registrationUsage().max }}</span>
+            </div>
+            <div class="usage-card__bar">
+              <div class="usage-card__fill"
+                   [class.usage-card__fill--warning]="registrationUsage().percent >= 80"
+                   [class.usage-card__fill--danger]="registrationUsage().percent >= 100"
+                   [style.width.%]="registrationUsage().percent"></div>
+            </div>
+          </div>
+        }
         <!-- Admins usage -->
         <div class="usage-card">
           <div class="usage-card__header">

@@ -56,38 +56,12 @@
   @if (tenantContext.planType() !== 'enterprise') {
     <div class="billing-page__upgrade-section">
       <h2 class="billing-page__upgrade-title">{{ 'billing.upgradeTitle' | t }}</h2>
-      <div class="billing-page__upgrade-grid">
-        @if (tenantContext.planType() === 'starter' || tenantContext.planType() === 'single_use') {
-          <div class="billing-page__upgrade-card">
-            <h3>Pro</h3>
-            <p class="billing-page__upgrade-price">$49<span>/{{ 'billing.perMonth' | t }}</span></p>
-            <ul>
-              <li>{{ 'billing.feature.tournaments20' | t }}</li>
-              <li>{{ 'billing.feature.admins5' | t }}</li>
-              <li>{{ 'billing.feature.drawPlanner' | t }}</li>
-            </ul>
-            <app-async-button
-              variant="primary"
-              [loading]="upgrading()"
-              (clicked)="upgradePlan('pro')">
-              {{ 'billing.upgradeTo' | t }} Pro
-            </app-async-button>
-          </div>
-        }
-        <div class="billing-page__upgrade-card billing-page__upgrade-card--enterprise">
-          <h3>Enterprise</h3>
-          <p class="billing-page__upgrade-price">{{ 'billing.contactSales' | t }}</p>
-          <ul>
-            <li>{{ 'billing.feature.tournamentsUnlimited' | t }}</li>
-            <li>{{ 'billing.feature.dedicatedServer' | t }}</li>
-            <li>{{ 'billing.feature.dedicatedDB' | t }}</li>
-            <li>{{ 'billing.feature.dedicatedAI' | t }}</li>
-          </ul>
-          <app-async-button variant="primary" (clicked)="contactSales()">
-            {{ 'billing.contactSalesAction' | t }}
-          </app-async-button>
-        </div>
-      </div>
+      <app-plans-pricing
+        mode="authenticated"
+        [currentPlanKey]="currentPlanKey()"
+        [initialSelection]="recommendedPlan()"
+        (planSelected)="onPlanSelected($event)">
+      </app-plans-pricing>
     </div>
   }
 

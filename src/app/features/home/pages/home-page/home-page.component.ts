@@ -5,6 +5,7 @@ import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
 import { ChatbotBubbleComponent } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
+import { PlansPricingComponent } from '../../../../shared/components/plans-pricing/plans-pricing.component';
 import { MOCK_TOURNAMENTS } from '../../../../core/data/mock/mock-tournaments';
 import { Tournament } from '../../../../core/models';
 
@@ -28,7 +29,7 @@ interface FaqItem {
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent, ChatbotBubbleComponent],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent, ChatbotBubbleComponent, PlansPricingComponent],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })

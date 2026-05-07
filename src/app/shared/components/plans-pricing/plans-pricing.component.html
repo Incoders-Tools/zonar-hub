@@ -1,0 +1,89 @@
+@if (showToggle()) {
+  <div class="pricing-toggle">
+    <span
+      class="pricing-toggle__label"
+      [class.pricing-toggle__label--active]="billingCycle() === 'monthly'"
+      (click)="setBillingCycle('monthly')">
+      {{ 'home.pricing.monthly' | t }}
+    </span>
+    <button
+      type="button"
+      class="pricing-toggle__switch"
+      [class.pricing-toggle__switch--annual]="billingCycle() === 'annual'"
+      (click)="toggleBillingCycle()"
+      [attr.aria-label]="'home.pricing.monthly' | t">
+      <span class="pricing-toggle__knob"></span>
+    </button>
+    <span
+      class="pricing-toggle__label"
+      [class.pricing-toggle__label--active]="billingCycle() === 'annual'"
+      (click)="setBillingCycle('annual')">
+      {{ 'home.pricing.annual' | t }}
+    </span>
+    <span class="pricing-toggle__badge">{{ 'home.pricing.save' | t }}</span>
+  </div>
+}
+
+<div class="pricing-grid">
+  @for (card of plans; track card.key) {
+    <div class="pricing-card"
+         [class.pricing-card--popular]="card.highlighted"
+         [class.pricing-card--selected]="selectedPlan() === card.key"
+         [class.pricing-card--current]="isCurrent(card)"
+         [class.pricing-card--readonly]="readOnly()"
+         (click)="selectPlan(card.key)">
+
+      @if (isCurrent(card)) {
+        <span class="pricing-card__badge pricing-card__badge--current">
+          {{ 'plans.currentPlan' | t }}
+        </span>
+      } @else if (card.badgeKey) {
+        <span class="pricing-card__badge">{{ card.badgeKey | t }}</span>
+      }
+
+      <h3 class="pricing-card__name">{{ card.nameKey | t }}</h3>
+      <div class="pricing-card__price">
+        @if (billingCycle() === 'monthly' || !card.priceAnnualKey) {
+          {{ card.priceMonthlyKey | t }}
+        } @else {
+          {{ card.priceAnnualKey | t }}
+        }
+      </div>
+
+      <div class="pricing-card__scope">
+        @for (scopeKey of card.scopeKeys; track scopeKey) {
+          <span>{{ scopeKey | t }}</span>
+        }
+      </div>
+
+      <ul class="pricing-card__features">
+        @for (feature of card.featureKeys; track feature) {
+          <li>{{ feature | t }}</li>
+        }
+      </ul>
+
+      @if (mode() === 'public') {
+        <a class="btn pricing-card__cta"
+           [class.btn--primary]="card.highlighted"
+           [class.btn--outline]="!card.highlighted"
+           [routerLink]="ctaLink(card)"
+           [queryParams]="card.ctaContact ? null : { plan: card.key }">
+          {{ ctaLabelKey(card) | t }}
+        </a>
+      } @else {
+        <button type="button"
+                class="btn pricing-card__cta"
+                [class.btn--primary]="card.highlighted || !isCurrent(card)"
+                [class.btn--outline]="isCurrent(card)"
+                [disabled]="isCurrent(card) || readOnly()"
+                (click)="$event.stopPropagation(); selectPlan(card.key)">
+          @if (isCurrent(card)) {
+            {{ 'plans.cta.current' | t }}
+          } @else {
+            {{ ctaLabelKey(card) | t }}
+          }
+        </button>
+      }
+    </div>
+  }
+</div>
