@@ -23,7 +23,13 @@
       "Bash(xargs -I{} grep -H \"^namespace\" {})",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(grep -v \"\\\\.spec\\\\.ts$\")"
+      "Bash(grep -v \"\\\\.spec\\\\.ts$\")",
+      "Bash(git -c core.autocrlf=false commit -m ' *)",
+      "Bash(node -e ' *)",
+      "Bash(node scripts/strip-i18n-keys.cjs)",
+      "Bash(rm scripts/strip-i18n-keys.cjs)",
+      "Bash(rmdir scripts *)",
+      "Bash(rm -f scripts/strip-i18n-keys.cjs)"
     ]
   }
 }
