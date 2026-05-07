@@ -395,6 +395,7 @@
   }
 
   &__sport-option {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -410,6 +411,48 @@
       border-color: var(--zh-primary);
       background: var(--zh-surface-selected);
     }
+
+    &--primary {
+      border-color: var(--zh-primary, #2563eb);
+      box-shadow: 0 0 0 3px var(--zh-primary-alpha-20, rgba(37, 99, 235, 0.18));
+    }
+  }
+
+  &__sport-primary-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--zh-primary, #2563eb);
+    color: var(--zh-on-primary, #fff);
+    font-size: var(--zh-font-size-xs, 11px);
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--zh-radius-pill, 999px);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__sport-primary-hint {
+    margin-top: var(--zh-space-md);
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__primary-sport-banner {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    margin-bottom: var(--zh-space-md);
+    background: var(--zh-primary-alpha-10, rgba(37, 99, 235, 0.08));
+    border: 1px solid var(--zh-primary-alpha-20, rgba(37, 99, 235, 0.18));
+    border-radius: var(--zh-radius-md);
+    color: var(--zh-text-primary);
+    font-size: var(--zh-font-size-sm);
+  }
+
+  &__primary-sport-icon {
+    font-size: 1.5rem;
   }
 
   &__sport-icon {

@@ -116,25 +116,33 @@
 
 .users-page__permissions-toolbar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--zh-space-md);
-  margin-bottom: var(--zh-space-md);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--zh-space-lg);
+  margin-bottom: var(--zh-space-lg);
+  padding: var(--zh-space-md);
+  background: var(--zh-surface-muted, var(--zh-surface-elevated));
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-md);
 }
 
 .users-page__permissions-field {
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-xs);
 }
 
 .users-page__permissions-field--copy {
   display: flex;
   flex-direction: column;
+  gap: var(--zh-space-xs);
 }
 
 .users-page__permissions-copy-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--zh-space-sm);
-  align-items: center;
+  align-items: stretch;
 }
 
 .users-page__copy-button {

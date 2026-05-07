@@ -17,6 +17,8 @@ import { CollapsibleSectionComponent } from '../../../../shared/components/colla
 import { AdminUser } from '../../../../core/models/admin-user.model';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ApiPermissionRepository } from '../../../../core/repositories/api/api-permission.repository';
 import { PermissionModule, UserOrganizationPermissionAssignment } from '../../../../core/models';
 import { DEFAULT_ROLE_PERMISSIONS, SYSTEM_ADMIN_ONLY_TOOLS } from '../../../../core/auth/permissions.model';
@@ -77,6 +79,8 @@ export class AdminUsersPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly permissionRepository = inject(ApiPermissionRepository);
+  private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
   readonly canManageOrganizationAssignments = this.auth.isAdmin;
 
@@ -91,7 +95,6 @@ export class AdminUsersPageComponent implements OnInit {
   readonly permissionCatalog = signal<PermissionModule[]>([]);
   readonly permissionsByOrganization = signal<Record<string, string[]>>({});
   readonly selectedPermissionOrganizationId = signal<string | null>(null);
-  readonly copySourceOrganizationId = signal<string>('');
   readonly copySourceUserId = signal<string>('');
   readonly loadingPermissionCatalog = signal(false);
   readonly loadingUserPermissions = signal(false);
@@ -153,20 +156,18 @@ export class AdminUsersPageComponent implements OnInit {
     })).filter(mod => mod.tools.length > 0);
   });
 
-  readonly canCopyPermissions = computed(() => {
-    const source = this.copySourceOrganizationId();
-    const target = this.selectedPermissionOrganizationId();
-    return !!source && !!target && source !== target;
-  });
-
-  /** Users from the active organization that can act as a permission source */
+  /**
+   * All admin users the current admin can see and use as a permission source.
+   * The constraint "any accessible organization" means: every user already
+   * surfaced by the facade — the facade itself is filtered by the admin's
+   * accessible organizations on the backend side. The user being edited is
+   * excluded (replicating from yourself is a no-op).
+   */
   readonly availableSourceUsers = computed(() => {
-    const activeOrgId = this.activeOrg.activeOrganizationId();
-    if (!activeOrgId) return [];
     const editingId = this.editingUser()?.id;
     return this.facade.users()
-      .filter(u => (u.tenantIds ?? []).some(id => id === activeOrgId))
-      .filter(u => u.id !== editingId);
+      .filter(u => u.id !== editingId)
+      .filter(u => (u.tenantIds ?? []).length > 0);
   });
 
   readonly canCopyPermissionsFromUser = computed(() => {
@@ -227,6 +228,15 @@ export class AdminUsersPageComponent implements OnInit {
     if (!this.isSystemAdmin() && row.role === 'system_admin') {
       return [];
     }
+
+    const currentUserId = this.auth.currentUser()?.id;
+
+    // Prevent self-deletion: hide the delete action for the current user.
+    // The handler also rejects delete attempts as a defense in depth.
+    if (currentUserId && row.id === currentUserId) {
+      return this.rowActions.filter(action => action.action !== 'delete');
+    }
+
     return this.rowActions;
   };
 
@@ -388,7 +398,7 @@ export class AdminUsersPageComponent implements OnInit {
       this.orderedTenantIds.set([]);
       this.permissionsByOrganization.set({});
       this.selectedPermissionOrganizationId.set(null);
-      this.copySourceOrganizationId.set('');
+      this.copySourceUserId.set('');
     }
 
     this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
@@ -422,6 +432,12 @@ export class AdminUsersPageComponent implements OnInit {
     if (event.action === 'edit') {
       this.openEditForm(event.row);
     } else if (event.action === 'delete') {
+      // Belt-and-suspenders: the row filter already removed delete for the
+      // current user, but if anything bypasses that we still bail out.
+      if (event.row.id === this.auth.currentUser()?.id) {
+        this.notifications.warning(this.i18n.translate('admin.users.action.cannotDeleteSelfMessage'));
+        return;
+      }
       this.confirmDelete(event.row);
     } else if (event.action === 'duplicate') {
       this.openDuplicateForm(event.row);
@@ -577,14 +593,16 @@ export class AdminUsersPageComponent implements OnInit {
     this.selectedPermissionOrganizationId.set(organizationId || null);
   }
 
-  onCopySourceOrganizationChanged(organizationId: string): void {
-    this.copySourceOrganizationId.set(organizationId);
-  }
-
   onCopySourceUserChanged(userId: string): void {
     this.copySourceUserId.set(userId);
   }
 
+  /**
+   * Replicate the source user's tool selection to the currently selected
+   * target organization. If the source user has no assignment for the
+   * target org we fall back to whichever assignment they DO have, since
+   * the goal is "give this user the same toolkit as the source".
+   */
   async copyPermissionsFromUser(): Promise<void> {
     if (!this.canCopyPermissionsFromUser()) return;
 
@@ -594,8 +612,12 @@ export class AdminUsersPageComponent implements OnInit {
 
     try {
       const sourcePermissions = await this.permissionRepository.getUserPermissions(sourceUserId);
-      const sourceTools = sourcePermissions.permissionsByOrganization
-        .find(p => p.organizationId === targetOrgId)?.toolKeys ?? [];
+      const assignments = sourcePermissions.permissionsByOrganization;
+      const sameOrg = assignments.find(p => p.organizationId === targetOrgId);
+      const fallback = assignments.find(p => (p.toolKeys?.length ?? 0) > 0);
+      const sourceTools = sameOrg?.toolKeys?.length
+        ? sameOrg.toolKeys
+        : (fallback?.toolKeys ?? []);
 
       this.permissionsByOrganization.update(current => ({
         ...current,
@@ -604,26 +626,6 @@ export class AdminUsersPageComponent implements OnInit {
     } catch {
       // notification handled upstream by the HTTP interceptor
     }
-  }
-
-  copyPermissionsFromOrganization(): void {
-    if (!this.canCopyPermissions()) {
-      return;
-    }
-
-    const sourceId = this.copySourceOrganizationId();
-    const targetId = this.selectedPermissionOrganizationId();
-    if (!sourceId || !targetId) {
-      return;
-    }
-
-    const matrix = this.permissionsByOrganization();
-    const sourceTools = matrix[sourceId] ?? [];
-
-    this.permissionsByOrganization.update(current => ({
-      ...current,
-      [targetId]: this.normalizeToolKeys(sourceTools)
-    }));
   }
 
   private async loadPermissionCatalog(): Promise<void> {
@@ -685,10 +687,6 @@ export class AdminUsersPageComponent implements OnInit {
       this.selectedPermissionOrganizationId.set(effectiveOrder[0] ?? null);
     }
 
-    const source = this.copySourceOrganizationId();
-    if (source && !selected.has(source)) {
-      this.copySourceOrganizationId.set('');
-    }
   }
 
   private applyRoleRestrictionsToPermissions(): void {

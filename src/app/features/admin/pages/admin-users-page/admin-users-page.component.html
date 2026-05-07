@@ -137,30 +137,7 @@
                 </div>
 
                 <div class="form-field users-page__permissions-field users-page__permissions-field--copy">
-                  <label>{{ 'admin.users.permissions.copyFrom' | t }}</label>
-                  <div class="users-page__permissions-copy-row">
-                    <select
-                      [value]="copySourceOrganizationId()"
-                      (change)="onCopySourceOrganizationChanged($any($event.target).value)">
-                      <option value="">{{ 'admin.users.permissions.selectSourceOrganization' | t }}</option>
-                      @for (tenant of selectedTenantItems(); track tenant.id) {
-                        <option [value]="tenant.id" [disabled]="tenant.id === selectedPermissionOrganizationId()">
-                          {{ tenant.name }}
-                        </option>
-                      }
-                    </select>
-                    <button
-                      type="button"
-                      class="users-page__copy-button"
-                      (click)="copyPermissionsFromOrganization()"
-                      [disabled]="!canCopyPermissions()">
-                      {{ 'admin.users.permissions.copyAction' | t }}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="form-field users-page__permissions-field users-page__permissions-field--copy">
-                  <label>{{ 'admin.users.permissions.copyFromUser' | t }}</label>
+                  <label>{{ 'admin.users.permissions.replicateFromUser' | t }}</label>
                   <div class="users-page__permissions-copy-row">
                     <select
                       [value]="copySourceUserId()"
@@ -180,9 +157,10 @@
                       class="users-page__copy-button"
                       (click)="copyPermissionsFromUser()"
                       [disabled]="!canCopyPermissionsFromUser()">
-                      {{ 'admin.users.permissions.copyAction' | t }}
+                      {{ 'admin.users.permissions.replicateAction' | t }}
                     </button>
                   </div>
+                  <span class="form-field__hint">{{ 'admin.users.permissions.replicateHint' | t }}</span>
                 </div>
               </div>
 

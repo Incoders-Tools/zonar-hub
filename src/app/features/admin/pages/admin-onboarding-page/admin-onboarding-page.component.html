@@ -167,10 +167,14 @@
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.venue'">
         <form [formGroup]="venueForm">
-          <div class="form-field">
+          <div class="form-field onboarding__primary-field" [class.onboarding__primary-field--spotlight]="showVenueFieldSpotlight()">
             <label class="form-field__label" for="ob-venue-name">{{ 'onboarding.venue.name' | t }} *</label>
             <input class="form-field__input" id="ob-venue-name" type="text" formControlName="name"
+              [class.onboarding__input--spotlight]="showVenueFieldSpotlight()"
               [placeholder]="'onboarding.venue.namePlaceholder' | t" />
+            @if (showVenueFieldSpotlight()) {
+              <span class="onboarding__primary-field-chip">{{ 'onboarding.startHereTooltip' | t }}</span>
+            }
             @if (venueForm.get('name')?.hasError('required') && venueForm.get('name')?.touched) {
               <span class="form-field__error">{{ 'common.required' | t }}</span>
             }
@@ -245,12 +249,21 @@
               <button type="button"
                 class="onboarding__sport-option"
                 [class.onboarding__sport-option--active]="isSportSelected(sport.id)"
+                [class.onboarding__sport-option--primary]="primarySportId() === sport.id"
                 (click)="toggleSport(sport.id)">
                 <span class="onboarding__sport-icon">{{ sport.icon }}</span>
                 <span class="onboarding__sport-label">{{ sport.name }}</span>
+                @if (primarySportId() === sport.id) {
+                  <span class="onboarding__sport-primary-badge">{{ 'onboarding.sport.primaryBadge' | t }}</span>
+                }
               </button>
             }
           </div>
+          @if (hasMultipleSports()) {
+            <p class="form-field__hint onboarding__sport-primary-hint">
+              {{ 'onboarding.sport.primaryHint' | t }}
+            </p>
+          }
         </div>
       </app-form-shell>
       <div class="onboarding__actions">
@@ -267,10 +280,23 @@
     <div class="onboarding__card">
       <app-form-shell [titleKey]="'onboarding.step.tournament'">
         <form [formGroup]="tournamentForm">
-          <div class="form-field">
+          @if (hasMultipleSports() && primarySport()) {
+            <div class="onboarding__primary-sport-banner">
+              <span class="onboarding__primary-sport-icon">{{ primarySport()?.icon }}</span>
+              <span>
+                {{ 'onboarding.tournament.primarySportNotice' | t }}
+                <strong>{{ primarySport()?.name }}</strong>.
+              </span>
+            </div>
+          }
+          <div class="form-field onboarding__primary-field" [class.onboarding__primary-field--spotlight]="showTournamentFieldSpotlight()">
             <label class="form-field__label" for="ob-tournament-name">{{ 'onboarding.tournament.name' | t }} *</label>
             <input class="form-field__input" id="ob-tournament-name" type="text" formControlName="name"
+              [class.onboarding__input--spotlight]="showTournamentFieldSpotlight()"
               [placeholder]="'onboarding.tournament.namePlaceholder' | t" />
+            @if (showTournamentFieldSpotlight()) {
+              <span class="onboarding__primary-field-chip">{{ 'onboarding.startHereTooltip' | t }}</span>
+            }
           </div>
           <div class="form-row">
             <div class="form-field">

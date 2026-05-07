@@ -98,6 +98,11 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly sportValid = signal(false);
   private readonly tournamentValid = signal(false);
   readonly showOrgFieldSpotlight = signal(false);
+  readonly showVenueFieldSpotlight = signal(false);
+  readonly showTournamentFieldSpotlight = signal(false);
+  private venueFieldSpotlightTimeout: ReturnType<typeof setTimeout> | null = null;
+  private tournamentFieldSpotlightTimeout: ReturnType<typeof setTimeout> | null = null;
+  private static readonly SPOTLIGHT_DURATION_MS = 5400;
 
   readonly totalSteps = 5;
 
@@ -180,8 +185,17 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     courtNames: new FormArray<FormControl<string>>([])
   });
 
-  /** Step 3: Sports selection (signal-based, not form) */
-  readonly selectedSportIds = signal<Set<string>>(new Set());
+  /** Step 3: Sports selection (signal-based, not form). Order is preserved
+   *  so the first sport selected is treated as the primary one. */
+  readonly selectedSportIdsOrder = signal<string[]>([]);
+  readonly selectedSportIds = computed<Set<string>>(() => new Set(this.selectedSportIdsOrder()));
+  readonly primarySportId = computed<string | null>(() => this.selectedSportIdsOrder()[0] ?? null);
+  readonly hasMultipleSports = computed<boolean>(() => this.selectedSportIdsOrder().length > 1);
+  readonly primarySport = computed(() => {
+    const id = this.primarySportId();
+    if (!id) return null;
+    return this.availableSports().find(s => s.id === id) ?? null;
+  });
 
   /** Step 4: Tournament (optional) */
   readonly tournamentForm = new FormGroup({
@@ -271,6 +285,14 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       clearTimeout(this.orgFieldSpotlightTimeout);
       this.orgFieldSpotlightTimeout = null;
     }
+    if (this.venueFieldSpotlightTimeout) {
+      clearTimeout(this.venueFieldSpotlightTimeout);
+      this.venueFieldSpotlightTimeout = null;
+    }
+    if (this.tournamentFieldSpotlightTimeout) {
+      clearTimeout(this.tournamentFieldSpotlightTimeout);
+      this.tournamentFieldSpotlightTimeout = null;
+    }
   }
 
   private activateOrgFieldSpotlight(): void {
@@ -282,7 +304,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     this.orgFieldSpotlightTimeout = setTimeout(() => {
       this.showOrgFieldSpotlight.set(false);
       this.orgFieldSpotlightTimeout = null;
-    }, 3400);
+    }, AdminOnboardingPageComponent.SPOTLIGHT_DURATION_MS);
   }
 
   private clearOrgFieldSpotlight(): void {
@@ -291,6 +313,28 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       this.orgFieldSpotlightTimeout = null;
     }
     this.showOrgFieldSpotlight.set(false);
+  }
+
+  private activateVenueFieldSpotlight(): void {
+    this.showVenueFieldSpotlight.set(true);
+    if (this.venueFieldSpotlightTimeout) {
+      clearTimeout(this.venueFieldSpotlightTimeout);
+    }
+    this.venueFieldSpotlightTimeout = setTimeout(() => {
+      this.showVenueFieldSpotlight.set(false);
+      this.venueFieldSpotlightTimeout = null;
+    }, AdminOnboardingPageComponent.SPOTLIGHT_DURATION_MS);
+  }
+
+  private activateTournamentFieldSpotlight(): void {
+    this.showTournamentFieldSpotlight.set(true);
+    if (this.tournamentFieldSpotlightTimeout) {
+      clearTimeout(this.tournamentFieldSpotlightTimeout);
+    }
+    this.tournamentFieldSpotlightTimeout = setTimeout(() => {
+      this.showTournamentFieldSpotlight.set(false);
+      this.tournamentFieldSpotlightTimeout = null;
+    }, AdminOnboardingPageComponent.SPOTLIGHT_DURATION_MS);
   }
 
   /** Sync FormArray of court names with count */
@@ -327,20 +371,19 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     this.userPrefs.applyEffectiveSettings();
   }
 
-  /** Sport multi-select */
+  /** Sport multi-select. Insertion order is preserved so the first selection
+   *  becomes the primary sport. */
   toggleSport(sportId: string): void {
-    const current = new Set(this.selectedSportIds());
-    if (current.has(sportId)) {
-      current.delete(sportId);
-    } else {
-      current.add(sportId);
-    }
-    this.selectedSportIds.set(current);
-    this.sportValid.set(current.size > 0);
+    const current = this.selectedSportIdsOrder();
+    const next = current.includes(sportId)
+      ? current.filter(id => id !== sportId)
+      : [...current, sportId];
+    this.selectedSportIdsOrder.set(next);
+    this.sportValid.set(next.length > 0);
   }
 
   isSportSelected(sportId: string): boolean {
-    return this.selectedSportIds().has(sportId);
+    return this.selectedSportIdsOrder().includes(sportId);
   }
 
   /** Organization type selection */
@@ -359,6 +402,15 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       const next = current + 1;
       this.currentStep.set(next);
       this.onboarding.updateWizardStep(next);
+      this.triggerStepSpotlight(next);
+    }
+  }
+
+  private triggerStepSpotlight(step: number): void {
+    if (step === 2) {
+      this.activateVenueFieldSpotlight();
+    } else if (step === 4) {
+      this.activateTournamentFieldSpotlight();
     }
   }
 
@@ -396,7 +448,9 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
       const orgValues = this.orgForm.value;
       const venueValues = this.venueForm.getRawValue();
-      const sportIds = [...this.selectedSportIds()];
+      // Preserve selection order so the primary sport (index 0) is the one
+      // used for the optional tournament created in the next step.
+      const sportIds = [...this.selectedSportIdsOrder()];
 
       const tValues = this.tournamentForm.value;
       const includeTournament = !skipTournament && !!tValues.name && !!tValues.startDate && !!tValues.endDate;
@@ -561,7 +615,11 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const selectedSport = this.availableSports().find(s => enabledSportIds.includes(s.id));
+    // Use the primary sport (first selection) when multiple sports were chosen.
+    const primarySportId = enabledSportIds[0];
+    const selectedSport = primarySportId
+      ? this.availableSports().find(s => s.id === primarySportId)
+      : undefined;
     const complexName = (complex?.name ?? venueName.trim()) || normalizedName;
     const complexId = complex?.id ?? 'complex_onboarding';
 
