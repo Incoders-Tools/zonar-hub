@@ -10,6 +10,7 @@ import { CollapsibleSectionComponent } from '../../../../../shared/components/co
 import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../../shared/components/child-collection-grid/child-collection-grid.component';
 import { Tournament } from '../../../../../core/models';
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { I18nService } from '../../../../../core/i18n/i18n.service';
 import { DateFormatService } from '../../../../../core/services/date-format.service';
 import { TournamentsFacadeService } from '../tournaments-facade.service';
 import { dateRangeValidator } from '../../../../../shared/validators/date-range.validator';
@@ -37,6 +38,7 @@ import { DateInputComponent } from '../../../../../shared/components/date-input/
 export class TournamentsFormComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(I18nService);
   readonly facade = inject(TournamentsFacadeService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dateFormatService = inject(DateFormatService);
@@ -65,7 +67,11 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   readonly modalityOptionsForSport = computed(() => {
     const sportId = this._selectedSportId();
     if (!sportId) return [];
-    return this.facade.getModalitiesForSport(sportId).map(m => ({ value: m.id, label: m.nameEs }));
+    const locale = this.i18n.locale();
+    return this.facade.getModalitiesForSport(sportId).map(m => ({
+      value: m.id,
+      label: locale === 'en' ? m.nameEn : locale === 'pt' ? m.namePt : m.nameEs
+    }));
   });
   readonly genderOptions = computed(() =>
     this.facade.genders().map(g => ({ value: g.id, label: g.name }))

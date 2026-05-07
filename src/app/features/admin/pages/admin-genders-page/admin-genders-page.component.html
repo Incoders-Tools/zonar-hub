@@ -11,7 +11,7 @@
           [titleKey]="'genders.help.title'"
           [sections]="helpSections">
         </app-help-button>
-        @if (hasSelection()) {
+        @if (hasSelection() && isSystemAdmin()) {
           <app-async-button
             variant="danger"
             [loading]="facade.deleting()"
@@ -19,9 +19,11 @@
             {{ 'admin.bulkDelete' | t }}
           </app-async-button>
         }
-        <app-async-button variant="primary" (clicked)="openCreate()">
-          {{ 'genders.action.create' | t }}
-        </app-async-button>
+        @if (isSystemAdmin()) {
+          <app-async-button variant="primary" (clicked)="openCreate()">
+            {{ 'genders.action.create' | t }}
+          </app-async-button>
+        }
       </div>
     </div>
   </div>
@@ -67,7 +69,7 @@
     (retried)="facade.load()"
     [selectable]="true"
     [reorderable]="true"
-    [rowActions]="genderRowActions"
+    [rowActions]="genderRowActions()"
     emptyMessageKey="genders.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"

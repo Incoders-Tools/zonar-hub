@@ -46,7 +46,7 @@
             <span class="registration-form__tournament-card-value">{{ selectedTournament()!.categoryName }} · {{ selectedTournament()!.genderLabel }}</span>
           </div>
           <div class="registration-form__tournament-card-row">
-            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentMaxPairs' | t }}</span>
+            <span class="registration-form__tournament-card-label">{{ tournamentMaxLabelKey() | t }}</span>
             <span class="registration-form__tournament-card-value">{{ selectedTournament()!.maxPairs }}</span>
           </div>
           @if (selectedTournament()!.registrationStartDate || selectedTournament()!.registrationEndDate) {

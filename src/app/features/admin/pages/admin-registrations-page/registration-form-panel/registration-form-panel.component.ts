@@ -13,6 +13,7 @@ import { RegistrationStrategyService } from '../../../../../core/services/regist
 import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
 import { MockEligibilityProfileRepository } from '../../../../../core/repositories/mock/mock-eligibility-profile.repository';
 import { TournamentService } from '../../../../../core/services/tournament.service';
+import { ActiveOrganizationService } from '../../../../../core/services/active-organization.service';
 import { ApiCategoryRepository } from '../../../../../core/repositories/api/api-category.repository';
 import { RegistrationService } from '../../../../../core/services/registration.service';
 import { RegistrationFacadeService } from '../registration-facade.service';
@@ -48,6 +49,7 @@ export class RegistrationFormPanelComponent implements OnInit {
   private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly registrationService = inject(RegistrationService);
   private readonly facade = inject(RegistrationFacadeService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
 
   // Inputs
   readonly registration = input<Registration | null>(null);
@@ -80,6 +82,23 @@ export class RegistrationFormPanelComponent implements OnInit {
   readonly availabilitySelection = signal<AvailabilitySelection | null>(null);
 
   private static readonly DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+  /**
+   * Translation key for the "max participants" line on the tournament detail
+   * card. Resolves dynamically based on the tournament's modality so single
+   * sports show "Max players", doubles "Max pairs" and team sports "Max teams".
+   */
+  readonly tournamentMaxLabelKey = computed<string>(() => {
+    const tournament = this.selectedTournament();
+    const modality = (tournament?.modalityKey ?? tournament?.modalityName ?? '').toLowerCase();
+    if (modality.includes('single') || modality.includes('individual')) {
+      return 'registrations.form.tournamentMaxPlayers';
+    }
+    if (modality.includes('team') || modality.includes('equip')) {
+      return 'registrations.form.tournamentMaxTeams';
+    }
+    return 'registrations.form.tournamentMaxPairs';
+  });
 
   readonly tournamentDays = computed<string[]>(() => {
     const tournament = this.selectedTournament();
@@ -158,8 +177,15 @@ export class RegistrationFormPanelComponent implements OnInit {
   }
 
   private async loadTournaments(): Promise<void> {
+    const activeOrgId = this.activeOrg.activeOrganizationId();
     const allTournaments = this.tournamentService.tournaments();
-    this.tournaments.set(allTournaments);
+    // Restrict the selector to tournaments that belong to the active org.
+    // Records without an organizationId (legacy/seed) only pass through when
+    // no org is selected, so demo data never bleeds across tenants.
+    const scoped = activeOrgId
+      ? allTournaments.filter(t => t.organizationId === activeOrgId)
+      : allTournaments.filter(t => !t.organizationId);
+    this.tournaments.set(scoped);
   }
 
   private async loadCategories(): Promise<void> {

@@ -64,7 +64,9 @@ export class AdminGendersPageComponent implements OnInit {
   readonly columns = computed<DataTableColumn[]>(() => {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'genders.column.name', sortable: true },
-      { key: 'statusLabel', labelKey: 'genders.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
+      // The status column doubles as an inline activate/deactivate toggle so
+      // admins (who can't access the form) can still flip the row.
+      { key: 'isActive', labelKey: 'genders.column.status', sortable: true, renderType: 'toggle', toggleAction: 'toggleActive' }
     ];
     if (this.isSystemAdmin()) {
       base.push(
@@ -75,10 +77,17 @@ export class AdminGendersPageComponent implements OnInit {
     return base;
   });
 
-  readonly genderRowActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
-  ];
+  /**
+   * Catalog policy: only sysadmin can mutate the catalog. Admins can still
+   * toggle active/inactive via the row toggle column but never edit/delete.
+   */
+  readonly genderRowActions = computed(() => {
+    if (!this.isSystemAdmin()) return [];
+    return [
+      { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
+      { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
+    ];
+  });
 
   readonly filterFields: FilterField[] = [
     { key: 'name', labelKey: 'genders.filter.name', type: 'text' },
@@ -128,10 +137,12 @@ export class AdminGendersPageComponent implements OnInit {
   }
 
   onRowActionClicked(event: { action: string; row: GenderRow }): void {
-    if (event.action === 'edit') {
+    if (event.action === 'edit' && this.isSystemAdmin()) {
       this.openEdit(event.row);
-    } else if (event.action === 'delete') {
+    } else if (event.action === 'delete' && this.isSystemAdmin()) {
       this.confirmDelete(event.row);
+    } else if (event.action === 'toggleActive') {
+      this.toggleGenderActive(event.row);
     }
   }
 
@@ -151,6 +162,20 @@ export class AdminGendersPageComponent implements OnInit {
   closeFormPanel(): void {
     this.showFormPanel.set(false);
     this.editingGender.set(null);
+  }
+
+  /**
+   * Activate / deactivate a gender. Available to both admin and sysadmin —
+   * they can toggle the row even though only sysadmin can mutate the rest of
+   * the catalog through the form.
+   */
+  async toggleGenderActive(row: GenderRow): Promise<void> {
+    const gender = this.facade.filteredGenders().find(g => g.id === row.id);
+    if (!gender) return;
+    await this.facade.save(
+      { ...gender, isActive: !gender.isActive },
+      gender.id
+    );
   }
 
   confirmDelete(row: GenderRow): void {

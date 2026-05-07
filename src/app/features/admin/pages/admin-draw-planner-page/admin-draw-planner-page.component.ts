@@ -115,12 +115,21 @@ export class AdminDrawPlannerPageComponent {
       statusVariant = 'finished';
     }
 
+    const modalityKey = (t.modalityKey ?? t.modalityName ?? '').toLowerCase();
+    const maxLabelKey =
+      modalityKey.includes('single') || modalityKey.includes('individual')
+        ? 'planner.preview.maxPlayers'
+        : modalityKey.includes('team') || modalityKey.includes('equip')
+          ? 'planner.preview.maxTeams'
+          : 'planner.preview.maxPairs';
+
     return {
       name: t.name,
       sport: t.sportName ?? null,
       modality: t.modalityName ?? null,
       complex: t.complexName,
       maxPairs: t.maxPairs,
+      maxLabelKey,
       startDate: t.startDate,
       endDate: t.endDate,
       statusKey,

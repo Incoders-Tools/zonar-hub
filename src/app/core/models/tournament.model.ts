@@ -19,6 +19,9 @@ export interface Tournament {
   sportName: string;
   modalityId?: string;
   modalityName?: string;
+  /** Stable identifier of the modality (single | doubles | teams) used to
+   *  drive locale-independent UI logic such as the "max participants" label. */
+  modalityKey?: string;
   eligibilityProfileId?: string;
   eligibilityProfileName?: string;
   ruleSetId?: string;
