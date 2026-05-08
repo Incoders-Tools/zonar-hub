@@ -96,14 +96,22 @@ export class LoginPageComponent {
         const target = isAdminAreaUser ? '/admin' : '/player';
         this.router.navigate([target]);
       }
-    } catch {
-      this.attemptGuard.recordAttempt(email);
-      const remaining = this.attemptGuard.getRemainingAttempts(email);
-      this.remainingAttempts.set(remaining);
-      if (remaining <= 0) {
-        this.isBlocked.set(true);
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'auth.invalidCredentials';
+      // Connectivity issues are NOT failed login attempts: the user never got
+      // a chance to be rejected, so we don't burn an attempt against the guard
+      // and we surface the real reason ("server unreachable") instead of a
+      // misleading "invalid credentials" bubble.
+      const isNetworkIssue = code === 'common.networkUnavailable' || code === 'common.requestTimeout';
+      if (!isNetworkIssue) {
+        this.attemptGuard.recordAttempt(email);
+        const remaining = this.attemptGuard.getRemainingAttempts(email);
+        this.remainingAttempts.set(remaining);
+        if (remaining <= 0) {
+          this.isBlocked.set(true);
+        }
       }
-      this.error.set('auth.invalidCredentials');
+      this.error.set(code || 'auth.invalidCredentials');
     } finally {
       this.submitting.set(false);
       this.loginProgress.set(0);
