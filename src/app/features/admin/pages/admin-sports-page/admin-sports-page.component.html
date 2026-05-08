@@ -58,20 +58,39 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-sports"
+    [items]="tableData()"
     [columns]="columns()"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="false"
     [reorderable]="false"
     [rowActions]="sportRowActions()"
     emptyMessageKey="admin.sports.emptyState"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            <span class="zh-list-card__eyebrow">{{ row.icon }} · {{ row.key }}</span>
+            <h3 class="zh-list-card__name">{{ row.name }}</h3>
+          </div>
+          <span class="zh-list-card__status"
+            [class.zh-list-card__status--active]="row.isActive"
+            [class.zh-list-card__status--inactive]="!row.isActive">
+            {{ row.statusLabel | t }}
+          </span>
+        </div>
+        <div class="zh-list-card__meta">
+          <span><strong>{{ 'admin.sports.column.sortOrder' | t }}:</strong> {{ row.sortOrder }}</span>
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 
   @if (showDeleteDialog()) {
     <app-confirm-dialog

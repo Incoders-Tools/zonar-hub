@@ -204,30 +204,34 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       }
     });
 
-    // Sport changes: update modality options and auto-select if only one
+    // Sport changes: hydrate modality options (in sport.modalityIds order)
+    // and preselect the primary modality (first in modalityIds). When
+    // editing an existing tournament, the existing modality is kept if it
+    // is still part of the sport's set; otherwise we fall back to the
+    // primary so the form never shows an empty required modality after a
+    // sport switch.
     this.form.get('sportId')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(sportId => {
       this._selectedSportId.set(sportId || '');
       const modalityCtrl = this.form.get('modalityId')!;
+
       if (!sportId) {
         modalityCtrl.setValue('', { emitEvent: false });
         this._selectedModalityId.set('');
         return;
       }
+
       const modalities = this.facade.getModalitiesForSport(sportId);
-      if (modalities.length === 1) {
-        modalityCtrl.setValue(modalities[0].id, { emitEvent: false });
-        this._selectedModalityId.set(modalities[0].id);
-      } else if (modalities.length > 1) {
-        // Keep current selection if still valid, otherwise clear
-        const current = modalityCtrl.value;
-        if (!modalities.some(m => m.id === current)) {
-          modalityCtrl.setValue('', { emitEvent: false });
-          this._selectedModalityId.set('');
-        }
-      } else {
+      if (modalities.length === 0) {
         modalityCtrl.setValue('', { emitEvent: false });
         this._selectedModalityId.set('');
+        return;
       }
+
+      const current = modalityCtrl.value;
+      const stillValid = current && modalities.some(m => m.id === current);
+      const next = stillValid ? current : modalities[0].id;
+      modalityCtrl.setValue(next, { emitEvent: false });
+      this._selectedModalityId.set(next);
     });
 
     // Modality changes: update the selected modality signal

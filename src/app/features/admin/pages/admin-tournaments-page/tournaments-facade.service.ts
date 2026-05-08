@@ -200,10 +200,19 @@ export class TournamentsFacadeService {
     return m?.nameEs || '';
   }
 
+  /**
+   * Returns the modalities that the sport advertises in `modalityIds`,
+   * preserving the original order — `modalityIds[0]` is the sport's
+   * primary modality and is the default the form preselects.
+   * Inactive modalities are filtered out so they never become a default.
+   */
   getModalitiesForSport(sportId: string): TournamentModality[] {
     const sport = this.sportsState().find(s => s.id === sportId);
     if (!sport?.modalityIds?.length) return [];
-    return this.modalitiesState().filter(m => sport.modalityIds.includes(m.id) && m.isActive);
+    const lookup = new Map(this.modalitiesState().map(m => [m.id, m]));
+    return sport.modalityIds
+      .map(id => lookup.get(id))
+      .filter((m): m is TournamentModality => !!m && m.isActive);
   }
 
   getRuleSetDescription(ruleSetId: string): string {

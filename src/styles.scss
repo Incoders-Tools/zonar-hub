@@ -81,16 +81,24 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 // ── Global select modernization ──
+// Chevron is built with two diagonal CSS gradients that consume
+// `--zh-text-secondary`, so it adapts per theme (no hardcoded SVG fill).
 select {
   appearance: none;
   font-family: inherit;
   font-size: var(--zh-font-size-sm);
   color: var(--zh-text-primary);
-  background-color: var(--zh-surface-bg);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a6349' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-color: var(--zh-surface-input);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--zh-text-secondary) 50%),
+    linear-gradient(135deg, var(--zh-text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-size:
+    6px 6px,
+    6px 6px;
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 12px;
   border: 1px solid var(--zh-border-subtle);
   border-radius: var(--zh-radius-sm);
   padding: 0 32px 0 var(--zh-space-sm);
@@ -111,5 +119,133 @@ select {
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  // Native <option> popup. Most engines (Chromium, Firefox, Edge) honour
+  // these on the open dropdown, which is why Night Arena options were
+  // unreadable: they rendered with the default white-on-white pairing
+  // because the elements inherit nothing useful by default.
+  option {
+    background-color: var(--zh-surface-elevated);
+    color: var(--zh-text-primary);
+
+    &:disabled {
+      color: var(--zh-text-muted);
+    }
+  }
+}
+
+// ── Shared list-card pattern ──
+// Used by every admin page that consumes <zh-collection-view> to render
+// the cards layout. Centralized so each page only declares its template,
+// not bespoke styles. Override with feature-specific variants as needed.
+.zh-list-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-sm);
+  width: 100%;
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--zh-space-sm);
+  }
+
+  &__title {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-2xs);
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--zh-text-secondary);
+  }
+
+  &__name {
+    margin: 0;
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    line-height: 1.4;
+  }
+
+  &__status {
+    flex-shrink: 0;
+    padding: 2px var(--zh-space-sm);
+    border-radius: var(--zh-radius-pill);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--zh-status-neutral-bg);
+    color: var(--zh-status-neutral-text);
+
+    &--active,
+    &--success {
+      background: var(--zh-status-active-bg);
+      color: var(--zh-status-active-text);
+    }
+
+    &--inactive,
+    &--neutral {
+      background: var(--zh-status-inactive-bg);
+      color: var(--zh-status-inactive-text);
+    }
+
+    &--info {
+      background: var(--zh-status-info-bg);
+      color: var(--zh-status-info-text);
+    }
+
+    &--warning {
+      background: var(--zh-status-warning-bg);
+      color: var(--zh-status-warning-text);
+    }
+
+    &--danger {
+      background: var(--zh-error-soft);
+      color: var(--zh-danger);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--zh-space-md);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--zh-space-2xs);
+    }
+
+    strong {
+      color: var(--zh-text-primary);
+      font-weight: 600;
+    }
+  }
+
+  &__description {
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    line-height: 1.5;
   }
 }

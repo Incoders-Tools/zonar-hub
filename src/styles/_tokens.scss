@@ -12,6 +12,13 @@
   --zh-surface-card: #ffffff;
   --zh-surface-muted: #eef2e8;
   --zh-surface-overlay: rgba(15, 35, 20, 0.5);
+  // Semantic surface aliases used by feature SCSS
+  --zh-surface-default: #ffffff;
+  --zh-surface-hover: rgba(27, 107, 58, 0.06);
+  --zh-surface-input: #ffffff;
+  --zh-surface-selected: rgba(27, 107, 58, 0.10);
+  --zh-surface-subtle: #eef2e8;
+  --zh-surface-base: var(--zh-surface-elevated);
 
   // ---- Text ----
   --zh-text-primary: #1a2e1a;
@@ -24,6 +31,8 @@
   --zh-border-subtle: #d4dece;
   --zh-border-strong: #b8c9b0;
   --zh-border-focus: #1b6b3a;
+  // Semantic alias used by feature SCSS (default-strength border)
+  --zh-border-default: #c7d3ba;
 
   // ---- Primary Action ----
   --zh-primary: #1b6b3a;
@@ -31,6 +40,15 @@
   --zh-primary-soft: rgba(27, 107, 58, 0.10);
   --zh-primary-contrast: #ffffff;
   --zh-on-primary: #ffffff;
+  // Alpha tints commonly used by feature SCSS
+  --zh-primary-alpha-10: rgba(27, 107, 58, 0.10);
+  --zh-primary-alpha-20: rgba(27, 107, 58, 0.20);
+  --zh-primary-alpha-30: rgba(27, 107, 58, 0.30);
+  // Aliases to support legacy `--zh-color-*` namespace used by some forms
+  --zh-color-primary: var(--zh-primary);
+  --zh-color-primary-hover: var(--zh-primary-hover);
+  --zh-color-primary-alpha: var(--zh-primary-alpha-20);
+  --zh-color-danger: var(--zh-danger);
 
   // ---- Secondary Action ----
   --zh-secondary: #5c7264;
@@ -50,6 +68,9 @@
   --zh-danger: #c42b2b;
   --zh-danger-soft: rgba(196, 43, 43, 0.10);
   --zh-on-danger: #ffffff;
+  // Semantic alias used by feature SCSS
+  --zh-error: #c42b2b;
+  --zh-error-soft: rgba(196, 43, 43, 0.10);
 
   --zh-info: #1a6b8a;
   --zh-info-soft: rgba(26, 107, 138, 0.10);
@@ -62,6 +83,20 @@
   --zh-badge-in-progress: #c2850c;
   --zh-badge-completed: #5c7264;
   --zh-badge-draft: #7a957a;
+
+  // ---- Status pills used by forms / list cells ----
+  --zh-status-active-bg: rgba(27, 138, 62, 0.12);
+  --zh-status-active-text: #166534;
+  --zh-status-inactive-bg: rgba(107, 114, 128, 0.12);
+  --zh-status-inactive-text: #4b5563;
+  --zh-status-info-bg: rgba(26, 107, 138, 0.12);
+  --zh-status-info-text: #1565c0;
+  --zh-status-success-bg: rgba(27, 138, 62, 0.12);
+  --zh-status-success-text: #2e7d32;
+  --zh-status-neutral-bg: rgba(15, 23, 42, 0.05);
+  --zh-status-neutral-text: #475569;
+  --zh-status-warning-bg: rgba(194, 133, 12, 0.12);
+  --zh-status-warning-text: #854d0e;
 
   // ---- Hero Accent ----
   --zh-hero-accent: #1b6b3a;
@@ -89,9 +124,15 @@
   --zh-elevation-md: 0 4px 12px rgba(15, 23, 42, 0.08);
   --zh-elevation-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
   --zh-elevation-hero: 0 16px 48px rgba(15, 23, 42, 0.12);
+  // Semantic shadow aliases (used widely under "shadow" naming)
+  --zh-shadow-sm: var(--zh-elevation-sm);
+  --zh-shadow-md: var(--zh-elevation-md);
+  --zh-shadow-lg: var(--zh-elevation-lg);
+  --zh-shadow-xl: 0 25px 50px -12px rgba(15, 23, 42, 0.18);
 
   // ---- Spacing ----
   --zh-space-2xs: 2px;
+  --zh-space-xxs: 2px; // legacy alias
   --zh-space-xs: 4px;
   --zh-space-sm: 8px;
   --zh-space-md: 16px;
@@ -106,10 +147,12 @@
   --zh-radius-lg: 16px;
   --zh-radius-xl: 20px;
   --zh-radius-full: 999px;
+  --zh-radius-pill: 999px;
 
   // ---- Typography ----
   --zh-font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --zh-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --zh-font-size-2xs: 0.6875rem;
   --zh-font-size-xs: 0.75rem;
   --zh-font-size-sm: 0.875rem;
   --zh-font-size-md: 1rem;

@@ -69,7 +69,7 @@
               <span class="plans-page__limit-value">{{ formatLimitValue(plan.maxCourts) }}</span>
             </li>
           </ul>
-          @if (plan.features?.length) {
+          @if (plan.features.length) {
             <ul class="plans-page__card-features">
               @for (feature of plan.features; track feature) {
                 <li>✓ {{ feature }}</li>

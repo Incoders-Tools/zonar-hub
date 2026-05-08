@@ -12,6 +12,9 @@
   --zh-primary-hover: #145530;
   --zh-primary-soft: rgba(27, 107, 58, 0.10);
   --zh-on-primary: #ffffff;
+  --zh-primary-alpha-10: rgba(27, 107, 58, 0.10);
+  --zh-primary-alpha-20: rgba(27, 107, 58, 0.20);
+  --zh-primary-alpha-30: rgba(27, 107, 58, 0.30);
 
   --zh-hero-accent: #1b6b3a;
   --zh-hero-gradient-start: #0e4423;
@@ -21,6 +24,11 @@
   --zh-surface-elevated: #ffffff;
   --zh-surface-card: #ffffff;
   --zh-surface-muted: #eef2e8;
+  --zh-surface-default: #ffffff;
+  --zh-surface-hover: rgba(27, 107, 58, 0.06);
+  --zh-surface-input: #ffffff;
+  --zh-surface-selected: rgba(27, 107, 58, 0.10);
+  --zh-surface-subtle: #eef2e8;
 
   --zh-text-primary: #1a2e1a;
   --zh-text-secondary: #4a6349;
@@ -29,6 +37,10 @@
   --zh-border-subtle: #d4dece;
   --zh-border-strong: #b8c9b0;
   --zh-border-focus: #1b6b3a;
+  --zh-border-default: #c7d3ba;
+
+  --zh-error: #c42b2b;
+  --zh-error-soft: rgba(196, 43, 43, 0.10);
 
   --zh-sidebar-bg: #0e2a16;
   --zh-sidebar-text: #d4dece;
@@ -46,6 +58,9 @@
   --zh-primary-hover: #8b4513;
   --zh-primary-soft: rgba(160, 82, 45, 0.10);
   --zh-on-primary: #ffffff;
+  --zh-primary-alpha-10: rgba(160, 82, 45, 0.10);
+  --zh-primary-alpha-20: rgba(160, 82, 45, 0.20);
+  --zh-primary-alpha-30: rgba(160, 82, 45, 0.30);
 
   --zh-hero-accent: #a0522d;
   --zh-hero-gradient-start: #6b3410;
@@ -55,6 +70,11 @@
   --zh-surface-elevated: #ffffff;
   --zh-surface-card: #ffffff;
   --zh-surface-muted: #f5ede2;
+  --zh-surface-default: #ffffff;
+  --zh-surface-hover: rgba(160, 82, 45, 0.06);
+  --zh-surface-input: #ffffff;
+  --zh-surface-selected: rgba(160, 82, 45, 0.10);
+  --zh-surface-subtle: #f5ede2;
 
   --zh-text-primary: #2c1810;
   --zh-text-secondary: #6b5545;
@@ -63,6 +83,10 @@
   --zh-border-subtle: #e8ddd0;
   --zh-border-strong: #d4c4b0;
   --zh-border-focus: #a0522d;
+  --zh-border-default: #d8c8b6;
+
+  --zh-error: #c42b2b;
+  --zh-error-soft: rgba(196, 43, 43, 0.10);
 
   --zh-sidebar-bg: #2c1810;
   --zh-sidebar-text: #e8ddd0;
@@ -82,6 +106,9 @@
   --zh-primary-hover: #6366f1;
   --zh-primary-soft: rgba(129, 140, 248, 0.15);
   --zh-on-primary: #0f0e1a;
+  --zh-primary-alpha-10: rgba(129, 140, 248, 0.10);
+  --zh-primary-alpha-20: rgba(129, 140, 248, 0.20);
+  --zh-primary-alpha-30: rgba(129, 140, 248, 0.30);
 
   --zh-hero-accent: #818cf8;
   --zh-hero-gradient-start: #312e81;
@@ -92,16 +119,50 @@
   --zh-surface-card: #1a1930;
   --zh-surface-muted: #1e1d35;
   --zh-surface-overlay: rgba(0, 0, 0, 0.6);
+  // Semantic surface aliases (dark variants)
+  --zh-surface-default: #1a1930;
+  --zh-surface-hover: rgba(255, 255, 255, 0.06);
+  --zh-surface-input: #1e1d35;
+  --zh-surface-selected: rgba(129, 140, 248, 0.18);
+  --zh-surface-subtle: #1e1d35;
 
   --zh-text-primary: #f1f0ff;
-  --zh-text-secondary: #a5a3c9;
-  --zh-text-muted: #6b6991;
+  --zh-text-secondary: #c4c2e0;
+  // Bumped from #6b6991 to clear WCAG AA (≥4.5:1 on #0f0e1a) for hints,
+  // skip/back buttons, helper text, etc.
+  --zh-text-muted: #9290b8;
   --zh-text-inverse: #0f0e1a;
   --zh-text-link: #818cf8;
 
   --zh-border-subtle: #2d2b4a;
   --zh-border-strong: #3f3d66;
   --zh-border-focus: #818cf8;
+  --zh-border-default: #3f3d66;
+
+  --zh-error: #f87171;
+  --zh-error-soft: rgba(248, 113, 113, 0.15);
+
+  // Legacy color/space aliases — re-bound for dark theme so feature
+  // SCSS that still references them stays readable.
+  --zh-color-primary: var(--zh-primary);
+  --zh-color-primary-hover: var(--zh-primary-hover);
+  --zh-color-primary-alpha: var(--zh-primary-alpha-30);
+  --zh-color-danger: var(--zh-danger);
+  --zh-surface-base: var(--zh-surface-elevated);
+
+  // Status pills tuned for dark surfaces.
+  --zh-status-active-bg: rgba(52, 211, 153, 0.18);
+  --zh-status-active-text: #6ee7b7;
+  --zh-status-inactive-bg: rgba(165, 163, 201, 0.15);
+  --zh-status-inactive-text: #c4c2e0;
+  --zh-status-info-bg: rgba(56, 189, 248, 0.18);
+  --zh-status-info-text: #7dd3fc;
+  --zh-status-success-bg: rgba(52, 211, 153, 0.18);
+  --zh-status-success-text: #6ee7b7;
+  --zh-status-neutral-bg: rgba(255, 255, 255, 0.06);
+  --zh-status-neutral-text: #c4c2e0;
+  --zh-status-warning-bg: rgba(251, 191, 36, 0.18);
+  --zh-status-warning-text: #fcd34d;
 
   --zh-secondary: #a5a3c9;
   --zh-secondary-hover: #8886b0;
@@ -140,6 +201,10 @@
   --zh-elevation-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --zh-elevation-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
   --zh-elevation-hero: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --zh-shadow-sm: var(--zh-elevation-sm);
+  --zh-shadow-md: var(--zh-elevation-md);
+  --zh-shadow-lg: var(--zh-elevation-lg);
+  --zh-shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
 
   --zh-draw-zone-a: #818cf8;
   --zh-draw-zone-b: #a78bfa;

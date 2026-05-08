@@ -18,7 +18,6 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ThemeService, AppTheme } from '../../../../core/theme/theme.service';
 import { DateFormatService } from '../../../../core/services/date-format.service';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
-import { ApiTournamentAdminRepository } from '../../../../core/repositories/api/api-tournament-admin.repository';
 import { AppLocale } from '../../../../core/i18n/i18n.types';
 import { Sport, OrganizationType, Complex } from '../../../../core/models';
 
@@ -70,7 +69,6 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly sportRepo = inject(ApiSportRepository);
   private readonly onboardingRepo = inject(ApiOnboardingRepository);
   private readonly complexRepo = inject(ApiComplexRepository);
-  private readonly tournamentRepo = inject(ApiTournamentAdminRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
   protected readonly userPrefs = inject(UserPreferencesService);
   protected readonly i18n = inject(I18nService);
@@ -232,18 +230,24 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
   constructor() {
     // Auto-focus the first editable field of each step as soon as it becomes
-    // visible, so the user can type without an extra click.
+    // visible. Reads the viewChild signals INSIDE the effect so Angular
+    // re-runs it when the @if block renders and the ElementRef populates,
+    // avoiding the race where the effect fired before the input existed.
     effect(() => {
       const step = this.currentStep();
-      if (step === 0) {
+      const orgInput = this.orgNameInput();
+      const venueInput = this.venueNameInput();
+      const tournamentInput = this.tournamentNameInput();
+
+      if (step === 0 && orgInput) {
         queueMicrotask(() => {
-          this.orgNameInput()?.nativeElement?.focus();
+          orgInput.nativeElement?.focus({ preventScroll: false });
           this.activateOrgFieldSpotlight();
         });
-      } else if (step === 2) {
-        queueMicrotask(() => this.venueNameInput()?.nativeElement?.focus());
-      } else if (step === 4) {
-        queueMicrotask(() => this.tournamentNameInput()?.nativeElement?.focus());
+      } else if (step === 2 && venueInput) {
+        queueMicrotask(() => venueInput.nativeElement?.focus({ preventScroll: false }));
+      } else if (step === 4 && tournamentInput) {
+        queueMicrotask(() => tournamentInput.nativeElement?.focus({ preventScroll: false }));
       }
     });
   }
@@ -493,20 +497,12 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
       this.auth.updateCurrentOrganizationAssignments(result.organizationId, [result.organizationId]);
       this.activeOrgService.setOnboardingOrganization(result.organizationId);
 
-      await this.syncOnboardingEntitiesToLocalAdminTools(
-        result,
-        result.organizationId,
-        organizationName,
-        venueValues.name ?? '',
-        venueValues.address ?? '',
-        venueValues.location,
-        venueValues.courtNames ?? [],
-        sportIds,
-        includeTournament,
-        tValues.name ?? '',
-        tValues.startDate ?? '',
-        tValues.endDate ?? ''
-      );
+      // Best-effort local cache hydration of the complex created by the
+      // backend so the next admin screen visit doesn't have to re-fetch.
+      // We deliberately DO NOT re-create the tournament here — the backend
+      // onboarding endpoint is the source of truth and creating it again
+      // from the frontend produced duplicate rows in production.
+      await this.hydrateOnboardingComplexCache(result);
 
       this.onboarding.completeWizard(includeTournament);
       this.onboarding.markOrganizationCreated();
@@ -529,149 +525,25 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
     await this.finishSetup(true);
   }
 
-  private async syncOnboardingEntitiesToLocalAdminTools(
-    result: { complexId?: string | null; tournamentId?: string | null },
-    organizationId: string,
-    organizationName: string,
-    venueName: string,
-    venueAddress: string,
-    venueLocation: string | null | undefined,
-    courtNames: string[],
-    enabledSportIds: string[],
-    includeTournament: boolean,
-    tournamentName: string,
-    tournamentStartDate: string,
-    tournamentEndDate: string
-  ): Promise<void> {
-    try {
-      const complex = await this.ensureOnboardingComplex(
-        result,
-        organizationId,
-        organizationName,
-        venueName,
-        venueAddress,
-        venueLocation,
-        courtNames,
-        enabledSportIds
-      );
-
-      if (
-        includeTournament &&
-        result.tournamentId &&
-        tournamentName.trim().length > 0 &&
-        tournamentStartDate &&
-        tournamentEndDate
-      ) {
-        await this.ensureOnboardingTournament(
-          organizationId,
-          organizationName,
-          complex,
-          venueName,
-          enabledSportIds,
-          tournamentName,
-          tournamentStartDate,
-          tournamentEndDate
-        );
-      }
-    } catch {
-      // Onboarding completion is source-of-truth in backend. Local sync is best effort only.
-    }
-  }
-
-  private async ensureOnboardingComplex(
-    result: { complexId?: string | null },
-    _organizationId: string,
-    _organizationName: string,
-    venueName: string,
-    _venueAddress: string,
-    _venueLocation: string | null | undefined,
-    _courtNames: string[],
-    _enabledSportIds: string[]
+  /**
+   * Hydrates the local cache so the admin tools see the complex+courts
+   * created server-side by /admin/onboarding/complete. Read-only — no
+   * writes. Replaces a previous helper trio that re-created the tournament
+   * client-side and produced duplicate rows.
+   */
+  private async hydrateOnboardingComplexCache(
+    result: { complexId?: string | null }
   ): Promise<Complex | null> {
-    if (!result.complexId || venueName.trim().length === 0) {
+    if (!result.complexId) {
       return null;
     }
 
-    // The complex (and its courts) are persisted by the onboarding endpoint
-    // server-side; we only need to surface it locally for the wizard's
-    // remaining steps to reference.
-    const existingComplexes = await this.complexRepo.getAll();
-    return existingComplexes.find(c => c.id === result.complexId) ?? null;
-  }
-
-  private async ensureOnboardingTournament(
-    organizationId: string,
-    organizationName: string,
-    complex: Complex | null,
-    venueName: string,
-    enabledSportIds: string[],
-    tournamentName: string,
-    tournamentStartDate: string,
-    tournamentEndDate: string
-  ): Promise<void> {
-    const normalizedName = tournamentName.trim();
-    if (normalizedName.length === 0) {
-      return;
+    try {
+      const existingComplexes = await this.complexRepo.getAll();
+      return existingComplexes.find(c => c.id === result.complexId) ?? null;
+    } catch {
+      return null;
     }
-
-    const key = this.buildEntityKey(normalizedName);
-    const existingKeys = await this.tournamentRepo.getExistingKeys();
-
-    if (existingKeys.includes(key)) {
-      return;
-    }
-
-    // Use the primary sport (first selection) when multiple sports were chosen.
-    const primarySportId = enabledSportIds[0];
-    if (!primarySportId) {
-      // No sport selected — we can't create a tournament without a valid
-      // sport_id (NOT NULL FK). Skip silently; the user can create one
-      // manually later.
-      return;
-    }
-
-    const selectedSport = this.availableSports().find(s => s.id === primarySportId);
-    const complexName = (complex?.name ?? venueName.trim()) || normalizedName;
-
-    await this.tournamentRepo.create({
-      organizationId,
-      organizationName,
-      name: normalizedName,
-      key,
-      // Optional FKs are left undefined when we don't have a real UUID;
-      // the API columns are nullable so persistence stays consistent.
-      complexId: complex?.id ?? '',
-      complexName,
-      categoryId: '',
-      categoryName: '',
-      genderId: '',
-      genderLabel: '',
-      tournamentTypeId: '',
-      tournamentTypeName: '',
-      sportId: primarySportId,
-      sportName: selectedSport?.name ?? '',
-      statusId: 'upcoming',
-      statusLabel: 'upcoming',
-      startDate: tournamentStartDate,
-      endDate: tournamentEndDate,
-      registrationStartDate: tournamentStartDate,
-      registrationEndDate: tournamentStartDate,
-      maxPairs: null,
-      description: '',
-      rules: '',
-      isActive: true,
-      selectedCourtIds: []
-    });
-  }
-
-  private buildEntityKey(value: string): string {
-    return value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s_-]/g, '')
-      .trim()
-      .replace(/\s+/g, '_');
   }
 
   /** Courts counter buttons */

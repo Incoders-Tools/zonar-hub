@@ -78,6 +78,10 @@
     }
   }
 
+  // Form layout — mirrors the shared tournaments-form pattern so labels,
+  // inputs, selects, errors, dividers and spacing are visually consistent
+  // across the admin area. Do not introduce a parallel form skin here —
+  // any visual change should be lifted into the shared design tokens.
   &__form-content {
     display: flex;
     flex-direction: column;
@@ -93,13 +97,7 @@
   &__form-field {
     display: flex;
     flex-direction: column;
-    gap: var(--zh-space-xs);
-
-    label {
-      font-weight: 500;
-      font-size: var(--zh-font-size-sm);
-      color: var(--zh-text-primary);
-    }
+    gap: var(--zh-space-sm);
 
     &--full {
       grid-column: 1 / -1;
@@ -108,55 +106,46 @@
     &--checkbox {
       flex-direction: row;
       align-items: center;
+    }
 
-      label {
-        margin: 0;
+    label {
+      font-weight: 500;
+      font-size: var(--zh-font-size-sm);
+      color: var(--zh-text-primary);
+      margin: 0;
+    }
+
+    input,
+    select,
+    textarea {
+      padding: var(--zh-space-sm) var(--zh-space-md);
+      border: 1px solid var(--zh-border-subtle);
+      border-radius: var(--zh-radius-sm);
+      font-size: var(--zh-font-size-sm);
+      background-color: var(--zh-surface-input);
+      color: var(--zh-text-primary);
+      transition: border-color var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+
+      &:focus {
+        outline: none;
+        border-color: var(--zh-primary);
+        box-shadow: 0 0 0 3px var(--zh-primary-alpha-20);
+      }
+
+      &.error {
+        border-color: var(--zh-danger);
+      }
+
+      &:disabled {
+        background-color: var(--zh-surface-muted);
+        color: var(--zh-text-secondary);
+        cursor: not-allowed;
       }
     }
-  }
 
-  &__select {
-    padding: var(--zh-space-xs) var(--zh-space-sm);
-    border: 1px solid var(--zh-border-subtle);
-    border-radius: var(--zh-radius-sm);
-    font-size: var(--zh-font-size-sm);
-    background: var(--zh-surface-base);
-    color: var(--zh-text-primary);
-    transition: border-color var(--zh-transition-fast);
-
-    &:focus {
-      outline: none;
-      border-color: var(--zh-color-primary);
-      box-shadow: 0 0 0 3px var(--zh-color-primary-alpha);
-    }
-
-    &.error {
-      border-color: var(--zh-color-danger);
-    }
-  }
-
-  &__textarea {
-    padding: var(--zh-space-xs) var(--zh-space-sm);
-    border: 1px solid var(--zh-border-subtle);
-    border-radius: var(--zh-radius-sm);
-    font-size: var(--zh-font-size-sm);
-    background: var(--zh-surface-base);
-    color: var(--zh-text-primary);
-    resize: vertical;
-    transition: border-color var(--zh-transition-fast);
-
-    &:focus {
-      outline: none;
-      border-color: var(--zh-color-primary);
-      box-shadow: 0 0 0 3px var(--zh-color-primary-alpha);
-    }
-
-    &.error {
-      border-color: var(--zh-color-danger);
-    }
-
-    &--mono {
-      font-family: var(--zh-font-mono);
+    textarea {
+      resize: vertical;
+      min-height: 60px;
     }
   }
 
@@ -187,14 +176,14 @@
 
   &__error-message {
     font-size: var(--zh-font-size-xs);
-    color: var(--zh-color-danger);
-    margin-top: var(--zh-space-xxs);
+    color: var(--zh-danger);
+    margin-top: var(--zh-space-2xs);
   }
 
   &__hint {
     font-size: var(--zh-font-size-xs);
     color: var(--zh-text-secondary);
-    margin-top: var(--zh-space-xxs);
+    margin-top: var(--zh-space-2xs);
   }
 
   &__form-actions {
@@ -207,7 +196,7 @@
   }
 
   &__btn-cancel {
-    padding: var(--zh-space-xs) var(--zh-space-md);
+    padding: var(--zh-space-sm) var(--zh-space-md);
     border-radius: var(--zh-radius-sm);
     font-size: var(--zh-font-size-sm);
     font-weight: 500;
@@ -223,7 +212,7 @@
   }
 
   &__btn-save {
-    padding: var(--zh-space-xs) var(--zh-space-md);
+    padding: var(--zh-space-sm) var(--zh-space-md);
     border-radius: var(--zh-radius-sm);
     font-size: var(--zh-font-size-sm);
     font-weight: 500;

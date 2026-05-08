@@ -49,7 +49,7 @@
     } @else if (showError()) {
       <app-error-state (retried)="onRetried()"></app-error-state>
     } @else if (!hasItems()) {
-      <app-empty-state [messageKey]="emptyMessageKey()"></app-empty-state>
+      <app-empty-state [message]="emptyMessageKey()"></app-empty-state>
     } @else {
       <div class="zh-collection-view__cards">
         @for (row of items(); track row[trackByKey()]) {

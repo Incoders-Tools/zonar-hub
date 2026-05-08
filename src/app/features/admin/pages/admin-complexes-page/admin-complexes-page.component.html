@@ -62,21 +62,44 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-complexes"
+    [items]="tableData()"
     [columns]="columns()"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="true"
     [reorderable]="true"
     [rowActions]="complexRowActions"
     emptyMessageKey="admin.complexes.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            <h3 class="zh-list-card__name">{{ row.name }}</h3>
+            @if (row.location) {
+              <p class="zh-list-card__subtitle">{{ row.location }}</p>
+            }
+          </div>
+          <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+            {{ row.statusLabel | t }}
+          </span>
+        </div>
+        <div class="zh-list-card__meta">
+          <span><strong>{{ 'admin.complexes.column.courtsCount' | t }}:</strong> {{ row.courtsCount }}</span>
+          @if (isSystemAdmin()) {
+            <span><strong>{{ 'admin.complexes.column.key' | t }}:</strong> {{ row.key }}</span>
+            <span><strong>{{ 'admin.complexes.column.sortOrder' | t }}:</strong> {{ row.sortOrder }}</span>
+          }
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 
   <!-- Courts Panel (shown below table when toggled) -->
   @if (courtsComplexId()) {

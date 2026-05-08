@@ -143,17 +143,28 @@ export class AdminProfilePageComponent implements OnInit {
         this.configDirty.set(this.configForm.dirty);
         this.configValid.set(this.configForm.valid);
 
-        // Apply config changes in real-time
+        // Live PREVIEW only — apply locally so the user sees the new
+        // theme/locale/date format immediately, but do NOT persist to the
+        // backend on every keystroke. Persisting here used to fan out four
+        // parallel GET-then-POST upserts on each value change, racing with
+        // each other and producing UNIQUE-violation 409s on the second
+        // POST. Persistence happens on Save (onSubmitConfig).
         if (this.configForm.valid && this.configForm.dirty) {
-          const values = this.configForm.getRawValue();
-          this.prefs.updateCurrentUserPrefs({
-            locale: values.locale,
-            theme: values.theme,
-            dateFormat: values.dateFormat,
-            timezone: values.timezone
-          });
+          this.applyConfigPreview(this.configForm.getRawValue());
         }
       });
+  }
+
+  /**
+   * Applies user-visible config changes locally (theme, locale, date
+   * format) without touching the backend. Used by the form's valueChanges
+   * subscription to keep the live preview while the user edits.
+   */
+  private applyConfigPreview(values: { locale: AppLocale; theme: AppTheme; dateFormat: string; timezone: string }): void {
+    this.themeService.setTheme(values.theme);
+    // Other dimensions (locale, dateFormat, timezone) are reflected on
+    // save — applying them mid-edit creates flicker on long pages without
+    // adding meaningful preview value.
   }
 
   setTab(tab: ProfileTab): void {
