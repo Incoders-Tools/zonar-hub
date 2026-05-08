@@ -1,7 +1,8 @@
-import { Injectable, inject, computed } from '@angular/core';
+import { Injectable, inject, computed, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { FilterField } from '../../shared/components/filter-panel/filter-panel.component';
-import { MockTenantRepository } from '../repositories/mock/mock-tenant.repository';
+import { ApiTenantRepository } from '../repositories/api/api-tenant.repository';
+import { Tenant } from '../models';
 
 /**
  * Provides a tenant filter field for filter panels.
@@ -12,9 +13,13 @@ import { MockTenantRepository } from '../repositories/mock/mock-tenant.repositor
 @Injectable({ providedIn: 'root' })
 export class TenantFilterService {
   private readonly auth = inject(AuthService);
-  private readonly tenantRepo = inject(MockTenantRepository);
+  private readonly tenantRepo = inject(ApiTenantRepository);
+  private readonly tenantsCache = signal<Tenant[]>([]);
 
-  /** Whether the current user should see a tenant filter */
+  constructor() {
+    void this.refreshTenants();
+  }
+
   readonly showTenantFilter = computed(() => {
     const user = this.auth.currentUser();
     if (!user) return false;
@@ -22,11 +27,10 @@ export class TenantFilterService {
     return (user.tenantIds?.length ?? 0) > 1;
   });
 
-  /** Available tenant options for the filter, scoped to user access */
   readonly tenantFilterField = computed<FilterField | null>(() => {
     if (!this.showTenantFilter()) return null;
     const user = this.auth.currentUser();
-    const allTenants = this.tenantRepo.getAllSync();
+    const allTenants = this.tenantsCache();
     let options: { value: string; labelKey: string }[];
 
     if (user?.role === 'system_admin') {
@@ -47,4 +51,13 @@ export class TenantFilterService {
       options
     };
   });
+
+  private async refreshTenants(): Promise<void> {
+    try {
+      const tenants = await this.tenantRepo.getAll();
+      this.tenantsCache.set(tenants);
+    } catch {
+      this.tenantsCache.set([]);
+    }
+  }
 }

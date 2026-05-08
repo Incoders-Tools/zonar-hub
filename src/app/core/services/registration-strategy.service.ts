@@ -1,10 +1,24 @@
 import { Injectable } from '@angular/core';
 import { SportParticipantConfig, SportRegistrationRuleSet } from '../models/sport-config.model';
-import { SPORT_REGISTRATION_RULES, DEFAULT_SPORT_CONFIG } from '../data/mock/mock-sport-configs';
 import { BaseRegistrationStrategy } from './strategies/base-registration.strategy';
 import { PairRegistrationStrategy } from './strategies/pair-registration.strategy';
 import { IndividualRegistrationStrategy } from './strategies/individual-registration.strategy';
 import { TeamRegistrationStrategy } from './strategies/team-registration.strategy';
+
+const DEFAULT_SPORT_CONFIG: SportParticipantConfig = {
+  sportKey: 'default',
+  participantType: 'pair',
+  minPlayers: 2,
+  maxPlayers: 2,
+  requiresGender: true,
+  requiresCategory: true,
+  categoryToleranceLevels: 1,
+  allowsHabitualPartner: true
+};
+
+/** Sport-specific overrides will land server-side; until then every sport
+ *  falls back to the safe pair default above. */
+const SPORT_REGISTRATION_RULES: SportRegistrationRuleSet[] = [];
 
 @Injectable({ providedIn: 'root' })
 export class RegistrationStrategyService {

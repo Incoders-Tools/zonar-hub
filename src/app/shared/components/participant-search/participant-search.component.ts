@@ -9,7 +9,7 @@ import { Registration, ParticipantAvailabilityState, ParticipantSearchResult } f
 import { TournamentEligibilitySlot } from '../../../core/models/tournament-admin.model';
 import { Category } from '../../../core/models/catalog.model';
 import { SportParticipantConfig } from '../../../core/models/sport-config.model';
-import { MockPlayerRepository } from '../../../core/repositories/mock/mock-player.repository';
+import { ApiPlayerRepository } from '../../../core/repositories/api/api-player.repository';
 import { EligibilityValidationService } from '../../../core/services/eligibility-validation.service';
 
 @Component({
@@ -20,7 +20,7 @@ import { EligibilityValidationService } from '../../../core/services/eligibility
   styleUrl: './participant-search.component.scss'
 })
 export class ParticipantSearchComponent implements OnInit {
-  private readonly playerRepo = inject(MockPlayerRepository);
+  private readonly playerRepo = inject(ApiPlayerRepository);
   private readonly eligibilityService = inject(EligibilityValidationService);
   private readonly destroyRef = inject(DestroyRef);
 

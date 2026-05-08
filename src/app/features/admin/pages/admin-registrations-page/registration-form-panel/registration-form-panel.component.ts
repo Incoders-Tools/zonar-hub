@@ -11,7 +11,7 @@ import { AvailabilitySelectorComponent, AvailabilitySelection } from '../../../.
 import { FormatDatePipe } from '../../../../../shared/pipes/format-date.pipe';
 import { RegistrationStrategyService } from '../../../../../core/services/registration-strategy.service';
 import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
-import { MockEligibilityProfileRepository } from '../../../../../core/repositories/mock/mock-eligibility-profile.repository';
+import { ApiEligibilityProfileRepository } from '../../../../../core/repositories/api/api-eligibility-profile.repository';
 import { TournamentService } from '../../../../../core/services/tournament.service';
 import { ActiveOrganizationService } from '../../../../../core/services/active-organization.service';
 import { ApiCategoryRepository } from '../../../../../core/repositories/api/api-category.repository';
@@ -44,7 +44,7 @@ export class RegistrationFormPanelComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly strategyService = inject(RegistrationStrategyService);
   private readonly eligibilityService = inject(EligibilityValidationService);
-  private readonly eligibilityRepo = inject(MockEligibilityProfileRepository);
+  private readonly eligibilityRepo = inject(ApiEligibilityProfileRepository);
   private readonly tournamentService = inject(TournamentService);
   private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly registrationService = inject(RegistrationService);

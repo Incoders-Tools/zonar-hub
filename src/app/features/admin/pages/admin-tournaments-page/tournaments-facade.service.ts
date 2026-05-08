@@ -1,13 +1,13 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality, TournamentRuleSet } from '../../../../core/models';
-import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
+import { ApiTournamentAdminRepository } from '../../../../core/repositories/api/api-tournament-admin.repository';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
 import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
-import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { ApiTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
-import { MockTournamentRuleSetRepository } from '../../../../core/repositories/mock/mock-tournament-rule-set.repository';
+import { ApiTournamentRuleSetRepository } from '../../../../core/repositories/api/api-tournament-rule-set.repository';
 import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
@@ -19,14 +19,14 @@ export interface TournamentFilters {
 
 @Injectable()
 export class TournamentsFacadeService {
-  private readonly repository = inject(MockTournamentAdminRepository);
+  private readonly repository = inject(ApiTournamentAdminRepository);
   private readonly complexRepo = inject(ApiComplexRepository);
   private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly genderRepo = inject(ApiGenderRepository);
-  private readonly tournamentTypeRepo = inject(MockTournamentTypeRepository);
+  private readonly tournamentTypeRepo = inject(ApiTournamentTypeRepository);
   private readonly sportRepo = inject(ApiSportRepository);
   private readonly modalityRepo = inject(ApiTournamentModalityRepository);
-  private readonly ruleSetRepo = inject(MockTournamentRuleSetRepository);
+  private readonly ruleSetRepo = inject(ApiTournamentRuleSetRepository);
   private readonly courtRepo = inject(ApiCourtRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private lastOrgId: string | null | undefined = undefined;
@@ -227,7 +227,7 @@ export class TournamentsFacadeService {
         this.modalityRepo.getAll(),
         this.ruleSetRepo.getAll()
       ]);
-      this.entitiesState.set(tournaments);
+      // Lookups need to land first so the name resolver can use them.
       this.complexesState.set(complexes);
       this.categoriesState.set(categories);
       this.gendersState.set(genders);
@@ -235,11 +235,37 @@ export class TournamentsFacadeService {
       this.sportsState.set(sports);
       this.modalitiesState.set(modalities);
       this.ruleSetsState.set(ruleSets);
+
+      // The API returns canonical IDs only — populate display names from
+      // the lookups we just loaded so the table shows readable text.
+      this.entitiesState.set(tournaments.map(t => this.hydrateNames(t)));
     } catch (error) {
       this.errorState.set((error as Error).message);
     } finally {
       this.loadingState.set(false);
     }
+  }
+
+  private hydrateNames(tournament: Tournament): Tournament {
+    const sport = this.sportsState().find(s => s.id === tournament.sportId);
+    const complex = this.complexesState().find(c => c.id === tournament.complexId);
+    const category = this.categoriesState().find(c => c.id === tournament.categoryId);
+    const gender = this.gendersState().find(g => g.id === tournament.genderId);
+    const modality = this.modalitiesState().find(m => m.id === tournament.modalityId);
+    const tournamentType = this.tournamentTypesState().find(t => t.id === tournament.tournamentTypeId);
+    const ruleSet = this.ruleSetsState().find(r => r.id === tournament.ruleSetId);
+
+    return {
+      ...tournament,
+      sportName: sport?.name ?? tournament.sportName ?? '',
+      complexName: complex?.name ?? tournament.complexName ?? '',
+      categoryName: category?.name ?? tournament.categoryName ?? '',
+      genderLabel: gender?.name ?? tournament.genderLabel ?? '',
+      modalityName: modality?.nameEs ?? tournament.modalityName,
+      modalityKey: modality?.key ?? tournament.modalityKey,
+      tournamentTypeName: tournamentType?.name ?? tournament.tournamentTypeName ?? '',
+      ruleSetDescription: ruleSet?.descriptionText ?? tournament.ruleSetDescription
+    };
   }
 
   async loadCourtsForComplex(complexId: string): Promise<void> {
@@ -301,19 +327,27 @@ export class TournamentsFacadeService {
       this.savingState.set(true);
       this.errorState.set(null);
 
-      const isUpdate = 'id' in tournament && tournament.id;
+      // Stamp the active organization on creates so the row is scoped server-side.
+      const activeOrgId = this.activeOrg.activeOrganizationId();
+      const withOrg = {
+        ...tournament,
+        organizationId: (tournament as Tournament).organizationId ?? activeOrgId ?? undefined
+      };
+
+      const isUpdate = 'id' in withOrg && withOrg.id;
 
       if (isUpdate) {
-        const updated = await this.repository.update((tournament as Tournament).id, tournament);
-        const idx = this.entitiesState().findIndex(t => t.id === (tournament as Tournament).id);
+        const updated = await this.repository.update((withOrg as Tournament).id, withOrg);
+        const hydrated = this.hydrateNames(updated);
+        const idx = this.entitiesState().findIndex(t => t.id === (withOrg as Tournament).id);
         if (idx !== -1) {
           const updatedTournaments = [...this.entitiesState()];
-          updatedTournaments[idx] = updated;
+          updatedTournaments[idx] = hydrated;
           this.entitiesState.set(updatedTournaments);
         }
       } else {
-        const created = await this.repository.create(tournament as Omit<Tournament, 'id' | 'createdAt'>);
-        this.entitiesState.set([...this.entitiesState(), created]);
+        const created = await this.repository.create(withOrg as Omit<Tournament, 'id' | 'createdAt'>);
+        this.entitiesState.set([...this.entitiesState(), this.hydrateNames(created)]);
       }
 
       return true;

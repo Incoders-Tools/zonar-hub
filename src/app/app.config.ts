@@ -6,7 +6,7 @@ import { MAT_ICON_DEFAULT_OPTIONS } from '@angular/material/icon';
 import { routes } from './app.routes';
 import { authTokenInterceptor } from './core/auth/auth-token.interceptor';
 import { tenantHeaderInterceptor } from './core/auth/tenant-header.interceptor';
-import { MockFileStorageRepository } from './core/repositories/mock/mock-file-storage.repository';
+import { ApiFileStorageRepository } from './core/repositories/api/api-file-storage.repository';
 import { FILE_STORAGE_REPOSITORY } from './core/repositories/file-storage.repository';
 
 export const appConfig: ApplicationConfig = {
@@ -15,7 +15,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authTokenInterceptor, tenantHeaderInterceptor])),
     provideAnimationsAsync(),
     { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-rounded' } },
-    // File storage — swap MockFileStorageRepository for ApiFileStorageRepository when the API endpoint is ready
-    { provide: FILE_STORAGE_REPOSITORY, useExisting: MockFileStorageRepository }
+    { provide: FILE_STORAGE_REPOSITORY, useExisting: ApiFileStorageRepository }
   ]
 };

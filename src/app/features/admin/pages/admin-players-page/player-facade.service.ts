@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Player, Category, Gender, Sport } from '../../../../core/models';
-import { MockPlayerRepository } from '../../../../core/repositories/mock/mock-player.repository';
+import { ApiPlayerRepository } from '../../../../core/repositories/api/api-player.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
 import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
@@ -18,7 +18,7 @@ export interface PlayerFilters {
 
 @Injectable()
 export class PlayerFacadeService {
-  private readonly repo = inject(MockPlayerRepository);
+  private readonly repo = inject(ApiPlayerRepository);
   private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly genderRepo = inject(ApiGenderRepository);
   private readonly sportRepo = inject(ApiSportRepository);

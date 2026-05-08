@@ -6,9 +6,9 @@ import { TournamentService } from '../../../../core/services/tournament.service'
 import { RegistrationService } from '../../../../core/services/registration.service';
 import { RegistrationStrategyService } from '../../../../core/services/registration-strategy.service';
 import { EligibilityValidationService } from '../../../../core/services/eligibility-validation.service';
-import { MockEligibilityProfileRepository } from '../../../../core/repositories/mock/mock-eligibility-profile.repository';
+import { ApiEligibilityProfileRepository } from '../../../../core/repositories/api/api-eligibility-profile.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
-import { MockPlayerRepository } from '../../../../core/repositories/mock/mock-player.repository';
+import { ApiPlayerRepository } from '../../../../core/repositories/api/api-player.repository';
 
 export interface WizardSlot {
   slotNumber: number;
@@ -26,9 +26,9 @@ export class WizardFacadeService {
   private readonly registrationService = inject(RegistrationService);
   private readonly strategyService = inject(RegistrationStrategyService);
   private readonly eligibilityService = inject(EligibilityValidationService);
-  private readonly eligibilityProfileRepo = inject(MockEligibilityProfileRepository);
+  private readonly eligibilityProfileRepo = inject(ApiEligibilityProfileRepository);
   private readonly categoryRepo = inject(ApiCategoryRepository);
-  private readonly playerRepo = inject(MockPlayerRepository);
+  private readonly playerRepo = inject(ApiPlayerRepository);
 
   readonly tournament = signal<Tournament | null>(null);
   readonly config = signal<SportParticipantConfig | null>(null);

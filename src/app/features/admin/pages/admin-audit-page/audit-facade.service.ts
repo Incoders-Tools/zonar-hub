@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { AuditLog } from '../../../../core/models/operational.model';
-import { MockAuditRepository } from '../../../../core/repositories/mock/mock-audit.repository';
+import { ApiAuditRepository } from '../../../../core/repositories/api/api-audit.repository';
 
 export interface AuditFilters {
   action?: string;
@@ -10,7 +10,7 @@ export interface AuditFilters {
 
 @Injectable()
 export class AuditFacadeService {
-  private readonly repository = inject(MockAuditRepository);
+  private readonly repository = inject(ApiAuditRepository);
 
   readonly logs = signal<AuditLog[]>([]);
   readonly loading = signal(false);

@@ -18,7 +18,7 @@ import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ThemeService, AppTheme } from '../../../../core/theme/theme.service';
 import { DateFormatService } from '../../../../core/services/date-format.service';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
-import { MockTournamentAdminRepository } from '../../../../core/repositories/mock/mock-tournament-admin.repository';
+import { ApiTournamentAdminRepository } from '../../../../core/repositories/api/api-tournament-admin.repository';
 import { AppLocale } from '../../../../core/i18n/i18n.types';
 import { Sport, OrganizationType, Complex } from '../../../../core/models';
 
@@ -70,7 +70,7 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
   private readonly sportRepo = inject(ApiSportRepository);
   private readonly onboardingRepo = inject(ApiOnboardingRepository);
   private readonly complexRepo = inject(ApiComplexRepository);
-  private readonly tournamentRepo = inject(MockTournamentAdminRepository);
+  private readonly tournamentRepo = inject(ApiTournamentAdminRepository);
   private readonly activeOrgService = inject(ActiveOrganizationService);
   protected readonly userPrefs = inject(UserPreferencesService);
   protected readonly i18n = inject(I18nService);
@@ -623,27 +623,33 @@ export class AdminOnboardingPageComponent implements OnInit, OnDestroy {
 
     // Use the primary sport (first selection) when multiple sports were chosen.
     const primarySportId = enabledSportIds[0];
-    const selectedSport = primarySportId
-      ? this.availableSports().find(s => s.id === primarySportId)
-      : undefined;
+    if (!primarySportId) {
+      // No sport selected — we can't create a tournament without a valid
+      // sport_id (NOT NULL FK). Skip silently; the user can create one
+      // manually later.
+      return;
+    }
+
+    const selectedSport = this.availableSports().find(s => s.id === primarySportId);
     const complexName = (complex?.name ?? venueName.trim()) || normalizedName;
-    const complexId = complex?.id ?? 'complex_onboarding';
 
     await this.tournamentRepo.create({
       organizationId,
       organizationName,
       name: normalizedName,
       key,
-      complexId,
+      // Optional FKs are left undefined when we don't have a real UUID;
+      // the API columns are nullable so persistence stays consistent.
+      complexId: complex?.id ?? '',
       complexName,
-      categoryId: 'category_open',
-      categoryName: 'Open',
-      genderId: 'gender_open',
-      genderLabel: 'Open',
-      tournamentTypeId: 'type_standard',
-      tournamentTypeName: 'Standard',
-      sportId: selectedSport?.id ?? enabledSportIds[0] ?? 'sport_default',
-      sportName: selectedSport?.name ?? 'Sport',
+      categoryId: '',
+      categoryName: '',
+      genderId: '',
+      genderLabel: '',
+      tournamentTypeId: '',
+      tournamentTypeName: '',
+      sportId: primarySportId,
+      sportName: selectedSport?.name ?? '',
       statusId: 'upcoming',
       statusLabel: 'upcoming',
       startDate: tournamentStartDate,

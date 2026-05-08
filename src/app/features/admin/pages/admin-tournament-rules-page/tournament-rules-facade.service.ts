@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { TournamentRuleSet, TournamentType } from '../../../../core/models';
-import { MockTournamentRuleSetRepository } from '../../../../core/repositories/mock/mock-tournament-rule-set.repository';
-import { MockTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { ApiTournamentRuleSetRepository } from '../../../../core/repositories/api/api-tournament-rule-set.repository';
+import { ApiTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
 
 export interface TournamentRuleSetFilters {
   tournamentTypeName?: string;
@@ -10,8 +10,8 @@ export interface TournamentRuleSetFilters {
 
 @Injectable()
 export class TournamentRulesFacadeService {
-  private readonly repository = inject(MockTournamentRuleSetRepository);
-  private readonly tournamentTypeRepository = inject(MockTournamentTypeRepository);
+  private readonly repository = inject(ApiTournamentRuleSetRepository);
+  private readonly tournamentTypeRepository = inject(ApiTournamentTypeRepository);
 
   // State signals
   private readonly entitiesState = signal<TournamentRuleSet[]>([]);

@@ -1,40 +1,38 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Tournament } from '../models';
-import { MockTournamentAdminRepository } from '../repositories/mock/mock-tournament-admin.repository';
-import { MOCK_TOURNAMENTS } from '../data/mock/mock-tournaments';
+import { ApiTournamentAdminRepository } from '../repositories/api/api-tournament-admin.repository';
 
 @Injectable({ providedIn: 'root' })
 export class TournamentService {
-  private readonly repository = inject(MockTournamentAdminRepository);
+  private readonly repository = inject(ApiTournamentAdminRepository);
   private readonly tournamentsState = signal<Tournament[]>([]);
   private readonly loadingState = signal(false);
   private readonly errorState = signal<string | null>(null);
-  private loaded = false;
 
   readonly tournaments = this.tournamentsState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
 
+  /** Tournaments that should be visible publicly (anything except cancelled). */
   readonly publicTournaments = computed(() =>
-    this.tournamentsState().filter(t => t.statusId !== 'ts6')
-  );
-
-  readonly upcomingTournaments = computed(() =>
-    this.tournamentsState().filter(t => ['ts1', 'ts2'].includes(t.statusId))
+    this.tournamentsState().filter(t => (t.statusId || '').toLowerCase() !== 'cancelled')
   );
 
   /**
-   * Public display tournaments: always includes MOCK_TOURNAMENTS (demo data)
-   * merged with any tenant-specific tournaments. This ensures the public-facing
-   * tournament list is never empty regardless of who is logged in.
+   * Upcoming tournaments come from the API. The previous implementation
+   * merged a hard-coded MOCK_TOURNAMENTS list to keep the public landing
+   * page populated; the DB is the single source of truth now and an empty
+   * state is preferred over fake data.
    */
-  readonly publicDisplayTournaments = computed(() => {
-    const tenantTournaments = this.tournamentsState().filter(t => t.statusId !== 'ts6');
-    const mockIds = new Set(MOCK_TOURNAMENTS.map(t => t.id));
-    const tenantOnly = tenantTournaments.filter(t => !mockIds.has(t.id));
-    const allMock = MOCK_TOURNAMENTS.filter(t => t.statusId !== 'ts6');
-    return [...allMock, ...tenantOnly];
+  readonly upcomingTournaments = computed(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return this.tournamentsState()
+      .filter(t => (t.statusId || '').toLowerCase() !== 'cancelled')
+      .filter(t => !t.endDate || t.endDate >= today);
   });
+
+  /** Tournaments scoped to whatever the active organization currently is. */
+  readonly publicDisplayTournaments = computed(() => this.publicTournaments());
 
   async loadTournaments(): Promise<void> {
     this.loadingState.set(true);
@@ -42,21 +40,20 @@ export class TournamentService {
     try {
       const data = await this.repository.getAll();
       this.tournamentsState.set(data);
-      this.loaded = true;
     } catch {
       this.errorState.set('state.error');
+      this.tournamentsState.set([]);
     } finally {
       this.loadingState.set(false);
     }
   }
 
   getTournamentById(id: string): Tournament | undefined {
-    // Check tenant-specific data first, then fall back to mock data
-    return this.tournamentsState().find(t => t.id === id)
-      ?? MOCK_TOURNAMENTS.find(t => t.id === id);
+    return this.tournamentsState().find(t => t.id === id);
   }
 
   isRegistrationOpen(tournament: Tournament): boolean {
+    if (!tournament.registrationStartDate || !tournament.registrationEndDate) return false;
     const now = new Date().toISOString().slice(0, 10);
     return now >= tournament.registrationStartDate && now <= tournament.registrationEndDate;
   }

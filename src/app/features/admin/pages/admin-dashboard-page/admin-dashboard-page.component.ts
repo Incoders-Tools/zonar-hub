@@ -4,7 +4,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
-import { MockPlanRepository } from '../../../../core/repositories/mock/mock-plan.repository';
+import { ApiPlanRepository } from '../../../../core/repositories/api/api-plan.repository';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { Plan } from '../../../../core/models';
 
@@ -32,7 +32,7 @@ export class AdminDashboardPageComponent {
   protected readonly dashboardService = inject(AdminDashboardService);
   protected readonly tenantContext = inject(TenantContextService);
   protected readonly activeOrg = inject(ActiveOrganizationService);
-  private readonly planRepo = inject(MockPlanRepository);
+  private readonly planRepo = inject(ApiPlanRepository);
   protected readonly onboarding = inject(OnboardingStateService);
 
   readonly currentPlan = signal<Plan | null>(null);
@@ -81,7 +81,10 @@ export class AdminDashboardPageComponent {
     effect(() => {
       const planId = this.tenantContext.tenant()?.planId;
       if (planId) {
-        this.planRepo.getById(planId).then(plan => this.currentPlan.set(plan)).catch(() => this.currentPlan.set(null));
+        this.planRepo
+          .getById(planId)
+          .then(plan => this.currentPlan.set(plan))
+          .catch(() => this.currentPlan.set(null));
       } else {
         this.currentPlan.set(null);
       }

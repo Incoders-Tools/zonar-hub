@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { AppLog } from '../../../../core/models/app-log.model';
-import { MockAppLogRepository } from '../../../../core/repositories/mock/mock-app-log.repository';
+import { ApiAppLogRepository } from '../../../../core/repositories/api/api-app-log.repository';
 
 export interface AppLogFilters {
   level?: string;
@@ -11,7 +11,7 @@ export interface AppLogFilters {
 
 @Injectable()
 export class AppLogsFacadeService {
-  private readonly repository = inject(MockAppLogRepository);
+  private readonly repository = inject(ApiAppLogRepository);
 
   readonly logs = signal<AppLog[]>([]);
   readonly loading = signal(false);

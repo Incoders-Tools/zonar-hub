@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Plan } from '../../../../core/models';
-import { MockPlanRepository } from '../../../../core/repositories/mock/mock-plan.repository';
+import { ApiPlanRepository } from '../../../../core/repositories/api/api-plan.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 export interface PlanFilters {
@@ -10,7 +10,7 @@ export interface PlanFilters {
 
 @Injectable()
 export class PlanFacadeService {
-  private readonly repo = inject(MockPlanRepository);
+  private readonly repo = inject(ApiPlanRepository);
   private readonly notification = inject(NotificationService);
 
   private readonly plansState = signal<Plan[]>([]);

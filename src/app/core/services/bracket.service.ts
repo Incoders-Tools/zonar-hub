@@ -1,10 +1,14 @@
 import { Injectable } from '@angular/core';
 import { TournamentBracket } from '../models';
-import { MOCK_BRACKETS } from '../data/mock/mock-brackets';
 
+/**
+ * Bracket service. Brackets are computed/persisted server-side; until that
+ * surface ships the FE returns null so callers render an empty bracket
+ * placeholder instead of a fake fixture.
+ */
 @Injectable({ providedIn: 'root' })
 export class BracketService {
-  getBracketByTournament(tournamentId: string): TournamentBracket | null {
-    return MOCK_BRACKETS.find(b => b.tournamentId === tournamentId) ?? null;
+  getBracketByTournament(_tournamentId: string): TournamentBracket | null {
+    return null;
   }
 }

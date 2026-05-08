@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { NewsArticle, HomeSection, FlyerBackground } from '../models';
-import { MOCK_NEWS, MOCK_HOME_SECTIONS } from '../data/mock/mock-content';
+const MOCK_NEWS: NewsArticle[] = [];
+const MOCK_HOME_SECTIONS: HomeSection[] = [];
 
 /**
  * Generate a simple SVG placeholder for flyer backgrounds.

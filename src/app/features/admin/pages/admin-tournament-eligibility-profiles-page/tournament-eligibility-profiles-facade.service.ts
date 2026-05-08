@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { TournamentEligibilityProfile } from '../../../../core/models';
-import { MockTournamentEligibilityProfileRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { ApiTournamentEligibilityProfileRepository } from '../../../../core/repositories/tournament-admin.repository';
 
 export interface TournamentEligibilityProfileFilters {
   name?: string;
@@ -9,7 +9,7 @@ export interface TournamentEligibilityProfileFilters {
 
 @Injectable()
 export class TournamentEligibilityProfilesFacadeService {
-  private readonly repository = inject(MockTournamentEligibilityProfileRepository);
+  private readonly repository = inject(ApiTournamentEligibilityProfileRepository);
 
   // State signals
   private readonly entitiesState = signal<TournamentEligibilityProfile[]>([]);

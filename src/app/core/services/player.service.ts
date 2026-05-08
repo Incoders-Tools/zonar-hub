@@ -1,10 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Player } from '../models';
-import { MockPlayerRepository } from '../repositories/mock/mock-player.repository';
+import { ApiPlayerRepository } from '../repositories/api/api-player.repository';
 
 @Injectable({ providedIn: 'root' })
 export class PlayerService {
-  private readonly repository = inject(MockPlayerRepository);
+  private readonly repository = inject(ApiPlayerRepository);
   private readonly playersState = signal<Player[]>([]);
   private readonly loadingState = signal(false);
 
