@@ -71,6 +71,12 @@
   }
 }
 
+:host ::ng-deep app-collapsible-section {
+  display: block;
+  margin-top: var(--zh-space-md);
+  margin-bottom: var(--zh-space-md);
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

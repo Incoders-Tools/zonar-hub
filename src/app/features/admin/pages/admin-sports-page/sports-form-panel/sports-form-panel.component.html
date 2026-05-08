@@ -59,7 +59,7 @@
       </div>
     </div>
 
-    <!-- Modalities Selection (multi-select with drag-drop) -->
+    <!-- Modalities Selection (required, multi-select with drag-drop) -->
     <app-child-collection-grid
       mode="select"
       [titleKey]="'admin.sports.form.modalitiesTitle'"
@@ -77,6 +77,9 @@
       (selectionReordered)="onModalityOrderChanged($event)">
     </app-child-collection-grid>
     <div class="sports-form__field" style="margin-top: 0.25rem;">
+      @if (modalityRequiredError()) {
+        <span class="sports-form__error">{{ 'admin.sports.error.modalityRequired' | t }}</span>
+      }
       <span class="sports-form__hint">{{ 'admin.sports.form.modalitiesPrimaryHint' | t }}</span>
     </div>
 

@@ -32,35 +32,20 @@
         }
       </div>
 
-      <!-- Modality Field (filtered by sport) -->
-      @if (modalityOptionsForSport().length > 0) {
-        <div class="tournaments-form__field">
-          <label>{{ 'admin.tournaments.form.modalityId' | t }}</label>
-          <select formControlName="modalityId">
-            @if (modalityOptionsForSport().length > 1) {
-              <option value="">{{ 'admin.tournaments.form.selectModality' | t }}</option>
-            }
-            @for (option of modalityOptionsForSport(); track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </select>
-          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.modalityHint' | t }}</span>
-        </div>
-      }
-
-      <!-- Tournament Type Field (legacy, hidden for non-sysadmin) -->
-      @if (isSystemAdmin()) {
-        <div class="tournaments-form__field">
-          <label>{{ 'admin.tournaments.form.tournamentTypeId' | t }}</label>
-          <select formControlName="tournamentTypeId">
-            <option value="">{{ 'admin.tournaments.form.selectType' | t }}</option>
-            @for (option of tournamentTypeOptions(); track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </select>
-          <span class="tournaments-form__hint">{{ 'admin.tournaments.form.typeHint' | t }}</span>
-        </div>
-      }
+      <!-- Modality Field (required, filtered by selected sport) -->
+      <div class="tournaments-form__field">
+        <label>{{ 'admin.tournaments.form.modalityId' | t }} *</label>
+        <select formControlName="modalityId" [class.error]="isFieldInvalid('modalityId')">
+          <option value="">{{ 'admin.tournaments.form.selectModality' | t }}</option>
+          @for (option of modalityOptionsForSport(); track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (isFieldInvalid('modalityId')) {
+          <span class="tournaments-form__error">{{ 'common.required' | t }}</span>
+        }
+        <span class="tournaments-form__hint">{{ 'admin.tournaments.form.modalityHint' | t }}</span>
+      </div>
 
       <!-- Complex Field -->
       <div class="tournaments-form__field">

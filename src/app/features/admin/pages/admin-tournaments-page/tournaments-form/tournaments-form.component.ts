@@ -58,9 +58,6 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   readonly complexOptions = computed(() =>
     this.facade.complexes().map(c => ({ value: c.id, label: c.name }))
   );
-  readonly tournamentTypeOptions = computed(() =>
-    this.facade.tournamentTypes().filter(t => t.isActive).map(t => ({ value: t.id, label: t.name }))
-  );
   readonly sportOptions = computed(() =>
     this.facade.sports().filter(s => s.isActive).map(s => ({ value: s.id, label: s.name }))
   );
@@ -156,8 +153,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       name: ['', [Validators.required]],
       complexId: ['', [Validators.required]],
       sportId: ['', [Validators.required]],
-      modalityId: [''],
-      tournamentTypeId: [''],
+      modalityId: ['', [Validators.required]],
       ruleSetId: [''],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
@@ -272,7 +268,6 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
         complexId: tournament.complexId,
         sportId: tournament.sportId || '',
         modalityId: tournament.modalityId || '',
-        tournamentTypeId: tournament.tournamentTypeId || '',
         ruleSetId: tournament.ruleSetId || '',
         startDate: tournament.startDate,
         endDate: tournament.endDate,
@@ -369,11 +364,10 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     const payload: Partial<Tournament> = {
       ...formValue,
       complexName: this.facade.getComplexName(formValue.complexId),
-      tournamentTypeName: this.facade.getTournamentTypeName(formValue.tournamentTypeId),
       sportId: formValue.sportId,
       sportName: this.facade.getSportName(formValue.sportId),
-      modalityId: formValue.modalityId || undefined,
-      modalityName: formValue.modalityId ? this.facade.getModalityName(formValue.modalityId) : undefined,
+      modalityId: formValue.modalityId,
+      modalityName: this.facade.getModalityName(formValue.modalityId),
       ruleSetId: formValue.ruleSetId || undefined,
       ruleSetDescription: formValue.ruleSetId ? this.facade.getRuleSetDescription(formValue.ruleSetId) : undefined,
       genderLabel: this.facade.getGenderLabel(formValue.genderId),

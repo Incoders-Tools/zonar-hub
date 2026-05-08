@@ -67,6 +67,10 @@ export class SportsFormPanelComponent implements OnInit {
   readonly selectedModalityIds = signal<Set<string>>(new Set());
   readonly orderedModalityIds = signal<string[]>([]);
 
+  /** A sport must have at least one modality before it can be persisted. */
+  readonly hasModalities = computed(() => this.selectedModalityIds().size > 0);
+  readonly modalityRequiredError = signal(false);
+
   ngOnInit(): void {
     this.initializeForm();
     this.populateForm();
@@ -137,8 +141,9 @@ export class SportsFormPanelComponent implements OnInit {
 
   async onSave(): Promise<void> {
     this.submitted = true;
+    this.modalityRequiredError.set(!this.hasModalities());
 
-    if (!this.form.valid) {
+    if (!this.form.valid || !this.hasModalities()) {
       return;
     }
 
@@ -188,6 +193,9 @@ export class SportsFormPanelComponent implements OnInit {
 
   onModalitySelectionChanged(ids: Set<string>): void {
     this.selectedModalityIds.set(ids);
+    if (ids.size > 0) {
+      this.modalityRequiredError.set(false);
+    }
     this.form.markAsDirty();
   }
 

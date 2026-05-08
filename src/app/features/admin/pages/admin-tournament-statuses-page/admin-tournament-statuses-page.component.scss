@@ -160,7 +160,10 @@
   justify-content: flex-end;
   gap: var(--zh-space-sm);
   padding-top: var(--zh-space-md);
+  padding-bottom: var(--zh-space-md);
   border-top: 1px solid var(--zh-border-subtle);
+  border-bottom: 1px solid var(--zh-border-subtle);
+  margin-bottom: var(--zh-space-sm);
 
   .btn-cancel {
     padding: var(--zh-space-sm) var(--zh-space-md);

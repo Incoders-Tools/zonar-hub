@@ -11,6 +11,7 @@ export const TRANSLATIONS: TranslationMap = {
     'common.cancel': 'Cancelar',
     'common.delete': 'Eliminar',
     'common.edit': 'Editar',
+    'common.view': 'Ver',
     'common.create': 'Crear',
     'common.update': 'Actualizar',
     'common.search': 'Buscar',
@@ -1688,6 +1689,8 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.sports.error.keyExists': 'Esta clave ya existe',
     'admin.sports.error.nameExists': 'Este nombre ya existe',
     'admin.sports.error.sortOrderExists': 'Este orden ya está en uso',
+    'admin.sports.error.modalityRequired': 'Debes seleccionar al menos una modalidad',
+    'sports.errors.modality_required': 'El deporte debe tener al menos una modalidad asociada',
 
     // ---- Admin Tournament Modalities ----
     'admin.modalities.title': 'Modalidades de torneo',
@@ -4044,6 +4047,8 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.sports.error.keyExists': 'This key already exists',
     'admin.sports.error.nameExists': 'This name already exists',
     'admin.sports.error.sortOrderExists': 'This order is already in use',
+    'admin.sports.error.modalityRequired': 'You must select at least one modality',
+    'sports.errors.modality_required': 'A sport must have at least one modality assigned',
 
     // ---- Admin Tournament Modalities ----
     'admin.modalities.title': 'Tournament Modalities',
@@ -6078,6 +6083,8 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.users.help.roleAdmin': 'Acesso às funções de administração padrão',
     'admin.users.help.roleEditor': 'Pode gerenciar torneios e operações do circuito sem acesso à administração do sistema',
     'admin.users.help.roleViewer': 'Acesso somente leitura a relatórios e dados',
+
+    'genders.title': 'Gêneros',
     'genders.subtitle': 'Gerencie os gêneros do circuito de padel',
     'genders.action.create': 'Novo gênero',
     'genders.emptyState': 'Nenhum gênero registrado',
@@ -6397,6 +6404,8 @@ export const TRANSLATIONS: TranslationMap = {
     'admin.sports.error.keyExists': 'Esta chave já existe',
     'admin.sports.error.nameExists': 'Este nome já existe',
     'admin.sports.error.sortOrderExists': 'Esta ordem já está em uso',
+    'admin.sports.error.modalityRequired': 'Você deve selecionar pelo menos uma modalidade',
+    'sports.errors.modality_required': 'O esporte deve ter pelo menos uma modalidade associada',
 
     // ---- Admin Tournament Modalities ----
     'admin.modalities.title': 'Modalidades de torneio',
