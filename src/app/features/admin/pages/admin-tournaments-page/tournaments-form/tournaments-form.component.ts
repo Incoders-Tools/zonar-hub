@@ -76,13 +76,21 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   readonly categoryOptions = computed(() =>
     this.facade.categories().map(c => ({ value: c.id, label: c.name }))
   );
-  readonly ruleSetOptions = computed(() =>
-    this.facade.ruleSets().filter(r => r.isActive).map(r => ({
-      value: r.id,
-      label: r.tournamentTypeName,
-      description: r.descriptionText
-    }))
-  );
+  readonly ruleSetOptions = computed(() => {
+    const locale = this.i18n.locale();
+    return this.facade.ruleSets().filter(r => r.isActive).map(r => {
+      const description = locale === 'en'
+        ? (r.descriptionEn ?? r.descriptionEs ?? '')
+        : locale === 'pt'
+          ? (r.descriptionPt ?? r.descriptionEs ?? '')
+          : (r.descriptionEs ?? '');
+      return {
+        value: r.id,
+        label: r.name,
+        description: description ?? ''
+      };
+    });
+  });
 
   readonly showGenderField = signal(true);
   readonly showPointsField = signal(true);

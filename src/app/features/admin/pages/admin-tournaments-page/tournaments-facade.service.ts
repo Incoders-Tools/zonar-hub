@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality, TournamentRuleSet } from '../../../../core/models';
+import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality } from '../../../../core/models';
+import { TournamentRule } from '../../../../core/models/tournament-rule.model';
 import { ApiTournamentAdminRepository } from '../../../../core/repositories/api/api-tournament-admin.repository';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
@@ -7,8 +8,9 @@ import { ApiGenderRepository } from '../../../../core/repositories/api/api-gende
 import { ApiTournamentTypeRepository } from '../../../../core/repositories/tournament-admin.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
-import { ApiTournamentRuleSetRepository } from '../../../../core/repositories/api/api-tournament-rule-set.repository';
+import { ApiTournamentRuleRepository } from '../../../../core/repositories/api/api-tournament-rule.repository';
 import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface TournamentFilters {
@@ -26,9 +28,10 @@ export class TournamentsFacadeService {
   private readonly tournamentTypeRepo = inject(ApiTournamentTypeRepository);
   private readonly sportRepo = inject(ApiSportRepository);
   private readonly modalityRepo = inject(ApiTournamentModalityRepository);
-  private readonly ruleSetRepo = inject(ApiTournamentRuleSetRepository);
+  private readonly ruleRepo = inject(ApiTournamentRuleRepository);
   private readonly courtRepo = inject(ApiCourtRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
+  private readonly i18n = inject(I18nService);
   private lastOrgId: string | null | undefined = undefined;
 
   constructor() {
@@ -60,7 +63,7 @@ export class TournamentsFacadeService {
   private readonly tournamentTypesState = signal<TournamentType[]>([]);
   private readonly sportsState = signal<Sport[]>([]);
   private readonly modalitiesState = signal<TournamentModality[]>([]);
-  private readonly ruleSetsState = signal<TournamentRuleSet[]>([]);
+  private readonly ruleSetsState = signal<TournamentRule[]>([]);
   private readonly courtsForComplexState = signal<Court[]>([]);
   private readonly loadingCourtsState = signal(false);
 
@@ -204,7 +207,23 @@ export class TournamentsFacadeService {
   }
 
   getRuleSetDescription(ruleSetId: string): string {
-    return this.ruleSetsState().find(r => r.id === ruleSetId)?.descriptionText || '';
+    const rule = this.ruleSetsState().find(r => r.id === ruleSetId);
+    if (!rule) return '';
+    return this.localizedRuleDescription(rule);
+  }
+
+  /** Locale-aware label for a rule (used in the form selector and listings). */
+  getRuleSetLabel(ruleSetId: string): string {
+    const rule = this.ruleSetsState().find(r => r.id === ruleSetId);
+    return rule?.name ?? '';
+  }
+
+  private localizedRuleDescription(rule: TournamentRule): string {
+    const locale = this.i18n.locale();
+    if (locale === 'en' && rule.descriptionEn) return rule.descriptionEn;
+    if (locale === 'pt' && rule.descriptionPt) return rule.descriptionPt;
+    if (rule.descriptionEs) return rule.descriptionEs;
+    return rule.descriptionEn ?? rule.descriptionPt ?? '';
   }
 
   async load(): Promise<void> {
@@ -221,11 +240,11 @@ export class TournamentsFacadeService {
         this.genderRepo.getAll(),
         this.tournamentTypeRepo.getAll(),
         // Load sports filtered by organization
-        activeOrgId 
+        activeOrgId
           ? this.sportRepo.getForOrganization(activeOrgId)
           : this.sportRepo.getAll(),
         this.modalityRepo.getAll(),
-        this.ruleSetRepo.getAll()
+        this.ruleRepo.getAll()
       ]);
       // Lookups need to land first so the name resolver can use them.
       this.complexesState.set(complexes);
@@ -264,7 +283,7 @@ export class TournamentsFacadeService {
       modalityName: modality?.nameEs ?? tournament.modalityName,
       modalityKey: modality?.key ?? tournament.modalityKey,
       tournamentTypeName: tournamentType?.name ?? tournament.tournamentTypeName ?? '',
-      ruleSetDescription: ruleSet?.descriptionText ?? tournament.ruleSetDescription
+      ruleSetDescription: ruleSet ? this.localizedRuleDescription(ruleSet) : tournament.ruleSetDescription
     };
   }
 

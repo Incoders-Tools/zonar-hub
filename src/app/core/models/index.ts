@@ -14,7 +14,7 @@ export * from './operational.model';
 export * from './bracket.model';
 export * from './app-log.model';
 export * from './sport.model';
-export * from './tournament-rule-set.model';
+export * from './tournament-rule.model';
 export * from './sport-config.model';
 export * from './organization.model';
 export * from './tournament-modality.model';

@@ -33,7 +33,7 @@
     <div class="tournament-rules-page__form-panel" @slideDown>
       <div class="tournament-rules-page__form-panel-header">
         <h3 class="tournament-rules-page__form-panel-title">
-          {{ (editingRuleSet() ? 'admin.tournament-rules.edit.title' : 'admin.tournament-rules.create.title') | t }}
+          {{ (editingRule() ? 'admin.tournament-rules.edit.title' : 'admin.tournament-rules.create.title') | t }}
         </h3>
         <button
           class="tournament-rules-page__form-panel-close"
@@ -49,62 +49,61 @@
 
           <form [formGroup]="form" class="tournament-rules-page__form-content">
             <div class="tournament-rules-page__form-grid">
-              <!-- Tournament Type Select -->
-              <div class="tournament-rules-page__form-field">
-                <label>{{ 'admin.tournament-rules.form.tournamentTypeId' | t }} *</label>
-                <select
-                  formControlName="tournamentTypeId"
-                  [class.error]="isFieldInvalid('tournamentTypeId')"
-                  class="tournament-rules-page__select">
-                  <option value="" disabled>{{ 'admin.tournament-rules.form.tournamentTypeId' | t }}</option>
-                  @for (type of facade.tournamentTypes(); track type.id) {
-                    <option [value]="type.id">{{ type.name }}</option>
-                  }
-                </select>
-                @if (isFieldInvalid('tournamentTypeId')) {
-                  <span class="tournament-rules-page__error-message">{{ getErrorMessage('tournamentTypeId') | t }}</span>
+              <!-- Name -->
+              <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
+                <label>{{ 'admin.tournament-rules.form.name' | t }} *</label>
+                <input
+                  type="text"
+                  formControlName="name"
+                  [class.error]="isFieldInvalid('name')"
+                  [placeholder]="'admin.tournament-rules.form.namePlaceholder' | t" />
+                @if (isFieldInvalid('name')) {
+                  <span class="tournament-rules-page__error-message">{{ getErrorMessage('name') | t }}</span>
                 }
               </div>
 
-              <!-- Active Status -->
-              <div class="tournament-rules-page__form-field">
+              @if (isSystemAdmin()) {
+                <!-- Sysadmin: edit all 3 locales -->
+                <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
+                  <label>{{ 'admin.tournament-rules.form.descriptionEs' | t }}</label>
+                  <textarea formControlName="descriptionEs" rows="3"
+                    [placeholder]="'admin.tournament-rules.form.descriptionPlaceholder' | t"></textarea>
+                </div>
+                <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
+                  <label>{{ 'admin.tournament-rules.form.descriptionEn' | t }}</label>
+                  <textarea formControlName="descriptionEn" rows="3"
+                    [placeholder]="'admin.tournament-rules.form.descriptionPlaceholder' | t"></textarea>
+                </div>
+                <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
+                  <label>{{ 'admin.tournament-rules.form.descriptionPt' | t }}</label>
+                  <textarea formControlName="descriptionPt" rows="3"
+                    [placeholder]="'admin.tournament-rules.form.descriptionPlaceholder' | t"></textarea>
+                </div>
+              } @else {
+                <!-- Non-sysadmin: edit only the active locale -->
+                <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
+                  <label>{{ 'admin.tournament-rules.form.description' | t }}</label>
+                  <textarea [formControlName]="localeDescriptionControlName()" rows="3"
+                    [placeholder]="'admin.tournament-rules.form.descriptionPlaceholder' | t"></textarea>
+                </div>
+              }
+
+              <!-- Sort Order (sysadmin only) -->
+              @if (isSystemAdmin()) {
+                <div class="tournament-rules-page__form-field">
+                  <label>{{ 'admin.tournament-rules.form.sortOrder' | t }}</label>
+                  <input type="number" formControlName="sortOrder" min="0"
+                    [class.error]="isFieldInvalid('sortOrder')" />
+                </div>
+              }
+
+              <!-- Active (always last for visual consistency) -->
+              <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
                 <app-active-toggle
                   [value]="form.get('isActive')!.value"
                   mode="toggle"
                   (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
                 </app-active-toggle>
-              </div>
-
-              <!-- Rules JSON Textarea (full width) -->
-              <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
-                <label>{{ 'admin.tournament-rules.form.rulesJson' | t }} *</label>
-                <textarea
-                  formControlName="rulesJson"
-                  rows="10"
-                  [class.error]="isFieldInvalid('rulesJson')"
-                  class="tournament-rules-page__textarea tournament-rules-page__textarea--mono"
-                  [placeholder]="'admin.tournament-rules.form.rulesJsonHint' | t">
-                </textarea>
-                @if (isFieldInvalid('rulesJson')) {
-                  <span class="tournament-rules-page__error-message">{{ getErrorMessage('rulesJson') | t }}</span>
-                }
-                <span class="tournament-rules-page__hint">{{ 'admin.tournament-rules.form.rulesJsonHint' | t }}</span>
-              </div>
-
-              <!-- Description Textarea (full width) -->
-              <div class="tournament-rules-page__form-field tournament-rules-page__form-field--full">
-                <label>{{ 'admin.tournament-rules.form.descriptionText' | t }} *</label>
-                <textarea
-                  formControlName="descriptionText"
-                  rows="6"
-                  [class.error]="isFieldInvalid('descriptionText')"
-                  class="tournament-rules-page__textarea"
-                  [placeholder]="'admin.tournament-rules.form.descriptionTextHint' | t">
-                </textarea>
-                @if (isFieldInvalid('descriptionText')) {
-                  <span class="tournament-rules-page__error-message">{{ getErrorMessage('descriptionText') | t }}</span>
-                }
-                <span class="tournament-rules-page__hint">{{ 'admin.tournament-rules.form.descriptionTextHint' | t }}</span>
               </div>
             </div>
 
@@ -147,7 +146,7 @@
     (retried)="facade.load()"
     [selectable]="true"
     [reorderable]="true"
-    [rowActions]="ruleSetRowActions"
+    [rowActions]="ruleRowActions"
     emptyMessageKey="admin.tournament-rules.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
