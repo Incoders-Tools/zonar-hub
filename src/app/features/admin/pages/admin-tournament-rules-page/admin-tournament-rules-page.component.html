@@ -137,21 +137,41 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="tournament-rules"
+    [items]="tableData()"
     [columns]="columns"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="true"
     [reorderable]="true"
     [rowActions]="ruleRowActions"
     emptyMessageKey="admin.tournament-rules.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="rule-card">
+        <div class="rule-card__header">
+          <h3 class="rule-card__name">{{ row.name }}</h3>
+          <span class="rule-card__status"
+            [class.rule-card__status--active]="row.isActive"
+            [class.rule-card__status--inactive]="!row.isActive">
+            {{ row.statusLabel | t }}
+          </span>
+        </div>
+        @if (row.description) {
+          <p class="rule-card__description">{{ row.description }}</p>
+        }
+        <div class="rule-card__meta">
+          <span class="rule-card__meta-label">{{ 'admin.tournament-rules.column.sortOrder' | t }}:</span>
+          <span class="rule-card__meta-value">{{ row.sortOrder }}</span>
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 </div>
 
 <!-- Delete Confirmation Dialog -->

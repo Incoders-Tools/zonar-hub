@@ -19,47 +19,38 @@
       </div>
 
       <!-- Sport Field -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.sportId' | t }} *</label>
-        <select formControlName="sportId" [class.error]="isFieldInvalid('sportId')">
-          <option value="">{{ 'admin.tournaments.form.selectSport' | t }}</option>
-          @for (option of sportOptions(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-        @if (isFieldInvalid('sportId')) {
-          <span class="tournaments-form__error">{{ getErrorMessage('sportId') | t }}</span>
-        }
-      </div>
+      <zh-select
+        [label]="('admin.tournaments.form.sportId' | t)"
+        [required]="true"
+        [placeholder]="('admin.tournaments.form.selectSport' | t)"
+        [options]="sportOptions()"
+        [error]="isFieldInvalid('sportId')"
+        [errorMessage]="(getErrorMessage('sportId') | t)"
+        formControlName="sportId">
+      </zh-select>
 
       <!-- Modality Field (required, filtered by selected sport) -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.modalityId' | t }} *</label>
-        <select formControlName="modalityId" [class.error]="isFieldInvalid('modalityId')">
-          <option value="">{{ 'admin.tournaments.form.selectModality' | t }}</option>
-          @for (option of modalityOptionsForSport(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-        @if (isFieldInvalid('modalityId')) {
-          <span class="tournaments-form__error">{{ 'common.required' | t }}</span>
-        }
-        <span class="tournaments-form__hint">{{ 'admin.tournaments.form.modalityHint' | t }}</span>
-      </div>
+      <zh-select
+        [label]="('admin.tournaments.form.modalityId' | t)"
+        [required]="true"
+        [placeholder]="('admin.tournaments.form.selectModality' | t)"
+        [options]="modalityOptionsForSport()"
+        [hint]="('admin.tournaments.form.modalityHint' | t)"
+        [error]="isFieldInvalid('modalityId')"
+        [errorMessage]="('common.required' | t)"
+        formControlName="modalityId">
+      </zh-select>
 
       <!-- Complex Field -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.complexId' | t }} *</label>
-        <select formControlName="complexId" [class.error]="isFieldInvalid('complexId')">
-          <option value="">{{ 'admin.tournaments.form.selectComplex' | t }}</option>
-          @for (option of complexOptions(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-        @if (isFieldInvalid('complexId')) {
-          <span class="tournaments-form__error">{{ getErrorMessage('complexId') | t }}</span>
-        }
-      </div>
+      <zh-select
+        [label]="('admin.tournaments.form.complexId' | t)"
+        [required]="true"
+        [placeholder]="('admin.tournaments.form.selectComplex' | t)"
+        [options]="complexOptions()"
+        [error]="isFieldInvalid('complexId')"
+        [errorMessage]="(getErrorMessage('complexId') | t)"
+        formControlName="complexId">
+      </zh-select>
 
       <!-- Courts from selected complex (collapsed by default) -->
       @if (form.get('complexId')?.value) {
@@ -122,41 +113,32 @@
       }
 
       <!-- Gender -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.genderId' | t }} *</label>
-        <select formControlName="genderId" [class.error]="isFieldInvalid('genderId')">
-          <option value="">{{ 'admin.tournaments.form.selectGender' | t }}</option>
-          @for (option of genderOptions(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-        @if (isFieldInvalid('genderId')) {
-          <span class="tournaments-form__error">{{ 'common.required' | t }}</span>
-        }
-      </div>
+      <zh-select
+        [label]="('admin.tournaments.form.genderId' | t)"
+        [required]="true"
+        [placeholder]="('admin.tournaments.form.selectGender' | t)"
+        [options]="genderOptions()"
+        [error]="isFieldInvalid('genderId')"
+        [errorMessage]="('common.required' | t)"
+        formControlName="genderId">
+      </zh-select>
 
       <!-- Category -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.categoryId' | t }}</label>
-        <select formControlName="categoryId">
-          <option value="">{{ 'admin.tournaments.form.selectCategory' | t }}</option>
-          @for (option of categoryOptions(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-      </div>
+      <zh-select
+        [label]="('admin.tournaments.form.categoryId' | t)"
+        [placeholder]="('admin.tournaments.form.selectCategory' | t)"
+        [options]="categoryOptions()"
+        formControlName="categoryId">
+      </zh-select>
 
       <!-- Rule Set -->
-      <div class="tournaments-form__field">
-        <label>{{ 'admin.tournaments.form.ruleSetId' | t }}</label>
-        <select formControlName="ruleSetId">
-          <option value="">{{ 'admin.tournaments.form.selectRuleSet' | t }}</option>
-          @for (option of ruleSetOptions(); track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-        <span class="tournaments-form__hint">{{ 'admin.tournaments.form.ruleSetHint' | t }}</span>
-      </div>
+      <zh-select
+        [label]="('admin.tournaments.form.ruleSetId' | t)"
+        [placeholder]="('admin.tournaments.form.selectRuleSet' | t)"
+        [options]="ruleSetOptions()"
+        [hint]="('admin.tournaments.form.ruleSetHint' | t)"
+        formControlName="ruleSetId">
+      </zh-select>
 
       <!-- Max Pairs -->
       <div class="tournaments-form__field">

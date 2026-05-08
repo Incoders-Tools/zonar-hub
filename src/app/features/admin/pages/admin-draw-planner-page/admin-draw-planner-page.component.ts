@@ -8,6 +8,7 @@ import { DataTableComponent, DataTableColumn } from '../../../../shared/componen
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { ZhSelectComponent, ZhSelectOption } from '../../../../shared/components/zh-select/zh-select.component';
 import { DrawPlannerService } from '../../../../core/services/draw-planner.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -39,7 +40,8 @@ const PLANNER_STAGES: PlannerStage[] = [
     DataTableComponent,
     AsyncButtonComponent,
     ConfirmDialogComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ZhSelectComponent
   ],
   templateUrl: './admin-draw-planner-page.component.html',
   styleUrl: './admin-draw-planner-page.component.scss'
@@ -70,6 +72,14 @@ export class AdminDrawPlannerPageComponent {
     { titleKey: 'drawPlanner.help.tips.title', contentKey: 'drawPlanner.help.tips.content' }
   ];
   readonly helpVideoUrl = 'https://www.youtube.com/embed/PLACEHOLDER_DRAW_VIDEO';
+
+  // --- Tournament options for the zh-select ---
+  readonly tournamentOptions = computed<ZhSelectOption[]>(() =>
+    this.tournamentService.upcomingTournaments().map(t => ({
+      value: t.id,
+      label: `${t.name}${t.categoryName ? ' — ' + t.categoryName : ''}`
+    }))
+  );
 
   // --- Generate tab state ---
   readonly selectedTournamentId = signal('');

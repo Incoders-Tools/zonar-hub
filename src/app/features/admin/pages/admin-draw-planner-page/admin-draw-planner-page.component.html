@@ -13,12 +13,12 @@
     <h2>{{ 'drawPlanner.selectTournament' | t }}</h2>
     <p class="draw-planner__notice">{{ 'drawPlanner.upcomingOnly' | t }}</p>
     <div class="field">
-      <select [ngModel]="selectedTournamentId()" (ngModelChange)="selectedTournamentId.set($event)">
-        <option value="">{{ 'drawPlanner.chooseTournament' | t }}</option>
-        @for (t of tournamentService.upcomingTournaments(); track t.id) {
-          <option [value]="t.id">{{ t.name }} — {{ t.categoryName }}</option>
-        }
-      </select>
+      <zh-select
+        [placeholder]="('drawPlanner.chooseTournament' | t)"
+        [options]="tournamentOptions()"
+        [ngModel]="selectedTournamentId()"
+        (ngModelChange)="selectedTournamentId.set($event)">
+      </zh-select>
     </div>
   </div>
 

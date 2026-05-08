@@ -1,0 +1,84 @@
+<div class="zh-collection-view">
+  <div class="zh-collection-view__toolbar">
+    <div
+      class="zh-collection-view__toggle"
+      role="group"
+      [attr.aria-label]="'common.viewMode' | t">
+      <button
+        type="button"
+        class="zh-collection-view__toggle-btn"
+        [class.zh-collection-view__toggle-btn--active]="currentMode() === 'table'"
+        [attr.aria-pressed]="currentMode() === 'table'"
+        [attr.aria-label]="'common.viewTable' | t"
+        (click)="setMode('table')">
+        <mat-icon>view_list</mat-icon>
+      </button>
+      <button
+        type="button"
+        class="zh-collection-view__toggle-btn"
+        [class.zh-collection-view__toggle-btn--active]="currentMode() === 'cards'"
+        [attr.aria-pressed]="currentMode() === 'cards'"
+        [attr.aria-label]="'common.viewCards' | t"
+        (click)="setMode('cards')">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (currentMode() === 'table') {
+    <app-data-table
+      [columns]="columns()"
+      [data]="items()"
+      [loading]="loading()"
+      [error]="error()"
+      [emptyMessageKey]="emptyMessageKey()"
+      [selectable]="selectable()"
+      [paginated]="paginated()"
+      [pageSize]="pageSize()"
+      [reorderable]="reorderable()"
+      [trackByKey]="trackByKey()"
+      [rowActions]="rowActions()"
+      (rowAction)="onRowAction($event)"
+      (selectionChanged)="onSelectionChanged($event)"
+      (sorted)="onSorted($event)"
+      (retried)="onRetried()">
+    </app-data-table>
+  } @else {
+    @if (showLoading()) {
+      <app-loading-state></app-loading-state>
+    } @else if (showError()) {
+      <app-error-state (retried)="onRetried()"></app-error-state>
+    } @else if (!hasItems()) {
+      <app-empty-state [messageKey]="emptyMessageKey()"></app-empty-state>
+    } @else {
+      <div class="zh-collection-view__cards">
+        @for (row of items(); track row[trackByKey()]) {
+          <div class="zh-collection-view__card">
+            @if (cardTemplate) {
+              <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: row, row: row }"></ng-container>
+            } @else {
+              <pre>{{ row | json }}</pre>
+            }
+            @if (rowActions().length > 0) {
+              <div class="zh-collection-view__card-actions">
+                @for (action of rowActions(); track action.action) {
+                  <button
+                    type="button"
+                    class="zh-collection-view__card-action"
+                    [class.zh-collection-view__card-action--primary]="action.variant === 'primary'"
+                    [class.zh-collection-view__card-action--danger]="action.variant === 'danger'"
+                    [class.zh-collection-view__card-action--warn]="action.variant === 'warn'"
+                    [attr.aria-label]="action.labelKey | t"
+                    (click)="onCardAction(action.action, row)">
+                    <mat-icon>{{ action.icon }}</mat-icon>
+                    <span class="zh-collection-view__card-action-label">{{ action.labelKey | t }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

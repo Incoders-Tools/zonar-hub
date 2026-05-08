@@ -16,6 +16,7 @@ import { TournamentsFacadeService } from '../tournaments-facade.service';
 import { dateRangeValidator } from '../../../../../shared/validators/date-range.validator';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 import { DateInputComponent } from '../../../../../shared/components/date-input/date-input.component';
+import { ZhSelectComponent } from '../../../../../shared/components/zh-select/zh-select.component';
 
 @Component({
   selector: 'app-tournaments-form',
@@ -30,7 +31,8 @@ import { DateInputComponent } from '../../../../../shared/components/date-input/
     CollapsibleSectionComponent,
     ChildCollectionGridComponent,
     ActiveToggleComponent,
-    DateInputComponent
+    DateInputComponent,
+    ZhSelectComponent
   ],
   templateUrl: './tournaments-form.component.html',
   styleUrl: './tournaments-form.component.scss'

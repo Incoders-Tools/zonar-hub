@@ -230,6 +230,64 @@
   }
 }
 
+.rule-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-xs);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--zh-space-sm);
+  }
+
+  &__name {
+    margin: 0;
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+  }
+
+  &__status {
+    flex-shrink: 0;
+    padding: 2px var(--zh-space-sm);
+    border-radius: var(--zh-radius-pill);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+
+    &--active {
+      background: var(--zh-status-active-bg, rgba(34, 197, 94, 0.12));
+      color: var(--zh-status-active-text, #166534);
+    }
+
+    &--inactive {
+      background: var(--zh-status-inactive-bg, rgba(107, 114, 128, 0.12));
+      color: var(--zh-status-inactive-text, #4b5563);
+    }
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+    line-height: 1.4;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-muted);
+  }
+
+  &__meta-label {
+    font-weight: 600;
+  }
+}
+
 @media (max-width: 599px) {
   .tournament-rules-page {
     padding: var(--zh-space-md);
