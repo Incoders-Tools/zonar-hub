@@ -34,7 +34,27 @@
       "Bash(dotnet build *)",
       "Bash(git push *)",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(supabase --version)",
+      "Bash(supabase db *)",
+      "Bash(dotnet test *)",
+      "Bash(tasklist *)",
+      "Bash(timeout 30 dotnet run --no-build)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Stop-Process *)",
+      "Bash(dotnet user-secrets *)",
+      "Bash(ASPNETCORE_URLS=\"http://127.0.0.1:5599\" timeout 25 dotnet run --no-launch-profile --no-build)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=\"http://127.0.0.1:5599\" timeout 15 dotnet run --no-launch-profile --no-build)",
+      "Bash(timeout 45 dotnet run --project ZonarHub.AppHost --no-build)",
+      "Bash(dotnet run *)",
+      "Bash(echo \"started PID $!\")",
+      "Read(//tmp/**)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri 'http://localhost:5336/' -TimeoutSec 5; \"GET / -> $\\($r.StatusCode\\): $\\($r.Content\\)\" } catch { \"GET / -> $\\($_.Exception.Message\\)\" }; try { $r = Invoke-WebRequest -Uri 'http://localhost:5336/health' -TimeoutSec 5; \"GET /health -> $\\($r.StatusCode\\): $\\($r.Content\\)\" } catch { \"GET /health -> $\\($_.Exception.Message\\)\" })",
+      "Bash(curl -sS -m 5 http://localhost:5336/ -w \"\\\\nstatus=%{http_code}\\\\n\")",
+      "Bash(curl -sS -m 5 http://localhost:5336/health -w \"\\\\nstatus=%{http_code}\\\\n\")",
+      "Bash(curl -sS -m 5 -X POST http://localhost:5336/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"sysadmin@zonarhub.com\",\"password\":\"#ZHSera12621262\"}' -w \"\\\\nstatus=%{http_code}\\\\n\")"
     ]
   }
 }
