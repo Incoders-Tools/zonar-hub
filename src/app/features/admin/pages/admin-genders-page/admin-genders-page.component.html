@@ -81,11 +81,11 @@
           <div class="zh-list-card__title">
             <h3 class="zh-list-card__name">{{ row.name }}</h3>
           </div>
-          <span class="zh-list-card__status"
-            [class.zh-list-card__status--active]="row.isActive"
-            [class.zh-list-card__status--inactive]="!row.isActive">
-            {{ row.statusLabel | t }}
-          </span>
+          <app-active-toggle
+            [value]="row.isActive"
+            mode="toggle"
+            (toggled)="onRowActionClicked({ action: 'toggleActive', row: row })">
+          </app-active-toggle>
         </div>
         @if (isSystemAdmin()) {
           <div class="zh-list-card__meta">

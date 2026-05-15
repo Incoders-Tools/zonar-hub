@@ -11,6 +11,7 @@ import { GenderFormPanelComponent } from './gender-form-panel/gender-form-panel.
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { Gender } from '../../../../core/models';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 
 interface GenderRow extends Record<string, unknown> {
   id: string;
@@ -32,7 +33,8 @@ interface GenderRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     GenderFormPanelComponent,
-    HelpButtonComponent
+    HelpButtonComponent,
+    ActiveToggleComponent
   ],
   providers: [GenderFacadeService],
   templateUrl: './admin-genders-page.component.html',

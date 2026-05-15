@@ -14,6 +14,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ModalitiesFacadeService, ModalityFilters } from './modalities-facade.service';
 import { ModalitiesFormPanelComponent } from './modalities-form-panel/modalities-form-panel.component';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 
 interface ModalityRow extends Record<string, unknown> {
   id: string;
@@ -37,7 +38,8 @@ interface ModalityRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     HelpButtonComponent,
-    ModalitiesFormPanelComponent
+    ModalitiesFormPanelComponent,
+    ActiveToggleComponent
   ],
   providers: [ModalitiesFacadeService],
   templateUrl: './admin-tournament-modalities-page.component.html',

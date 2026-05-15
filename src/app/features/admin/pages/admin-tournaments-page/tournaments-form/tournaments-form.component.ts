@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, computed, OnInit, OnChanges, SimpleChanges, DestroyRef } from '@angular/core';
+import { Component, inject, input, output, signal, computed, OnInit, OnChanges, SimpleChanges, DestroyRef, effect, untracked } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -117,6 +117,30 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
 
   // Courts selection
   readonly selectedCourtIds = signal<Set<string>>(new Set());
+
+  constructor() {
+    // Safety-net effect: re-fires when modalities finish loading so that if the
+    // user selected a sport before facade.load() populated modalities (race
+    // condition — Bug #3), the primary modality is still preselected correctly.
+    // We use untracked() for the form access to avoid cyclical tracking.
+    effect(() => {
+      const modalities = this.facade.modalities(); // track modalities
+      const sportId = this._selectedSportId();      // track selected sport
+      if (!sportId || modalities.length === 0) return;
+      const candidates = this.facade.getModalitiesForSport(sportId);
+      if (candidates.length === 0) return;
+      untracked(() => {
+        const modalityCtrl = this.form?.get('modalityId');
+        if (!modalityCtrl) return;
+        const current = modalityCtrl.value;
+        const stillValid = current && candidates.some(m => m.id === current);
+        if (!stillValid) {
+          modalityCtrl.setValue(candidates[0].id, { emitEvent: false });
+          this._selectedModalityId.set(candidates[0].id);
+        }
+      });
+    });
+  }
 
   readonly courtColumns: ChildGridColumn[] = [
     { key: 'name', labelKey: 'admin.tournaments.courts.column.name', type: 'display' },

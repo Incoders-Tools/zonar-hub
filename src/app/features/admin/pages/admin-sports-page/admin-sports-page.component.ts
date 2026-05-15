@@ -13,6 +13,7 @@ import { ActiveOrganizationService } from '../../../../core/services/active-orga
 import { SportsFacadeService, SportFilters } from './sports-facade.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { SportsFormPanelComponent } from './sports-form-panel/sports-form-panel.component';
+import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 
 interface SportRow extends Record<string, unknown> {
   id: string;
@@ -37,7 +38,8 @@ interface SportRow extends Record<string, unknown> {
     HelpButtonComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,
-    SportsFormPanelComponent
+    SportsFormPanelComponent,
+    ActiveToggleComponent
   ],
   providers: [SportsFacadeService],
   templateUrl: './admin-sports-page.component.html',

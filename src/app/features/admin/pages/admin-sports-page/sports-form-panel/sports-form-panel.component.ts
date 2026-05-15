@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, input, output, signal, computed, effect } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
@@ -36,7 +36,7 @@ import { SportIconComponent } from '../../../../../shared/components/sport-icon/
   templateUrl: './sports-form-panel.component.html',
   styleUrl: './sports-form-panel.component.scss'
 })
-export class SportsFormPanelComponent implements OnInit {
+export class SportsFormPanelComponent {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(SportsFacadeService);
   private readonly auth = inject(AuthService);
@@ -71,9 +71,16 @@ export class SportsFormPanelComponent implements OnInit {
   readonly hasModalities = computed(() => this.selectedModalityIds().size > 0);
   readonly modalityRequiredError = signal(false);
 
-  ngOnInit(): void {
-    this.initializeForm();
-    this.populateForm();
+  constructor() {
+    // Re-initialize + re-populate whenever the sport() signal changes.
+    // This handles the case where editingSport is set after the component
+    // is already created (e.g. openEdit sets it asynchronously), which
+    // ngOnInit alone would miss, causing stale form values (Bug #4).
+    effect(() => {
+      const _s = this.sport(); // track the signal
+      this.initializeForm();
+      this.populateForm();
+    });
   }
 
   private initializeForm(): void {

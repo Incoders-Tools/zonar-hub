@@ -74,4 +74,26 @@ describe('AdminSportsPageComponent', () => {
     await facade.load();
     expect(facade.entities().length).toBeGreaterThan(0);
   });
+
+  it('onRowActionClicked with toggleActive calls toggleSportEnabled on facade', async () => {
+    // The component declares providers: [SportsFacadeService], so the component's
+    // facade is a separate instance from TestBed.inject(SportsFacadeService).
+    // Access the component's own facade via component.facade.
+    const componentFacade = component.facade;
+
+    // Spy must be set up before load
+    spyOn(componentFacade, 'toggleSportEnabled').and.resolveTo(true);
+
+    // Seed the component's facade with sports
+    await componentFacade.load();
+    fixture.detectChanges();
+
+    // tableData() is computed from facade.filteredSports()
+    const row = component.tableData()[0];
+    expect(row).toBeDefined('tableData should have at least one row after load');
+
+    await component.onRowActionClicked({ action: 'toggleActive', row });
+
+    expect(componentFacade.toggleSportEnabled).toHaveBeenCalledWith(row.id, !row.isActive);
+  });
 });
