@@ -11,42 +11,42 @@
 
 ### 1.1 DB migrations
 
-- [ ] **1.1.1** `[BE]` Write xUnit migration-smoke tests asserting `impersonation_sessions` and `impersonation_audit` tables exist with correct columns, indexes, and RLS policies (system_admin only).
+- [x] **1.1.1** `[BE]` Write xUnit migration-smoke tests asserting `impersonation_sessions` and `impersonation_audit` tables exist with correct columns, indexes, and RLS policies (system_admin only).
   _Done when_: tests compile and **fail** (tables absent from test DB schema).
 
-- [ ] **1.1.2** `[BE]` Create migration `20260515_create_impersonation_tables.sql`: `impersonation_sessions(id uuid PK, real_user_id uuid NOT NULL, target_user_id uuid NOT NULL, started_at timestamptz NOT NULL, expires_at timestamptz NOT NULL, revoked_at timestamptz, tenant_id uuid NOT NULL, reason text)` + `impersonation_audit(id uuid PK, session_id uuid NOT NULL REFERENCES impersonation_sessions, real_user_id uuid NOT NULL, effective_user_id uuid NOT NULL, method text NOT NULL, path text NOT NULL, status int, ip text, user_agent text, occurred_at timestamptz NOT NULL)` + indexes on `session_id`, `real_user_id`, `effective_user_id`, `occurred_at DESC` + RLS restricting both tables to `system_admin`.
+- [x] **1.1.2** `[BE]` Create migration `20260515_create_impersonation_tables.sql`: `impersonation_sessions(id uuid PK, real_user_id uuid NOT NULL, target_user_id uuid NOT NULL, started_at timestamptz NOT NULL, expires_at timestamptz NOT NULL, revoked_at timestamptz, tenant_id uuid NOT NULL, reason text)` + `impersonation_audit(id uuid PK, session_id uuid NOT NULL REFERENCES impersonation_sessions, real_user_id uuid NOT NULL, effective_user_id uuid NOT NULL, method text NOT NULL, path text NOT NULL, status int, ip text, user_agent text, occurred_at timestamptz NOT NULL)` + indexes on `session_id`, `real_user_id`, `effective_user_id`, `occurred_at DESC` + RLS restricting both tables to `system_admin`.
   _Done when_: migration applies cleanly against the Supabase test schema; smoke tests from 1.1.1 are green. (depends on 1.1.1)
   _Satisfies_: REQ-AUD-001, REQ-AUD-002, REQ-AUD-014, REQ-AUD-015, REQ-AUD-016, design §4.3.
 
 ### 1.2 Feature-flag plumbing
 
-- [ ] **1.2.1** `[BE]` Write xUnit unit tests for `FeaturesOptions` parsing: `Features:Impersonation:Enabled = true` resolves to `true`, absent key resolves to `false`. `[PARALLEL with 1.1.1]`
+- [x] **1.2.1** `[BE]` Write xUnit unit tests for `FeaturesOptions` parsing: `Features:Impersonation:Enabled = true` resolves to `true`, absent key resolves to `false`. `[PARALLEL with 1.1.1]`
   _Done when_: tests compile and **fail** (class absent).
 
-- [ ] **1.2.2** `[BE]` Add `FeaturesOptions.Impersonation.Enabled` (bool, default `false`) to `ZonarHub.Infrastructure` configuration binding. Register `IOptions<FeaturesOptions>` in DI. Add `JwtOptions.ImpersonationTokenMinutes` (int, default `30`).
+- [x] **1.2.2** `[BE]` Add `FeaturesOptions.Impersonation.Enabled` (bool, default `false`) to `ZonarHub.Infrastructure` configuration binding. Register `IOptions<FeaturesOptions>` in DI. Add `JwtOptions.ImpersonationTokenMinutes` (int, default `30`).
   _Done when_: unit tests from 1.2.1 are green; existing `JwtOptions` tests still pass. (depends on 1.2.1)
   _Satisfies_: REQ-IMP-007, design §9.1.
 
 ### 1.3 JWT issuance — impersonation token
 
-- [ ] **1.3.1** `[BE]` Write xUnit unit tests for `JwtTokenService.GenerateImpersonationToken`:
+- [x] **1.3.1** `[BE]` Write xUnit unit tests for `JwtTokenService.GenerateImpersonationToken`:
   - Claims match design §2.1 exactly (`sub = target.id`, `act.sub = realUser.id`, `act.email = realUser.email`, `imp_session_id`, `imp = true`, `jti`, `exp = issued + 30 min`).
   - Non-impersonation token produced by `GenerateAccessToken` does NOT contain `act`, `imp_session_id`, or `imp`.
   _Done when_: tests compile and **fail** (method absent). `[PARALLEL with 1.1.1, 1.2.1]`
 
-- [ ] **1.3.2** `[BE]` Add `GenerateImpersonationToken(User target, User realUser, Guid sessionId, DateTimeOffset expiresAt)` to `JwtTokenService`. Must not touch `GenerateAccessToken`. Reads `ImpersonationTokenMinutes` from `JwtOptions`.
+- [x] **1.3.2** `[BE]` Add `GenerateImpersonationToken(User target, User realUser, Guid sessionId, DateTimeOffset expiresAt)` to `JwtTokenService`. Must not touch `GenerateAccessToken`. Reads `ImpersonationTokenMinutes` from `JwtOptions`.
   _Done when_: tests from 1.3.1 are green; `GenerateAccessToken` tests still pass. (depends on 1.3.1, 1.2.2)
   _Satisfies_: REQ-IMP-009, design §2.1, §2.4.
 
 ### 1.4 ImpersonationContext + IImpersonationSessionStore
 
-- [ ] **1.4.1** `[BE]` Write xUnit unit tests for `ImpersonationContext`:
+- [x] **1.4.1** `[BE]` Write xUnit unit tests for `ImpersonationContext`:
   - When JWT has `imp = true` and all required claims, `IsImpersonating = true`, `RealUserId` and `SessionId` parse correctly.
   - When JWT has no `imp` claim, `IsImpersonating = false`.
   - When JWT has `imp = true` but `act.sub` is absent, middleware returns `401` before context is built.
   _Done when_: tests compile and **fail** (class absent). `[PARALLEL with 1.3.1]`
 
-- [ ] **1.4.2** `[BE]` Implement `ImpersonationContext` (POCO extracted from JWT claims in the auth middleware) and `IImpersonationSessionStore` (interface + Supabase-backed implementation: validates `revoked_at IS NULL AND expires_at > now() AND id = sessionId`).
+- [x] **1.4.2** `[BE]` Implement `ImpersonationContext` (POCO extracted from JWT claims in the auth middleware) and `IImpersonationSessionStore` (interface + Supabase-backed implementation: validates `revoked_at IS NULL AND expires_at > now() AND id = sessionId`).
   _Done when_: tests from 1.4.1 are green. (depends on 1.4.1, 1.1.2)
   _Satisfies_: design §1, §2.3, REQ-AUD-004, REQ-AUD-005.
 
@@ -58,18 +58,18 @@ _Depends on Phase 1 complete._
 
 ### 2.1 MediatR commands and DTOs
 
-- [ ] **2.1.1** `[BE]` Write xUnit unit tests for `StartImpersonationCommand` and `StopImpersonationCommand` FluentValidation rules:
+- [x] **2.1.1** `[BE]` Write xUnit unit tests for `StartImpersonationCommand` and `StopImpersonationCommand` FluentValidation rules:
   - `StartImpersonationCommand`: `targetUserId` required GUID, `reason` max 500 chars.
   - `StopImpersonationCommand`: `imp_session_id` must be present in calling context.
   _Done when_: tests compile and **fail** (commands absent). `[PARALLEL with 2.2.1]`
 
-- [ ] **2.1.2** `[BE]` Implement `StartImpersonationCommand`, `StopImpersonationCommand`, their validators (FluentValidation), and corresponding response DTOs (`StartImpersonationResponse` matching design §4.1 response shape). Follow existing `Features/Auth/Login` pattern.
+- [x] **2.1.2** `[BE]` Implement `StartImpersonationCommand`, `StopImpersonationCommand`, their validators (FluentValidation), and corresponding response DTOs (`StartImpersonationResponse` matching design §4.1 response shape). Follow existing `Features/Auth/Login` pattern.
   _Done when_: validator tests from 2.1.1 are green. (depends on 2.1.1)
   _Satisfies_: design §4.2.
 
 ### 2.2 Endpoint integration tests (write first)
 
-- [ ] **2.2.1** `[BE]` Write xUnit integration tests (`ZonarHub.Tests`) for all `POST /api/admin/impersonation/start` scenarios:
+- [x] **2.2.1** `[BE]` Write xUnit integration tests (`ZonarHub.Tests`) for all `POST /api/admin/impersonation/start` scenarios:
   - Happy path: 200, response shape, `impersonation_sessions` row inserted, `session_started` audit row written before response returned.
   - Non-sysadmin caller: 403.
   - Admin-on-admin target: 400 `impersonation.targetInvalid`.
@@ -78,13 +78,13 @@ _Depends on Phase 1 complete._
   - Caller already impersonating: 409 `impersonation.alreadyActive` (previous session auto-revoked, new session created, stop audit row for old session written). `[PARALLEL with 2.1.1]`
   _Done when_: all tests compile and **fail** (endpoint absent).
 
-- [ ] **2.2.2** `[BE]` Write xUnit integration tests for `POST /api/admin/impersonation/stop`:
+- [x] **2.2.2** `[BE]` Write xUnit integration tests for `POST /api/admin/impersonation/stop`:
   - Happy path: 204, `revoked_at` set on session row, `session_stopped` audit row written.
   - Called without impersonation token: 400 `impersonation.notImpersonating`.
   - Called with already-revoked session: 400 (idempotent or specific error — implement as 400 to be safe).
   _Done when_: tests compile and **fail** (endpoint absent). `[PARALLEL with 2.2.1]`
 
-- [ ] **2.2.3** `[BE]` Write xUnit tests for `GET /api/admin/impersonation/health`:
+- [x] **2.2.3** `[BE]` Write xUnit tests for `GET /api/admin/impersonation/health`:
   - Flag on: `{ enabled: true }` 200.
   - Flag off: `{ enabled: false }` 200.
   - Anonymous caller accepted.
@@ -92,33 +92,33 @@ _Depends on Phase 1 complete._
 
 ### 2.3 Implement endpoints
 
-- [ ] **2.3.1** `[BE]` Implement `MapImpersonationEndpoints` at `ZonarHub.ApiService/Endpoints/Admin/System/Impersonation/MapImpersonationEndpoints.cs` exposing all three routes. Wire `StartImpersonationCommand` handler: validate sysadmin, check flag, reject admin-on-admin + cross-tenant, auto-revoke existing session (write `session_stopped` audit), insert `impersonation_sessions` row, call `GenerateImpersonationToken`, write `session_started` audit, return `StartImpersonationResponse`.
+- [x] **2.3.1** `[BE]` Implement `MapImpersonationEndpoints` at `ZonarHub.ApiService/Endpoints/Admin/System/Impersonation/MapImpersonationEndpoints.cs` exposing all three routes. Wire `StartImpersonationCommand` handler: validate sysadmin, check flag, reject admin-on-admin + cross-tenant, auto-revoke existing session (write `session_stopped` audit), insert `impersonation_sessions` row, call `GenerateImpersonationToken`, write `session_started` audit, return `StartImpersonationResponse`.
   _Done when_: integration tests from 2.2.1 are green. (depends on 2.2.1, 2.2.2, 2.2.3, 2.1.2, 1.3.2, 1.4.2)
   _Satisfies_: REQ-IMP-001, REQ-IMP-003, REQ-IMP-007, REQ-IMP-008, REQ-IMP-009, REQ-IMP-013, REQ-AUD-006, REQ-AUD-007, REQ-AUD-008, design §4.1.
 
-- [ ] **2.3.2** `[BE]` Implement `StopImpersonationCommand` handler: look up session by `imp_session_id`, set `revoked_at = now()`, write `session_stopped` audit row (non-blocking — log failure, do not fail response per REQ-AUD-009), return 204.
+- [x] **2.3.2** `[BE]` Implement `StopImpersonationCommand` handler: look up session by `imp_session_id`, set `revoked_at = now()`, write `session_stopped` audit row (non-blocking — log failure, do not fail response per REQ-AUD-009), return 204.
   _Done when_: integration tests from 2.2.2 are green. (depends on 2.3.1)
   _Satisfies_: REQ-IMP-020, REQ-AUD-007, REQ-AUD-009, REQ-AUD-011, design §4.1.
 
-- [ ] **2.3.3** `[BE]` Implement `health` endpoint: reads `IOptions<FeaturesOptions>` per-request, returns `{ enabled }` anonymously.
+- [x] **2.3.3** `[BE]` Implement `health` endpoint: reads `IOptions<FeaturesOptions>` per-request, returns `{ enabled }` anonymously.
   _Done when_: integration tests from 2.2.3 are green. (depends on 2.3.1)
   _Satisfies_: design §9.1.
 
 ### 2.4 SensitiveActionMiddleware
 
-- [ ] **2.4.1** `[BE]` Write xUnit integration tests for each entry in the sensitive-route block list (design §3.4): each blocked endpoint under impersonation returns `403 impersonation.forbidden`; same endpoint under real sysadmin token returns the normal response (or 404 if not fully implemented).
+- [x] **2.4.1** `[BE]` Write xUnit integration tests for each entry in the sensitive-route block list (design §3.4): each blocked endpoint under impersonation returns `403 impersonation.forbidden`; same endpoint under real sysadmin token returns the normal response (or 404 if not fully implemented).
   _Done when_: tests compile and **fail**. `[PARALLEL with 2.2.1]`
 
-- [ ] **2.4.2** `[BE]` Implement `SensitiveActionMiddleware` as an `IEndpointFilter` registered globally; consult `SensitiveRouteRegistry` (static readonly dictionary `(method, path-prefix) → AllowedReadOnly|Blocked`); when `ImpersonationContext.IsImpersonating == true` and route is Blocked, return `403` Problem JSON with error code `impersonation.forbidden`; when ReadOnly, reject non-GET methods similarly. Also validate session is not revoked (consult `IImpersonationSessionStore`) — return `401` if revoked.
+- [x] **2.4.2** `[BE]` Implement `SensitiveActionMiddleware` as an `IEndpointFilter` registered globally; consult `SensitiveRouteRegistry` (static readonly dictionary `(method, path-prefix) → AllowedReadOnly|Blocked`); when `ImpersonationContext.IsImpersonating == true` and route is Blocked, return `403` Problem JSON with error code `impersonation.forbidden`; when ReadOnly, reject non-GET methods similarly. Also validate session is not revoked (consult `IImpersonationSessionStore`) — return `401` if revoked.
   _Done when_: tests from 2.4.1 are green. (depends on 2.4.1, 1.4.2)
   _Satisfies_: REQ-IMP-031, REQ-IMP-034, REQ-IMP-035, design §3.4, §3.5, §2.3.
 
 ### 2.5 ImpersonationAuditBehavior (MediatR pipeline)
 
-- [ ] **2.5.1** `[BE]` Write xUnit integration test: a normal authenticated request under an impersonation token (e.g., any existing GET handler wrapped in MediatR) produces exactly one `impersonation_audit` row with both identities, method, path, status, ip, user_agent, occurred_at. Non-impersonated request produces no such row.
+- [x] **2.5.1** `[BE]` Write xUnit integration test: a normal authenticated request under an impersonation token (e.g., any existing GET handler wrapped in MediatR) produces exactly one `impersonation_audit` row with both identities, method, path, status, ip, user_agent, occurred_at. Non-impersonated request produces no such row.
   _Done when_: test compiles and **fails**. `[PARALLEL with 2.4.1]`
 
-- [ ] **2.5.2** `[BE]` Implement `ImpersonationAuditBehavior : IPipelineBehavior<TRequest, TResponse>`: runs only when `ImpersonationContext.IsImpersonating`; extracts `(method, path, real_user_id, effective_user_id, session_id, ip, user_agent)`; inserts to `impersonation_audit` after handler completes (captures status); register in DI AFTER auth resolution. Also add `EndpointAuditMiddleware` (non-MediatR paths, e.g. health) for completeness.
+- [x] **2.5.2** `[BE]` Implement `ImpersonationAuditBehavior : IPipelineBehavior<TRequest, TResponse>`: runs only when `ImpersonationContext.IsImpersonating`; extracts `(method, path, real_user_id, effective_user_id, session_id, ip, user_agent)`; inserts to `impersonation_audit` after handler completes (captures status); register in DI AFTER auth resolution. Also add `EndpointAuditMiddleware` (non-MediatR paths, e.g. health) for completeness.
   _Done when_: test from 2.5.1 is green; failed requests (4xx/5xx) also produce rows. (depends on 2.5.1, 1.4.2, 1.1.2)
   _Satisfies_: REQ-AUD-001, REQ-AUD-002, REQ-AUD-003, REQ-AUD-004, REQ-AUD-010, REQ-AUD-012, REQ-AUD-013, design §4.3.
 
