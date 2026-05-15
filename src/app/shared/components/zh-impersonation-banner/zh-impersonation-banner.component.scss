@@ -1,0 +1,94 @@
+// ============================================================
+// zh-impersonation-banner — SCSS
+// ============================================================
+// ALL colors come from semantic CSS custom properties.
+// No hardcoded hex or rgb() literals. See _tokens.scss and
+// _themes.scss for --banner-impersonation-* definitions.
+// ============================================================
+
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1001; // One above the toolbar (z-index: 1000 is typical for Material toolbars)
+  background: var(--banner-impersonation-bg);
+  color: var(--banner-impersonation-fg);
+  font-family: var(--zh-font-family);
+  font-size: var(--zh-font-size-sm);
+  font-weight: 600;
+  box-shadow: var(--zh-elevation-md);
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--zh-space-md);
+  padding: var(--zh-space-sm) var(--zh-space-lg);
+  flex-wrap: wrap;
+}
+
+.banner__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--zh-space-xs);
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.banner__label {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.banner__name {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.banner__email {
+  opacity: 0.8;
+  font-size: var(--zh-font-size-xs);
+  white-space: nowrap;
+}
+
+.banner__tenant {
+  opacity: 0.85;
+  font-size: var(--zh-font-size-xs);
+  border-left: 1px solid var(--banner-impersonation-accent);
+  padding-left: var(--zh-space-xs);
+  margin-left: var(--zh-space-xs);
+  white-space: nowrap;
+}
+
+.banner__expiry {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--banner-impersonation-accent);
+  white-space: nowrap;
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+.banner__exit {
+  background: var(--banner-impersonation-accent);
+  color: var(--banner-impersonation-bg);
+  border: none;
+  border-radius: var(--zh-radius-full);
+  padding: var(--zh-space-xs) var(--zh-space-md);
+  font-size: var(--zh-font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--zh-transition-fast);
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--banner-impersonation-fg);
+    outline-offset: 2px;
+  }
+}

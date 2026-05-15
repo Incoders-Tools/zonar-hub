@@ -13,6 +13,9 @@ import { ChatbotBubbleComponent } from '../../shared/components/chatbot-bubble/c
 import { OrgSelectorComponent } from '../../shared/components/org-selector/org-selector.component';
 import { SessionTimeoutDialogComponent } from '../../shared/components/session-timeout-dialog/session-timeout-dialog.component';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
+import { ImpersonationService } from '../../core/impersonation/impersonation.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { ZhImpersonationBannerComponent } from '../../shared/components/zh-impersonation-banner/zh-impersonation-banner.component';
 
 interface AdminNavItem {
   labelKey: string;
@@ -35,7 +38,7 @@ interface AdminNavGroup {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, GuidedTourComponent, ChatbotBubbleComponent, OrgSelectorComponent, SessionTimeoutDialogComponent, ProgressBarComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, GuidedTourComponent, ChatbotBubbleComponent, OrgSelectorComponent, SessionTimeoutDialogComponent, ProgressBarComponent, ZhImpersonationBannerComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
@@ -44,6 +47,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   protected readonly permissions = inject(PermissionService);
   protected readonly sessionTimeout = inject(SessionTimeoutService);
   private readonly router = inject(Router);
+  protected readonly imp = inject(ImpersonationService);
+  private readonly notifications = inject(NotificationService);
   protected readonly onboarding = inject(OnboardingStateService);
   private readonly userPrefs = inject(UserPreferencesService);
   protected readonly activeOrg = inject(ActiveOrganizationService);
@@ -254,6 +259,21 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   toggleItemChildren(item: AdminNavItem): void {
     item.expanded = !item.expanded;
+  }
+
+  /**
+   * Handles the exit-impersonation action triggered from the banner.
+   * Design §5.6, §6.3, REQ-IMP-020 – REQ-IMP-022.
+   */
+  async onExitImpersonation(): Promise<void> {
+    try {
+      await this.imp.stop();
+      await this.router.navigate(['/admin']);
+      this.notifications.success('admin.impersonation.toastStopped');
+    } catch {
+      // stop() swallows API errors internally; this catch handles navigation errors.
+      this.notifications.error('admin.impersonation.errors.sensitiveBlocked');
+    }
   }
 
   logout(): void {

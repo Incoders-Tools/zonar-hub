@@ -1,4 +1,14 @@
 <div class="admin-layout" [class.admin-layout--collapsed]="sidebarCollapsed()" [class.admin-layout--onboarding]="onboarding.needsWizard()">
+  <!-- Impersonation Banner — mounts when an impersonation session is active (REQ-IMP-014) -->
+  @if (imp.active()) {
+    <zh-impersonation-banner
+      [targetName]="imp.target()!.fullName"
+      [targetEmail]="imp.target()!.email"
+      [tenantName]="imp.target()!.tenantName ?? ''"
+      [expiresAt]="imp.expiresAt()!"
+      (exit)="onExitImpersonation()" />
+  }
+
   <!-- Mobile Header -->
   <header class="admin-mobile-header">
     <button class="admin-mobile-header__toggle" (click)="toggleMobileSidebar()" aria-label="Toggle menu">☰</button>

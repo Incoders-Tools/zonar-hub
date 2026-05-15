@@ -218,13 +218,13 @@ _Depends on Phase 3 complete._
 
 ### 4.1 Semantic tokens
 
-- [ ] **4.1.1** `[FE]` Add three new semantic tokens to `src/styles/_tokens.scss`: `--banner-impersonation-bg`, `--banner-impersonation-fg`, `--banner-impersonation-accent` with default values. Add per-theme overrides in `src/styles/_themes.scss` for `court-energy` (warm amber/dark teal), `clay-match` (terracotta), and `night-arena` (high-contrast magenta) per design §5.6.
+- [x] **4.1.1** `[FE]` Add three new semantic tokens to `src/styles/_tokens.scss`: `--banner-impersonation-bg`, `--banner-impersonation-fg`, `--banner-impersonation-accent` with default values. Add per-theme overrides in `src/styles/_themes.scss` for `court-energy` (warm amber/dark teal), `clay-match` (terracotta), and `night-arena` (high-contrast magenta) per design §5.6.
   _Done when_: `npm run build` is green; no hardcoded color values in the new declarations; existing theme tests pass. `[PARALLEL with 4.2.1]`
   _Satisfies_: REQ-IMP-017, design §5.6.
 
 ### 4.2 zh-impersonation-banner component
 
-- [ ] **4.2.1** `[FE]` Write `src/app/shared/components/zh-impersonation-banner/zh-impersonation-banner.component.spec.ts`:
+- [x] **4.2.1** `[FE]` Write `src/app/shared/components/zh-impersonation-banner/zh-impersonation-banner.component.spec.ts`:
   - Renders `targetName`, `targetEmail`, `tenantName`, formatted expiry countdown.
   - Emits `exit` output when exit button is clicked.
   - Has `aria-live="polite"` attribute.
@@ -232,19 +232,19 @@ _Depends on Phase 3 complete._
   - i18n keys `admin.impersonation.bannerLabel`, `bannerTenant`, `bannerExit` are present in template.
   _Done when_: tests compile and **fail**. `[PARALLEL with 4.1.1]`
 
-- [ ] **4.2.2** `[FE]` Implement `src/app/shared/components/zh-impersonation-banner/zh-impersonation-banner.component.ts` and `.html` and `.scss`: standalone, OnPush, signal-based inputs (`targetName` required, `targetEmail`, `tenantName`, `expiresAt` required) and `exit` output; sticky below toolbar via `position: sticky; top: 0; z-index: <toolbar+1>`; `aria-live="polite"` region; all colours via `var(--banner-impersonation-*)` tokens; labels via i18n keys. Export from shared barrel.
+- [x] **4.2.2** `[FE]` Implement `src/app/shared/components/zh-impersonation-banner/zh-impersonation-banner.component.ts` and `.html` and `.scss`: standalone, OnPush, signal-based inputs (`targetName` required, `targetEmail`, `tenantName`, `expiresAt` required) and `exit` output; sticky below toolbar via `position: sticky; top: 0; z-index: <toolbar+1>`; `aria-live="polite"` region; all colours via `var(--banner-impersonation-*)` tokens; labels via i18n keys. Export from shared barrel.
   _Done when_: tests from 4.2.1 are green; `npm run build` green. (depends on 4.2.1, 4.1.1)
   _Satisfies_: REQ-IMP-014, REQ-IMP-015, REQ-IMP-016, REQ-IMP-017, REQ-IMP-018, design §5.6.
 
 ### 4.3 i18n keys
 
-- [ ] **4.3.1** `[FE]` Add all 21 i18n keys from design §5.8 to `src/assets/i18n/es.json`, `en.json`, and `pt.json`. Keys: `admin.impersonation.title`, `.intro`, `.pickUser`, `.reasonLabel`, `.reasonPlaceholder`, `.start`, `.confirmTitle`, `.confirmBody`, `.confirmCta`, `.bannerLabel`, `.bannerTenant`, `.bannerExit`, `.exitConfirm`, `.toastStarted`, `.toastStopped`, `.toastIdleExit`, `.errors.targetInvalid`, `.errors.alreadyActive`, `.errors.featureDisabled`, `.errors.notSysadmin`, `.errors.sensitiveBlocked`.
+- [x] **4.3.1** `[FE]` Add all 21 i18n keys from design §5.8 to `src/assets/i18n/es.json`, `en.json`, and `pt.json`. Keys: `admin.impersonation.title`, `.intro`, `.pickUser`, `.reasonLabel`, `.reasonPlaceholder`, `.start`, `.confirmTitle`, `.confirmBody`, `.confirmCta`, `.bannerLabel`, `.bannerTenant`, `.bannerExit`, `.exitConfirm`, `.toastStarted`, `.toastStopped`, `.toastIdleExit`, `.errors.targetInvalid`, `.errors.alreadyActive`, `.errors.featureDisabled`, `.errors.notSysadmin`, `.errors.sensitiveBlocked`.
   _Done when_: `npm run build` green; no missing-key warnings in test output; all three locale files have all 21 keys. `[PARALLEL with 4.2.1]`
   _Satisfies_: REQ-IMP-006, REQ-IMP-019, design §5.8.
 
 ### 4.4 Banner mounted in app shell
 
-- [ ] **4.4.1** `[FE]` Mount `<zh-impersonation-banner>` in the app shell template (`app.component.html` or the root layout shell) using `@if (imp.active())` guard, bound to `imp.target()` and `imp.expiresAt()` signals; wire `(exit)` to `onExitImpersonation()` handler that calls `ImpersonationService.stop()` then redirects to admin landing on success, shows toast error and keeps banner on failure.
+- [x] **4.4.1** `[FE]` Mount `<zh-impersonation-banner>` in the app shell template (`app.component.html` or the root layout shell) using `@if (imp.active())` guard, bound to `imp.target()` and `imp.expiresAt()` signals; wire `(exit)` to `onExitImpersonation()` handler that calls `ImpersonationService.stop()` then redirects to admin landing on success, shows toast error and keeps banner on failure.
   _Done when_: banner renders during an active impersonation session and is absent otherwise; manual test (Phase 7) confirms. (depends on 4.2.2, 3.3.2)
   _Satisfies_: REQ-IMP-014, REQ-IMP-020, REQ-IMP-021, REQ-IMP-022, design §5.6.
 

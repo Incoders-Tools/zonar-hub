@@ -179,4 +179,11 @@
   --zh-toolbar-height: 64px;
   --zh-toolbar-bg: var(--zh-surface-elevated);
   --zh-toolbar-border: var(--zh-border-subtle);
+
+  // ---- Impersonation Banner ----
+  // Semantic tokens for the persistent impersonation banner (REQ-IMP-017).
+  // All three are remapped per-theme in _themes.scss.
+  --banner-impersonation-bg: #7c5500;
+  --banner-impersonation-fg: #ffffff;
+  --banner-impersonation-accent: #f5c842;
 }

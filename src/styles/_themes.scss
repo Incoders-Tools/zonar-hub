@@ -8,6 +8,10 @@
 // ---- court-energy (Default — Wimbledon-inspired elegant green) ----
 [data-theme='court-energy'],
 :root {
+  // Impersonation banner: warm amber background over dark teal text/accent.
+  --banner-impersonation-bg: #7c5500;
+  --banner-impersonation-fg: #ffffff;
+  --banner-impersonation-accent: #f5c842;
   --zh-primary: #1b6b3a;
   --zh-primary-hover: #145530;
   --zh-primary-soft: rgba(27, 107, 58, 0.10);
@@ -54,6 +58,11 @@
 
 // ---- clay-match (Warm clay court tones) ----
 [data-theme='clay-match'] {
+  // Impersonation banner: terracotta accent.
+  --banner-impersonation-bg: #7a2d00;
+  --banner-impersonation-fg: #ffffff;
+  --banner-impersonation-accent: #e8844a;
+
   --zh-primary: #a0522d;
   --zh-primary-hover: #8b4513;
   --zh-primary-soft: rgba(160, 82, 45, 0.10);
@@ -100,6 +109,11 @@
 
 // ---- night-arena (Dark mode, neon accents) ----
 [data-theme='night-arena'] {
+  // Impersonation banner: high-contrast magenta accent.
+  --banner-impersonation-bg: #2a0030;
+  --banner-impersonation-fg: #f1f0ff;
+  --banner-impersonation-accent: #f026d1;
+
   color-scheme: dark;
 
   --zh-primary: #818cf8;

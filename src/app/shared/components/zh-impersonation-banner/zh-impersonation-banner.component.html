@@ -1,0 +1,27 @@
+<div class="banner">
+  <div class="banner__identity">
+    <span class="banner__label">{{ 'admin.impersonation.bannerLabel' | t }}</span>
+    <span class="banner__name">{{ targetName() }}</span>
+    @if (targetEmail()) {
+      <span class="banner__email">&lt;{{ targetEmail() }}&gt;</span>
+    }
+    @if (tenantName()) {
+      <span class="banner__tenant">
+        {{ 'admin.impersonation.bannerTenant' | t }}
+        {{ tenantName() }}
+      </span>
+    }
+  </div>
+
+  <div class="banner__expiry" data-testid="expiry">
+    {{ countdownLabel() }}
+  </div>
+
+  <button
+    class="banner__exit"
+    type="button"
+    data-testid="exit-btn"
+    (click)="onExit()">
+    {{ 'admin.impersonation.bannerExit' | t }}
+  </button>
+</div>

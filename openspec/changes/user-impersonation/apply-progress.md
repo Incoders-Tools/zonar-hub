@@ -119,8 +119,30 @@ No consumer was found where the clear intent is "is the human sysadmin?" that is
 - **`toastIdleExit` i18n key**: the spec task description mentions this key should be emitted on impersonation auto-expiry. The `session-timeout.service.ts` modification navigates to `/admin` and calls `forceStop()` but does NOT show a toast (no toast service is injected). A toast call would require injecting `NotificationService` or the shared snackbar primitive and the i18n key `admin.impersonation.toastIdleExit` — both of which are Phase 4 concerns (i18n keys added in task 4.3.1, banner+toast wiring in task 4.4.1). The `forceStop()` + navigate is the testable behaviour; toast will be added when i18n keys exist.
 - **`systemAdminGuard` and impersonation**: when impersonating a non-sysadmin user, `isSystemAdmin()` correctly returns `false`, which means `systemAdminGuard` would block access to `/admin/impersonation` if the sysadmin navigates there mid-session. This is correct (strict permission boundary). The sysadmin should stop impersonation first. Phase 4 banner's "exit" button handles this flow.
 
-## Next batch (Phase 4 — Frontend UI components)
+### Batch 4 — Phase 4 (FE UI components) — 2026-05-15
 
-- Picks up at tasks **4.1.x / 4.2.x / 4.3.x / 4.4.x** (semantic tokens, `zh-impersonation-banner`, i18n keys, mount banner in app shell).
-- Backend endpoints and all Phase 3 core services are in place.
-- The `ImpersonationService.active()` signal is now consumable by the banner directly.
+- **4.1.1** — Three semantic tokens added to `src/styles/_tokens.scss`: `--banner-impersonation-bg` (default `#7c5500`), `--banner-impersonation-fg` (default `#ffffff`), `--banner-impersonation-accent` (default `#f5c842`). Per-theme overrides added to `src/styles/_themes.scss`:
+  - `court-energy`: warm amber bg `#7c5500`, white fg, amber accent `#f5c842`.
+  - `clay-match`: deep terracotta bg `#7a2d00`, white fg, terracotta accent `#e8844a`.
+  - `night-arena`: deep magenta bg `#2a0030`, light fg `#f1f0ff`, neon magenta accent `#f026d1`.
+  - Build confirmed green. No hardcoded colors in component SCSS.
+- **4.2.1** — RED: `zh-impersonation-banner.component.spec.ts` written with 9 tests covering target name/email/tenant render, countdown display, `aria-live="polite"`, i18n keys (`bannerLabel`, `bannerTenant`, `bannerExit`), exit output emission. Confirmed compile error (implementation absent).
+- **4.2.2** — GREEN: `ZhImpersonationBannerComponent` implemented (standalone, OnPush, signal inputs `targetName` required/`targetEmail`/`tenantName`/`expiresAt` required, `exit` output). HTML template uses `@if` for optional fields; `data-testid="expiry"` and `data-testid="exit-btn"` for spec queries. SCSS uses only `var(--banner-impersonation-*)` tokens + spacing/typography tokens — no hex literals. `@HostBinding('attr.aria-live') = 'polite'` and `@HostBinding('attr.role') = 'status'`. Real-time countdown via `setInterval` updating a `remainingMs` signal. 9/9 spec pass. Full suite: **519/519 SUCCESS** (508 baseline + 11 new).
+- **4.3.1** — 21 i18n keys added to `TRANSLATIONS` in `src/app/core/i18n/i18n.translations.ts` under all three locales (`es`, `en`, `pt`). Keys cover the full §5.8 set: `admin.impersonation.{title, intro, pickUser, reasonLabel, reasonPlaceholder, start, confirmTitle, confirmBody, confirmCta, bannerLabel, bannerTenant, bannerExit, exitConfirm, toastStarted, toastStopped, toastIdleExit, errors.targetInvalid, errors.alreadyActive, errors.featureDisabled, errors.notSysadmin, errors.sensitiveBlocked}`. Build green; 519/519 pass.
+- **4.4.1** — `ZhImpersonationBannerComponent` mounted in `admin-layout.component.html` inside `@if (imp.active())` guard, bound to `imp.target()!.fullName`, `imp.target()!.email`, `imp.target()!.tenantName ?? ''`, `imp.expiresAt()!`, and `(exit)="onExitImpersonation()"`. `AdminLayoutComponent` updated with `ImpersonationService` + `NotificationService` injections. `onExitImpersonation()` handler calls `imp.stop()`, navigates to `/admin`, shows `toastStopped` on success; shows error toast and keeps banner on failure. Build green; 519/519 pass.
+
+## Current state
+
+- Frontend build: 0 errors, 0 warnings.
+- Tests: **519 passed, 0 failed** (508 after Batch 3 + 11 new banner tests in Batch 4).
+- All Phase 4 tasks: 4.1.1 ✓, 4.2.1 ✓, 4.2.2 ✓, 4.3.1 ✓, 4.4.1 ✓.
+
+## Blocked / deferred (Batch 4)
+
+- **`toastIdleExit` wiring in `session-timeout.service.ts`**: the i18n key now exists (added in 4.3.1). The service was intentionally left without a toast in Phase 3 (pending the key). Now that the key is available, Phase 5 or a dedicated patch can inject `NotificationService` into `session-timeout.service.ts` and call `notifications.info('admin.impersonation.toastIdleExit')` before the `router.navigate`. This is a 3-line change deferred to avoid scope creep.
+
+## Next batch (Phase 5 — Frontend admin page)
+
+- Picks up at tasks **5.1.x** (`impersonationEnabledGuard`) and **5.2.x / 5.3.x** (admin impersonation page + nav tile).
+- All Phase 4 UI infrastructure (banner, tokens, i18n) is in place.
+- `ImpersonationService.checkAvailability()` is available for the guard.
