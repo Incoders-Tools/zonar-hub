@@ -136,26 +136,26 @@ _Can start in parallel with Phase 2 once Phase 1 is complete. Full integration r
 
 ### 3.1 Models and test fixtures
 
-- [ ] **3.1.1** `[FE]` Create `src/app/core/impersonation/impersonation.model.ts`: interfaces `ImpersonationSession`, `ImpersonationTarget`, `StartImpersonationRequest`, `StartImpersonationResponse`, `ImpersonationHealthResponse`. Create `src/app/core/impersonation/index.ts` barrel. Create `src/app/testing/helpers/build-impersonation-session.ts` factory (shared fixture builder for all specs).
+- [x] **3.1.1** `[FE]` Create `src/app/core/impersonation/impersonation.model.ts`: interfaces `ImpersonationSession`, `ImpersonationTarget`, `StartImpersonationRequest`, `StartImpersonationResponse`, `ImpersonationHealthResponse`. Create `src/app/core/impersonation/index.ts` barrel. Create `src/app/testing/helpers/build-impersonation-session.ts` factory (shared fixture builder for all specs).
   _Done when_: TypeScript compiles; factory exports typed stubs for use in specs. `[PARALLEL with Phase 2]`
   _Satisfies_: design §5.1, §8.3.
 
 ### 3.2 ImpersonationRepository
 
-- [ ] **3.2.1** `[FE]` Write `src/app/core/repositories/api/api-impersonation.repository.spec.ts` using `provideHttpClientTesting()`:
+- [x] **3.2.1** `[FE]` Write `src/app/core/repositories/api/api-impersonation.repository.spec.ts` using `provideHttpClientTesting()`:
   - `start(req)` POSTs to `/api/admin/impersonation/start`, returns typed `StartImpersonationResponse`.
   - `stop()` POSTs to `/api/admin/impersonation/stop`, returns void.
   - `health()` GETs `/api/admin/impersonation/health`, returns `ImpersonationHealthResponse`.
   - Error responses surface error codes via `extractApiErrorCode`.
   _Done when_: tests compile and **fail**. (depends on 3.1.1) `[PARALLEL with 3.3.1]`
 
-- [ ] **3.2.2** `[FE]` Implement `src/app/core/impersonation/impersonation.repository.ts` (interface) and `src/app/core/repositories/api/api-impersonation.repository.ts` (HTTP implementation). Follow the api-integration skill: no direct HttpClient in components; repository returns typed observables/promises; error codes extracted via `extractApiErrorCode`.
+- [x] **3.2.2** `[FE]` Implement `src/app/core/impersonation/impersonation.repository.ts` (interface) and `src/app/core/repositories/api/api-impersonation.repository.ts` (HTTP implementation). Follow the api-integration skill: no direct HttpClient in components; repository returns typed observables/promises; error codes extracted via `extractApiErrorCode`.
   _Done when_: tests from 3.2.1 are green. (depends on 3.2.1)
   _Satisfies_: REQ-AUTH-006, REQ-AUD-017, design §5.1.
 
 ### 3.3 ImpersonationService
 
-- [ ] **3.3.1** `[FE]` Write `src/app/core/impersonation/impersonation.service.spec.ts`:
+- [x] **3.3.1** `[FE]` Write `src/app/core/impersonation/impersonation.service.spec.ts`:
   - `start(uid, reason)` calls repository, sets `session` signal, writes to sessionStorage under `zh_impersonation_session`.
   - `stop()` calls repository, clears signal and sessionStorage.
   - Boot-time rehydration: service instantiated with a non-expired sessionStorage entry → `active() === true`.
@@ -165,13 +165,13 @@ _Can start in parallel with Phase 2 once Phase 1 is complete. Full integration r
   - `checkAvailability()` calls repository `health()`, caches result for session.
   _Done when_: tests compile and **fail**. (depends on 3.1.1) `[PARALLEL with 3.2.1]`
 
-- [ ] **3.3.2** `[FE]` Implement `src/app/core/impersonation/impersonation.service.ts` per design §5.2 signal API: `session`, `active`, `target`, `expiresAt` signals/computed; `start`, `stop`, `forceStop`, `token`, `checkAvailability` methods; sessionStorage I/O under key `zh_impersonation_session`; constructor reads sessionStorage and rehydrates or discards based on `expiresAt > now`.
+- [x] **3.3.2** `[FE]` Implement `src/app/core/impersonation/impersonation.service.ts` per design §5.2 signal API: `session`, `active`, `target`, `expiresAt` signals/computed; `start`, `stop`, `forceStop`, `token`, `checkAvailability` methods; sessionStorage I/O under key `zh_impersonation_session`; constructor reads sessionStorage and rehydrates or discards based on `expiresAt > now`.
   _Done when_: tests from 3.3.1 are green. (depends on 3.3.1, 3.2.2)
   _Satisfies_: REQ-IMP-010, REQ-IMP-023, REQ-IMP-026, REQ-IMP-027, REQ-IMP-029, REQ-AUTH-001, REQ-AUTH-003, REQ-AUTH-004, REQ-AUTH-005, REQ-AUTH-022, REQ-AUTH-023, design §5.2, §5.5, §9.2.
 
 ### 3.4 AuthService rewire
 
-- [ ] **3.4.1** `[FE]` Update `src/app/core/auth/auth.service.spec.ts` with new impersonation-mode variants:
+- [x] **3.4.1** `[FE]` Update `src/app/core/auth/auth.service.spec.ts` with new impersonation-mode variants:
   - `currentUser()` returns target user when `ImpersonationService.active() === true`.
   - `currentUser()` returns real sysadmin when `active() === false`.
   - `realUser()` always returns the sysadmin's own user regardless of impersonation state.
@@ -180,13 +180,13 @@ _Can start in parallel with Phase 2 once Phase 1 is complete. Full integration r
   _Done when_: new test cases compile and **fail**. (depends on 3.3.2)
   _Satisfies_: REQ-AUTH-025, design §5.3, §8.2.
 
-- [ ] **3.4.2** `[FE]` Rewire `AuthService`: inject `ImpersonationService` lazily via `Injector` (avoid cyclic DI); add `realUser = computed(...)` returning sysadmin identity always; change `currentUser` to `computed(() => this.imp.target() ?? this.sessionState()?.user)`; add `isImpersonating = computed(() => this.imp.active())`.
+- [x] **3.4.2** `[FE]` Rewire `AuthService`: inject `ImpersonationService` lazily via `Injector` (avoid cyclic DI); add `realUser = computed(...)` returning sysadmin identity always; change `currentUser` to `computed(() => this.imp.target() ?? this.sessionState()?.user)`; add `isImpersonating = computed(() => this.imp.active())`.
   _Done when_: tests from 3.4.1 are green; `npm run test:ci` baseline (456/456) still passes. (depends on 3.4.1)
   _Satisfies_: REQ-AUTH-010, REQ-AUTH-011, REQ-AUTH-012, REQ-AUTH-013, REQ-AUTH-014, REQ-AUTH-015, REQ-AUTH-016, design §5.3.
 
 ### 3.5 Auth token interceptor rewire
 
-- [ ] **3.5.1** `[FE]` Update `src/app/core/auth/auth-token.interceptor.spec.ts` with impersonation variants:
+- [x] **3.5.1** `[FE]` Update `src/app/core/auth/auth-token.interceptor.spec.ts` with impersonation variants:
   - `imp.active() === false` → `Authorization: Bearer <real-token>`.
   - `imp.active() === true` → `Authorization: Bearer <imp-token>` + `X-Tenant-Id` header reflects target user's tenant (not sysadmin's).
   - Immediately after impersonation stop (token cleared), next request uses real token.
@@ -194,19 +194,19 @@ _Can start in parallel with Phase 2 once Phase 1 is complete. Full integration r
   _Done when_: new tests compile and **fail**. (depends on 3.4.2)
   _Satisfies_: REQ-AUTH-025.
 
-- [ ] **3.5.2** `[FE]` Modify `src/app/core/auth/auth-token.interceptor.ts` to ask `ImpersonationService.token()` first; if non-null, attach it as Bearer; also derive tenant from `ImpersonationService.target()?.tenantId` when impersonating. Create helper function in `src/app/core/impersonation/impersonation-token.interceptor.ts` (unit-testable, exported, consumed by the existing interceptor — no second interceptor in chain per design §5.4). On 401, call `forceStop()` if impersonation is active.
+- [x] **3.5.2** `[FE]` Modify `src/app/core/auth/auth-token.interceptor.ts` to ask `ImpersonationService.token()` first; if non-null, attach it as Bearer; also derive tenant from `ImpersonationService.target()?.tenantId` when impersonating. Create helper function in `src/app/core/impersonation/impersonation-token.interceptor.ts` (unit-testable, exported, consumed by the existing interceptor — no second interceptor in chain per design §5.4). On 401, call `forceStop()` if impersonation is active.
   _Done when_: tests from 3.5.1 are green. (depends on 3.5.1, 3.3.2)
   _Satisfies_: REQ-AUTH-006, REQ-AUTH-007, REQ-AUTH-008, REQ-AUTH-009, REQ-AUTH-020, REQ-AUTH-021, REQ-AUTH-024, design §5.4.
 
 ### 3.6 Session-timeout service integration
 
-- [ ] **3.6.1** `[FE]` Update session-timeout service spec to add impersonation-expiry variants:
+- [x] **3.6.1** `[FE]` Update session-timeout service spec to add impersonation-expiry variants:
   - When impersonation token expires and real token is still valid → `ImpersonationService.forceStop()` is called, real session is intact.
   - When both tokens expire → real-session logout takes precedence.
   - `toastIdleExit` i18n key is emitted on impersonation auto-expiry.
   _Done when_: tests compile and **fail**. (depends on 3.3.2)
 
-- [ ] **3.6.2** `[FE]` Modify `session-timeout.service.ts` to watch `ImpersonationService.expiresAt()`; set a client-side timer; when it fires, call `ImpersonationService.forceStop()` and emit the idle-exit toast, then redirect to admin landing — without touching the real session.
+- [x] **3.6.2** `[FE]` Modify `session-timeout.service.ts` to watch `ImpersonationService.expiresAt()`; set a client-side timer; when it fires, call `ImpersonationService.forceStop()` and emit the idle-exit toast, then redirect to admin landing — without touching the real session.
   _Done when_: tests from 3.6.1 are green. (depends on 3.6.1, 3.4.2)
   _Satisfies_: REQ-IMP-023, REQ-IMP-024, REQ-AUTH-017, REQ-AUTH-018, REQ-AUTH-019, design §6.3, ADR-005.
 

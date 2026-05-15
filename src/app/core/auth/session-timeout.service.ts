@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
+import { ImpersonationService } from '../impersonation/impersonation.service';
 
 /**
  * Inactivity-based session timeout. After a configurable idle window the
@@ -18,10 +19,13 @@ const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'mousemove', 'wheel', 'touchsta
 export class SessionTimeoutService implements OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly imp = inject(ImpersonationService);
 
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private lastActivity = Date.now();
   private warningStartedAt: number | null = null;
+  /** Track whether we already fired the impersonation expiry for the current session. */
+  private impExpiryFired = false;
 
   private readonly warningActiveState = signal(false);
   readonly secondsRemaining = signal<number>(0);
@@ -33,6 +37,7 @@ export class SessionTimeoutService implements OnDestroy {
     this.stopMonitoring();
     this.lastActivity = Date.now();
     this.warningStartedAt = null;
+    this.impExpiryFired = false;
     this.warningActiveState.set(false);
     this.secondsRemaining.set(0);
     for (const event of ACTIVITY_EVENTS) {
@@ -82,6 +87,21 @@ export class SessionTimeoutService implements OnDestroy {
       this.warningActiveState.set(false);
       this.secondsRemaining.set(0);
       return;
+    }
+
+    // --- Impersonation expiry check (absolute clock, design §6.3 / ADR-005) ---
+    if (this.imp.active() && !this.impExpiryFired) {
+      const expiresAt = this.imp.expiresAt();
+      if (expiresAt && new Date(expiresAt).getTime() <= Date.now()) {
+        this.impExpiryFired = true;
+        this.imp.forceStop();
+        void this.router.navigate(['/admin']);
+        return; // Do NOT proceed to real-session idle check this tick
+      }
+    }
+    // Reset fire-guard if impersonation ended (e.g. user manually stopped it)
+    if (!this.imp.active()) {
+      this.impExpiryFired = false;
     }
 
     const now = Date.now();

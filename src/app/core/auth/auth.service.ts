@@ -1,9 +1,10 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, Injector, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';
 import { API_BASE_URL } from '../config/api-base-url.token';
 import { AuthSession, LoginRequest, RegisterRequest, Tenant, User, UserRole } from '../models';
 import { extractApiErrorCode } from '../repositories/api/api-error.util';
+import { ImpersonationService } from '../impersonation/impersonation.service';
 
 interface ApiTenantDto {
   id: string;
@@ -51,9 +52,56 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
 
+  /**
+   * ImpersonationService injected lazily via Injector to avoid circular DI.
+   * AuthService → ImpersonationService ← ApiImpersonationRepository → ImpersonationService
+   * The lazy pattern breaks the compile-time cycle.
+   */
+  private readonly injector = inject(Injector);
+  private _imp: ImpersonationService | null = null;
+  private get imp(): ImpersonationService {
+    if (!this._imp) {
+      this._imp = this.injector.get(ImpersonationService);
+    }
+    return this._imp;
+  }
+
   readonly session = this.sessionState.asReadonly();
   readonly isAuthenticated = computed(() => this.sessionState() !== null);
-  readonly currentUser = computed(() => this.sessionState()?.user ?? null);
+
+  /**
+   * The real authenticated user (the human sysadmin who logged in).
+   * Never changes during an impersonation session.
+   * Use this wherever the intent is "who is the actual human operator".
+   */
+  readonly realUser = computed(() => this.sessionState()?.user ?? null);
+
+  /**
+   * The EFFECTIVE user — the impersonated target when an impersonation session
+   * is active, otherwise the real user. All downstream UI and permission checks
+   * should read this signal (they see the target's identity transparently).
+   */
+  readonly currentUser = computed<User | null>(() => {
+    const target = this.imp.target();
+    if (target) {
+      // Map ImpersonationTarget → User shape for downstream consumers
+      return {
+        id: target.id,
+        fullName: target.fullName,
+        email: target.email,
+        role: target.role as UserRole,
+        roleId: '',          // not available in imp token; downstream that needs roleId should use realUser()
+        isActive: true,
+        tenantId: target.tenantId,
+        createdAt: ''        // not available in imp token
+      } satisfies User;
+    }
+    return this.sessionState()?.user ?? null;
+  });
+
+  /** Whether an impersonation session is currently active. */
+  readonly isImpersonating = computed(() => this.imp.active());
+
   readonly userRole = computed<UserRole | null>(() => this.currentUser()?.role ?? null);
   readonly isSystemAdmin = computed(() => this.userRole() === 'system_admin');
   readonly isAdmin = computed(() => this.userRole() === 'admin' || this.userRole() === 'system_admin');
