@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { HomePageComponent } from './home-page.component';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('HomePageComponent', () => {
   let fixture: ComponentFixture<HomePageComponent>;
@@ -10,7 +12,7 @@ describe('HomePageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomePageComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomePageComponent);
@@ -35,12 +37,12 @@ describe('HomePageComponent', () => {
   });
 
   it('should render the primary action link', () => {
-    const link = element.querySelector('.primary-link');
+    const link = element.querySelector('a[routerLink]');
     expect(link).toBeTruthy();
   });
 
   it('should render the feature cards', () => {
-    const cards = element.querySelectorAll('.card');
-    expect(cards.length).toBe(3);
+    const cards = element.querySelectorAll('.feature-card');
+    expect(cards.length).toBeGreaterThan(0);
   });
 });

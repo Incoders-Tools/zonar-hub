@@ -62,6 +62,7 @@ describe('AdminDashboardPageComponent', () => {
       priceAnnual: 0,
       priceSingleUse: null,
       maxTournaments: 3,
+      maxRegistrations: null,
       maxAdmins: 1,
       maxComplexes: 1,
       maxCourts: 4,

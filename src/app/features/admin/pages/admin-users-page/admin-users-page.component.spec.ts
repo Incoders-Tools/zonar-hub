@@ -137,43 +137,29 @@ describe('AdminUsersPageComponent', () => {
     expect(component.tenantItems().map(item => item.id)).toEqual(['org-1', 'org-2']);
   });
 
-  it('should copy permissions from source organization to target organization', () => {
-    const now = new Date().toISOString();
-    facade.tenants.set([
-      {
-        id: 'org-1',
-        name: 'Org 1',
-        key: 'org_1',
-        contactEmail: 'org1@example.com',
-        planId: 'plan-1',
-        planType: 'starter',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now
-      },
-      {
-        id: 'org-2',
-        name: 'Org 2',
-        key: 'org_2',
-        contactEmail: 'org2@example.com',
-        planId: 'plan-1',
-        planType: 'starter',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now
-      }
-    ]);
-
+  it('should update copy source user id when onCopySourceUserChanged is called', () => {
     fixture.detectChanges();
 
-    component.onTenantSelectionChanged(new Set(['org-1', 'org-2']));
+    component.onCopySourceUserChanged('user-42');
+
+    expect(component.copySourceUserId()).toBe('user-42');
+  });
+
+  it('should not be able to copy permissions without a source user and target organization', () => {
+    fixture.detectChanges();
+
+    component.onCopySourceUserChanged('');
+    component.onPermissionOrganizationChanged('');
+
+    expect(component.canCopyPermissionsFromUser()).toBe(false);
+  });
+
+  it('should allow copying permissions when source user and target organization are both set', () => {
+    fixture.detectChanges();
+
+    component.onCopySourceUserChanged('user-42');
     component.onPermissionOrganizationChanged('org-1');
-    component.onPermissionsChanged(['dashboard', 'users']);
 
-    component.onPermissionOrganizationChanged('org-2');
-    component.onCopySourceOrganizationChanged('org-1');
-    component.copyPermissionsFromOrganization();
-
-    expect(component.permissionsByOrganization()['org-2']).toEqual(['dashboard', 'users']);
+    expect(component.canCopyPermissionsFromUser()).toBe(true);
   });
 });

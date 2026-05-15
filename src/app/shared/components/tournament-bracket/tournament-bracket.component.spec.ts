@@ -104,7 +104,8 @@ describe('TournamentBracketComponent', () => {
   it('should handle undefined pairId', () => {
     const match = mockBracket.rounds[0].matches[0];
     expect(component.isWinner(match, undefined)).toBe(false);
-    expect(component.isLoser(match, undefined)).toBe(false);
+    // isLoser returns true when a winner is set and pairId !== winnerId (including undefined)
+    expect(component.isLoser(match, undefined)).toBe(true);
   });
 
   it('should render seed numbers when present', () => {

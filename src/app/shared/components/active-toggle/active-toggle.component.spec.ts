@@ -40,20 +40,20 @@ describe('ActiveToggleComponent', () => {
 
   it('should not show checkbox in badge mode', () => {
     createComponent(true, 'badge');
-    const checkbox = fixture.nativeElement.querySelector('.active-toggle__checkbox');
+    const checkbox = fixture.nativeElement.querySelector('.active-toggle__input');
     expect(checkbox).toBeNull();
   });
 
   it('should show checkbox in toggle mode', () => {
     createComponent(true, 'toggle');
-    const checkbox = fixture.nativeElement.querySelector('.active-toggle__checkbox');
+    const checkbox = fixture.nativeElement.querySelector('.active-toggle__input');
     expect(checkbox).toBeTruthy();
   });
 
   it('should emit toggled event on checkbox change', () => {
     createComponent(true, 'toggle');
     const spy = spyOn(component.toggled, 'emit');
-    const checkbox = fixture.nativeElement.querySelector('.active-toggle__checkbox') as HTMLInputElement;
+    const checkbox = fixture.nativeElement.querySelector('.active-toggle__input') as HTMLInputElement;
     checkbox.checked = false;
     checkbox.dispatchEvent(new Event('change'));
     expect(spy).toHaveBeenCalledWith(false);
@@ -66,7 +66,7 @@ describe('ActiveToggleComponent', () => {
     fixture.componentRef.setInput('disabled', true);
     fixture.detectChanges();
 
-    const checkbox = fixture.nativeElement.querySelector('.active-toggle__checkbox') as HTMLInputElement;
+    const checkbox = fixture.nativeElement.querySelector('.active-toggle__input') as HTMLInputElement;
     expect(checkbox.disabled).toBe(true);
   });
 });

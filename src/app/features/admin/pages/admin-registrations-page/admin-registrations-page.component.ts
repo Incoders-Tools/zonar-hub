@@ -2,7 +2,8 @@ import { Component, inject, signal, computed, OnInit, OnDestroy, effect, viewChi
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MatIcon } from '@angular/material/icon';
-import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { FilterPanelComponent, FilterField, SortOption } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
@@ -47,7 +48,7 @@ interface TokenRow extends Record<string, unknown> {
   imports: [
     TranslatePipe,
     MatIcon,
-    DataTableComponent,
+    ZhCollectionViewComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,

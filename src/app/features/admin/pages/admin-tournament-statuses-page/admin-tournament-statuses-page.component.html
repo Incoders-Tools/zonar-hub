@@ -160,21 +160,45 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-tournament-statuses"
+    [items]="tableData()"
     [columns]="columns()"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="true"
     [reorderable]="true"
     [rowActions]="statusRowActions"
     emptyMessageKey="admin.tournament-statuses.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            <h3 class="zh-list-card__name">{{ row.name }}</h3>
+            @if (row.description) {
+              <p class="zh-list-card__subtitle">{{ row.description }}</p>
+            }
+          </div>
+          <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+            {{ row.statusLabel | t }}
+          </span>
+        </div>
+        @if (isSystemAdmin()) {
+          <div class="zh-list-card__meta">
+            <span><strong>{{ 'admin.tournament-statuses.column.key' | t }}:</strong> {{ row.key }}</span>
+            @if (row.sortOrder !== null) {
+              <span><strong>{{ 'admin.tournament-statuses.column.sortOrder' | t }}:</strong> {{ row.sortOrder }}</span>
+            }
+          </div>
+        }
+      </div>
+    </ng-template>
+  </zh-collection-view>
 </div>
 
 <!-- Delete Confirmation Dialog -->

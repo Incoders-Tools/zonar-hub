@@ -13,9 +13,10 @@ describe('RegistrationFlyerComponent', () => {
     fixture = TestBed.createComponent(RegistrationFlyerComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('data', {
-      title: 'Test Flyer',
+      tournamentName: 'Test Tournament',
       date: '2026-01-01',
-      location: 'Test Location'
+      location: 'Test Location',
+      playerNames: ['Player A', 'Player B']
     });
     fixture.detectChanges();
   });

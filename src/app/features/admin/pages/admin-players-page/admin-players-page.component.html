@@ -101,22 +101,51 @@
         (sortRulesChanged)="onSortRulesChanged($event)">
       </app-filter-panel>
 
-      <app-data-table
+      <zh-collection-view
+        viewKey="admin-players"
+        [items]="tableData()"
         [columns]="columns"
-        [data]="tableData()"
         [loading]="facade.loading()"
-        [error]="facade.error()"
-        (retried)="facade.load()"
+        [error]="!!facade.error()"
         [selectable]="true"
         [paginated]="true"
-        [paginationPosition]="'both'"
         [pageSize]="25"
         [rowActions]="playerRowActions"
         emptyMessageKey="admin.players.emptyState"
         (selectionChanged)="onSelectionChanged($event)"
         (sorted)="onSorted($event)"
-        (rowAction)="onRowActionClicked($event)">
-      </app-data-table>
+        (rowAction)="onRowActionClicked($event)"
+        (retried)="facade.load()">
+        <ng-template #cardTpl let-row>
+          <div class="zh-list-card">
+            <div class="zh-list-card__header">
+              <div class="zh-list-card__title">
+                @if (row.sportName) {
+                  <span class="zh-list-card__eyebrow">{{ row.sportName }}</span>
+                }
+                <h3 class="zh-list-card__name">{{ row.name }}</h3>
+                @if (row.email) {
+                  <p class="zh-list-card__subtitle">{{ row.email }}</p>
+                }
+              </div>
+              <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+                {{ row.statusLabel | t }}
+              </span>
+            </div>
+            <div class="zh-list-card__meta">
+              @if (row.categoryName) {
+                <span><strong>{{ 'admin.players.column.category' | t }}:</strong> {{ row.categoryName }}</span>
+              }
+              @if (row.genderLabel) {
+                <span><strong>{{ 'admin.players.column.gender' | t }}:</strong> {{ row.genderLabel }}</span>
+              }
+              @if (row.ranking) {
+                <span><strong>{{ 'admin.players.column.ranking' | t }}:</strong> {{ row.ranking }}</span>
+              }
+            </div>
+          </div>
+        </ng-template>
+      </zh-collection-view>
     }
 
     <!-- IMPORTER TAB -->

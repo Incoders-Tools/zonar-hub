@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ModalitiesFormPanelComponent } from './modalities-form-panel.component';
 import { ModalitiesFacadeService } from '../modalities-facade.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ModalitiesFormPanelComponent', () => {
   let component: ModalitiesFormPanelComponent;
@@ -10,7 +12,9 @@ describe('ModalitiesFormPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ModalitiesFormPanelComponent],
       providers: [
-        { provide: ModalitiesFacadeService, useValue: { getNextSortOrder: () => 1, checkKeyExists: () => Promise.resolve(false), checkSortOrderExists: () => Promise.resolve(false), saveModality: () => Promise.resolve(true) } }
+        { provide: ModalitiesFacadeService, useValue: { getNextSortOrder: () => 1, checkKeyExists: () => Promise.resolve(false), checkSortOrderExists: () => Promise.resolve(false), saveModality: () => Promise.resolve(true) } },
+        provideHttpClient(),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
 

@@ -6,7 +6,8 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
@@ -45,7 +46,7 @@ interface FlyerFilters {
     AsyncButtonComponent,
     FormShellComponent,
     ConfirmDialogComponent,
-    DataTableComponent,
+    ZhCollectionViewComponent,
     FilterPanelComponent,
     HelpButtonComponent,
     ActiveToggleComponent,

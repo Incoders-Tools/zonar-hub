@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrgSelectorComponent } from './org-selector.component';
 import { ActiveOrganizationService } from '../../../core/services/active-organization.service';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 
 describe('OrgSelectorComponent', () => {
   let component: OrgSelectorComponent;
@@ -9,8 +9,12 @@ describe('OrgSelectorComponent', () => {
 
   const mockActiveOrgService = {
     activeOrganization: signal(null),
-    organizations: signal([]),
-    setActiveOrganization: jasmine.createSpy('setActiveOrganization')
+    activeOrganizationId: signal(null),
+    activeOrganizationName: signal(''),
+    primaryOrganizationId: signal(null),
+    manageableOrganizations: signal([]),
+    hasMultipleOrganizations: signal(false),
+    switchOrganization: jasmine.createSpy('switchOrganization')
   };
 
   beforeEach(async () => {

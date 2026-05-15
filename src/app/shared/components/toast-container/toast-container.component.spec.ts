@@ -8,7 +8,7 @@ describe('ToastContainerComponent', () => {
   let fixture: ComponentFixture<ToastContainerComponent>;
 
   const mockNotificationService = {
-    notifications: signal([]),
+    messages: signal([]),
     dismiss: jasmine.createSpy('dismiss')
   };
 

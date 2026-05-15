@@ -1,7 +1,8 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
@@ -26,7 +27,7 @@ interface RoleRow extends Record<string, unknown> {
   standalone: true,
   imports: [
     TranslatePipe,
-    DataTableComponent,
+    ZhCollectionViewComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,

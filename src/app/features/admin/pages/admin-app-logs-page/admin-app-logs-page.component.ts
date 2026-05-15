@@ -1,13 +1,12 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
-import { AppLog } from '../../../../core/models/app-log.model';
 import { AppLogsFacadeService, AppLogFilters } from './app-logs-facade.service';
 
 interface AppLogRow extends Record<string, unknown> {
@@ -25,10 +24,9 @@ interface AppLogRow extends Record<string, unknown> {
   selector: 'app-admin-app-logs-page',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     TranslatePipe,
-    DataTableComponent,
+    ZhCollectionViewComponent,
     FilterPanelComponent,
     ConfirmDialogComponent,
     AsyncButtonComponent,

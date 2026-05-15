@@ -97,6 +97,7 @@ describe('ApiAdminUserRepository', () => {
       roleId: payload.roleId,
       organizationId: payload.organizationId,
       tenantIds: payload.tenantIds,
+      permissionsByOrganization: payload.permissionsByOrganization,
       password: payload.password
     });
     expect(created.id).toBe('u-2');
@@ -137,6 +138,7 @@ describe('ApiAdminUserRepository', () => {
       roleId: payload.roleId,
       organizationId: payload.organizationId,
       tenantIds: payload.tenantIds,
+      permissionsByOrganization: payload.permissionsByOrganization,
       isActive: payload.isActive
     });
     expect(updated.roleId).toBe('role003');

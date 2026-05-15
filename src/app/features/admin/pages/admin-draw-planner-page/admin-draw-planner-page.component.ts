@@ -4,7 +4,8 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { ProgressBarComponent } from '../../../../shared/components/progress-bar/progress-bar.component';
-import { DataTableComponent, DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
@@ -37,7 +38,7 @@ const PLANNER_STAGES: PlannerStage[] = [
     TranslatePipe,
     FormatDatePipe,
     ProgressBarComponent,
-    DataTableComponent,
+    ZhCollectionViewComponent,
     AsyncButtonComponent,
     ConfirmDialogComponent,
     HelpButtonComponent,

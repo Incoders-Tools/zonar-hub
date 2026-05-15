@@ -210,21 +210,43 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-users"
+    [items]="tableData()"
     [columns]="columns"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="true"
     [rowActions]="rowActions"
     [rowActionsFilter]="userRowActionsFilter"
     emptyMessageKey="common.noResults"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            @if (row.roleName || row.role) {
+              <span class="zh-list-card__eyebrow">{{ (row.roleName || row.role) | t }}</span>
+            }
+            <h3 class="zh-list-card__name">{{ row.fullName }}</h3>
+            <p class="zh-list-card__subtitle">{{ row.email }}</p>
+          </div>
+          <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+            {{ row.status | t }}
+          </span>
+        </div>
+        @if (row.organizations) {
+          <div class="zh-list-card__meta">
+            <span><strong>{{ 'admin.users.column.organizations' | t }}:</strong> {{ row.organizations }}</span>
+          </div>
+        }
+      </div>
+    </ng-template>
+  </zh-collection-view>
 </div>
 
 <!-- Delete Confirmation Dialog -->

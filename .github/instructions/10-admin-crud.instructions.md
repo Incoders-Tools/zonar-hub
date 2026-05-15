@@ -126,7 +126,14 @@ If they exist in the menu, they must have complete CRUD behavior.
 
 ## 7. Shared table expectations
 
-The shared management table component must support:
+Every admin listing MUST be rendered through the shared `<zh-collection-view>`
+component (selector defined in `src/app/shared/components/zh-collection-view/`).
+The full contract — required inputs, default-mode rule, shared `.zh-list-card`
+markup, equivalence between table and cards, testing expectations — lives in
+`.github/skills/list-and-card-views/SKILL.md`. That skill is mandatory whenever
+you create or refactor a list.
+
+The shared component must support:
 - pagination
 - row selection
 - bulk actions
@@ -134,8 +141,11 @@ The shared management table component must support:
 - empty state
 - error state
 - user-driven column reordering
+- table ↔ cards toggle, persisted per page via `viewKey`
 
-If the shared table already exists, extend it in place instead of creating a second overlapping table solution.
+If the shared component already exists, extend it in place instead of creating
+a second overlapping list solution. Do not introduce a parallel cards grid
+alongside `<app-data-table>` or roll a feature-specific list wrapper.
 
 ---
 

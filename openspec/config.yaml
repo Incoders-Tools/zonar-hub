@@ -1,0 +1,83 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Project: Zonar Hub — Angular frontend for competitive padel circuit management
+  Stack: Angular 20, TypeScript 5.8 (strict + strictTemplates), SCSS, RxJS 7, Angular Material 3 + CDK
+  Architecture: feature-first standalone components, lazy-loaded routes
+    Features: admin, auth, home, legal, player, registration, tournaments
+    Core: auth, config, data, i18n, models, repositories, services, theme
+    Shared: components, directives, pipes, services, validators
+  Testing: Karma 6.4 + Jasmine 6; npm test (interactive), npm run test:ci (--watch=false --browsers=ChromeHeadless)
+  Coverage: karma-coverage 2.2 via ng test --code-coverage
+  Style: semantic design tokens only (_tokens.scss, _themes.scss, _mixins.scss); three themes: court-energy, clay-match, night-arena
+  Backend: .NET HTTP API at sibling zonar-hub-api; components must NOT call HttpClient directly (use repositories)
+  i18n: no hardcoded UI text; translation keys for locales es/en/pt
+
+strict_tdd: true
+
+testing:
+  strict_tdd: true
+  detected: "2026-05-14"
+
+  test_runner:
+    framework: Karma + Jasmine
+    command: "npm run test:ci"
+    interactive_command: "npm test"
+
+  layers:
+    unit:
+      available: true
+      tool: Karma 6.4 + Jasmine 6
+    integration:
+      available: true
+      tool: Angular TestBed
+    e2e:
+      available: false
+      tool: null
+
+  coverage:
+    available: true
+    command: "ng test --code-coverage"
+    tool: karma-coverage 2.2
+
+  quality_tools:
+    linter:
+      available: false
+      command: null
+    type_checker:
+      available: true
+      command: "tsc --noEmit"
+    formatter:
+      available: false
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Load relevant coding skills for the project stack
+    - Components must NOT call HttpClient directly — use repositories
+    - No hardcoded colors — use semantic design tokens only
+    - No hardcoded UI text — use i18n translation keys
+    - Every component needs a .spec.ts
+    tdd: true
+    test_command: "npm run test:ci"
+  verify:
+    test_command: "npm run test:ci"
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas (large removals)

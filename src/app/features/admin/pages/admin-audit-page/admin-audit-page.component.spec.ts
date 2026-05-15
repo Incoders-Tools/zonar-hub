@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminAuditPageComponent } from './admin-audit-page.component';
 import { AuditFacadeService } from './audit-facade.service';
+import { By } from '@angular/platform-browser';
 
 describe('AdminAuditPageComponent', () => {
   let component: AdminAuditPageComponent;
@@ -44,5 +45,11 @@ describe('AdminAuditPageComponent', () => {
     const rows = [{ id: 'log1', timestamp: '', userId: '', action: '', entityType: '', entityId: '', changes: '' }];
     component.onSelectionChanged(rows);
     expect(component.selectedLogs()).toEqual(rows);
+  });
+
+  it('should render listing via zh-collection-view', () => {
+    fixture.detectChanges();
+    const collectionView = fixture.debugElement.query(By.css('zh-collection-view'));
+    expect(collectionView).toBeTruthy();
   });
 });

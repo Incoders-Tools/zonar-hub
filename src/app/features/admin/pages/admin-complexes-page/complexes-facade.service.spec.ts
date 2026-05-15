@@ -1,29 +1,65 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { ComplexesFacadeService } from './complexes-facade.service';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
-import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
+import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
+import { Complex, Court, Availability } from '../../../../core/models';
 
-const adminDashboardSpy = jasmine.createSpyObj<AdminDashboardService>('AdminDashboardService', ['loadSummary']);
-adminDashboardSpy.loadSummary.and.returnValue(Promise.resolve());
+const seededComplexes: Complex[] = [
+  { id: 'cx1', name: 'Club Pádel Norte', key: 'club_padel_norte', address: 'Av. Norte 100', location: 'Palermo', cityId: '', cityName: '', sortOrder: 1, preponderance: 1, sportsSupported: [], courtsCount: 2, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: 'cx2', name: 'Centro Sur', key: 'centro_sur', address: 'Av. Sur 200', location: 'Sur', cityId: '', cityName: '', sortOrder: 2, preponderance: 2, sportsSupported: [], courtsCount: 1, isActive: false, createdAt: '2024-01-01', updatedAt: '2024-01-01' }
+];
+
+const seededCourts: Court[] = [
+  { id: 'ct1', complexId: 'cx1', name: 'Cancha 1', isActive: true }
+];
+
+const seededAvailability: Availability[] = [
+  { id: 'av1', courtId: 'ct1', dayOfWeek: 1, timeFrom: '08:00', timeTo: '10:00', isAvailable: true }
+];
 
 describe('ComplexesFacadeService', () => {
   let service: ComplexesFacadeService;
+  let complexRepoSpy: jasmine.SpyObj<ApiComplexRepository>;
+  let sportRepoSpy: jasmine.SpyObj<ApiSportRepository>;
 
   beforeEach(() => {
-    localStorage.clear();
+    complexRepoSpy = jasmine.createSpyObj<ApiComplexRepository>('ApiComplexRepository', [
+      'getAll', 'getForOrganization', 'getById', 'create', 'update', 'delete',
+      'getExistingKeys', 'getCourtsByComplexId', 'createCourt', 'updateCourt',
+      'deleteCourt', 'getAvailabilityByCourtId', 'saveAvailability'
+    ]);
+    complexRepoSpy.getAll.and.resolveTo([...seededComplexes]);
+    complexRepoSpy.getExistingKeys.and.resolveTo(seededComplexes.map(c => c.key));
+    complexRepoSpy.getCourtsByComplexId.and.resolveTo([...seededCourts]);
+    complexRepoSpy.getAvailabilityByCourtId.and.resolveTo([...seededAvailability]);
+    complexRepoSpy.delete.and.resolveTo();
+
+    sportRepoSpy = jasmine.createSpyObj<ApiSportRepository>('ApiSportRepository', [
+      'getAll', 'getForOrganization', 'getForTenant', 'setForOrganization', 'setForTenant',
+      'getById', 'create', 'update', 'delete', 'getExistingKeys'
+    ]);
+    sportRepoSpy.getAll.and.resolveTo([]);
+
+    const activeOrgSpy = jasmine.createSpyObj<ActiveOrganizationService>('ActiveOrganizationService', [], {
+      activeOrganizationId: signal(null)
+    });
+
+    const adminDashboardSpy = jasmine.createSpyObj<AdminDashboardService>('AdminDashboardService', ['loadSummary']);
+    adminDashboardSpy.loadSummary.and.returnValue(Promise.resolve());
+
     TestBed.configureTestingModule({
       providers: [
         ComplexesFacadeService,
-        ApiComplexRepository,
-        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        { provide: ApiComplexRepository, useValue: complexRepoSpy },
+        { provide: ApiSportRepository, useValue: sportRepoSpy },
+        { provide: ActiveOrganizationService, useValue: activeOrgSpy },
         { provide: AdminDashboardService, useValue: adminDashboardSpy }
       ]
     });
+
     service = TestBed.inject(ComplexesFacadeService);
   });
 
@@ -109,5 +145,4 @@ describe('ComplexesFacadeService', () => {
     expect(service.availability().length).toBeGreaterThan(0);
     expect(service.loadingAvailability()).toBe(false);
   });
-
 });

@@ -155,16 +155,33 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <app-data-table
+  <zh-collection-view
+    viewKey="admin-email-templates"
+    [items]="tableData()"
     [columns]="columns"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [rowActions]="rowActions"
     emptyMessageKey="admin.email-templates.emptyState"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            <span class="zh-list-card__eyebrow">{{ row.key }}</span>
+            <h3 class="zh-list-card__name">{{ row.subject }}</h3>
+            @if (row.description) {
+              <p class="zh-list-card__subtitle">{{ row.description }}</p>
+            }
+          </div>
+          <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+            {{ row.statusLabel | t }}
+          </span>
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 </div>
 
 @if (showDeleteDialog()) {

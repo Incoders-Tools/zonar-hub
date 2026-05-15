@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TournamentDetailPageComponent } from './tournament-detail-page.component';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('TournamentDetailPageComponent', () => {
   let component: TournamentDetailPageComponent;
@@ -9,7 +11,7 @@ describe('TournamentDetailPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TournamentDetailPageComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TournamentDetailPageComponent);

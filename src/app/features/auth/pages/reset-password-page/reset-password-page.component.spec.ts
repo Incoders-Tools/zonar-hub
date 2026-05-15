@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResetPasswordPageComponent } from './reset-password-page.component';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ResetPasswordPageComponent', () => {
   let component: ResetPasswordPageComponent;
@@ -9,7 +11,7 @@ describe('ResetPasswordPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ResetPasswordPageComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ResetPasswordPageComponent);

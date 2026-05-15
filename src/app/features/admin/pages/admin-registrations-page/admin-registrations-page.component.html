@@ -106,20 +106,40 @@
         (filtersCleared)="onFiltersCleared()">
       </app-filter-panel>
 
-      <app-data-table
+      <zh-collection-view
+        viewKey="admin-registrations"
+        [items]="tableData()"
         [columns]="listColumns"
-        [data]="tableData()"
         [loading]="facade.loading()"
-        [error]="facade.error()"
-        (retried)="facade.load()"
+        [error]="!!facade.error()"
         [selectable]="true"
         [paginated]="true"
-        [paginationPosition]="'both'"
         [pageSize]="50"
         [rowActions]="listRowActions"
+        emptyMessageKey="registrations.emptyState"
         (rowAction)="onRowActionClicked($event)"
-        (selectionChanged)="onSelectionChanged($event)">
-      </app-data-table>
+        (selectionChanged)="onSelectionChanged($event)"
+        (retried)="facade.load()">
+        <ng-template #cardTpl let-row>
+          <div class="zh-list-card">
+            <div class="zh-list-card__header">
+              <div class="zh-list-card__title">
+                @if (row.tournamentName) {
+                  <span class="zh-list-card__eyebrow">{{ row.tournamentName }}</span>
+                }
+                <h3 class="zh-list-card__name">{{ row.participantsDisplay }}</h3>
+              </div>
+              <span class="zh-list-card__status zh-list-card__status--{{ row.statusId === 'confirmed' ? 'active' : 'info' }}">
+                {{ row.statusLabel | t }}
+              </span>
+            </div>
+            <div class="zh-list-card__meta">
+              <span><strong>{{ 'registrations.column.source' | t }}:</strong> {{ row.source | t }}</span>
+              <span><strong>{{ 'registrations.column.registeredAt' | t }}:</strong> {{ row.registeredAt }}</span>
+            </div>
+          </div>
+        </ng-template>
+      </zh-collection-view>
     }
 
     <!-- IMPORTER TAB -->
@@ -297,18 +317,41 @@
         (filtersCleared)="onTokenFiltersCleared()">
       </app-filter-panel>
 
-      <app-data-table
+      <zh-collection-view
+        viewKey="admin-registration-tokens"
+        [items]="tokenTableData()"
         [columns]="tokenColumns"
-        [data]="tokenTableData()"
         [loading]="facade.loading()"
-        [error]="facade.error()"
-        (retried)="facade.load()"
+        [error]="!!facade.error()"
         [paginated]="true"
-        [paginationPosition]="'both'"
         [pageSize]="50"
         [rowActions]="tokenRowActions"
-        (rowAction)="onTokenAction($event)">
-      </app-data-table>
+        emptyMessageKey="registrations.tokens.emptyState"
+        (rowAction)="onTokenAction($event)"
+        (retried)="facade.load()">
+        <ng-template #cardTpl let-row>
+          <div class="zh-list-card">
+            <div class="zh-list-card__header">
+              <div class="zh-list-card__title">
+                <span class="zh-list-card__eyebrow">{{ 'registrations.tokens.codeLabel' | t }}</span>
+                <h3 class="zh-list-card__name">{{ row.code }}</h3>
+                @if (row.assignedTo) {
+                  <p class="zh-list-card__subtitle">{{ row.assignedTo }}</p>
+                }
+              </div>
+              <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+                {{ row.statusLabel | t }}
+              </span>
+            </div>
+            <div class="zh-list-card__meta">
+              @if (row.createdBy) {
+                <span><strong>{{ 'registrations.tokens.createdBy' | t }}:</strong> {{ row.createdBy }}</span>
+              }
+              <span><strong>{{ 'registrations.tokens.expiresAt' | t }}:</strong> {{ row.expiresAt }}</span>
+            </div>
+          </div>
+        </ng-template>
+      </zh-collection-view>
     }
 
     <!-- AI AGENT TAB -->

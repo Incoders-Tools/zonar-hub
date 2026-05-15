@@ -4,9 +4,14 @@ import { ComplexesFacadeService } from '../complexes-facade.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApiComplexRepository } from '../../../../../core/repositories/api/api-complex.repository';
+import { ApiSportRepository } from '../../../../../core/repositories/api/api-sport.repository';
+import { ActiveOrganizationService } from '../../../../../core/services/active-organization.service';
+import { AdminDashboardService } from '../../../../../core/services/admin-dashboard.service';
+import { FILE_STORAGE_REPOSITORY } from '../../../../../core/repositories/file-storage.repository';
 import { API_BASE_URL } from '../../../../../core/config/api-base-url.token';
 import { Complex } from '../../../../../core/models';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { signal } from '@angular/core';
 
 describe('ComplexesFormPanelComponent', () => {
   let component: ComplexesFormPanelComponent;
@@ -31,11 +36,43 @@ describe('ComplexesFormPanelComponent', () => {
   };
 
   beforeEach(async () => {
+    const complexRepoSpy = jasmine.createSpyObj<ApiComplexRepository>('ApiComplexRepository', [
+      'getAll', 'getForOrganization', 'getById', 'create', 'update', 'delete',
+      'getExistingKeys', 'getCourtsByComplexId', 'createCourt', 'updateCourt',
+      'deleteCourt', 'getAvailabilityByCourtId', 'saveAvailability'
+    ]);
+    complexRepoSpy.getAll.and.resolveTo([]);
+    complexRepoSpy.getExistingKeys.and.resolveTo([]);
+
+    const sportRepoSpy = jasmine.createSpyObj<ApiSportRepository>('ApiSportRepository', [
+      'getAll', 'getForOrganization', 'getForTenant', 'setForOrganization', 'setForTenant',
+      'getById', 'create', 'update', 'delete', 'getExistingKeys'
+    ]);
+    sportRepoSpy.getAll.and.resolveTo([]);
+
+    const activeOrgSpy = jasmine.createSpyObj<ActiveOrganizationService>('ActiveOrganizationService', [], {
+      activeOrganizationId: signal(null),
+      organizationChanged: signal(0)
+    });
+
+    const adminDashboardSpy = jasmine.createSpyObj<AdminDashboardService>('AdminDashboardService', ['loadSummary']);
+    adminDashboardSpy.loadSummary.and.returnValue(Promise.resolve());
+
+    const fileStorageMock = {
+      upload: jasmine.createSpy('upload').and.resolveTo('http://cdn/logo.png'),
+      delete: jasmine.createSpy('delete').and.resolveTo(),
+      buildTransformUrl: jasmine.createSpy('buildTransformUrl').and.callFake((url: string) => url)
+    };
+
     await TestBed.configureTestingModule({
       imports: [ComplexesFormPanelComponent, NoopAnimationsModule],
       providers: [
         ComplexesFacadeService,
-        ApiComplexRepository,
+        { provide: ApiComplexRepository, useValue: complexRepoSpy },
+        { provide: ApiSportRepository, useValue: sportRepoSpy },
+        { provide: ActiveOrganizationService, useValue: activeOrgSpy },
+        { provide: AdminDashboardService, useValue: adminDashboardSpy },
+        { provide: FILE_STORAGE_REPOSITORY, useValue: fileStorageMock },
         { provide: API_BASE_URL, useValue: 'http://localhost/api' },
         provideHttpClient(),
         provideHttpClientTesting()

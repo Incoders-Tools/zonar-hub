@@ -5,6 +5,8 @@ import { CategoryFacadeService } from '../category-facade.service';
 import { EntityKeyService } from '../../../../../shared/services/entity-key.service';
 import { I18nService } from '../../../../../core/i18n/i18n.service';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CategoryFormPanelComponent', () => {
   let component: CategoryFormPanelComponent;
@@ -25,7 +27,9 @@ describe('CategoryFormPanelComponent', () => {
       providers: [
         EntityKeyService,
         I18nService,
-        { provide: CategoryFacadeService, useValue: facadeSpy }
+        { provide: CategoryFacadeService, useValue: facadeSpy },
+        provideHttpClient(),
+        provideHttpClientTesting()
       ]
     }).compileComponents();
 

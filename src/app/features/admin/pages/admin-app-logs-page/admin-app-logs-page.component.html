@@ -48,23 +48,43 @@
     </div>
   </div>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-app-logs"
+    [items]="tableData()"
     [columns]="columns"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="true"
     [rowActions]="rowActions"
-    [paginated]="true"
-    [pageSize]="10"
-    paginationPosition="both"
     emptyMessageKey="common.noResults"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            <span class="zh-list-card__eyebrow">{{ row.level }} — {{ row.origin }}</span>
+            <h3 class="zh-list-card__name">{{ row.category }}</h3>
+          </div>
+          <span class="zh-list-card__status"
+            [class.zh-list-card__status--active]="row.resolved === 'Resolved'"
+            [class.zh-list-card__status--inactive]="row.resolved !== 'Resolved'">
+            {{ row.resolved }}
+          </span>
+        </div>
+        <div class="zh-list-card__meta">
+          <span><strong>{{ 'admin.appLogs.column.timestamp' | t }}:</strong> {{ row.createdAt }}</span>
+          <span><strong>{{ 'admin.appLogs.column.message' | t }}:</strong> {{ row.message }}</span>
+          @if (row.route) {
+            <span><strong>{{ 'admin.appLogs.column.route' | t }}:</strong> {{ row.route }}</span>
+          }
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 </div>
 
 <!-- Delete Confirmation Dialog -->

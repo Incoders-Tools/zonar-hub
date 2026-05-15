@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminAppLogsPageComponent } from './admin-app-logs-page.component';
 import { AppLogsFacadeService } from './app-logs-facade.service';
+import { By } from '@angular/platform-browser';
 
 describe('AdminAppLogsPageComponent', () => {
   let component: AdminAppLogsPageComponent;
@@ -50,5 +51,11 @@ describe('AdminAppLogsPageComponent', () => {
     const rows = [{ id: 'log1', createdAt: '', level: '', origin: '', category: '', message: '', resolved: '' }];
     component.onSelectionChanged(rows);
     expect(component.selectedLogs()).toEqual(rows);
+  });
+
+  it('should render listing via zh-collection-view', () => {
+    fixture.detectChanges();
+    const collectionView = fixture.debugElement.query(By.css('zh-collection-view'));
+    expect(collectionView).toBeTruthy();
   });
 });

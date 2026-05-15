@@ -29,23 +29,39 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-audit"
+    [items]="tableData()"
     [columns]="columns"
-    [data]="tableData()"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
-    (retried)="facade.load()"
     [selectable]="true"
     [rowActions]="rowActions"
-    [paginated]="true"
-    [pageSize]="10"
-    paginationPosition="both"
     emptyMessageKey="common.noResults"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            <span class="zh-list-card__eyebrow">{{ row.action }}</span>
+            <h3 class="zh-list-card__name">{{ row.entityType }}</h3>
+          </div>
+        </div>
+        <div class="zh-list-card__meta">
+          <span><strong>{{ 'admin.audit.column.timestamp' | t }}:</strong> {{ row.timestamp }}</span>
+          <span><strong>{{ 'admin.audit.column.user' | t }}:</strong> {{ row.userId }}</span>
+          <span><strong>{{ 'admin.audit.column.entityId' | t }}:</strong> {{ row.entityId }}</span>
+          @if (row.changes) {
+            <span><strong>{{ 'admin.audit.column.changes' | t }}:</strong> {{ row.changes }}</span>
+          }
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 </div>
 
 <!-- Delete Confirmation Dialog -->

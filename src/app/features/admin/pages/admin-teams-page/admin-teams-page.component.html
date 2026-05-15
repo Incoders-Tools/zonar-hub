@@ -65,29 +65,54 @@
     (sortRulesChanged)="onSortRulesChanged($event)">
   </app-filter-panel>
 
-  <!-- Data Table -->
-  <app-data-table
+  <!-- Collection (table + cards toggle) -->
+  <zh-collection-view
+    viewKey="admin-teams"
+    [items]="tableData()"
     [columns]="columns"
-    [data]="tableData()"
     [loading]="facade.loading()"
-    [error]="facade.error()"
-    (retried)="facade.load()"
+    [error]="!!facade.error()"
     [selectable]="true"
     [paginated]="true"
     [pageSize]="25"
     [rowActions]="teamRowActions"
     emptyMessageKey="admin.teams.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
-    (rowAction)="onRowActionClicked($event)">
-  </app-data-table>
+    (rowAction)="onRowActionClicked($event)"
+    (retried)="facade.load()">
+    <ng-template #cardTpl let-row>
+      <div class="zh-list-card">
+        <div class="zh-list-card__header">
+          <div class="zh-list-card__title">
+            @if (row.sportName) {
+              <span class="zh-list-card__eyebrow">{{ row.sportName }}</span>
+            }
+            <h3 class="zh-list-card__name">{{ row.name }}</h3>
+          </div>
+          <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+            {{ row.statusLabel | t }}
+          </span>
+        </div>
+        <div class="zh-list-card__meta">
+          @if (row.categoryName) {
+            <span><strong>{{ 'admin.teams.column.category' | t }}:</strong> {{ row.categoryName }}</span>
+          }
+          @if (row.captainName) {
+            <span><strong>{{ 'admin.teams.column.captain' | t }}:</strong> {{ row.captainName }}</span>
+          }
+          <span><strong>{{ 'admin.teams.column.players' | t }}:</strong> {{ row.playerCount }}</span>
+        </div>
+      </div>
+    </ng-template>
+  </zh-collection-view>
 
   <!-- Delete Confirm Dialog -->
   @if (showDeleteDialog()) {
     <app-confirm-dialog
       titleKey="admin.teams.deleteConfirm.title"
       messageKey="admin.teams.deleteConfirm.message"
-      confirmKey="common.delete"
-      cancelKey="common.cancel"
+      confirmLabelKey="common.delete"
+      cancelLabelKey="common.cancel"
       [dangerous]="true"
       [loading]="facade.deleting()"
       (confirmed)="executeDelete()"
@@ -100,8 +125,8 @@
     <app-confirm-dialog
       titleKey="admin.teams.bulkDeleteConfirm.title"
       messageKey="admin.teams.bulkDeleteConfirm.message"
-      confirmKey="common.delete"
-      cancelKey="common.cancel"
+      confirmLabelKey="common.delete"
+      cancelLabelKey="common.cancel"
       [dangerous]="true"
       [loading]="facade.deleting()"
       (confirmed)="executeBulkDelete()"

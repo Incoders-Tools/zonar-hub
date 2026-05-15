@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminTeamsPageComponent } from './admin-teams-page.component';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('AdminTeamsPageComponent', () => {
   let component: AdminTeamsPageComponent;
@@ -9,7 +11,7 @@ describe('AdminTeamsPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminTeamsPageComponent],
-      providers: [provideAnimations()]
+      providers: [provideAnimations(), provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminTeamsPageComponent);

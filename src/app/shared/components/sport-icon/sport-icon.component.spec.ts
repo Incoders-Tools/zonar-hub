@@ -37,7 +37,7 @@ describe('SportIconComponent', () => {
     fixture.detectChanges();
     const img = fixture.nativeElement.querySelector('.sport-icon--svg');
     expect(img).toBeTruthy();
-    expect(img.src).toContain('assets/icons/sports/padel.svg');
+    expect(img.src).toContain('uploads/sports-icons/padel.svg');
   });
 
   it('should apply custom size', () => {

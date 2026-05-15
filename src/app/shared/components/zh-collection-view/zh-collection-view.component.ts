@@ -70,6 +70,7 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
   readonly reorderable = input(false);
   readonly trackByKey = input('id');
   readonly rowActions = input<ZhCollectionRowAction[]>([]);
+  readonly rowActionsFilter = input<((row: T) => ZhCollectionRowAction[]) | null>(null);
 
   readonly rowAction = output<{ action: string; row: T }>();
   readonly selectionChanged = output<T[]>();

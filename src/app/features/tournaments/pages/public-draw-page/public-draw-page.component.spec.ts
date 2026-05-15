@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PublicDrawPageComponent } from './public-draw-page.component';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('PublicDrawPageComponent', () => {
   let component: PublicDrawPageComponent;
@@ -9,7 +11,7 @@ describe('PublicDrawPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PublicDrawPageComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PublicDrawPageComponent);

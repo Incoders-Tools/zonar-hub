@@ -9,7 +9,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
-import { DataTableColumn, DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
+import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { FilterField, FilterPanelComponent } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -35,7 +36,7 @@ interface EmailTemplateRow extends Record<string, unknown> {
     MatInputModule,
     MatIcon,
     TranslatePipe,
-    DataTableComponent,
+    ZhCollectionViewComponent,
     FilterPanelComponent,
     ActiveToggleComponent,
     AsyncButtonComponent,

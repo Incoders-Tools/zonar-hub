@@ -213,17 +213,32 @@
       @if (activeTab() === 'drafts') {
         <div class="planner-section">
           <h2>{{ 'planner.tab.drafts' | t }}</h2>
-          <app-data-table
+          <zh-collection-view
+            viewKey="admin-draw-planner"
+            [items]="savedDrawsTableData()"
             [columns]="savedDrawColumns"
-            [data]="savedDrawsTableData()"
             [loading]="loadingDraws()"
-            [paginated]="true"
-            [pageSize]="10"
             [rowActions]="savedDrawActions"
             [rowActionsFilter]="savedDrawActionsFilter"
             emptyMessageKey="planner.drafts.empty"
             (rowAction)="onDrawRowAction($event)">
-          </app-data-table>
+            <ng-template #cardTpl let-row>
+              <div class="zh-list-card">
+                <div class="zh-list-card__header">
+                  <div class="zh-list-card__title">
+                    <span class="zh-list-card__eyebrow">{{ row.tournamentName }}</span>
+                    <h3 class="zh-list-card__name">{{ row.name }}</h3>
+                  </div>
+                  <span class="zh-list-card__status">
+                    {{ row.statusLabelKey | t }}
+                  </span>
+                </div>
+                <div class="zh-list-card__meta">
+                  <span><strong>{{ 'planner.drafts.createdAt' | t }}:</strong> {{ row.generatedAt }}</span>
+                </div>
+              </div>
+            </ng-template>
+          </zh-collection-view>
         </div>
       }
     </div>
