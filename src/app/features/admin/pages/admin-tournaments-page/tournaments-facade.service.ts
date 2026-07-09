@@ -242,19 +242,30 @@ export class TournamentsFacadeService {
       
       const activeOrgId = this.activeOrg.activeOrganizationId();
       
-      const [tournaments, complexes, categories, genders, tournamentTypes, sports, modalities, ruleSets] = await Promise.all([
+      const [tournaments, complexes, categories, genders, tournamentTypes, allSports, orgSports, modalities, ruleSets] = await Promise.all([
         this.repository.getAll(),
         this.complexRepo.getAll(),
         this.categoryRepo.getAll(),
         this.genderRepo.getAll(),
         this.tournamentTypeRepo.getAll(),
-        // Load sports filtered by organization
+        this.sportRepo.getAll(),
+        // Load org-scoped sports to know which are enabled for this organization
         activeOrgId
           ? this.sportRepo.getForOrganization(activeOrgId)
-          : this.sportRepo.getAll(),
+          : Promise.resolve<Sport[]>([]),
         this.modalityRepo.getAll(),
         this.ruleRepo.getAll()
       ]);
+
+      // Build the effective sports list: full data from getAll() (which includes
+      // modalityIds), filtered to only those enabled for the active organization.
+      // When no org is active, all active sports are shown (system admin context).
+      const sports = activeOrgId
+        ? (() => {
+            const enabledIds = new Set(orgSports.map(s => s.id));
+            return allSports.filter(s => enabledIds.has(s.id) && s.isActive);
+          })()
+        : allSports;
       // Lookups need to land first so the name resolver can use them.
       this.complexesState.set(complexes);
       this.categoriesState.set(categories);
@@ -310,6 +321,35 @@ export class TournamentsFacadeService {
     } finally {
       this.loadingCourtsState.set(false);
     }
+  }
+
+  async loadCourtsForComplexes(complexIds: string[]): Promise<void> {
+    if (!complexIds.length) {
+      this.courtsForComplexState.set([]);
+      return;
+    }
+    try {
+      this.loadingCourtsState.set(true);
+      const results = await Promise.all(complexIds.map(id => this.courtRepo.getByComplexId(id)));
+      const seenIds = new Set<string>();
+      const allCourts = results.flat().filter(c => {
+        if (seenIds.has(c.id)) return false;
+        seenIds.add(c.id);
+        return true;
+      });
+      this.courtsForComplexState.set(allCourts);
+    } catch {
+      this.courtsForComplexState.set([]);
+    } finally {
+      this.loadingCourtsState.set(false);
+    }
+  }
+
+  getComplexNames(complexIds: string[]): string {
+    return complexIds
+      .map(id => this.complexesState().find(c => c.id === id)?.name ?? '')
+      .filter(Boolean)
+      .join(', ');
   }
 
   applyFilters(filters: TournamentFilters): void {

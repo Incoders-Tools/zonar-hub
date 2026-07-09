@@ -41,19 +41,28 @@
         formControlName="modalityId">
       </zh-select>
 
-      <!-- Complex Field -->
-      <zh-select
-        [label]="('admin.tournaments.form.complexId' | t)"
-        [required]="true"
-        [placeholder]="('admin.tournaments.form.selectComplex' | t)"
-        [options]="complexOptions()"
-        [error]="isFieldInvalid('complexId')"
-        [errorMessage]="(getErrorMessage('complexId') | t)"
-        formControlName="complexId">
-      </zh-select>
+      <!-- Complexes Multi-Select -->
+      <div class="tournaments-form__field tournaments-form__field--full">
+        <label class="tournaments-form__label">
+          {{ 'admin.tournaments.form.complexId' | t }} *
+        </label>
+        <div class="tournaments-form__complex-grid">
+          @for (complex of complexOptions(); track complex.value) {
+            <button type="button"
+              class="tournaments-form__complex-option"
+              [class.tournaments-form__complex-option--active]="isComplexSelected(complex.value)"
+              (click)="toggleComplex(complex.value)">
+              {{ complex.label }}
+            </button>
+          }
+        </div>
+        @if (isFieldInvalid('complexId')) {
+          <span class="tournaments-form__error">{{ ('admin.tournaments.error.complexRequired' | t) }}</span>
+        }
+      </div>
 
-      <!-- Courts from selected complex (collapsed by default) -->
-      @if (form.get('complexId')?.value) {
+      <!-- Courts from selected complexes -->
+      @if (hasSelectedComplexes()) {
         <div class="tournaments-form__field tournaments-form__field--full">
           <app-child-collection-grid
             mode="select"

@@ -9,6 +9,10 @@ export interface Tournament {
   name: string;
   complexId: string;
   complexName: string;
+  /** Multiple complexes where the tournament takes place. Populated in
+   *  the form when the admin selects more than one complex. The first
+   *  entry is also mirrored to `complexId` for backend backward-compat. */
+  complexIds?: string[];
   categoryId: string;
   categoryName: string;
   genderId: string;

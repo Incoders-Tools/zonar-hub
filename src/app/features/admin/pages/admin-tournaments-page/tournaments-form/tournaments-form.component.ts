@@ -100,6 +100,30 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   private readonly _selectedSportId = signal<string>('');
   private readonly _selectedModalityId = signal<string>('');
 
+  // Multi-select complexes
+  readonly selectedComplexIds = signal<string[]>([]);
+
+  readonly hasSelectedComplexes = computed(() => this.selectedComplexIds().length > 0);
+
+  isComplexSelected(complexId: string): boolean {
+    return this.selectedComplexIds().includes(complexId);
+  }
+
+  toggleComplex(complexId: string): void {
+    const current = this.selectedComplexIds();
+    const next = current.includes(complexId)
+      ? current.filter(id => id !== complexId)
+      : [...current, complexId];
+    this.selectedComplexIds.set(next);
+    this.facade.loadCourtsForComplexes(next).then(() => {
+      if (next.length > 0) {
+        this.selectedCourtIds.set(new Set(this.facade.courtsForComplex().map(c => c.id)));
+      } else {
+        this.selectedCourtIds.set(new Set());
+      }
+    });
+  }
+
   /** Dynamic label key for the max participants field, based on selected modality */
   readonly maxParticipantsLabelKey = computed(() => {
     const modalityId = this._selectedModalityId();
@@ -185,7 +209,6 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   private initializeForm(): void {
     this.form = this.fb.group({
       name: ['', [Validators.required]],
-      complexId: ['', [Validators.required]],
       sportId: ['', [Validators.required]],
       modalityId: ['', [Validators.required]],
       ruleSetId: [''],
@@ -263,17 +286,6 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       this._selectedModalityId.set(modalityId || '');
     });
 
-    // Complex changes: load courts for selected complex
-    this.form.get('complexId')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async (complexId) => {
-      await this.facade.loadCourtsForComplex(complexId || '');
-      if (complexId) {
-        // By default select all courts
-        this.selectedCourtIds.set(new Set(this.facade.courtsForComplex().map(c => c.id)));
-      } else {
-        this.selectedCourtIds.set(new Set());
-      }
-    });
-
     // Date changes: update computed status and enable/disable registration fields
     this.form.get('startDate')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       this._startDate.set(value || '');
@@ -301,9 +313,14 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       this._selectedSportId.set(tournament.sportId || '');
       this._selectedModalityId.set(tournament.modalityId || '');
 
+      // Restore complex selection
+      const complexIds = tournament.complexIds?.length
+        ? tournament.complexIds
+        : tournament.complexId ? [tournament.complexId] : [];
+      this.selectedComplexIds.set(complexIds);
+
       this.form.patchValue({
         name: tournament.name,
-        complexId: tournament.complexId,
         sportId: tournament.sportId || '',
         modalityId: tournament.modalityId || '',
         ruleSetId: tournament.ruleSetId || '',
@@ -333,9 +350,9 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
 
       this.updateRegistrationFieldsState();
 
-      // Load courts and restore selection
-      if (tournament.complexId) {
-        this.facade.loadCourtsForComplex(tournament.complexId).then(() => {
+      // Load courts for selected complexes and restore selection
+      if (complexIds.length > 0) {
+        this.facade.loadCourtsForComplexes(complexIds).then(() => {
           if (tournament.selectedCourtIds?.length) {
             this.selectedCourtIds.set(new Set(tournament.selectedCourtIds));
           } else {
@@ -345,6 +362,8 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       }
     } else {
       this.isEditing = false;
+      this.selectedComplexIds.set([]);
+      this.selectedCourtIds.set(new Set());
       this.form.get('key')?.enable();
       const nextOrder = this.facade.getNextSortOrder();
       this.form.patchValue({
@@ -376,11 +395,18 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   async onSave(): Promise<void> {
     this.submitted = true;
 
-    if (!this.form.valid) {
+    const complexIds = this.selectedComplexIds();
+    if (!this.form.valid || !complexIds.length) {
       return;
     }
 
     const formValue = this.form.getRawValue();
+    const primaryComplexId = complexIds[0] ?? '';
+
+    // Validate that at least one complex is selected
+    if (!complexIds.length) {
+      return;
+    }
 
     // Validate uniqueness
     if (!this.isEditing && formValue.key) {
@@ -401,7 +427,9 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
 
     const payload: Partial<Tournament> = {
       ...formValue,
-      complexName: this.facade.getComplexName(formValue.complexId),
+      complexId: primaryComplexId,
+      complexIds: complexIds,
+      complexName: this.facade.getComplexNames(complexIds),
       sportId: formValue.sportId,
       sportName: this.facade.getSportName(formValue.sportId),
       modalityId: formValue.modalityId,
@@ -435,22 +463,22 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   }
 
   getCourtEmptyMessageKey(): string {
-    const complexId = this.form.get('complexId')?.value;
+    const complexIds = this.selectedComplexIds();
     const courts = this.facade.courtsForComplex();
     const loading = this.facade.loadingCourts();
-    
+
     if (loading) {
       return 'admin.tournaments.courts.loading';
     }
-    
-    if (!complexId) {
+
+    if (!complexIds.length) {
       return 'admin.tournaments.courts.selectComplex';
     }
-    
+
     if (courts.length === 0) {
       return 'admin.tournaments.courts.noCourtsForComplex';
     }
-    
+
     return 'admin.tournaments.courts.empty';
   }
 
@@ -483,6 +511,9 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   }
 
   isFieldInvalid(controlName: string): boolean {
+    if (controlName === 'complexId') {
+      return this.submitted && this.selectedComplexIds().length === 0;
+    }
     const control = this.form.get(controlName);
     return (this.submitted && control?.invalid) || false;
   }
