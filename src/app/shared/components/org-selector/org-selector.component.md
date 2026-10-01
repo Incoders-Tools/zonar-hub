@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Organization switcher dropdown that allows users to select the active organization (tenant) context. Reads and updates the current organization through `ActiveOrganizationService`.
+Organization switcher dropdown that selects active context independently of the server-persisted primary organization. Admins with multiple assigned active organizations can confirm a primary replacement. System admins may switch to other active organizations, but cannot designate unassigned organizations as primary.
 
 ## Inputs
 
@@ -15,25 +15,27 @@ None. Selection changes are propagated through `ActiveOrganizationService`.
 ## Dependencies
 
 - `ActiveOrganizationService` (injected; provides available organizations and manages the active selection)
-- Angular Material select or menu component
+- `AuthService`, `NotificationService` and shared `ConfirmDialogComponent`
 
 ## States
 
 | State | Description |
 |-------|-------------|
 | Single org | Selector may be hidden or displayed as read-only when only one organization is available. |
-| Multiple orgs | Dropdown is active and allows switching. |
-| Loading | Organizations are being fetched. |
+| Multiple orgs | Dropdown is active and allows switching; the primary badge appears only when multiple assigned active organizations are eligible. |
+| Saving | Confirmation disables repeat submission until the API responds. |
+| Failure | Existing primary and active selection remain unchanged; an error notification appears. |
+| Success | Primary moves to the first row, without switching active context. |
 
 ## Accessibility
 
-- Dropdown is keyboard-navigable (arrow keys, Enter, Escape).
-- Active organization is announced to screen readers on change.
-- Label is associated with the control via `aria-labelledby` or `aria-label`.
+- Separate native buttons provide keyboard access to switch and set-primary actions without nesting interactive elements.
+- Active context is marked with `aria-current`; search and primary actions have translated accessible labels.
+- The shared confirmation dialog warns before replacement.
 
 ## i18n
 
-- Dropdown label and placeholder use translation keys.
+- Dropdown labels, confirmation warning and success/error notifications use translation keys in es/en/pt.
 - Organization names are data-driven (not translated).
 
 ## Theming

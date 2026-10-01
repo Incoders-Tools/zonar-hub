@@ -15,7 +15,7 @@ import { AsyncButtonComponent } from '../async-button/async-button.component';
           <p class="confirm-dialog__warning">{{ warningKey() | t }}</p>
         }
         <div class="confirm-dialog__actions">
-          <button class="confirm-dialog__cancel" (click)="onCancel()">
+          <button class="confirm-dialog__cancel" [disabled]="loading()" (click)="onCancel()">
             {{ cancelLabelKey() | t }}
           </button>
           <app-async-button
@@ -43,6 +43,8 @@ export class ConfirmDialogComponent {
   readonly cancelled = output<void>();
 
   onCancel(): void {
-    this.cancelled.emit();
+    if (!this.loading()) {
+      this.cancelled.emit();
+    }
   }
 }

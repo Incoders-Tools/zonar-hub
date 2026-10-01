@@ -13,7 +13,7 @@
 
   <!-- Dropdown -->
   @if (isOpen()) {
-    <div class="org-selector__dropdown" role="listbox" [attr.aria-label]="'org.selector.label' | t">
+    <div class="org-selector__dropdown" [attr.aria-label]="'org.selector.label' | t">
       <div class="org-selector__dropdown-header">
         <span class="org-selector__dropdown-title">{{ 'org.selector.switch' | t }}</span>
       </div>
@@ -28,25 +28,25 @@
             (ngModelChange)="searchQuery.set($event)"
             (click)="$event.stopPropagation()"
             autocomplete="off"
-            aria-label="Search organizations">
+            [attr.aria-label]="'org.selector.search' | t">
         </div>
       }
 
       <div class="org-selector__list">
         @for (org of filteredOrganizations(); track org.id) {
+          <div class="org-selector__row">
           <button
             class="org-selector__option"
             type="button"
-            role="option"
             [class.org-selector__option--active]="org.id === activeOrgId()"
             [class.org-selector__option--primary]="org.id === primaryOrgId()"
-            [attr.aria-selected]="org.id === activeOrgId()"
+            [attr.aria-current]="org.id === activeOrgId() ? 'true' : null"
             (click)="selectOrganization(org.id)">
             <span class="org-selector__option-dot"
                   [class.org-selector__option-dot--active]="org.id === activeOrgId()"></span>
             <span class="org-selector__option-info">
               <span class="org-selector__option-name">{{ org.name }}</span>
-              @if (org.id === primaryOrgId()) {
+              @if (hasMultiplePrimaryEligible() && org.id === primaryOrgId()) {
                 <span class="org-selector__option-badge">{{ 'org.selector.primary' | t }}</span>
               }
             </span>
@@ -54,6 +54,12 @@
               <span class="org-selector__option-check">✓</span>
             }
           </button>
+          @if (canSetPrimary() && primaryEligibleIds().has(org.id) && org.id !== primaryOrgId()) {
+            <button class="org-selector__set-primary" type="button"
+              [attr.aria-label]="('org.selector.setPrimary' | t) + ': ' + org.name"
+              (click)="requestPrimary(org.id)">{{ 'org.selector.setPrimary' | t }}</button>
+          }
+          </div>
         } @empty {
           <div class="org-selector__empty">{{ 'org.selector.noResults' | t }}</div>
         }
@@ -61,3 +67,14 @@
     </div>
   }
 </div>
+@if (pendingPrimaryId()) {
+  <app-confirm-dialog
+    [titleKey]="'org.selector.confirmTitle'"
+    [messageKey]="'org.selector.confirmMessage'"
+    [warningKey]="'org.selector.confirmWarning'"
+    [confirmLabelKey]="'org.selector.setPrimary'"
+    [confirmVariant]="'primary'"
+    [loading]="savingPrimary()"
+    (confirmed)="confirmPrimary()"
+    (cancelled)="pendingPrimaryId.set(null)" />
+}
