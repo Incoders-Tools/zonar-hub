@@ -72,6 +72,7 @@
 
   &__card-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--zh-space-xs);
     margin-top: auto;
     padding-top: var(--zh-space-sm);

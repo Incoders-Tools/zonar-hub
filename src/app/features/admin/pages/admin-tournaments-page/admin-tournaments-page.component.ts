@@ -103,7 +103,7 @@ export class AdminTournamentsPageComponent implements OnInit {
 
   readonly tournamentRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'share', labelKey: 'common.share', action: 'share', variant: 'default' as const },
+    { icon: 'share', labelKey: 'share.label', action: 'share', variant: 'default' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
