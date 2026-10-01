@@ -60,7 +60,7 @@ export class ZhSelectComponent implements ControlValueAccessor {
   );
 
   protected readonly hasError = computed(() =>
-    !!this.error() || (!!this.errorMessage() && this.touched())
+    !!this.error() || (!!this.errorMessage() && this.touched() && !this.value())
   );
 
   protected readonly autoId = computed(() =>

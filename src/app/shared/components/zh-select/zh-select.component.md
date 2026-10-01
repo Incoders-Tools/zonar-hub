@@ -41,7 +41,7 @@ No expone outputs propios. El valor se comunica por CVA (`formControlName`, `ngM
 ## Comportamiento de template / estructura UI
 - Renderiza label opcional, `<select>`, placeholder opcional, opciones, descripción de opción seleccionada, error o hint.
 - `selectedDescription` se calcula desde la opción cuyo `value` coincide con el valor actual.
-- `hasError` es true si `error` es true o si existe `errorMessage` y el control fue tocado.
+- `hasError` es true si `error` es true o si existe `errorMessage`, el control fue tocado y el valor está vacío. Para errores distintos de required con valor seleccionado, el consumidor debe pasar `error=true`.
 - `autoId` se calcula con `Math.random()` cuando no se provee `inputId`.
 
 ## Estados y variantes
@@ -69,8 +69,8 @@ No expone outputs propios. El valor se comunica por CVA (`formControlName`, `ngM
 - Hardcoded/fallbacks observados: color embebido en SVG `fill='%234a6349'`, fallbacks `#d32f2f`, `rgba(59, 130, 246, 0.15)` y `rgba(211, 47, 47, 0.15)`.
 
 ## Testing
-- No existe `zh-select.component.spec.ts` en el estado actual.
-- Deben cubrirse CVA, disabled desde FormControl/input, required, error/hint, descripción seleccionada, ids/labels y opciones disabled.
+- `zh-select.component.spec.ts` cubre required vacío/tocado, selección válida y error explícito con valor seleccionado.
+- Queda pendiente cobertura de CVA disabled, descripción seleccionada, ids/labels y opciones disabled.
 
 ## Guía de reutilización
 - Usar para selects estándar de formularios admin cuando se necesita consistencia visual y CVA.
@@ -78,8 +78,6 @@ No expone outputs propios. El valor se comunica por CVA (`formControlName`, `ngM
 - No usar para autocomplete, búsqueda asíncrona o multiselect; esos patrones requieren componente compartido específico o extensión controlada.
 
 ## Compliance gaps
-- Falta `zh-select.component.spec.ts`.
-- Falta `zh-select.component.md` previo; este archivo completa la documentación.
 - API actual no fuerza translation keys y renderiza strings literales.
 - Faltan asociaciones `aria-describedby`.
 - Hay fallbacks/colores hardcodeados en SCSS y SVG embebido.
