@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, adminGuard, adminOrUserGuard, toolGuard, playerGuard, guestGuard, systemAdminGuard } from './core/auth/auth.guards';
+import { complexesPendingSaveGuard } from './features/admin/pages/admin-complexes-page/complexes-pending-save.guard';
 
 export const routes: Routes = [
   // ─── Public routes (with public layout) ───
@@ -133,12 +134,12 @@ export const routes: Routes = [
       {
         path: 'complexes',
         loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent),
-        data: { toolKey: 'complexes' }, canActivate: [toolGuard]
+        data: { toolKey: 'complexes' }, canActivate: [toolGuard], canDeactivate: [complexesPendingSaveGuard]
       },
       {
         path: 'catalogs/complexes',
         loadComponent: () => import('./features/admin/pages/admin-complexes-page/admin-complexes-page.component').then(m => m.AdminComplexesPageComponent),
-        data: { toolKey: 'complexes' }, canActivate: [toolGuard]
+        data: { toolKey: 'complexes' }, canActivate: [toolGuard], canDeactivate: [complexesPendingSaveGuard]
       },
       {
         path: 'catalogs/categories',
