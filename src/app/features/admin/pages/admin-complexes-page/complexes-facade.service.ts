@@ -22,11 +22,14 @@ export class ComplexesFacadeService {
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly adminDashboard = inject(AdminDashboardService);
   private lastOrgId: string | null | undefined = undefined;
+  private loadRequestSequence = 0;
+  private requestedOrgId: string | null | undefined = undefined;
 
   constructor() {
     effect(() => {
       const currentOrgId = this.activeOrg.activeOrganizationId();
       if (this.lastOrgId !== undefined && currentOrgId !== this.lastOrgId) {
+        this.invalidateCourts();
         this.load();
       }
       this.lastOrgId = currentOrgId;
@@ -47,6 +50,7 @@ export class ComplexesFacadeService {
   private readonly selectedCourtState = signal<Court | null>(null);
   private readonly loadingCourtsState = signal(false);
   private readonly savingCourtState = signal(false);
+  private courtsRequestSequence = 0;
 
   // Availability state
   private readonly availabilityState = signal<Availability[]>([]);
@@ -120,22 +124,33 @@ export class ComplexesFacadeService {
   // --- Complex CRUD ---
 
   async load(): Promise<void> {
+    const requestSequence = ++this.loadRequestSequence;
+    const activeOrgId = this.activeOrg.activeOrganizationId();
+    if (this.requestedOrgId !== undefined && activeOrgId !== this.requestedOrgId) {
+      this.entitiesState.set([]);
+      this.sportsState.set([]);
+      this.invalidateCourts();
+      this.availabilityState.set([]);
+    }
+    this.requestedOrgId = activeOrgId;
+    const isCurrent = () => requestSequence === this.loadRequestSequence
+      && activeOrgId === this.activeOrg.activeOrganizationId();
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
-      const activeOrgId = this.activeOrg.activeOrganizationId();
       const [complexes, sports] = await Promise.all([
         this.repository.getAll(),
         activeOrgId
           ? this.sportRepository.getForOrganization(activeOrgId)
           : this.sportRepository.getAll()
       ]);
+      if (!isCurrent()) return;
       this.entitiesState.set(complexes);
       this.sportsState.set(sports.filter(s => s.isActive));
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      if (isCurrent()) this.errorState.set((error as Error).message);
     } finally {
-      this.loadingState.set(false);
+      if (isCurrent()) this.loadingState.set(false);
     }
   }
 
@@ -188,14 +203,15 @@ export class ComplexesFacadeService {
   async saveComplexWithCourts(
     complex: Complex | ComplexDraft,
     courts: CourtDraft[],
-    deleteCourtIds: string[]
+    deleteCourtIds: string[],
+    expectedOrganizationId: string | null = this.activeOrg.activeOrganizationId()
   ): Promise<boolean> {
     try {
       this.savingState.set(true);
       this.errorState.set(null);
-      const organizationId = this.activeOrg.activeOrganizationId();
-      if (!organizationId) {
-        throw new Error('No active organization selected');
+      const organizationId = expectedOrganizationId;
+      if (!organizationId || this.activeOrg.activeOrganizationId() !== organizationId) {
+        throw new Error('Active organization changed before save');
       }
       const complexId = complex.id ?? null;
       const request: SaveComplexWithCourtsRequest = {
@@ -222,7 +238,9 @@ export class ComplexesFacadeService {
         })),
         deleteCourtIds
       };
+      if (this.activeOrg.activeOrganizationId() !== organizationId) return false;
       const result = await this.repository.saveWithCourts(request);
+      if (this.activeOrg.activeOrganizationId() !== organizationId) return true;
       const now = new Date().toISOString();
       const saved: Complex = {
         ...complex,
@@ -340,15 +358,32 @@ export class ComplexesFacadeService {
 
   // --- Courts ---
 
-  async loadCourts(complexId: string): Promise<void> {
+  invalidateCourts(): void {
+    ++this.courtsRequestSequence;
+    this.courtsState.set([]);
+    this.selectedCourtState.set(null);
+    this.loadingCourtsState.set(false);
+  }
+
+  async loadCourts(complexId: string): Promise<boolean> {
+    const requestSequence = ++this.courtsRequestSequence;
+    const organizationId = this.activeOrg.activeOrganizationId();
     try {
       this.loadingCourtsState.set(true);
+      this.errorState.set(null);
       const courts = await this.repository.getCourtsByComplexId(complexId);
+      if (requestSequence !== this.courtsRequestSequence || organizationId !== this.activeOrg.activeOrganizationId()) return false;
       this.courtsState.set(courts);
+      return true;
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      if (requestSequence === this.courtsRequestSequence) {
+        this.errorState.set((error as Error).message);
+      }
+      return false;
     } finally {
-      this.loadingCourtsState.set(false);
+      if (requestSequence === this.courtsRequestSequence) {
+        this.loadingCourtsState.set(false);
+      }
     }
   }
 
