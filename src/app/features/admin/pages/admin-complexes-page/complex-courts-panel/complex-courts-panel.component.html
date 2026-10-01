@@ -2,7 +2,7 @@
   <div class="courts-panel__header">
     <h3 class="courts-panel__title">{{ 'admin.complexes.courts.title' | t }}</h3>
     <div class="courts-panel__actions">
-      @if (!showForm()) {
+      @if (!availabilityOnly() && !showForm()) {
         <app-async-button variant="primary" [disabled]="loading() || mutationsBlocked()" (clicked)="openCreate()">
           {{ 'admin.complexes.courts.form.create' | t }}
         </app-async-button>
@@ -11,7 +11,7 @@
   </div>
 
   <!-- Inline Court Form -->
-  @if (showForm()) {
+  @if (!availabilityOnly() && showForm()) {
     <div class="courts-panel__form" @slideDown>
       <div class="courts-panel__form-header">
         <h4 class="courts-panel__form-title">
@@ -106,14 +106,14 @@
     [data]="tableData"
     [loading]="loading()"
     [activeRowId]="activeCourtId()"
-    [rowActions]="draftMode() ? draftRowActions : courtRowActions"
+    [rowActions]="rowActions"
     emptyMessageKey="admin.complexes.courts.emptyState"
     (rowAction)="onRowAction($event)">
   </app-data-table>
 </div>
 
 <!-- Delete Court Dialog -->
-@if (showDeleteDialog()) {
+@if (!availabilityOnly() && showDeleteDialog()) {
   <app-confirm-dialog
     titleKey="admin.complexes.courts.confirm.deleteTitle"
     messageKey="admin.complexes.courts.confirm.deleteMessage"

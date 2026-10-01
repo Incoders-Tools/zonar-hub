@@ -121,13 +121,10 @@
 
       <app-complex-courts-panel
         [complexId]="courtsComplexId()!"
+        [availabilityOnly]="true"
         [courts]="facade.courts()"
         [loading]="facade.loadingCourts()"
-        [saving]="facade.savingCourt()"
         [activeCourtId]="availabilityCourtId()"
-        [sports]="facade.sports()"
-        (courtSaved)="onCourtSaved($event)"
-        (courtDeleted)="onCourtDeleted($event)"
         (availabilityRequested)="onAvailabilityRequested($event)">
       </app-complex-courts-panel>
 

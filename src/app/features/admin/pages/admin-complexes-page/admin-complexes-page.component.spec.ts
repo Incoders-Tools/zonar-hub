@@ -11,6 +11,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Complex } from '../../../../core/models';
 import { ComplexesFormPanelComponent } from './complexes-form-panel/complexes-form-panel.component';
+import { ComplexCourtsPanelComponent } from './complex-courts-panel/complex-courts-panel.component';
 import { By } from '@angular/platform-browser';
 import { FILE_STORAGE_REPOSITORY } from '../../../../core/repositories/file-storage.repository';
 import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
@@ -162,6 +163,27 @@ describe('AdminComplexesPageComponent', () => {
     // Toggle off
     component.toggleCourtsPanel(row);
     expect(component.courtsComplexId()).toBeNull();
+  });
+
+  it('uses the separate court list only for persisted-court availability', async () => {
+    complexRepoSpy.getCourtsByComplexId.and.resolveTo([
+      { id: 'ct1', complexId: 'cx1', name: 'Court', isActive: true }
+    ]);
+    complexRepoSpy.getAvailabilityByCourtId.and.resolveTo([]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.toggleCourtsPanel(component.tableData()[0]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const panel = fixture.debugElement.query(By.directive(ComplexCourtsPanelComponent)).componentInstance as ComplexCourtsPanelComponent;
+    expect(panel.availabilityOnly()).toBeTrue();
+    expect(panel.rowActions.map(action => action.action)).toEqual(['availability']);
+    panel.onRowAction({ action: 'availability', row: panel.tableData[0] });
+    expect(complexRepoSpy.getAvailabilityByCourtId).toHaveBeenCalledWith('ct1');
+    expect(component.availabilityCourtId()).toBe('ct1');
+    expect(complexRepoSpy.createCourt).not.toHaveBeenCalled();
+    expect(complexRepoSpy.updateCourt).not.toHaveBeenCalled();
+    expect(complexRepoSpy.deleteCourt).not.toHaveBeenCalled();
   });
 
   it('should apply filters', () => {

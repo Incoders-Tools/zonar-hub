@@ -56,6 +56,7 @@ export class ComplexCourtsPanelComponent {
 
   readonly complexId = input<string>('');
   readonly draftMode = input(false);
+  readonly availabilityOnly = input(false);
   readonly courts = input.required<Court[]>();
   readonly loading = input(false);
   readonly mutationsBlocked = input(false);
@@ -89,6 +90,11 @@ export class ComplexCourtsPanelComponent {
   ];
 
   readonly draftRowActions = this.courtRowActions.filter(action => action.action !== 'availability');
+  readonly availabilityRowActions = this.courtRowActions.filter(action => action.action === 'availability');
+
+  get rowActions() {
+    return this.availabilityOnly() ? this.availabilityRowActions : this.draftMode() ? this.draftRowActions : this.courtRowActions;
+  }
   readonly surfaceTypes = ['synthetic', 'cement', 'grass', 'clay'];
 
   get tableData(): CourtRow[] {
@@ -106,7 +112,7 @@ export class ComplexCourtsPanelComponent {
   }
 
   openCreate(): void {
-    if (this.loading() || this.mutationsBlocked()) return;
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked()) return;
     this.editingCourt.set(null);
     this.initForm();
     this.showForm.set(true);
@@ -114,7 +120,7 @@ export class ComplexCourtsPanelComponent {
   }
 
   openEdit(row: CourtRow): void {
-    if (this.loading() || this.mutationsBlocked()) return;
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked()) return;
     const court = this.courts().find(ct => ct.id === row.id);
     if (court) {
       this.editingCourt.set(court);
@@ -154,7 +160,7 @@ export class ComplexCourtsPanelComponent {
   }
 
   saveCourt(): void {
-    if (this.loading() || this.mutationsBlocked() || !this.courtForm.valid) return;
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked() || !this.courtForm?.valid) return;
 
     const formValue = this.courtForm.getRawValue();
     const editing = this.editingCourt();
@@ -172,19 +178,20 @@ export class ComplexCourtsPanelComponent {
   }
 
   onRowAction(event: { action: string; row: CourtRow }): void {
+    if (this.availabilityOnly() && event.action !== 'availability') return;
     if ((this.loading() || this.mutationsBlocked()) && event.action !== 'availability') return;
     if (event.action === 'edit') {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.deletingId.set(event.row.id);
       this.showDeleteDialog.set(true);
-    } else if (event.action === 'availability' && !this.draftMode()) {
+    } else if (event.action === 'availability' && !this.draftMode() && this.courts().some(court => court.id === event.row.id)) {
       this.availabilityRequested.emit(event.row.id);
     }
   }
 
   executeDelete(): void {
-    if (this.loading() || this.mutationsBlocked()) return;
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked()) return;
     const id = this.deletingId();
     if (id) {
       this.courtDeleted.emit(id);

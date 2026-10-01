@@ -312,18 +312,6 @@ export class AdminComplexesPageComponent implements OnInit {
     this.availabilityCourtId.set(null);
   }
 
-  async onCourtSaved(court: any): Promise<void> {
-    await this.facade.saveCourt(court);
-  }
-
-  async onCourtDeleted(id: string): Promise<void> {
-    await this.facade.deleteCourt(id);
-    // Close availability if it was for this court
-    if (this.availabilityCourtId() === id) {
-      this.availabilityCourtId.set(null);
-    }
-  }
-
   // --- Availability ---
 
   onAvailabilityRequested(courtId: string): void {

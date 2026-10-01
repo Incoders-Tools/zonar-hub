@@ -47,9 +47,7 @@ export class ComplexesFacadeService {
 
   // Courts state
   private readonly courtsState = signal<Court[]>([]);
-  private readonly selectedCourtState = signal<Court | null>(null);
   private readonly loadingCourtsState = signal(false);
-  private readonly savingCourtState = signal(false);
   private courtsRequestSequence = 0;
 
   // Availability state
@@ -68,9 +66,7 @@ export class ComplexesFacadeService {
   readonly error = this.errorState;
 
   readonly courts = this.courtsState;
-  readonly selectedCourt = this.selectedCourtState;
   readonly loadingCourts = this.loadingCourtsState;
-  readonly savingCourt = this.savingCourtState;
 
   readonly availability = this.availabilityState;
   readonly loadingAvailability = this.loadingAvailabilityState;
@@ -361,7 +357,6 @@ export class ComplexesFacadeService {
   invalidateCourts(): void {
     ++this.courtsRequestSequence;
     this.courtsState.set([]);
-    this.selectedCourtState.set(null);
     this.loadingCourtsState.set(false);
   }
 
@@ -384,59 +379,6 @@ export class ComplexesFacadeService {
       if (requestSequence === this.courtsRequestSequence) {
         this.loadingCourtsState.set(false);
       }
-    }
-  }
-
-  async saveCourt(court: Court | Omit<Court, 'id'>): Promise<boolean> {
-    try {
-      this.savingCourtState.set(true);
-      const isUpdate = 'id' in court && court.id;
-
-      if (isUpdate) {
-        const updated = await this.repository.updateCourt((court as Court).id, court);
-        const idx = this.courtsState().findIndex(ct => ct.id === (court as Court).id);
-        if (idx !== -1) {
-          const updatedList = [...this.courtsState()];
-          updatedList[idx] = updated;
-          this.courtsState.set(updatedList);
-        }
-      } else {
-        const created = await this.repository.createCourt(court as Omit<Court, 'id'>);
-        this.courtsState.set([...this.courtsState(), created]);
-        // Update courtsCount in local state
-        const complexId = (court as Omit<Court, 'id'>).complexId;
-        this.entitiesState.update(list =>
-          list.map(c => c.id === complexId ? { ...c, courtsCount: this.courtsState().length } : c)
-        );
-      }
-
-      return true;
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-      return false;
-    } finally {
-      this.savingCourtState.set(false);
-    }
-  }
-
-  async deleteCourt(id: string): Promise<boolean> {
-    try {
-      this.savingCourtState.set(true);
-      const court = this.courtsState().find(ct => ct.id === id);
-      await this.repository.deleteCourt(id);
-      this.courtsState.set(this.courtsState().filter(ct => ct.id !== id));
-      // Update courtsCount in local state
-      if (court) {
-        this.entitiesState.update(list =>
-          list.map(c => c.id === court.complexId ? { ...c, courtsCount: this.courtsState().length } : c)
-        );
-      }
-      return true;
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-      return false;
-    } finally {
-      this.savingCourtState.set(false);
     }
   }
 

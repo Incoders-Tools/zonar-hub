@@ -2,7 +2,7 @@
 
 ## Propósito
 
-`ComplexCourtsPanelComponent` administra la colección de canchas de un complejo dentro de la pantalla de Complexes. Permite crear, editar, eliminar y solicitar la edición de disponibilidad de una cancha.
+`ComplexCourtsPanelComponent` presenta canchas en dos modos: `draftMode` dentro del formulario agregado permite crear, editar y eliminar borradores sin persistirlos directamente; `availabilityOnly` en la lista separada muestra canchas persistidas y permite abrir su disponibilidad, sin mutaciones de canchas. El formulario padre es dueño del guardado atómico de complejo y canchas.
 
 ## API pública
 
@@ -10,8 +10,11 @@
 
 | Input | Tipo | Requerido | Descripción |
 | --- | --- | --- | --- |
-| `complexId` | `string` | Sí | Id del complejo padre para crear nuevas canchas. |
+| `complexId` | `string` | No | Id del complejo padre para nuevas canchas; predeterminado `''` antes de crear el complejo. |
 | `courts` | `Court[]` | Sí | Colección de canchas a renderizar. |
+| `draftMode` | `boolean` | No | Edición local de borradores; oculta disponibilidad. |
+| `availabilityOnly` | `boolean` | No | Solo disponibilidad para canchas persistidas; oculta y bloquea crear, editar y eliminar. |
+| `mutationsBlocked` | `boolean` | No | Bloquea cambios de borrador durante la carga o el guardado agregado. |
 | `loading` | `boolean` | No | Estado de carga de canchas. Default `false`. |
 | `saving` | `boolean` | No | Estado de guardado/eliminación de cancha. Default `false`. |
 | `activeCourtId` | `string \| null` | No | Id de la cancha cuya disponibilidad está abierta. |
@@ -24,6 +27,7 @@
 | `courtSaved` | `Court \| Omit<Court, 'id'>` | Emite payload de create/update hacia el padre. |
 | `courtDeleted` | `string` | Emite id de cancha confirmada para eliminar. |
 | `availabilityRequested` | `string` | Emite id de cancha para abrir/cerrar disponibilidad. |
+| `editorOpen` | `boolean` | Informa al formulario padre cuando el editor de borradores se abre o se cierra. |
 
 ### Estado interno
 
@@ -51,7 +55,7 @@
 - Form inline animado con campos: nombre, superficie, deportes, indoor y activo.
 - Superficies fijas: `synthetic`, `cement`, `grass`, `clay`.
 - Deportes se muestran como checkboxes generados desde `sports()`; el texto visible usa `sport.name` directamente.
-- Tabla `app-data-table` con columnas nombre, superficie, indoor y estado, más acciones editar/disponibilidad/eliminar.
+- Tabla `app-data-table` con columnas nombre, superficie, indoor y estado. En `draftMode` muestra editar/eliminar; en `availabilityOnly` solo disponibilidad. Los cambios de borrador se guardan únicamente con el complejo mediante la operación agregada atómica.
 - Confirm dialog para eliminación individual.
 
 ## States and variants
@@ -95,9 +99,10 @@
 - transformación de canchas a filas de tabla;
 - abrir/cerrar form;
 - emisión de `courtDeleted`;
-- emisión de `availabilityRequested`.
+- emisión de `availabilityRequested`;
+- modo `availabilityOnly`: solo acciones de disponibilidad y rechazo de mutaciones de canchas.
 
-No cubre: validación/submit de create/update, selección de deportes, estado disabled en edición sin dirty, confirm dialog desde interacción real, loading/empty renderizados, fila activa.
+No cubre: validación/envío completo de create/update, selección de deportes, estado deshabilitado en edición sin cambios, confirmación desde interacción real, loading/empty renderizados, fila activa.
 
 ## Admin CRUD compliance
 

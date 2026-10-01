@@ -55,6 +55,32 @@ describe('ComplexCourtsPanelComponent', () => {
     expect(component.courtDeleted.emit).toHaveBeenCalledWith('ct1');
   });
 
+  it('shows only availability and rejects mutations in availability-only mode', () => {
+    fixture.componentRef.setInput('availabilityOnly', true);
+    fixture.detectChanges();
+    const saved = spyOn(component.courtSaved, 'emit');
+    const deleted = spyOn(component.courtDeleted, 'emit');
+    expect(fixture.nativeElement.querySelector('.courts-panel__actions app-async-button')).toBeNull();
+    expect(component.rowActions.map(action => action.action)).toEqual(['availability']);
+    component.openCreate();
+    component.openEdit(component.tableData[0]);
+    component.onRowAction({ action: 'delete', row: component.tableData[0] });
+    component.deletingId.set('ct1');
+    component.executeDelete();
+    expect(component.showForm()).toBeFalse();
+    expect(component.showDeleteDialog()).toBeFalse();
+    expect(saved).not.toHaveBeenCalled();
+    expect(deleted).not.toHaveBeenCalled();
+  });
+
+  it('still requests availability for persisted courts in availability-only mode', () => {
+    fixture.componentRef.setInput('availabilityOnly', true);
+    fixture.detectChanges();
+    const requested = spyOn(component.availabilityRequested, 'emit');
+    component.onRowAction({ action: 'availability', row: component.tableData[0] });
+    expect(requested).toHaveBeenCalledOnceWith('ct1');
+  });
+
   it('should emit availabilityRequested', () => {
     spyOn(component.availabilityRequested, 'emit');
     component.onRowAction({ action: 'availability', row: { id: 'ct1', name: 'Cancha 1', surfaceType: 'sintético', surfaceTypeLabel: 'admin.complexes.courts.surfaceType.synthetic', isIndoor: false, isActive: true, indoorLabel: '', statusLabel: '', statusVariant: 'active' } });
