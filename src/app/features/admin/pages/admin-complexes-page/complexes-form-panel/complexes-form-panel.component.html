@@ -3,6 +3,7 @@
   [descriptionKey]="isEditing ? 'admin.complexes.edit.description' : 'admin.complexes.create.description'">
 
   <form [formGroup]="form" class="form-content" @slideDown>
+    <fieldset [disabled]="savePending() || saving()" class="parent-fields">
     <div class="form-grid">
       <!-- Name Field -->
       <div class="form-field">
@@ -58,7 +59,8 @@
         <app-active-toggle
           [value]="form.get('isActive')!.value"
           mode="toggle"
-          (toggled)="form.get('isActive')!.setValue($event); form.markAsDirty()">
+          [disabled]="savePending() || saving()"
+          (toggled)="onActiveToggled($event)">
         </app-active-toggle>
       </div>
     </div>
@@ -72,6 +74,7 @@
           <app-image-upload
             [currentImageUrl]="currentLogoUrl"
             [compact]="true"
+            [disabled]="savePending() || saving()"
             [maxSizeMb]="2"
             (imageChanged)="onLogoChanged($event)"
             (imageRemoved)="onLogoRemoved()">
@@ -155,15 +158,32 @@
       </app-collapsible-section>
     }
 
+    </fieldset>
+
+    @if (courtsLoadFailed()) {
+      <p role="alert">{{ 'admin.complexes.courts.loadError' | t }}</p>
+      <button type="button" (click)="retryCourtsLoad()">{{ 'common.retry' | t }}</button>
+    }
+    <app-complex-courts-panel
+      [complexId]="complex()?.id ?? ''"
+      [draftMode]="true"
+      [courts]="draftCourts"
+      [sports]="sports()"
+      [loading]="courtsLoading()"
+      [mutationsBlocked]="courtMutationsBlocked"
+      (courtSaved)="onCourtSaved($event)"
+      (courtDeleted)="onCourtDeleted($event)"
+      (editorOpen)="courtEditorOpen.set($event)" />
+
     <!-- Form Actions -->
     <div formActions class="form-actions">
-      <button type="button" (click)="onCancel()" class="btn-cancel">
+      <button type="button" (click)="onCancel()" [disabled]="savePending() || saving()" class="btn-cancel">
         {{ 'common.cancel' | t }}
       </button>
       <app-async-button
         type="submit"
         [loading]="saving()"
-        [disabled]="form.invalid || (isEditing && !form.dirty)"
+        [disabled]="form.invalid || saving() || savePending() || courtsLoading() || courtsLoadFailed() || courtEditorOpen() || (isEditing && !form.dirty && !courtsChanged())"
         (clicked)="onSave()"
         class="btn-save">
         {{ (isEditing ? 'common.update' : 'common.create') | t }}

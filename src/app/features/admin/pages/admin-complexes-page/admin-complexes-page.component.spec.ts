@@ -10,6 +10,10 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Complex } from '../../../../core/models';
+import { ComplexesFormPanelComponent } from './complexes-form-panel/complexes-form-panel.component';
+import { By } from '@angular/platform-browser';
+import { FILE_STORAGE_REPOSITORY } from '../../../../core/repositories/file-storage.repository';
+import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
 
 const seededComplexes: Complex[] = [
   { id: 'cx1', name: 'Club Pádel Norte', key: 'club_padel_norte', address: 'Av. Norte 100', location: 'Palermo', cityId: '', cityName: '', sortOrder: 1, preponderance: 1, sportsSupported: [], courtsCount: 2, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
@@ -56,6 +60,8 @@ describe('AdminComplexesPageComponent', () => {
         { provide: ApiSportRepository, useValue: sportRepoSpy },
         { provide: ActiveOrganizationService, useValue: activeOrgSpy },
         { provide: AdminDashboardService, useValue: adminDashboardSpy },
+        { provide: FILE_STORAGE_REPOSITORY, useValue: { upload: jasmine.createSpy('upload'), buildTransformUrl: (url: string) => url } },
+        { provide: API_BASE_URL, useValue: 'http://localhost/api' },
         provideHttpClient(),
         provideHttpClientTesting()
       ]
@@ -80,6 +86,63 @@ describe('AdminComplexesPageComponent', () => {
     component.openCreate();
     expect(component.showFormPanel()).toBe(true);
     expect(component.editingComplex()).toBeNull();
+  });
+
+  it('remounts the form when switching complexes or editing to create', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.editingComplex.set(seededComplexes[0]);
+    component.showFormPanel.set(true);
+    fixture.detectChanges();
+    const first = fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance as ComplexesFormPanelComponent;
+    expect(first.form.get('name')?.value).toBe(seededComplexes[0].name);
+    first.form.get('name')?.setValue('Unsaved');
+    component.editingComplex.set(seededComplexes[1]);
+    fixture.detectChanges();
+    const second = fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance as ComplexesFormPanelComponent;
+    expect(second).not.toBe(first);
+    expect(second.form.get('name')?.value).toBe(seededComplexes[1].name);
+    component.openCreate();
+    fixture.detectChanges();
+    const created = fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance as ComplexesFormPanelComponent;
+    expect(created).not.toBe(second);
+    expect(created.form.get('name')?.value).toBe('');
+  });
+
+  it('keeps the form mounted when header close is clicked during a pending child save, then closes after save', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.openCreate();
+    fixture.detectChanges();
+    const form = fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance as ComplexesFormPanelComponent;
+    form.savePending.set(true);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.complexes-page__form-panel-close') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.showFormPanel()).toBeTrue();
+    expect(fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance).toBe(form);
+    form.saved.emit();
+    fixture.detectChanges();
+    expect(component.showFormPanel()).toBeFalse();
+  });
+
+  it('does not replace a pending form via row edit, create, or courts actions', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.openEdit(component.tableData()[0]);
+    fixture.detectChanges();
+    const form = fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance as ComplexesFormPanelComponent;
+    form.savePending.set(true);
+    component.onRowActionClicked({ action: 'edit', row: component.tableData()[1] });
+    component.openCreate();
+    component.onRowActionClicked({ action: 'courts', row: component.tableData()[1] });
+    fixture.detectChanges();
+    expect(component.editingComplex()?.id).toBe('cx1');
+    expect(component.courtsComplexId()).toBeNull();
+    expect(fixture.debugElement.query(By.directive(ComplexesFormPanelComponent)).componentInstance).toBe(form);
+    form.savePending.set(false);
+    component.closeFormPanel();
+    expect(component.showFormPanel()).toBeFalse();
   });
 
   it('should close form panel', () => {

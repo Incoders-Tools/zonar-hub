@@ -43,12 +43,15 @@
         </button>
       </div>
       <div class="complexes-page__form-panel-body">
-        <app-complexes-form-panel
-          [complex]="editingComplex()"
-          [saving]="facade.saving()"
-          (saved)="closeFormPanel()"
-          (cancelled)="closeFormPanel()">
-        </app-complexes-form-panel>
+        @for (identity of [editingComplex()?.id ?? 'create']; track identity) {
+          <app-complexes-form-panel
+            [complex]="editingComplex()"
+            [sports]="facade.sports()"
+            [saving]="facade.saving()"
+            (saved)="onFormSaved()"
+            (cancelled)="closeFormPanel()">
+          </app-complexes-form-panel>
+        }
       </div>
     </div>
   }

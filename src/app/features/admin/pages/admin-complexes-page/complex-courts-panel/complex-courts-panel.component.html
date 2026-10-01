@@ -3,7 +3,7 @@
     <h3 class="courts-panel__title">{{ 'admin.complexes.courts.title' | t }}</h3>
     <div class="courts-panel__actions">
       @if (!showForm()) {
-        <app-async-button variant="primary" (clicked)="openCreate()">
+        <app-async-button variant="primary" [disabled]="loading() || mutationsBlocked()" (clicked)="openCreate()">
           {{ 'admin.complexes.courts.form.create' | t }}
         </app-async-button>
       }
@@ -26,7 +26,7 @@
         </button>
       </div>
 
-      <form [formGroup]="courtForm" class="courts-panel__form-body">
+      <div [formGroup]="courtForm" class="courts-panel__form-body">
         <div class="courts-panel__form-grid">
           <!-- Name -->
           <div class="courts-panel__form-field">
@@ -34,6 +34,7 @@
             <input
               type="text"
               formControlName="name"
+              [attr.disabled]="mutationsBlocked() ? true : null"
               [class.error]="courtForm.get('name')?.invalid && courtForm.get('name')?.touched"
             />
           </div>
@@ -41,7 +42,7 @@
           <!-- Surface Type -->
           <div class="courts-panel__form-field">
             <label>{{ 'admin.complexes.courts.form.surfaceType' | t }}</label>
-            <select formControlName="surfaceType">
+            <select formControlName="surfaceType" [attr.disabled]="mutationsBlocked() ? true : null">
               @for (surface of surfaceTypes; track surface) {
                 <option [value]="surface">{{ ('admin.complexes.courts.surfaceType.' + surface) | t }}</option>
               }
@@ -56,6 +57,7 @@
                 <label class="courts-panel__sport-option">
                   <input
                     type="checkbox"
+                    [disabled]="mutationsBlocked()"
                     [checked]="isSportSelected(sport.id)"
                     (change)="toggleSport(sport.id)" />
                   {{ sport.name }}
@@ -67,7 +69,7 @@
           <!-- Is Indoor -->
           <div class="courts-panel__form-field courts-panel__form-field--checkbox">
             <label>
-              <input type="checkbox" formControlName="isIndoor" />
+              <input type="checkbox" formControlName="isIndoor" [attr.disabled]="mutationsBlocked() ? true : null" />
               {{ 'admin.complexes.courts.form.isIndoor' | t }}
             </label>
           </div>
@@ -76,6 +78,7 @@
           <div class="courts-panel__form-field">
             <app-active-toggle
               [value]="courtForm.get('isActive')!.value"
+              [disabled]="mutationsBlocked()"
               mode="toggle"
               (toggled)="courtForm.get('isActive')!.setValue($event); courtForm.markAsDirty()">
             </app-active-toggle>
@@ -88,12 +91,12 @@
           </button>
           <app-async-button
             [loading]="saving()"
-            [disabled]="courtForm.invalid || (!!editingCourt() && !courtForm.dirty)"
+            [disabled]="loading() || mutationsBlocked() || courtForm.invalid || (!!editingCourt() && !courtForm.dirty)"
             (clicked)="saveCourt()">
             {{ (editingCourt() ? 'common.update' : 'common.create') | t }}
           </app-async-button>
         </div>
-      </form>
+      </div>
     </div>
   }
 
@@ -103,7 +106,7 @@
     [data]="tableData"
     [loading]="loading()"
     [activeRowId]="activeCourtId()"
-    [rowActions]="courtRowActions"
+    [rowActions]="draftMode() ? draftRowActions : courtRowActions"
     emptyMessageKey="admin.complexes.courts.emptyState"
     (rowAction)="onRowAction($event)">
   </app-data-table>

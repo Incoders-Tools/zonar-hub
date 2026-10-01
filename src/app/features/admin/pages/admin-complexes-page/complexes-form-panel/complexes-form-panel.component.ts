@@ -10,11 +10,13 @@ import { AsyncButtonComponent } from '../../../../../shared/components/async-but
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { ImageUploadComponent } from '../../../../../shared/components/image-upload/image-upload.component';
 import { AuthService } from '../../../../../core/auth/auth.service';
-import { Complex } from '../../../../../core/models';
-import { ComplexesFacadeService } from '../complexes-facade.service';
+import { Complex, Court, Sport } from '../../../../../core/models';
+import { ComplexesFacadeService, CourtDraft } from '../complexes-facade.service';
+import { ComplexCourtsPanelComponent } from '../complex-courts-panel/complex-courts-panel.component';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 import { FILE_STORAGE_REPOSITORY } from '../../../../../core/repositories/file-storage.repository';
 import { ImageOptimizationService } from '../../../../../core/services/image-optimization.service';
+import { ActiveOrganizationService } from '../../../../../core/services/active-organization.service';
 
 @Component({
   selector: 'app-complexes-form-panel',
@@ -29,7 +31,8 @@ import { ImageOptimizationService } from '../../../../../core/services/image-opt
     AsyncButtonComponent,
     CollapsibleSectionComponent,
     ActiveToggleComponent,
-    ImageUploadComponent
+    ImageUploadComponent,
+    ComplexCourtsPanelComponent
   ],
   templateUrl: './complexes-form-panel.component.html',
   styleUrl: './complexes-form-panel.component.scss',
@@ -50,12 +53,75 @@ export class ComplexesFormPanelComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly facade = inject(ComplexesFacadeService);
   private readonly auth = inject(AuthService);
+  private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly fileStorage = inject(FILE_STORAGE_REPOSITORY);
   private readonly imageOptimization = inject(ImageOptimizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   readonly complex = input<Complex | null>(null);
   readonly saving = input(false);
+  readonly sports = input<Sport[]>([]);
+  readonly courtDrafts = signal<(CourtDraft & { clientId: string })[]>([]);
+  readonly deletedCourtIds = signal<string[]>([]);
+  readonly courtsLoading = signal(false);
+  readonly courtsLoadFailed = signal(false);
+  readonly courtEditorOpen = signal(false);
+  readonly courtsChanged = signal(false);
+  private nextClientId = 0;
+  private loadVersion = 0;
+  readonly savePending = signal(false);
+
+  get courtMutationsBlocked(): boolean {
+    return this.courtsLoading() || this.courtsLoadFailed() || this.saving() || this.savePending();
+  }
+
+  get draftCourts(): Court[] {
+    return this.courtDrafts().map(({ clientId, ...court }) => ({ ...court, id: clientId }));
+  }
+
+  onCourtSaved(court: Court | Omit<Court, 'id'>): void {
+    if (this.courtMutationsBlocked) return;
+    const id = 'id' in court ? court.id : null;
+    const existing = this.courtDrafts().find(item => item.clientId === id);
+    const clientId = existing?.clientId ?? `draft-${++this.nextClientId}`;
+    const persistedId = existing?.id ?? null;
+    this.courtsChanged.set(true);
+    this.courtDrafts.update(items => {
+      const next = { ...court, id: persistedId, clientId } as CourtDraft & { clientId: string };
+      return existing ? items.map(item => item.clientId === clientId ? next : item) : [...items, next];
+    });
+  }
+
+  onCourtDeleted(clientId: string): void {
+    if (this.courtMutationsBlocked) return;
+    const court = this.courtDrafts().find(item => item.clientId === clientId);
+    if (!court) return;
+    this.courtsChanged.set(true);
+    if (court.id) this.deletedCourtIds.update(ids => [...ids, court.id!]);
+    this.courtDrafts.update(items => items.filter(item => item.clientId !== clientId));
+  }
+
+  async retryCourtsLoad(): Promise<void> {
+    const id = this.complex()?.id;
+    if (!id || this.courtsLoading() || this.courtsChanged()) return;
+    const version = ++this.loadVersion;
+    this.courtsLoading.set(true);
+    this.courtsLoadFailed.set(false);
+    try {
+      const loaded = await this.facade.loadCourts(id);
+      if (version !== this.loadVersion || this.complex()?.id !== id || this.courtsChanged()) return;
+      if (!loaded) {
+        this.courtsLoadFailed.set(true);
+        return;
+      }
+      this.courtDrafts.set(this.facade.courts().map(court => ({ ...court, clientId: court.id })));
+      this.courtsChanged.set(false);
+    } catch {
+      if (version === this.loadVersion) this.courtsLoadFailed.set(true);
+    } finally {
+      if (version === this.loadVersion) this.courtsLoading.set(false);
+    }
+  }
 
   readonly saved = output<void>();
   readonly cancelled = output<void>();
@@ -74,6 +140,7 @@ export class ComplexesFormPanelComponent implements OnInit {
   ngOnInit(): void {
     this.initializeForm();
     this.populateForm();
+    void this.retryCourtsLoad();
   }
 
   private initializeForm(): void {
@@ -139,10 +206,20 @@ export class ComplexesFormPanelComponent implements OnInit {
   async onSave(): Promise<void> {
     this.submitted = true;
 
-    if (!this.form.valid) {
+    if (!this.form.valid || this.courtsLoading() || this.courtsLoadFailed() || this.courtEditorOpen() || this.saving() || this.savePending()) {
       return;
     }
 
+    const expectedOrganizationId = this.activeOrg.activeOrganizationId();
+    this.savePending.set(true);
+    try {
+      await this.persistDraft(expectedOrganizationId);
+    } finally {
+      this.savePending.set(false);
+    }
+  }
+
+  private async persistDraft(expectedOrganizationId: string | null): Promise<void> {
     const formValue = this.form.getRawValue();
 
     if (!this.isEditing) {
@@ -191,20 +268,34 @@ export class ComplexesFormPanelComponent implements OnInit {
         optimized
       );
       (payload as Record<string, unknown>)['logoImagePath'] = storedUrl;
-      this.pendingLogoFile.set(null);
     }
 
-    const success = await this.facade.saveComplex(payload);
+    if (!expectedOrganizationId || this.activeOrg.activeOrganizationId() !== expectedOrganizationId) return;
+    const success = await this.facade.saveComplexWithCourts(
+      payload as Complex,
+      this.courtDrafts().map(({ clientId, ...court }) => court),
+      this.deletedCourtIds(),
+      expectedOrganizationId
+    );
     if (success) {
+      this.pendingLogoFile.set(null);
       this.saved.emit();
     }
   }
 
   onCancel(): void {
+    if (this.savePending() || this.saving()) return;
     this.cancelled.emit();
   }
 
+  onActiveToggled(value: boolean): void {
+    if (this.savePending() || this.saving()) return;
+    this.form.get('isActive')!.setValue(value);
+    this.form.markAsDirty();
+  }
+
   onLogoChanged(event: { file: File; previewUrl: string }): void {
+    if (this.savePending() || this.saving()) return;
     this.pendingLogoFile.set(event.file);
     // Store the preview URL so the field reflects the selection immediately.
     // The real URL will be set after uploading to storage on save.
@@ -213,6 +304,7 @@ export class ComplexesFormPanelComponent implements OnInit {
   }
 
   onLogoRemoved(): void {
+    if (this.savePending() || this.saving()) return;
     this.pendingLogoFile.set(null);
     this.form.get('logoImagePath')?.setValue('');
     this.form.markAsDirty();

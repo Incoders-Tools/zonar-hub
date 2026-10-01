@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
@@ -68,7 +68,16 @@ export class AdminComplexesPageComponent implements OnInit {
   private readonly activeOrg = inject(ActiveOrganizationService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
 
+  private readonly formPanel = viewChild(ComplexesFormPanelComponent);
   readonly showFormPanel = signal(false);
+
+  formPanelSavePending(): boolean {
+    return this.showFormPanel() && !!this.formPanel()?.savePending();
+  }
+
+  private get formSavePending(): boolean {
+    return this.formPanelSavePending();
+  }
   readonly showDeleteDialog = signal(false);
   readonly showBulkDeleteDialog = signal(false);
   readonly editingComplex = signal<Complex | null>(null);
@@ -83,6 +92,9 @@ export class AdminComplexesPageComponent implements OnInit {
       this.showBulkDeleteDialog.set(false);
       this.editingComplex.set(null);
       this.deletingId.set(null);
+      this.selectedComplexes.set([]);
+      this.closeCourtsPanel();
+      this.facade.invalidateCourts();
       void this.facade.load();
     });
   }
@@ -189,12 +201,14 @@ export class AdminComplexesPageComponent implements OnInit {
   // --- Create / Edit ---
 
   openCreate(): void {
+    if (this.formSavePending) return;
     this.editingComplex.set(null);
     this.showFormPanel.set(true);
     this.closeCourtsPanel();
   }
 
   openEdit(row: ComplexRow): void {
+    if (this.formSavePending) return;
     const complex = this.facade.filteredComplexes().find(c => c.id === row.id);
     if (complex) {
       this.editingComplex.set(complex);
@@ -204,6 +218,15 @@ export class AdminComplexesPageComponent implements OnInit {
   }
 
   closeFormPanel(): void {
+    if (this.formSavePending) return;
+    this.dismissFormPanel();
+  }
+
+  onFormSaved(): void {
+    this.dismissFormPanel();
+  }
+
+  private dismissFormPanel(): void {
     this.showFormPanel.set(false);
     this.editingComplex.set(null);
   }
@@ -269,6 +292,7 @@ export class AdminComplexesPageComponent implements OnInit {
   // --- Courts Panel ---
 
   toggleCourtsPanel(row: ComplexRow): void {
+    if (this.formSavePending) return;
     if (this.courtsComplexId() === row.id) {
       this.closeCourtsPanel();
       return;

@@ -16,6 +16,7 @@ import { signal } from '@angular/core';
 describe('ComplexesFormPanelComponent', () => {
   let component: ComplexesFormPanelComponent;
   let fixture: ComponentFixture<ComplexesFormPanelComponent>;
+  let organizationId: ReturnType<typeof signal<string | null>>;
 
   const mockComplex: Complex = {
     id: 'cx1',
@@ -38,11 +39,12 @@ describe('ComplexesFormPanelComponent', () => {
   beforeEach(async () => {
     const complexRepoSpy = jasmine.createSpyObj<ApiComplexRepository>('ApiComplexRepository', [
       'getAll', 'getForOrganization', 'getById', 'create', 'update', 'delete',
-      'getExistingKeys', 'getCourtsByComplexId', 'createCourt', 'updateCourt',
+      'getExistingKeys', 'getCourtsByComplexId', 'saveWithCourts', 'createCourt', 'updateCourt',
       'deleteCourt', 'getAvailabilityByCourtId', 'saveAvailability'
     ]);
     complexRepoSpy.getAll.and.resolveTo([]);
     complexRepoSpy.getExistingKeys.and.resolveTo([]);
+    complexRepoSpy.getCourtsByComplexId.and.resolveTo([]);
 
     const sportRepoSpy = jasmine.createSpyObj<ApiSportRepository>('ApiSportRepository', [
       'getAll', 'getForOrganization', 'getForTenant', 'setForOrganization', 'setForTenant',
@@ -50,8 +52,9 @@ describe('ComplexesFormPanelComponent', () => {
     ]);
     sportRepoSpy.getAll.and.resolveTo([]);
 
+    organizationId = signal<string | null>('org1');
     const activeOrgSpy = jasmine.createSpyObj<ActiveOrganizationService>('ActiveOrganizationService', [], {
-      activeOrganizationId: signal(null),
+      activeOrganizationId: organizationId,
       organizationChanged: signal(0)
     });
 
@@ -108,6 +111,128 @@ describe('ComplexesFormPanelComponent', () => {
     expect(component.isEditing).toBe(true);
     expect(component.form.get('name')?.value).toBe(mockComplex.name);
     expect(component.form.get('key')?.disabled).toBe(true);
+  });
+
+  it('does not submit after the organization switches during async validation', async () => {
+    const facade = TestBed.inject(ComplexesFacadeService);
+    let resolveKey!: (exists: boolean) => void;
+    spyOn(facade, 'checkKeyExists').and.returnValue(new Promise(resolve => { resolveKey = resolve; }));
+    spyOn(facade, 'saveComplexWithCourts');
+    fixture.detectChanges();
+    component.form.get('name')?.setValue('New complex');
+    const pending = component.onSave();
+    organizationId.set('org2');
+    resolveKey(false);
+    await pending;
+    expect(facade.saveComplexWithCourts).not.toHaveBeenCalled();
+  });
+
+  it('keeps court drafts and confirmed deletes local until one aggregate save succeeds', async () => {
+    fixture.componentRef.setInput('complex', mockComplex);
+    const facade = TestBed.inject(ComplexesFacadeService);
+    spyOn(facade, 'loadCourts').and.resolveTo(true);
+    spyOn(facade, 'saveComplexWithCourts').and.resolveTo(false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onCourtSaved({ complexId: mockComplex.id, name: 'New court', isActive: true });
+    await component.onSave();
+    expect(facade.saveComplexWithCourts).toHaveBeenCalledTimes(1);
+    expect(component.courtDrafts().length).toBe(1);
+    expect(component.courtDrafts()[0].id).toBeNull();
+  });
+
+  it('rejects draft mutations during load and failure, including retry', async () => {
+    fixture.componentRef.setInput('complex', mockComplex);
+    const facade = TestBed.inject(ComplexesFacadeService);
+    let resolveLoad!: (value: boolean) => void;
+    spyOn(facade, 'loadCourts').and.returnValue(new Promise(resolve => { resolveLoad = resolve; }));
+    fixture.detectChanges();
+    component.onCourtSaved({ complexId: 'cx1', name: 'Blocked', isActive: true });
+    expect(component.courtDrafts()).toEqual([]);
+    resolveLoad(false);
+    await fixture.whenStable();
+    component.onCourtSaved({ complexId: 'cx1', name: 'Blocked', isActive: true });
+    expect(component.courtDrafts()).toEqual([]);
+    const retry = component.retryCourtsLoad();
+    component.onCourtSaved({ complexId: 'cx1', name: 'Blocked', isActive: true });
+    expect(component.courtDrafts()).toEqual([]);
+    resolveLoad(true);
+    await retry;
+  });
+
+  it('freezes court drafts while an aggregate save is pending', async () => {
+    fixture.componentRef.setInput('complex', mockComplex);
+    const facade = TestBed.inject(ComplexesFacadeService);
+    spyOn(facade, 'loadCourts').and.resolveTo(true);
+    spyOn(facade, 'checkNameExists').and.resolveTo(false);
+    spyOn(facade, 'checkSortOrderExists').and.resolveTo(false);
+    let resolveSave!: (success: boolean) => void;
+    spyOn(facade, 'saveComplexWithCourts').and.returnValue(new Promise(resolve => { resolveSave = resolve; }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onCourtSaved({ complexId: 'cx1', name: 'Included', isActive: true });
+    const pending = component.onSave();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(facade.saveComplexWithCourts).toHaveBeenCalledTimes(1);
+    component.onCourtSaved({ complexId: 'cx1', name: 'Late', isActive: true });
+    component.onCourtDeleted(component.courtDrafts()[0].clientId);
+    expect(component.courtDrafts().map(court => court.name)).toEqual(['Included']);
+    expect(component.deletedCourtIds()).toEqual([]);
+    resolveSave(false);
+    await pending;
+    component.onCourtSaved({ complexId: 'cx1', name: 'After failure', isActive: true });
+    expect(component.courtDrafts().length).toBe(2);
+  });
+
+  it('locks parent editing during save and restores it after failure', async () => {
+    fixture.componentRef.setInput('complex', mockComplex);
+    const facade = TestBed.inject(ComplexesFacadeService);
+    spyOn(facade, 'loadCourts').and.resolveTo(true);
+    spyOn(facade, 'checkNameExists').and.resolveTo(false);
+    spyOn(facade, 'checkSortOrderExists').and.resolveTo(false);
+    let resolveSave!: (success: boolean) => void;
+    spyOn(facade, 'saveComplexWithCourts').and.returnValue(new Promise(resolve => { resolveSave = resolve; }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.form.get('name')?.setValue('Changed name');
+    const pending = component.onSave();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+    expect(facade.saveComplexWithCourts).toHaveBeenCalledTimes(1);
+    const root = fixture.nativeElement as HTMLElement;
+    expect((root.querySelector('[formControlName="name"]') as HTMLInputElement).matches(':disabled')).toBeTrue();
+    expect((root.querySelector('.btn-cancel') as HTMLButtonElement).disabled).toBeTrue();
+    expect((root.querySelector('app-active-toggle input') as HTMLInputElement).disabled).toBeTrue();
+    component.onActiveToggled(false);
+    expect(component.form.get('isActive')?.value).toBeTrue();
+    component.onLogoRemoved();
+    component.onCancel();
+    expect(component.form.get('logoImagePath')?.value).toBe(mockComplex.logoImagePath ?? '');
+    resolveSave(false);
+    await pending;
+    fixture.detectChanges();
+    expect(component.form.valid).toBeTrue();
+    expect(component.form.get('key')?.disabled).toBeTrue();
+    expect((root.querySelector('[formControlName="name"]') as HTMLInputElement).disabled).toBeFalse();
+    expect((root.querySelector('.btn-cancel') as HTMLButtonElement).disabled).toBeFalse();
+  });
+
+  it('preserves drafts and reports failure when aggregate save fails', async () => {
+    fixture.componentRef.setInput('complex', mockComplex);
+    const facade = TestBed.inject(ComplexesFacadeService);
+    spyOn(facade, 'loadCourts').and.resolveTo(true);
+    spyOn(facade, 'saveComplexWithCourts').and.resolveTo(false);
+    spyOn(component.saved, 'emit');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onCourtSaved({ complexId: 'cx1', name: 'Draft', isActive: true });
+    await component.onSave();
+    expect(component.courtDrafts()[0].name).toBe('Draft');
+    expect(component.saved.emit).not.toHaveBeenCalled();
   });
 
   it('should emit cancelled on cancel', () => {
