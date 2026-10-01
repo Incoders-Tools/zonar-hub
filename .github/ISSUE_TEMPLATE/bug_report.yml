@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible problem in Zonar Hub.
+body:
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current behavior
+      description: Describe what happened, including the affected screen or workflow.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Describe the result that should occur instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide the shortest sequence that reproduces the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and context
+      description: Include relevant error messages, affected versions, or code evidence without secrets or private data.
+    validations:
+      required: false
