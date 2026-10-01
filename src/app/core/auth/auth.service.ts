@@ -229,6 +229,15 @@ export class AuthService {
     this.clearTenantStorage();
   }
 
+  updatePrimaryOrganization(organizationId: string): void {
+    const current = this.sessionState();
+    if (!current) return;
+    this.setSession({
+      ...current,
+      user: { ...current.user, organizationId }
+    });
+  }
+
   updateCurrentOrganization(organizationId: string, organizationName?: string): void {
     const current = this.sessionState();
     if (!current) {
@@ -237,10 +246,6 @@ export class AuthService {
 
     const updated: AuthSession = {
       ...current,
-      user: {
-        ...current.user,
-        organizationId
-      },
       organizationId,
       organizationName: organizationName ?? current.organizationName
     };
@@ -254,16 +259,13 @@ export class AuthService {
       return;
     }
 
-    const nextOrgId = organizationId ?? current.user.organizationId;
-
     const updated: AuthSession = {
       ...current,
       user: {
         ...current.user,
-        organizationId: nextOrgId,
+        organizationId: organizationId ?? current.user.organizationId,
         tenantIds: tenantIds ?? current.user.tenantIds
-      },
-      organizationId: nextOrgId
+      }
     };
 
     this.setSession(updated);

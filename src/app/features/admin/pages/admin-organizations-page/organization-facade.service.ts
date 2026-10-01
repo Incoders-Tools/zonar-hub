@@ -118,9 +118,14 @@ export class OrganizationFacadeService {
         ]);
         existingIds.add(created.id);
         const updatedTenantIds = Array.from(existingIds);
-        this.auth.updateCurrentOrganizationAssignments(created.id, updatedTenantIds);
-        this.auth.updateCurrentOrganization(created.id, created.displayName);
-        this.activeOrg.setOnboardingOrganization(created.id);
+        this.auth.updateCurrentOrganizationAssignments(currentUser.organizationId ?? created.id, updatedTenantIds);
+        if (!currentUser.organizationId) {
+          // The backend assigns the first organization as primary.
+          this.auth.updatePrimaryOrganization(created.id);
+          this.activeOrg.setOnboardingOrganization(created.id);
+        } else {
+          this.activeOrg.refreshOrganizations();
+        }
       }
 
       this.notification.success('admin.organizations.toast.created');
@@ -146,6 +151,7 @@ export class OrganizationFacadeService {
       }
       this.notification.success('admin.organizations.toast.updated');
       await this.load();
+      this.activeOrg.refreshOrganizations();
       return true;
     } catch {
       this.notification.error('admin.organizations.toast.updateError');

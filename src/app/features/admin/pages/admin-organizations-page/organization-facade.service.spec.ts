@@ -37,6 +37,8 @@ class AuthServiceStub {
       });
     });
 
+  readonly updatePrimaryOrganization = jasmine.createSpy('updatePrimaryOrganization');
+
   readonly updateCurrentOrganization = jasmine
     .createSpy('updateCurrentOrganization')
     .and.callFake((organizationId: string) => {
@@ -97,6 +99,7 @@ class NotificationServiceStub {
 
 class ActiveOrganizationServiceStub {
   readonly setOnboardingOrganization = jasmine.createSpy('setOnboardingOrganization');
+  readonly refreshOrganizations = jasmine.createSpy('refreshOrganizations');
 }
 
 describe('OrganizationFacadeService', () => {
@@ -121,7 +124,7 @@ describe('OrganizationFacadeService', () => {
     activeOrg = TestBed.inject(ActiveOrganizationService) as unknown as ActiveOrganizationServiceStub;
   });
 
-  it('assigns and selects the newly created organization for current admin', async () => {
+  it('assigns a second organization without promoting it over the existing primary', async () => {
     const success = await service.createOrganization(
       {
         displayName: 'Org 2',
@@ -136,10 +139,12 @@ describe('OrganizationFacadeService', () => {
     expect(success).toBeTrue();
 
     const assignmentCall = auth.updateCurrentOrganizationAssignments.calls.mostRecent();
-    expect(assignmentCall.args[0]).toBe('org-2');
+    expect(assignmentCall.args[0]).toBe('org-1');
     expect(assignmentCall.args[1]).toEqual(jasmine.arrayContaining(['org-1', 'org-2']));
 
-    expect(auth.updateCurrentOrganization).toHaveBeenCalledWith('org-2', 'Org 2');
-    expect(activeOrg.setOnboardingOrganization).toHaveBeenCalledWith('org-2');
+    expect(auth.updateCurrentOrganization).not.toHaveBeenCalled();
+    expect(auth.updatePrimaryOrganization).not.toHaveBeenCalled();
+    expect(activeOrg.setOnboardingOrganization).not.toHaveBeenCalled();
+    expect(activeOrg.refreshOrganizations).toHaveBeenCalled();
   });
 });
