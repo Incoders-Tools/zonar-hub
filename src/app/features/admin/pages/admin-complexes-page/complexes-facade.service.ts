@@ -1,9 +1,14 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Complex, Court, Availability, Sport } from '../../../../core/models';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
+import { SaveComplexWithCourtsRequest } from '../../../../core/repositories/complex.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
+
+export type CourtDraft = Omit<Court, 'id'> & { id: string | null };
+
+type ComplexDraft = Omit<Complex, 'id' | 'createdAt' | 'updatedAt'> & { id?: null };
 
 export interface ComplexFilters {
   name?: string;
@@ -171,6 +176,77 @@ export class ComplexesFacadeService {
         }
       }
 
+      return true;
+    } catch (error) {
+      this.errorState.set((error as Error).message);
+      return false;
+    } finally {
+      this.savingState.set(false);
+    }
+  }
+
+  async saveComplexWithCourts(
+    complex: Complex | ComplexDraft,
+    courts: CourtDraft[],
+    deleteCourtIds: string[]
+  ): Promise<boolean> {
+    try {
+      this.savingState.set(true);
+      this.errorState.set(null);
+      const organizationId = this.activeOrg.activeOrganizationId();
+      if (!organizationId) {
+        throw new Error('No active organization selected');
+      }
+      const complexId = complex.id ?? null;
+      const request: SaveComplexWithCourtsRequest = {
+        complexId,
+        organizationId,
+        name: complex.name,
+        address: complex.address,
+        key: complex.key || null,
+        location: complex.location || null,
+        description: complex.description || null,
+        sortOrder: complex.sortOrder,
+        preponderance: complex.preponderance,
+        logoImagePath: complex.logoImagePath || null,
+        coverImagePath: complex.coverImagePath || null,
+        layoutDiagramPath: complex.layoutDiagramPath || null,
+        isActive: complex.isActive,
+        courts: courts.map(court => ({
+          id: court.id,
+          name: court.name,
+          isActive: court.isActive,
+          surfaceType: court.surfaceType ?? null,
+          isIndoor: court.isIndoor ?? false,
+          sportIds: court.sportIds ?? null
+        })),
+        deleteCourtIds
+      };
+      const result = await this.repository.saveWithCourts(request);
+      const now = new Date().toISOString();
+      const saved: Complex = {
+        ...complex,
+        id: result.complexId,
+        organizationId,
+        courtsCount: result.courtCount,
+        createdAt: 'createdAt' in complex ? complex.createdAt : now,
+        updatedAt: now
+      };
+      this.entitiesState.update(list => {
+        const index = list.findIndex(item => item.id === result.complexId);
+        if (index === -1) return [...list, saved];
+        const updated = [...list];
+        updated[index] = saved;
+        return updated;
+      });
+      if (!complexId) {
+        // Dashboard refresh is independent of the committed aggregate save.
+        try {
+          await this.adminDashboard.loadSummary(organizationId);
+        } catch {
+          // A stale dashboard must not turn a committed create into a retryable failure.
+        }
+      }
       return true;
     } catch (error) {
       this.errorState.set((error as Error).message);
