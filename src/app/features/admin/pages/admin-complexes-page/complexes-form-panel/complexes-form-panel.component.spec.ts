@@ -160,6 +160,50 @@ describe('ComplexesFormPanelComponent', () => {
     await retry;
   });
 
+  it('renders court-load retry as an accessible non-submit button that retries once without saving', async () => {
+    fixture.componentRef.setInput('complex', mockComplex);
+    const facade = TestBed.inject(ComplexesFacadeService);
+    const loadCourts = spyOn(facade, 'loadCourts').and.resolveTo(false);
+    const save = spyOn(facade, 'saveComplexWithCourts').and.resolveTo(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host: HTMLElement = fixture.nativeElement;
+    const alert = host.querySelector('.courts-load-alert');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.querySelector('.courts-load-alert__message')?.textContent?.trim()).toBeTruthy();
+    const retryButton = alert?.querySelector('app-async-button button') as HTMLButtonElement | null;
+    expect(retryButton).withContext('retry uses the shared async button').not.toBeNull();
+    expect(retryButton!.type).toBe('button');
+    expect(retryButton!.classList).toContain('async-btn--secondary');
+    expect(retryButton!.textContent?.trim()).toBeTruthy();
+
+    loadCourts.calls.reset();
+    retryButton!.click();
+    await fixture.whenStable();
+
+    expect(loadCourts).toHaveBeenCalledTimes(1);
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('spaces the main grid away from optional and technical sections inside the parent fieldset', () => {
+    const host: HTMLElement = fixture.nativeElement;
+    host.style.setProperty('--zh-space-lg', '24px');
+    fixture.detectChanges();
+
+    const fieldset = host.querySelector('fieldset.parent-fields') as HTMLElement;
+    const children = Array.from(fieldset.children).map(child => child.tagName.toLowerCase());
+    expect(children[0]).toBe('div');
+    expect(fieldset.children[0].querySelector('app-active-toggle')).not.toBeNull();
+    expect(children[1]).toBe('app-collapsible-section');
+
+    const style = getComputedStyle(fieldset);
+    expect(style.display).toBe('flex');
+    expect(style.flexDirection).toBe('column');
+    expect(style.rowGap).toBe('24px');
+  });
+
   it('freezes court drafts while an aggregate save is pending', async () => {
     fixture.componentRef.setInput('complex', mockComplex);
     const facade = TestBed.inject(ComplexesFacadeService);

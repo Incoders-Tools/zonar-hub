@@ -161,8 +161,16 @@
     </fieldset>
 
     @if (courtsLoadFailed()) {
-      <p role="alert">{{ 'admin.complexes.courts.loadError' | t }}</p>
-      <button type="button" (click)="retryCourtsLoad()">{{ 'common.retry' | t }}</button>
+      <div class="courts-load-alert" role="alert">
+        <p class="courts-load-alert__message">{{ 'admin.complexes.courts.loadError' | t }}</p>
+        <app-async-button
+          type="button"
+          variant="secondary"
+          [loading]="courtsLoading()"
+          (clicked)="retryCourtsLoad()">
+          {{ 'common.retry' | t }}
+        </app-async-button>
+      </div>
     }
     <app-complex-courts-panel
       [complexId]="complex()?.id ?? ''"
