@@ -100,12 +100,15 @@ class NotificationServiceStub {
 class ActiveOrganizationServiceStub {
   readonly setOnboardingOrganization = jasmine.createSpy('setOnboardingOrganization');
   readonly refreshOrganizations = jasmine.createSpy('refreshOrganizations');
+  readonly setPrimaryOrganization = jasmine.createSpy('setPrimaryOrganization').and.resolveTo();
+  readonly switchOrganization = jasmine.createSpy('switchOrganization');
 }
 
 describe('OrganizationFacadeService', () => {
   let service: OrganizationFacadeService;
   let auth: AuthServiceStub;
   let activeOrg: ActiveOrganizationServiceStub;
+  let notification: NotificationServiceStub;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -122,6 +125,7 @@ describe('OrganizationFacadeService', () => {
     service = TestBed.inject(OrganizationFacadeService);
     auth = TestBed.inject(AuthService) as unknown as AuthServiceStub;
     activeOrg = TestBed.inject(ActiveOrganizationService) as unknown as ActiveOrganizationServiceStub;
+    notification = TestBed.inject(NotificationService) as unknown as NotificationServiceStub;
   });
 
   it('assigns a second organization without promoting it over the existing primary', async () => {
@@ -146,5 +150,65 @@ describe('OrganizationFacadeService', () => {
     expect(auth.updatePrimaryOrganization).not.toHaveBeenCalled();
     expect(activeOrg.setOnboardingOrganization).not.toHaveBeenCalled();
     expect(activeOrg.refreshOrganizations).toHaveBeenCalled();
+  });
+
+  describe('setPrimary', () => {
+    it('sets the primary organization, confirms success and keeps the active context', async () => {
+      const result = await service.setPrimary('org-2');
+
+      expect(result).toBeTrue();
+      expect(activeOrg.setPrimaryOrganization).toHaveBeenCalledOnceWith('org-2');
+      expect(notification.success).toHaveBeenCalledOnceWith('org.selector.primarySuccess');
+      expect(notification.error).not.toHaveBeenCalled();
+      expect(activeOrg.switchOrganization).not.toHaveBeenCalled();
+      expect(activeOrg.setOnboardingOrganization).not.toHaveBeenCalled();
+      expect(service.savingPrimary()).toBeFalse();
+    });
+
+    it('reports failure without changing the current primary organization', async () => {
+      activeOrg.setPrimaryOrganization.and.rejectWith(new Error('org.selector.primaryError'));
+
+      const result = await service.setPrimary('org-2');
+
+      expect(result).toBeFalse();
+      expect(notification.error).toHaveBeenCalledOnceWith('org.selector.primaryError');
+      expect(notification.success).not.toHaveBeenCalled();
+      expect(auth.updatePrimaryOrganization).not.toHaveBeenCalled();
+      expect(auth.currentUser()?.organizationId).toBe('org-1');
+      expect(activeOrg.switchOrganization).not.toHaveBeenCalled();
+      expect(service.savingPrimary()).toBeFalse();
+    });
+
+    it('issues a single request while a primary change is pending', async () => {
+      let resolveRequest!: () => void;
+      activeOrg.setPrimaryOrganization.and.returnValue(
+        new Promise<void>(resolve => (resolveRequest = resolve))
+      );
+
+      const first = service.setPrimary('org-2');
+      expect(service.savingPrimary()).toBeTrue();
+
+      const duplicate = await service.setPrimary('org-2');
+      expect(duplicate).toBeFalse();
+      expect(activeOrg.setPrimaryOrganization).toHaveBeenCalledTimes(1);
+
+      resolveRequest();
+      expect(await first).toBeTrue();
+      expect(service.savingPrimary()).toBeFalse();
+      expect(notification.success).toHaveBeenCalledTimes(1);
+      expect(notification.error).not.toHaveBeenCalled();
+    });
+
+    it('allows a new request after a failed one settles', async () => {
+      activeOrg.setPrimaryOrganization.and.rejectWith(new Error('org.selector.primaryError'));
+      expect(await service.setPrimary('org-2')).toBeFalse();
+
+      activeOrg.setPrimaryOrganization.and.resolveTo();
+      expect(await service.setPrimary('org-2')).toBeTrue();
+
+      expect(activeOrg.setPrimaryOrganization).toHaveBeenCalledTimes(2);
+      expect(notification.error).toHaveBeenCalledTimes(1);
+      expect(notification.success).toHaveBeenCalledTimes(1);
+    });
   });
 });

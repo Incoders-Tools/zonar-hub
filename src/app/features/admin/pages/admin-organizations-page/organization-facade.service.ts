@@ -25,6 +25,7 @@ export class OrganizationFacadeService {
   private readonly errorState = signal(false);
   private readonly savingState = signal(false);
   private readonly deletingState = signal(false);
+  private readonly savingPrimaryState = signal(false);
   private readonly filtersState = signal<OrganizationFilters>({});
   private readonly sortState = signal<{ key: string; direction: 'asc' | 'desc' }>({ key: 'displayName', direction: 'asc' });
 
@@ -33,6 +34,7 @@ export class OrganizationFacadeService {
   readonly error = this.errorState.asReadonly();
   readonly saving = this.savingState.asReadonly();
   readonly deleting = this.deletingState.asReadonly();
+  readonly savingPrimary = this.savingPrimaryState.asReadonly();
 
   readonly filteredOrganizations = computed(() => {
     const all = this.organizationsState();
@@ -158,6 +160,26 @@ export class OrganizationFacadeService {
       return false;
     } finally {
       this.savingState.set(false);
+    }
+  }
+
+  /**
+   * Sets the admin's primary organization without switching the active context.
+   * Authorization and eligibility are enforced by ActiveOrganizationService;
+   * a call while another change is pending is ignored and resolves to false.
+   */
+  async setPrimary(id: string): Promise<boolean> {
+    if (this.savingPrimaryState()) return false;
+    this.savingPrimaryState.set(true);
+    try {
+      await this.activeOrg.setPrimaryOrganization(id);
+      this.notification.success('org.selector.primarySuccess');
+      return true;
+    } catch {
+      this.notification.error('org.selector.primaryError');
+      return false;
+    } finally {
+      this.savingPrimaryState.set(false);
     }
   }
 
