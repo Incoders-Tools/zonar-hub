@@ -1,0 +1,34 @@
+# Organization actions and onboarding diagnostics
+
+## Objective
+Move primary-organization selection out of the global switcher into each eligible organization list/card row; make the active principal visible after a successful change; align the complexes court-load retry and form spacing with local design tokens; distinguish a failed dashboard/court request from an actually incomplete onboarding wizard.
+
+## Scope and constraints
+- User requested UI and behavior fixes, not a new design system. Retain the primary pill and primary-first ordering in the switcher. Keep existing confirmation and API authorization, move the initiating action to the organization collection. The card view must honor the same per-row action filter as the table.
+- Investigate the user's latest registration but do not claim live database evidence without an authorized, identified target. Required evidence: HTTP status/body for dashboard summary and court-by-complex on that registration, with secrets and personal data omitted. Do not deploy a migration or alter live user records in this work.
+- Local code shows a court read error can make the dashboard render an empty pending checklist and a court load error can replace a successfully loaded complexes list. Fix these truthfulness/error-scoping faults with focused tests, independently of the eventual database root cause. Preserve the safety guard that blocks court draft mutation when existing courts failed to load.
+- Follow local Angular Material/shared UI, i18n es/en/pt, accessibility, and tokenized spacing conventions. Do not embed the full-page error-state component inside a form. Default artifacts are English unless existing component documentation convention is Spanish.
+- Frontend on user-authorized `dev`, small Conventional Commit work units; no pull request/merge requested. Strict TDD in `openspec/config.yaml` (`strict_tdd: true`), exact runner `npm run test:ci`, build `npm run build`; use independent verification per risk assessment. Preserve unrelated files.
+- Web design guidelines skill requires a network fetch not available in this session; use verifiable repository conventions instead, do not claim a fresh external audit.
+
+## Tasks
+- [x] OAD-1 Card actions now use per-row `rowActionsFilter`, matching table semantics, with fallback to all actions when no filter and no empty action container. Strict TDD: RED 3 failed/563 passed, GREEN 566/566 frontend tests; writer and independent verifier both passed full suite, build and diff check. Documentation updated. Work-unit commit on `dev` recorded after commit. Browser-only rendering not checked. Route: delegated frontend writer.
+- [ ] OAD-2 Add primary action/confirmation to eligible organization row and card, with reactive marker and existing API/facade behavior. Keep selector action temporarily so each commit retains primary-selection capability. Route: delegated frontend writer. Evidence: pending.
+- [ ] OAD-3 Remove primary action/confirmation from org selector after OAD-2 works; retain badge, ordering and switching, update specs/docs. Route: delegated frontend writer. Evidence: pending.
+- [ ] OAD-4 Align complexes court-load error/retry (compact and tokenized) and optional/active spacing; protect form semantics and regressions. Route: delegated frontend writer. Evidence: pending.
+- [ ] OAD-5 Show dashboard request failure rather than zero-progress checklist, scope court-load errors to court panel instead of replacing the complexes list; test both. Route: delegated frontend writer. Evidence: pending.
+- [ ] OAD-6 Verify the latest registration against actual API/database evidence, then determine whether missing migration, onboarding replay, or another cause remains. User/browser evidence needed; do not infer from green mocks or disposable Docker DB. Route: read-only investigation pending HTTP evidence.
+
+## Checks and delivery
+- Selector has primary pill but no set-primary button. Eligible organizations have one row/card action with existing replacement confirmation, success/error feedback and reactive marker. Noneligible and already-primary rows show no action.
+- Retry stays inside the complex form, uses the site's visual tokens and a non-submitting button. Spacing between active toggle and optional sections matches peer forms.
+- If dashboard summary fails, the UI exposes an error/retry, never represents failure as all tasks incomplete. A court-fetch failure cannot turn an already loaded complex collection into a failed collection; no edits on incomplete court data.
+- Each completed work unit includes tests/build, independent assessment, Conventional Commit identity and rollback boundary. Report failed/skipped/live checks separately. Do not close earlier GitHub issues solely on mock tests.
+
+## Progress
+- Read-only mapping: switcher owns the old set-primary flow; organizations page has only edit/delete actions; shared collection card mode ignores rowActionsFilter although table mode forwards it. Full-page error-state has 3xl padding and a retry button without `type=button`; avoid embedding it in a form.
+- Complex form court retry is an unstyled paragraph and button; parent-fields fieldset swallows the outer form gap, leaving active and optional sections crowded.
+- API CourtRepository reads court_sports for dashboard and court list. A missing live migration is a hypothesis, not evidence. AdminDashboardService converts request failure into empty summary; court-load failure shares a collection-wide error signal. Last registration and deployed migration not inspected; user was asked for redacted HTTP responses.
+- Existing project docs: `odd/tasks/organization-primary.md` and `odd/tasks/complex-courts-and-modality.md`. Both repos clean before this feature document was written.
+- Reordered work units before source changes: shared card filtering first, then new list action, then remove switcher action, avoiding a commit with no primary-selection entry point.
+- OAD-1 verification incident resolved without changing `.git`: the subagent `repository_root` selector accepted canonical Windows backslash path `C:\\repositories\\incoders\\zonar-hub`; earlier slash-form selection failed because the cwd workspace is an independent empty Git repo. Independent verifier repeated 566/566 tests, build and diff check and found no blockers. Unrelated tracked `.atl/` and `.gitignore` changes appeared concurrently; preserve and exclude them from this task's commit/review.

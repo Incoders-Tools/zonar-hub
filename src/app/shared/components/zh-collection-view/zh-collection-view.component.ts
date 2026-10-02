@@ -131,6 +131,12 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
     this.retried.emit();
   }
 
+  /** Same per-row rule as `app-data-table`: the filter, when provided, replaces `rowActions`. */
+  protected actionsForRow(row: T): ZhCollectionRowAction[] {
+    const filter = this.rowActionsFilter();
+    return filter ? filter(row) : this.rowActions();
+  }
+
   protected onCardAction(action: string, row: T): void {
     this.rowAction.emit({ action, row });
   }

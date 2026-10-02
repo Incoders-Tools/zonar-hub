@@ -20,6 +20,7 @@ Renderer genérico de colecciones que permite alternar entre tabla (`app-data-ta
 | `reorderable` | `boolean` | `false` | Se pasa a data-table. |
 | `trackByKey` | `string` | `'id'` | Campo para track y selección. |
 | `rowActions` | `ZhCollectionRowAction[]` | `[]` | Acciones en tabla y cards. |
+| `rowActionsFilter` | `((row: T) => ZhCollectionRowAction[]) \| null` | `null` | Acciones condicionales por fila. Si se provee, reemplaza a `rowActions` para cada fila en tabla y cards; si es `null`, todas las filas usan `rowActions`. |
 
 ### Outputs
 | Output | Payload | Cuándo emite |
@@ -55,6 +56,8 @@ Renderer genérico de colecciones que permite alternar entre tabla (`app-data-ta
 - Error en cards: `showError = error && !loading`.
 - Empty en cards: `!hasItems`.
 - Row actions con variantes `default`, `primary`, `warn`, `danger`.
+- Acciones por card: se resuelven por fila con la misma regla que `app-data-table` (`rowActionsFilter(row)` o, sin filtro, `rowActions`). Si una fila no tiene acciones, la card omite el contenedor `.zh-collection-view__card-actions`.
+- Diferencia conocida: `app-data-table` solo renderiza la columna de acciones cuando `rowActions` no está vacío; los callers que usan `rowActionsFilter` deben pasar también `rowActions` para que tabla y cards muestren lo mismo.
 - Selected/sorted/reorderable existen solo en modo tabla por delegación.
 
 ## Accesibilidad
@@ -72,8 +75,8 @@ Renderer genérico de colecciones que permite alternar entre tabla (`app-data-ta
 - Hardcoded fallback observado en SCSS: `#fff`, `#c19a00`, `#d32f2f` y tamaños fijos en algunos iconos; están detrás de fallback de variables pero conviene reemplazarlos por tokens completos.
 
 ## Testing
-- No existe `zh-collection-view.component.spec.ts` en el estado actual.
-- Deben cubrirse creación, modo inicial, persistencia localStorage, toggle, delegación a data-table, estados cards y acciones.
+- `zh-collection-view.component.spec.ts` cubre creación, delegación de `rowActionsFilter` a data-table y acciones en modo cards: sin filtro, filtradas por fila, fila sin acciones y emisión de `rowAction`.
+- Pendiente: modo inicial, persistencia localStorage y estados loading/error/empty en cards.
 
 ## Guía de reutilización
 - Usar en listados que necesitan alternativa cards/table sin duplicar lógica.
@@ -81,7 +84,6 @@ Renderer genérico de colecciones que permite alternar entre tabla (`app-data-ta
 - No usar si la colección requiere edición inline compleja o child collection con FormArray; en ese caso debe estabilizarse el patrón master-detail reusable.
 
 ## Compliance gaps
-- Falta `zh-collection-view.component.spec.ts`.
-- Falta `zh-collection-view.component.md` previo; este archivo completa la documentación.
+- Cobertura de spec parcial (ver Testing).
 - El fallback JSON no es apropiado para UI final de producto.
 - Algunos fallbacks de color hardcodeados permanecen en SCSS.

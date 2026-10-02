@@ -60,9 +60,10 @@
             } @else {
               <pre>{{ row | json }}</pre>
             }
-            @if (rowActions().length > 0) {
+            @let cardActions = actionsForRow(row);
+            @if (cardActions.length > 0) {
               <div class="zh-collection-view__card-actions">
-                @for (action of rowActions(); track action.action) {
+                @for (action of cardActions; track action.action) {
                   <button
                     type="button"
                     class="zh-collection-view__card-action"
