@@ -344,6 +344,88 @@ describe('ComplexesFacadeService', () => {
     expect(service.loadingCourts()).toBe(false);
   });
 
+  it('keeps court read failures out of the shared collection error', async () => {
+    await service.load();
+    complexRepoSpy.getAll.and.rejectWith(new Error('collection failure'));
+    await service.load();
+    complexRepoSpy.getCourtsByComplexId.and.rejectWith(new Error('courts failure'));
+    expect(await service.loadCourts('cx1')).toBe(false);
+    expect(service.courtsError()).toBe('courts failure');
+    expect(service.error()).toBe('collection failure');
+    expect(service.courts()).toEqual([]);
+    expect(service.loadingCourts()).toBe(false);
+  });
+
+  it('does not clear an existing collection error when courts load successfully', async () => {
+    complexRepoSpy.getAll.and.rejectWith(new Error('collection failure'));
+    await service.load();
+    expect(await service.loadCourts('cx1')).toBe(true);
+    expect(service.error()).toBe('collection failure');
+    expect(service.courtsError()).toBeNull();
+  });
+
+  it('clears the court error when a retry starts and after it succeeds', async () => {
+    complexRepoSpy.getCourtsByComplexId.and.rejectWith(new Error('courts failure'));
+    await service.loadCourts('cx1');
+    let resolveRetry!: (courts: Court[]) => void;
+    complexRepoSpy.getCourtsByComplexId.and.returnValue(new Promise(resolve => { resolveRetry = resolve; }));
+    const retry = service.loadCourts('cx1');
+    expect(service.courtsError()).toBeNull();
+    expect(service.loadingCourts()).toBe(true);
+    resolveRetry(seededCourts);
+    expect(await retry).toBe(true);
+    expect(service.courtsError()).toBeNull();
+    expect(service.courts()).toEqual(seededCourts);
+  });
+
+  it('clears the court error on invalidation so another complex does not inherit it', async () => {
+    complexRepoSpy.getCourtsByComplexId.and.rejectWith(new Error('courts failure'));
+    await service.loadCourts('cx1');
+    service.invalidateCourts();
+    expect(service.courtsError()).toBeNull();
+    complexRepoSpy.getCourtsByComplexId.and.resolveTo([]);
+    await service.loadCourts('cx2');
+    expect(service.courtsError()).toBeNull();
+  });
+
+  it('clears the court error when the active organization switches', async () => {
+    TestBed.tick();
+    complexRepoSpy.getCourtsByComplexId.and.rejectWith(new Error('courts failure'));
+    await service.loadCourts('cx1');
+    organizationId.set('org2');
+    TestBed.tick();
+    expect(service.courtsError()).toBeNull();
+  });
+
+  it('ignores an older court failure that arrives after a newer request', async () => {
+    let rejectOlder!: (error: Error) => void;
+    let resolveLatest!: (courts: Court[]) => void;
+    complexRepoSpy.getCourtsByComplexId.and.callFake(id => new Promise<Court[]>((resolve, reject) => {
+      if (id === 'cx1') rejectOlder = reject;
+      else resolveLatest = resolve;
+    }));
+    const older = service.loadCourts('cx1');
+    const latest = service.loadCourts('cx2');
+    rejectOlder(new Error('stale failure'));
+    expect(await older).toBe(false);
+    expect(service.courtsError()).toBeNull();
+    expect(service.error()).toBeNull();
+    expect(service.loadingCourts()).toBe(true);
+    resolveLatest([]);
+    await latest;
+  });
+
+  it('ignores a court failure from a previous active organization', async () => {
+    let rejectCourts!: (error: Error) => void;
+    complexRepoSpy.getCourtsByComplexId.and.returnValue(new Promise((_, reject) => { rejectCourts = reject; }));
+    const pending = service.loadCourts('cx1');
+    organizationId.set('org2');
+    rejectCourts(new Error('old organization failure'));
+    expect(await pending).toBe(false);
+    expect(service.courtsError()).toBeNull();
+    expect(service.error()).toBeNull();
+  });
+
   it('should load availability for a court', async () => {
     await service.loadAvailability('ct1');
     expect(service.availability().length).toBeGreaterThan(0);

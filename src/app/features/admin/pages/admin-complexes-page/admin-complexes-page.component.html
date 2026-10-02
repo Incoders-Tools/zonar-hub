@@ -119,14 +119,28 @@
         </button>
       </div>
 
-      <app-complex-courts-panel
-        [complexId]="courtsComplexId()!"
-        [availabilityOnly]="true"
-        [courts]="facade.courts()"
-        [loading]="facade.loadingCourts()"
-        [activeCourtId]="availabilityCourtId()"
-        (availabilityRequested)="onAvailabilityRequested($event)">
-      </app-complex-courts-panel>
+      <!-- A failed court read must not render as "no courts" -->
+      @if (facade.courtsError()) {
+        <div class="complexes-page__courts-alert" role="alert">
+          <p class="complexes-page__courts-alert-message">{{ 'admin.complexes.courts.listLoadError' | t }}</p>
+          <app-async-button
+            type="button"
+            variant="secondary"
+            [loading]="facade.loadingCourts()"
+            (clicked)="retryCourts()">
+            {{ 'common.retry' | t }}
+          </app-async-button>
+        </div>
+      } @else {
+        <app-complex-courts-panel
+          [complexId]="courtsComplexId()!"
+          [availabilityOnly]="true"
+          [courts]="facade.courts()"
+          [loading]="facade.loadingCourts()"
+          [activeCourtId]="availabilityCourtId()"
+          (availabilityRequested)="onAvailabilityRequested($event)">
+        </app-complex-courts-panel>
+      }
 
       <!-- Availability Grid (shown below courts panel) -->
       @if (availabilityCourtId()) {

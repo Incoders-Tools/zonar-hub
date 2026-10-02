@@ -306,6 +306,12 @@ export class AdminComplexesPageComponent implements OnInit {
     this.facade.loadCourts(row.id);
   }
 
+  retryCourts(): void {
+    const complexId = this.courtsComplexId();
+    if (!complexId || this.facade.loadingCourts()) return;
+    void this.facade.loadCourts(complexId);
+  }
+
   closeCourtsPanel(): void {
     this.courtsComplexId.set(null);
     this.courtsComplexName.set('');

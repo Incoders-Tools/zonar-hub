@@ -15,6 +15,7 @@ import { ComplexCourtsPanelComponent } from './complex-courts-panel/complex-cour
 import { By } from '@angular/platform-browser';
 import { FILE_STORAGE_REPOSITORY } from '../../../../core/repositories/file-storage.repository';
 import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
+import { TRANSLATIONS } from '../../../../core/i18n/i18n.translations';
 
 const seededComplexes: Complex[] = [
   { id: 'cx1', name: 'Club Pádel Norte', key: 'club_padel_norte', address: 'Av. Norte 100', location: 'Palermo', cityId: '', cityName: '', sortOrder: 1, preponderance: 1, sportsSupported: [], courtsCount: 2, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
@@ -184,6 +185,65 @@ describe('AdminComplexesPageComponent', () => {
     expect(complexRepoSpy.createCourt).not.toHaveBeenCalled();
     expect(complexRepoSpy.updateCourt).not.toHaveBeenCalled();
     expect(complexRepoSpy.deleteCourt).not.toHaveBeenCalled();
+  });
+
+  it('shows a scoped court alert with retry instead of the empty courts state when the court read fails', async () => {
+    complexRepoSpy.getCourtsByComplexId.and.rejectWith(new Error('courts failure'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.toggleCourtsPanel(component.tableData()[0]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    const section = host.querySelector('.complexes-page__courts-section') as HTMLElement;
+    const alert = section.querySelector('.complexes-page__courts-alert[role="alert"]') as HTMLElement;
+    expect(alert).not.toBeNull();
+    const message = alert.querySelector('.complexes-page__courts-alert-message')!.textContent!.trim();
+    expect(message).toBe(TRANSLATIONS.es['admin.complexes.courts.listLoadError']);
+    expect(message).not.toBe(TRANSLATIONS.es['admin.complexes.courts.loadError']);
+    expect(section.querySelector('app-complex-courts-panel')).toBeNull();
+    expect(section.querySelector('app-empty-state')).toBeNull();
+    expect(facade.error()).toBeNull();
+    expect(host.querySelector('zh-collection-view app-error-state')).toBeNull();
+    expect(component.tableData().length).toBe(seededComplexes.length);
+
+    const retry = alert.querySelector('button') as HTMLButtonElement;
+    expect(retry.type).toBe('button');
+    expect(retry.classList).toContain('async-btn--secondary');
+    complexRepoSpy.getCourtsByComplexId.and.resolveTo([]);
+    retry.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(complexRepoSpy.getCourtsByComplexId).toHaveBeenCalledTimes(2);
+    expect(complexRepoSpy.getCourtsByComplexId.calls.mostRecent().args).toEqual(['cx1']);
+    expect(section.querySelector('.complexes-page__courts-alert')).toBeNull();
+    expect(section.querySelector('app-complex-courts-panel app-empty-state')).not.toBeNull();
+  });
+
+  it('shows the genuine empty courts state without an alert when the court read succeeds empty', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.toggleCourtsPanel(component.tableData()[0]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const section = (fixture.nativeElement as HTMLElement).querySelector('.complexes-page__courts-section') as HTMLElement;
+    expect(section.querySelector('.complexes-page__courts-alert')).toBeNull();
+    expect(section.querySelector('app-complex-courts-panel app-empty-state')).not.toBeNull();
+  });
+
+  it('does not carry a court failure into another complex', async () => {
+    complexRepoSpy.getCourtsByComplexId.and.rejectWith(new Error('courts failure'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.toggleCourtsPanel(component.tableData()[0]);
+    await fixture.whenStable();
+    let resolveCourts!: (courts: never[]) => void;
+    complexRepoSpy.getCourtsByComplexId.and.returnValue(new Promise(resolve => { resolveCourts = resolve; }));
+    component.toggleCourtsPanel(component.tableData()[1]);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.complexes-page__courts-alert')).toBeNull();
+    resolveCourts([]);
+    await fixture.whenStable();
   });
 
   it('should apply filters', () => {

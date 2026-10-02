@@ -48,6 +48,8 @@ export class ComplexesFacadeService {
   // Courts state
   private readonly courtsState = signal<Court[]>([]);
   private readonly loadingCourtsState = signal(false);
+  // Scoped to court reads so a failure never replaces the complexes collection with its error state.
+  private readonly courtsErrorState = signal<string | null>(null);
   private courtsRequestSequence = 0;
 
   // Availability state
@@ -67,6 +69,7 @@ export class ComplexesFacadeService {
 
   readonly courts = this.courtsState;
   readonly loadingCourts = this.loadingCourtsState;
+  readonly courtsError = this.courtsErrorState;
 
   readonly availability = this.availabilityState;
   readonly loadingAvailability = this.loadingAvailabilityState;
@@ -358,21 +361,24 @@ export class ComplexesFacadeService {
     ++this.courtsRequestSequence;
     this.courtsState.set([]);
     this.loadingCourtsState.set(false);
+    this.courtsErrorState.set(null);
   }
 
   async loadCourts(complexId: string): Promise<boolean> {
     const requestSequence = ++this.courtsRequestSequence;
     const organizationId = this.activeOrg.activeOrganizationId();
+    const isCurrent = () => requestSequence === this.courtsRequestSequence
+      && organizationId === this.activeOrg.activeOrganizationId();
     try {
       this.loadingCourtsState.set(true);
-      this.errorState.set(null);
+      this.courtsErrorState.set(null);
       const courts = await this.repository.getCourtsByComplexId(complexId);
-      if (requestSequence !== this.courtsRequestSequence || organizationId !== this.activeOrg.activeOrganizationId()) return false;
+      if (!isCurrent()) return false;
       this.courtsState.set(courts);
       return true;
     } catch (error) {
-      if (requestSequence === this.courtsRequestSequence) {
-        this.errorState.set((error as Error).message);
+      if (isCurrent()) {
+        this.courtsErrorState.set((error as Error).message);
       }
       return false;
     } finally {
