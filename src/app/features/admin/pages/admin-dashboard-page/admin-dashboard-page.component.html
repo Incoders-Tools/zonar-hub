@@ -21,8 +21,39 @@
     </div>
   }
 
+  <!-- Summary request state: never render failure or pending data as zero progress -->
+  @if (dashboardService.error()) {
+    <div class="dashboard-summary-alert" role="alert" data-testid="dashboard-summary-error">
+      <p class="dashboard-summary-alert__message">{{ 'dashboard.summaryError' | t }}</p>
+      <app-async-button
+        type="button"
+        variant="secondary"
+        (clicked)="retrySummary()">
+        {{ 'common.retry' | t }}
+      </app-async-button>
+    </div>
+  } @else if (summaryLoading()) {
+    <p class="dashboard-summary-status" role="status" data-testid="dashboard-summary-loading">{{ 'common.loading' | t }}</p>
+  }
+
+  <!-- Without an active organization only the organization step is known; no summary counts are shown -->
+  @if (!activeOrg.activeOrganizationId()) {
+    <div class="setup-checklist">
+      <div class="setup-checklist__header">
+        <h2 class="setup-checklist__title">{{ 'dashboard.checklist.title' | t }}</h2>
+      </div>
+      <ul class="setup-checklist__list">
+        <li class="setup-checklist__item">
+          <span class="setup-checklist__icon">🏛️</span>
+          <span class="setup-checklist__check">⬜</span>
+          <a class="setup-checklist__label setup-checklist__label--link" routerLink="/admin/system/organizations">{{ 'dashboard.checklist.organization' | t }}</a>
+        </li>
+      </ul>
+    </div>
+  }
+
   <!-- Setup Progress Checklist -->
-  @if (!isSetupComplete()) {
+  @if (summary() && !isSetupComplete()) {
     <div class="setup-checklist">
       <div class="setup-checklist__header">
         <h2 class="setup-checklist__title">{{ 'dashboard.checklist.title' | t }}</h2>
@@ -47,41 +78,43 @@
     </div>
   }
 
-  <div class="stats-grid">
-    <div class="stat-card stat-card--primary">
-      <div class="stat-card__icon">🏆</div>
-      <span class="stat-card__value">{{ totalTournaments() }}</span>
-      <span class="stat-card__label">{{ 'admin.tournaments' | t }}</span>
+  @if (summary()) {
+    <div class="stats-grid">
+      <div class="stat-card stat-card--primary">
+        <div class="stat-card__icon">🏆</div>
+        <span class="stat-card__value">{{ totalTournaments() }}</span>
+        <span class="stat-card__label">{{ 'admin.tournaments' | t }}</span>
+      </div>
+      <div class="stat-card stat-card--success">
+        <div class="stat-card__icon">▶️</div>
+        <span class="stat-card__value">{{ activeTournaments() }}</span>
+        <span class="stat-card__label">{{ 'dashboard.activeTournaments' | t }}</span>
+      </div>
+      <div class="stat-card stat-card--info">
+        <div class="stat-card__icon">✅</div>
+        <span class="stat-card__value">{{ finishedTournaments() }}</span>
+        <span class="stat-card__label">{{ 'dashboard.finishedTournaments' | t }}</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon">👥</div>
+        <span class="stat-card__value">{{ totalPlayers() }}</span>
+        <span class="stat-card__label">{{ 'admin.players' | t }}</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon">📋</div>
+        <span class="stat-card__value">{{ totalRegistrations() }}</span>
+        <span class="stat-card__label">{{ 'admin.registrations' | t }}</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__icon">🏟️</div>
+        <span class="stat-card__value">{{ complexCount() }}</span>
+        <span class="stat-card__label">{{ 'admin.complexes' | t }}</span>
+      </div>
     </div>
-    <div class="stat-card stat-card--success">
-      <div class="stat-card__icon">▶️</div>
-      <span class="stat-card__value">{{ activeTournaments() }}</span>
-      <span class="stat-card__label">{{ 'dashboard.activeTournaments' | t }}</span>
-    </div>
-    <div class="stat-card stat-card--info">
-      <div class="stat-card__icon">✅</div>
-      <span class="stat-card__value">{{ finishedTournaments() }}</span>
-      <span class="stat-card__label">{{ 'dashboard.finishedTournaments' | t }}</span>
-    </div>
-    <div class="stat-card">
-      <div class="stat-card__icon">👥</div>
-      <span class="stat-card__value">{{ totalPlayers() }}</span>
-      <span class="stat-card__label">{{ 'admin.players' | t }}</span>
-    </div>
-    <div class="stat-card">
-      <div class="stat-card__icon">📋</div>
-      <span class="stat-card__value">{{ totalRegistrations() }}</span>
-      <span class="stat-card__label">{{ 'admin.registrations' | t }}</span>
-    </div>
-    <div class="stat-card">
-      <div class="stat-card__icon">🏟️</div>
-      <span class="stat-card__value">{{ complexCount() }}</span>
-      <span class="stat-card__label">{{ 'admin.complexes' | t }}</span>
-    </div>
-  </div>
+  }
 
   <!-- Usage Progress Section -->
-  @if (currentPlan(); as plan) {
+  @if (summary() && currentPlan()) {
     <div class="dashboard-section">
       <h2 class="dashboard-section__title">{{ 'dashboard.planUsage' | t }}</h2>
       <div class="usage-grid">
@@ -149,30 +182,33 @@
     <div class="dashboard-section">
       <h2 class="dashboard-section__title">{{ 'dashboard.overview' | t }}</h2>
       <div class="dashboard-charts">
-        <div class="chart-card">
-          <h3 class="chart-card__title">{{ 'dashboard.tournamentsByStatus' | t }}</h3>
-          <div class="chart-card__body">
-            <div class="chart-bar-group">
-              <div class="chart-bar">
-                <div class="chart-bar__fill chart-bar__fill--primary" [style.width.%]="totalTournaments() > 0 ? (activeTournaments() / totalTournaments()) * 100 : 0"></div>
-                <span class="chart-bar__label">{{ 'dashboard.active' | t }} ({{ activeTournaments() }})</span>
-              </div>
-              <div class="chart-bar">
-                <div class="chart-bar__fill chart-bar__fill--muted" [style.width.%]="totalTournaments() > 0 ? (finishedTournaments() / totalTournaments()) * 100 : 0"></div>
-                <span class="chart-bar__label">{{ 'dashboard.finished' | t }} ({{ finishedTournaments() }})</span>
+        <!-- Summary charts only render real data; quick actions stay available on loading or error -->
+        @if (summary()) {
+          <div class="chart-card" data-testid="dashboard-summary-charts">
+            <h3 class="chart-card__title">{{ 'dashboard.tournamentsByStatus' | t }}</h3>
+            <div class="chart-card__body">
+              <div class="chart-bar-group">
+                <div class="chart-bar">
+                  <div class="chart-bar__fill chart-bar__fill--primary" [style.width.%]="totalTournaments() > 0 ? (activeTournaments() / totalTournaments()) * 100 : 0"></div>
+                  <span class="chart-bar__label">{{ 'dashboard.active' | t }} ({{ activeTournaments() }})</span>
+                </div>
+                <div class="chart-bar">
+                  <div class="chart-bar__fill chart-bar__fill--muted" [style.width.%]="totalTournaments() > 0 ? (finishedTournaments() / totalTournaments()) * 100 : 0"></div>
+                  <span class="chart-bar__label">{{ 'dashboard.finished' | t }} ({{ finishedTournaments() }})</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="chart-card">
-          <h3 class="chart-card__title">{{ 'dashboard.registrationRate' | t }}</h3>
-          <div class="chart-card__body">
-            <div class="metric-ring">
-              <span class="metric-ring__value">{{ registrationFillRate() }}%</span>
-              <span class="metric-ring__label">{{ 'dashboard.registrationFillRate' | t }}</span>
+          <div class="chart-card" data-testid="dashboard-summary-charts">
+            <h3 class="chart-card__title">{{ 'dashboard.registrationRate' | t }}</h3>
+            <div class="chart-card__body">
+              <div class="metric-ring">
+                <span class="metric-ring__value">{{ registrationFillRate() }}%</span>
+                <span class="metric-ring__label">{{ 'dashboard.registrationFillRate' | t }}</span>
+              </div>
             </div>
           </div>
-        </div>
+        }
         <div class="chart-card">
           <h3 class="chart-card__title">{{ 'dashboard.quickActions' | t }}</h3>
           <div class="chart-card__body chart-card__body--actions">

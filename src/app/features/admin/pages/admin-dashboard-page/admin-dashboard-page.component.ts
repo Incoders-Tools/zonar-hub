@@ -1,6 +1,7 @@
 import { Component, inject, computed, signal, effect } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
@@ -24,7 +25,7 @@ interface UsageProgress {
 @Component({
   selector: 'app-admin-dashboard-page',
   standalone: true,
-  imports: [TranslatePipe, RouterLink],
+  imports: [TranslatePipe, RouterLink, AsyncButtonComponent],
   templateUrl: './admin-dashboard-page.component.html',
   styleUrl: './admin-dashboard-page.component.scss'
 })
@@ -36,7 +37,17 @@ export class AdminDashboardPageComponent {
   protected readonly onboarding = inject(OnboardingStateService);
 
   readonly currentPlan = signal<Plan | null>(null);
-  readonly summary = this.dashboardService.summary;
+  /** Summary of the active organization only; null while loading, after a failure, or when stale. */
+  readonly summary = computed(() => {
+    const organizationId = this.activeOrg.activeOrganizationId();
+    const summary = this.dashboardService.summary();
+    return organizationId && summary && this.dashboardService.summaryOrganizationId() === organizationId
+      ? summary
+      : null;
+  });
+  readonly summaryLoading = computed(
+    () => !!this.activeOrg.activeOrganizationId() && !this.summary() && !this.dashboardService.error()
+  );
   readonly complexCount = computed(() => this.summary()?.complexCount ?? 0);
   readonly adminCount = computed(() => this.summary()?.adminCount ?? 0);
   readonly activeSportsCount = computed(() => this.summary()?.activeSportsCount ?? 0);
@@ -89,6 +100,10 @@ export class AdminDashboardPageComponent {
         this.currentPlan.set(null);
       }
     });
+  }
+
+  retrySummary(): void {
+    void this.dashboardService.loadSummary(this.activeOrg.activeOrganizationId());
   }
 
   readonly showSetupPrompt = computed(() => {
