@@ -7,7 +7,9 @@ import { ZhCollectionViewComponent } from '../../../../shared/components/zh-coll
 import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
+import { ZhCollectionRowAction } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { Organization } from '../../../../core/models';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { OrganizationFacadeService, OrganizationFilters } from './organization-facade.service';
 import { OrganizationFormPanelComponent, OrganizationFormSubmitData } from './organization-form-panel/organization-form-panel.component';
@@ -20,6 +22,9 @@ interface OrganizationRow extends Record<string, unknown> {
   typeLabel: string;
   statusLabel: string;
   statusVariant: string;
+  isPrimary: boolean;
+  primaryLabel: string;
+  primaryVariant: string;
 }
 
 @Component({
@@ -53,6 +58,7 @@ interface OrganizationRow extends Record<string, unknown> {
 export class AdminOrganizationsPageComponent implements OnInit {
   readonly facade = inject(OrganizationFacadeService);
   private readonly activeOrg = inject(ActiveOrganizationService);
+  private readonly auth = inject(AuthService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -60,6 +66,12 @@ export class AdminOrganizationsPageComponent implements OnInit {
   readonly editingOrganization = signal<Organization | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly selectedOrganizations = signal<OrganizationRow[]>([]);
+  readonly pendingPrimaryId = signal<string | null>(null);
+
+  readonly primaryEligibleIds = computed(() =>
+    new Set(this.activeOrg.primaryEligibleOrganizations().map(org => org.id)));
+  /** Primary selection is only meaningful for admins with more than one eligible assignment. */
+  readonly canSetPrimary = computed(() => this.auth.isAdmin() && this.primaryEligibleIds().size > 1);
 
   constructor() {
     // Reload data and reset transient UI whenever the active organization changes
@@ -71,6 +83,7 @@ export class AdminOrganizationsPageComponent implements OnInit {
       this.editingOrganization.set(null);
       this.deletingId.set(null);
       this.selectedOrganizations.set([]);
+      this.pendingPrimaryId.set(null);
       void this.facade.load();
     });
   }
@@ -79,13 +92,21 @@ export class AdminOrganizationsPageComponent implements OnInit {
     { key: 'displayName', labelKey: 'admin.organizations.column.displayName', sortable: true },
     { key: 'legalName', labelKey: 'admin.organizations.column.legalName', sortable: true },
     { key: 'typeLabel', labelKey: 'admin.organizations.column.type', sortable: true, renderType: 'pill', translate: true },
+    { key: 'primaryLabel', labelKey: 'org.selector.primary', renderType: 'pill', translate: true, pillVariantKey: 'primaryVariant' },
     { key: 'statusLabel', labelKey: 'admin.organizations.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
-  readonly rowActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
+  readonly rowActions: ZhCollectionRowAction[] = [
+    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' },
+    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' }
   ];
+
+  private readonly setPrimaryAction: ZhCollectionRowAction =
+    { icon: 'star', labelKey: 'org.selector.setPrimary', action: 'setPrimary', variant: 'primary' };
+
+  /** Shared by table and cards: the primary action is offered only on eligible, non-primary rows. */
+  readonly organizationRowActionsFilter = (row: OrganizationRow): ZhCollectionRowAction[] =>
+    this.isPrimaryCandidate(row.id) ? [this.setPrimaryAction, ...this.rowActions] : this.rowActions;
 
   readonly filterFields: FilterField[] = [
     { key: 'name', labelKey: 'admin.organizations.filter.name', type: 'text' },
@@ -108,17 +129,22 @@ export class AdminOrganizationsPageComponent implements OnInit {
     }
   ];
 
-  readonly tableData = computed<OrganizationRow[]>(() =>
-    this.facade.filteredOrganizations().map(o => ({
+  readonly tableData = computed<OrganizationRow[]>(() => {
+    const primaryId = this.activeOrg.primaryOrganizationId();
+    return this.facade.filteredOrganizations().map(o => ({
       id: o.id,
       displayName: o.displayName,
       legalName: o.legalName ?? '',
       type: o.type,
       typeLabel: `organization.type.${o.type}`,
       statusLabel: o.isActive ? 'admin.organizations.status.active' : 'admin.organizations.status.inactive',
-      statusVariant: o.isActive ? 'active' : 'inactive'
-    }))
-  );
+      statusVariant: o.isActive ? 'active' : 'inactive',
+      isPrimary: o.id === primaryId,
+      // Blank labels render no pill, so only the primary row shows the marker.
+      primaryLabel: o.id === primaryId ? 'org.selector.primary' : '',
+      primaryVariant: 'info'
+    }));
+  });
 
   readonly hasSelection = computed(() => this.selectedOrganizations().length > 0);
 
@@ -151,7 +177,36 @@ export class AdminOrganizationsPageComponent implements OnInit {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
+    } else if (event.action === 'setPrimary') {
+      this.requestPrimary(event.row);
     }
+  }
+
+  requestPrimary(row: OrganizationRow): void {
+    if (!this.isPrimaryCandidate(row.id) || this.facade.savingPrimary()) return;
+    if (this.activeOrg.primaryOrganizationId() === null) {
+      void this.facade.setPrimary(row.id);
+    } else {
+      this.pendingPrimaryId.set(row.id);
+    }
+  }
+
+  async confirmPrimary(): Promise<void> {
+    const id = this.pendingPrimaryId();
+    if (!id || this.facade.savingPrimary()) return;
+    if (await this.facade.setPrimary(id)) {
+      this.pendingPrimaryId.set(null);
+    }
+  }
+
+  cancelPrimary(): void {
+    this.pendingPrimaryId.set(null);
+  }
+
+  private isPrimaryCandidate(id: string): boolean {
+    return this.canSetPrimary()
+      && this.primaryEligibleIds().has(id)
+      && this.activeOrg.primaryOrganizationId() !== id;
   }
 
   openCreate(): void {
