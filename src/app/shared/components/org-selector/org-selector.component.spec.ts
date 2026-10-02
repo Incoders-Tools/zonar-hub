@@ -1,17 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrgSelectorComponent } from './org-selector.component';
 import { ActiveOrganizationService } from '../../../core/services/active-organization.service';
-import { computed, signal } from '@angular/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { NotificationService } from '../../../core/services/notification.service';
+import { signal } from '@angular/core';
 
 describe('OrgSelectorComponent', () => {
   let component: OrgSelectorComponent;
   let fixture: ComponentFixture<OrgSelectorComponent>;
 
+  const first = { id: 'org-1', name: 'First Club' };
+  const second = { id: 'org-2', name: 'Second Club' };
+
   const mockActiveOrgService = {
-    activeOrganization: signal(null),
-    activeOrganizationId: signal(null),
+    activeOrganization: signal<{ id: string; name: string } | null>(null),
+    activeOrganizationId: signal<string | null>(null),
     activeOrganizationName: signal(''),
     primaryOrganizationId: signal<string | null>(null),
     manageableOrganizations: signal<{ id: string; name: string }[]>([]),
@@ -20,6 +21,30 @@ describe('OrgSelectorComponent', () => {
     switchOrganization: jasmine.createSpy('switchOrganization'),
     setPrimaryOrganization: jasmine.createSpy('setPrimaryOrganization').and.resolveTo()
   };
+
+  const element = (): HTMLElement => fixture.nativeElement;
+
+  function setOrganizations(
+    organizations: { id: string; name: string }[],
+    eligible: { id: string; name: string }[],
+    primaryId: string | null,
+    activeId: string | null = null
+  ): void {
+    mockActiveOrgService.manageableOrganizations.set(organizations);
+    mockActiveOrgService.primaryEligibleOrganizations.set(eligible);
+    mockActiveOrgService.primaryOrganizationId.set(primaryId);
+    mockActiveOrgService.activeOrganizationId.set(activeId);
+    mockActiveOrgService.hasMultipleOrganizations.set(organizations.length > 1);
+    fixture.detectChanges();
+  }
+
+  function openDropdown(): void {
+    element().querySelector<HTMLButtonElement>('.org-selector__trigger')!.click();
+    fixture.detectChanges();
+  }
+
+  const optionNames = (): string[] =>
+    Array.from(element().querySelectorAll('.org-selector__option-name')).map(node => node.textContent!.trim());
 
   beforeEach(async () => {
     mockActiveOrgService.activeOrganization.set(null);
@@ -31,15 +56,10 @@ describe('OrgSelectorComponent', () => {
     mockActiveOrgService.hasMultipleOrganizations.set(false);
     mockActiveOrgService.switchOrganization.calls.reset();
     mockActiveOrgService.setPrimaryOrganization.calls.reset();
-    mockActiveOrgService.setPrimaryOrganization.and.resolveTo();
 
     await TestBed.configureTestingModule({
       imports: [OrgSelectorComponent],
-      providers: [
-        { provide: ActiveOrganizationService, useValue: mockActiveOrgService },
-        { provide: AuthService, useValue: { isAdmin: signal(true) } },
-        { provide: NotificationService, useValue: { success: jasmine.createSpy('success'), error: jasmine.createSpy('error') } }
-      ]
+      providers: [{ provide: ActiveOrganizationService, useValue: mockActiveOrgService }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(OrgSelectorComponent);
@@ -47,91 +67,102 @@ describe('OrgSelectorComponent', () => {
     fixture.detectChanges();
   });
 
-  it('shows the server primary first and keeps switch separate from set-primary', () => {
-    mockActiveOrgService.manageableOrganizations.set([
-      { id: 'org-2', name: 'Second' }, { id: 'org-1', name: 'First' }
-    ] as never);
-    mockActiveOrgService.primaryOrganizationId.set('org-1' as never);
-    mockActiveOrgService.hasMultipleOrganizations.set(true);
-    mockActiveOrgService.primaryEligibleOrganizations.set([
-      { id: 'org-1', name: 'First' }, { id: 'org-2', name: 'Second' }
-    ]);
+  it('lists the primary organization first and marks it when several organizations are eligible', () => {
+    setOrganizations([second, first], [first, second], first.id);
+    openDropdown();
+
+    expect(optionNames()).toEqual([first.name, second.name]);
+    const badges = element().querySelectorAll('.org-selector__option-badge');
+    expect(badges.length).toBe(1);
+    expect(element().querySelectorAll('.org-selector__option')[0].contains(badges[0])).toBeTrue();
+  });
+
+  it('hides the primary badge when only one organization is eligible', () => {
+    setOrganizations([first, second], [first], first.id);
+    openDropdown();
+
+    expect(element().querySelectorAll('.org-selector__option').length).toBe(2);
+    expect(element().querySelector('.org-selector__option-badge')).toBeNull();
+  });
+
+  it('offers no set-primary action or confirmation even with several eligible organizations', () => {
+    setOrganizations([first, second], [first, second], first.id, first.id);
+    openDropdown();
+
+    const buttons = Array.from(element().querySelectorAll<HTMLButtonElement>('.org-selector__dropdown button'));
+    expect(buttons.length).toBe(2);
+    expect(buttons.every(button => button.classList.contains('org-selector__option'))).toBeTrue();
+    expect(element().querySelector('.org-selector__set-primary')).toBeNull();
+
+    buttons[1].click();
     fixture.detectChanges();
-    component.toggle();
-    fixture.detectChanges();
-    expect(component.organizations().map(org => org.id)).toEqual(['org-1', 'org-2']);
-    expect(fixture.nativeElement.querySelectorAll('.org-selector__set-primary').length).toBe(1);
-    component.requestPrimary('org-2');
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeTruthy();
-    expect(mockActiveOrgService.switchOrganization).not.toHaveBeenCalled();
+
+    expect(element().querySelector('app-confirm-dialog')).toBeNull();
     expect(mockActiveOrgService.setPrimaryOrganization).not.toHaveBeenCalled();
   });
 
-  it('does not offer primary on unassigned organizations and hides the badge for one assignment', () => {
-    mockActiveOrgService.manageableOrganizations.set([
-      { id: 'org-1', name: 'First' }, { id: 'org-2', name: 'Second' }
-    ]);
-    mockActiveOrgService.primaryEligibleOrganizations.set([{ id: 'org-1', name: 'First' }]);
-    mockActiveOrgService.primaryOrganizationId.set('org-1');
-    mockActiveOrgService.hasMultipleOrganizations.set(true);
-    component.toggle();
+  it('switches the active organization and closes the dropdown on selection', () => {
+    setOrganizations([first, second], [first, second], first.id, first.id);
+    openDropdown();
+
+    element().querySelectorAll<HTMLButtonElement>('.org-selector__option')[1].click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.org-selector__set-primary').length).toBe(0);
-    expect(fixture.nativeElement.querySelectorAll('.org-selector__option-badge').length).toBe(0);
-    component.requestPrimary('org-2');
-    expect(component.pendingPrimaryId()).toBeNull();
+
+    expect(mockActiveOrgService.switchOrganization).toHaveBeenCalledOnceWith(second.id);
+    expect(mockActiveOrgService.primaryOrganizationId()).toBe(first.id);
+    expect(element().querySelector('.org-selector__dropdown')).toBeNull();
   });
 
-  it('saves an eligible first primary without showing replacement confirmation', async () => {
-    mockActiveOrgService.primaryEligibleOrganizations.set([
-      { id: 'org-1', name: 'First' }, { id: 'org-2', name: 'Second' }
-    ]);
-    component.requestPrimary('org-2');
+  it('marks the active organization for assistive technology and exposes the expanded state', () => {
+    setOrganizations([first, second], [first, second], first.id, second.id);
+    const trigger = element().querySelector<HTMLButtonElement>('.org-selector__trigger')!;
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    openDropdown();
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    const options = element().querySelectorAll<HTMLButtonElement>('.org-selector__option');
+    expect(options[0].getAttribute('aria-current')).toBeNull();
+    expect(options[1].getAttribute('aria-current')).toBe('true');
+    expect(options[1].type).toBe('button');
+  });
+
+  it('does not open the dropdown when only one organization is available', () => {
+    setOrganizations([first], [first], first.id, first.id);
+    openDropdown();
+
+    expect(element().querySelector('.org-selector__dropdown')).toBeNull();
+    expect(element().querySelector('.org-selector__chevron')).toBeNull();
+  });
+
+  it('filters organizations by search and shows an empty result state', () => {
+    const many = Array.from({ length: 6 }, (_, index) => ({ id: `org-${index}`, name: `Club ${index}` }));
+    setOrganizations(many, many, many[0].id);
+    openDropdown();
+
+    const search = element().querySelector<HTMLInputElement>('.org-selector__search-input')!;
+    expect(search.getAttribute('aria-label')).toBeTruthy();
+
+    component.searchQuery.set('club 3');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeNull();
-    expect(component.pendingPrimaryId()).toBeNull();
-    expect(mockActiveOrgService.setPrimaryOrganization).toHaveBeenCalledOnceWith('org-2');
-    await fixture.whenStable();
-    expect(TestBed.inject(NotificationService).success).toHaveBeenCalledWith('org.selector.primarySuccess');
-  });
+    expect(optionNames()).toEqual(['Club 3']);
 
-  it('requires confirmation to replace a primary and cancellation preserves it', () => {
-    mockActiveOrgService.primaryEligibleOrganizations.set([
-      { id: 'org-1', name: 'First' }, { id: 'org-2', name: 'Second' }
-    ]);
-    mockActiveOrgService.primaryOrganizationId.set('org-1');
-    component.requestPrimary('org-2');
+    component.searchQuery.set('missing');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-confirm-dialog')).toBeTruthy();
-    expect(mockActiveOrgService.setPrimaryOrganization).not.toHaveBeenCalled();
-    component.pendingPrimaryId.set(null);
-    expect(mockActiveOrgService.primaryOrganizationId()).toBe('org-1');
-    expect(mockActiveOrgService.setPrimaryOrganization).not.toHaveBeenCalled();
+    expect(element().querySelector('.org-selector__option')).toBeNull();
+    expect(element().querySelector('.org-selector__empty')).toBeTruthy();
   });
 
-  it('reports first-primary save failure without changing the primary', async () => {
-    mockActiveOrgService.primaryEligibleOrganizations.set([
-      { id: 'org-1', name: 'First' }, { id: 'org-2', name: 'Second' }
-    ]);
-    mockActiveOrgService.setPrimaryOrganization.and.rejectWith(new Error('failed'));
-    component.requestPrimary('org-2');
-    await fixture.whenStable();
-    expect(mockActiveOrgService.primaryOrganizationId()).toBeNull();
-    expect(TestBed.inject(NotificationService).error).toHaveBeenCalledWith('org.selector.primaryError');
-  });
+  it('closes and clears the search when clicking outside', () => {
+    const many = Array.from({ length: 6 }, (_, index) => ({ id: `org-${index}`, name: `Club ${index}` }));
+    setOrganizations(many, many, many[0].id);
+    openDropdown();
+    component.searchQuery.set('club');
 
-  it('retains the old primary after a failed save', async () => {
-    mockActiveOrgService.primaryEligibleOrganizations.set([
-      { id: 'org-1', name: 'First' }, { id: 'org-2', name: 'Second' }
-    ]);
-    mockActiveOrgService.hasMultipleOrganizations.set(true);
-    mockActiveOrgService.primaryOrganizationId.set('org-1' as never);
-    mockActiveOrgService.setPrimaryOrganization.and.rejectWith(new Error('failed'));
-    component.requestPrimary('org-2');
-    await component.confirmPrimary();
-    expect(mockActiveOrgService.primaryOrganizationId()).toBe('org-1');
-    expect(component.pendingPrimaryId()).toBe('org-2');
-    expect(TestBed.inject(NotificationService).error).toHaveBeenCalledWith('org.selector.primaryError');
+    document.body.click();
+    fixture.detectChanges();
+
+    expect(element().querySelector('.org-selector__dropdown')).toBeNull();
+    expect(component.searchQuery()).toBe('');
   });
 });

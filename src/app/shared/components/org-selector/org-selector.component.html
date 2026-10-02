@@ -34,7 +34,6 @@
 
       <div class="org-selector__list">
         @for (org of filteredOrganizations(); track org.id) {
-          <div class="org-selector__row">
           <button
             class="org-selector__option"
             type="button"
@@ -54,12 +53,6 @@
               <span class="org-selector__option-check">✓</span>
             }
           </button>
-          @if (canSetPrimary() && primaryEligibleIds().has(org.id) && org.id !== primaryOrgId()) {
-            <button class="org-selector__set-primary" type="button"
-              [attr.aria-label]="('org.selector.setPrimary' | t) + ': ' + org.name"
-              (click)="requestPrimary(org.id)">{{ 'org.selector.setPrimary' | t }}</button>
-          }
-          </div>
         } @empty {
           <div class="org-selector__empty">{{ 'org.selector.noResults' | t }}</div>
         }
@@ -67,14 +60,3 @@
     </div>
   }
 </div>
-@if (pendingPrimaryId()) {
-  <app-confirm-dialog
-    [titleKey]="'org.selector.confirmTitle'"
-    [messageKey]="'org.selector.confirmMessage'"
-    [warningKey]="'org.selector.confirmWarning'"
-    [confirmLabelKey]="'org.selector.setPrimary'"
-    [confirmVariant]="'primary'"
-    [loading]="savingPrimary()"
-    (confirmed)="confirmPrimary()"
-    (cancelled)="pendingPrimaryId.set(null)" />
-}
