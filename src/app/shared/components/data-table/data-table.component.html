@@ -102,6 +102,7 @@
                       [class.data-table__action-btn--warn]="act.variant === 'warn'"
                       [class.data-table__action-btn--danger]="act.variant === 'danger'"
                       [title]="act.labelKey | t"
+                      [attr.aria-label]="act.labelKey | t"
                       (click)="onRowAction(act.action, row); $event.stopPropagation()">
                       <mat-icon class="data-table__action-icon">{{ act.icon }}</mat-icon>
                     </button>

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { I18nService } from '../../../core/i18n/i18n.service';
 import { DataTableColumn, DataTableComponent } from './data-table.component';
 
 describe('DataTableComponent', () => {
@@ -81,6 +82,24 @@ describe('DataTableComponent', () => {
       expect(pillIn(rows[0])?.getAttribute('data-variant')).toBe('active');
       expect(pillIn(rows[0])?.textContent?.trim()).toBe('Active');
       expect(pillIn(rows[1])?.getAttribute('data-variant')).toBe('inactive');
+    });
+  });
+
+  describe('row actions', () => {
+    it('exposes the translated action label as the accessible name of icon-only buttons', () => {
+      const expectedLabel = TestBed.inject(I18nService).translate('common.edit');
+      expect(expectedLabel).not.toBe('common.edit');
+
+      fixture.componentRef.setInput('columns', [{ key: 'name', labelKey: 'table.name' }]);
+      fixture.componentRef.setInput('data', [{ id: '1', name: 'Row' }]);
+      fixture.componentRef.setInput('rowActions', [{ icon: 'edit', labelKey: 'common.edit', action: 'edit' }]);
+      fixture.detectChanges();
+
+      const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.data-table__action-btn');
+      expect(button).not.toBeNull();
+      expect(button?.getAttribute('aria-label')).toBe(expectedLabel);
+      expect(button?.getAttribute('title')).toBe(expectedLabel);
+      expect(button?.textContent?.trim()).toBe('edit');
     });
   });
 });

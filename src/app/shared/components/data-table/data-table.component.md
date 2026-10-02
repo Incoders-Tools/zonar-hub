@@ -62,7 +62,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 ## Accesibilidad
 - La tabla declara `role="grid"`.
 - Checkbox global tiene `aria-label="Select all rows"`; checkbox de fila tiene texto hardcodeado `Select row`.
-- Acciones usan `title` traducido, pero no `aria-label` explícito.
+- Los botones de acción por fila son icon-only: el texto del `mat-icon` (p. ej. `star`) no debe ser el nombre accesible, por eso exponen `[attr.aria-label]` con la etiqueta traducida (`labelKey | t`) y conservan `title` traducido como tooltip nativo.
 - Columnas ordenables se activan por click, sin soporte de teclado documentado en template.
 - Drag/drop de columnas no expone instrucciones accesibles.
 
@@ -78,6 +78,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 
 ## Testing
 - `data-table.component.spec.ts` cubre creación y el render type `pill`: sin pill para valores vacíos/nulos/en blanco, pill solo en la fila con valor, `false`/`0` visibles y `data-variant` desde `pillVariantKey`.
+- También verifica que los botones de acción por fila exponen la etiqueta traducida como `aria-label` y `title`.
 - Faltan pruebas de loading/error/empty, selección, sort, paginación, acciones, resto de render types, retry y reorder.
 
 ## Guía de reutilización
@@ -90,5 +91,5 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 - Cobertura de tests parcial para un primitivo canónico (solo `pill` cubierto en profundidad).
 - Algunos textos/labels accesibles están hardcodeados y no pasan por i18n.
 - `emptyMessageKey` no se aplica en el template actual.
-- Acciones no tienen disabled/aria-label completo.
+- Acciones no soportan estado disabled.
 - Reorder por drag/drop no es plenamente accesible.
