@@ -37,10 +37,10 @@ export class AdminDashboardPageComponent {
 
   readonly currentPlan = signal<Plan | null>(null);
   readonly summary = this.dashboardService.summary;
-  readonly complexCount = computed(() => this.summary().complexCount);
-  readonly adminCount = computed(() => this.summary().adminCount);
-  readonly activeSportsCount = computed(() => this.summary().activeSportsCount);
-  readonly courtCount = computed(() => this.summary().courtCount);
+  readonly complexCount = computed(() => this.summary()?.complexCount ?? 0);
+  readonly adminCount = computed(() => this.summary()?.adminCount ?? 0);
+  readonly activeSportsCount = computed(() => this.summary()?.activeSportsCount ?? 0);
+  readonly courtCount = computed(() => this.summary()?.courtCount ?? 0);
 
   /** Setup progress checklist */
   readonly setupChecklist = computed<SetupCheckItem[]>(() => {
@@ -101,13 +101,13 @@ export class AdminDashboardPageComponent {
     return progress !== null && !progress.wizardCompleted && (progress.wizardStep ?? 0) > 0;
   });
 
-  readonly activeTournaments = computed(() => this.summary().activeTournaments);
+  readonly activeTournaments = computed(() => this.summary()?.activeTournaments ?? 0);
 
-  readonly finishedTournaments = computed(() => this.summary().finishedTournaments);
+  readonly finishedTournaments = computed(() => this.summary()?.finishedTournaments ?? 0);
 
-  readonly totalPlayers = computed(() => this.summary().totalPlayers);
-  readonly totalRegistrations = computed(() => this.summary().totalRegistrations);
-  readonly totalTournaments = computed(() => this.summary().totalTournaments);
+  readonly totalPlayers = computed(() => this.summary()?.totalPlayers ?? 0);
+  readonly totalRegistrations = computed(() => this.summary()?.totalRegistrations ?? 0);
+  readonly totalTournaments = computed(() => this.summary()?.totalTournaments ?? 0);
 
   /** Usage progress: tournaments */
   readonly tournamentUsage = computed(() =>
