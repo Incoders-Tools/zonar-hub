@@ -62,9 +62,11 @@
               @if (col.key !== 'actions') {
                 <td class="data-table__td">
                   @if (col.renderType === 'pill') {
-                    <span class="data-table__pill" [attr.data-variant]="row[col.pillVariantKey ?? col.key]">
-                      {{ col.translate ? ($any(row[col.key]) | t) : row[col.key] }}
-                    </span>
+                    @if (hasPillValue(row[col.key])) {
+                      <span class="data-table__pill" [attr.data-variant]="row[col.pillVariantKey ?? col.key]">
+                        {{ col.translate ? ($any(row[col.key]) | t) : row[col.key] }}
+                      </span>
+                    }
                   } @else if (col.renderType === 'toggle') {
                     <mat-slide-toggle
                       [checked]="!!row[col.key]"

@@ -47,7 +47,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 - Renderiza wrapper scrollable con `<table role="grid">`.
 - Prioridad de estados: `loading` > `error` > `empty` > tabla.
 - Las columnas con key `actions` se omiten como columna de datos; las acciones salen de `rowActions`/`rowActionsFilter`.
-- `pill` usa `data-variant` desde la fila; `toggle` emite acción pero revierte visualmente el slide-toggle al valor original; `date` usa `formatDate`; `icon` muestra `mat-icon` y nombre.
+- `pill` usa `data-variant` desde la fila (`pillVariantKey ?? key`). Si el valor de la celda es `null`, `undefined` o string vacío/en blanco, no se renderiza pill (celda vacía), lo que permite marcadores exclusivos como "principal" sin pills vacías en el resto de filas. `false` y `0` siguen renderizándose como pill. `toggle` emite acción pero revierte visualmente el slide-toggle al valor original; `date` usa `formatDate`; `icon` muestra `mat-icon` y nombre.
 - La paginación es cliente, calculada sobre `data`, no server-side.
 
 ## Estados y variantes
@@ -77,8 +77,8 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 - Hardcoded styles observados: sombra mobile `rgba(0, 0, 0, 0.06)`; tamaños fijos de checkbox/iconos/botones; el resto se apoya mayormente en tokens.
 
 ## Testing
-- `data-table.component.spec.ts` solo cubre creación del componente.
-- Faltan pruebas de loading/error/empty, selección, sort, paginación, acciones, render types, retry y reorder.
+- `data-table.component.spec.ts` cubre creación y el render type `pill`: sin pill para valores vacíos/nulos/en blanco, pill solo en la fila con valor, `false`/`0` visibles y `data-variant` desde `pillVariantKey`.
+- Faltan pruebas de loading/error/empty, selección, sort, paginación, acciones, resto de render types, retry y reorder.
 
 ## Guía de reutilización
 - Usar para listados/tablas compartidas de administración antes de crear tablas específicas.
@@ -87,7 +87,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 - El consumidor debe ordenar datos ante `sorted`; el componente no modifica el orden de `data`.
 
 ## Compliance gaps
-- Cobertura de tests superficial para un primitivo canónico.
+- Cobertura de tests parcial para un primitivo canónico (solo `pill` cubierto en profundidad).
 - Algunos textos/labels accesibles están hardcodeados y no pasan por i18n.
 - `emptyMessageKey` no se aplica en el template actual.
 - Acciones no tienen disabled/aria-label completo.

@@ -165,6 +165,12 @@ export class DataTableComponent<T extends Record<string, unknown>> {
     event.preventDefault();
   }
 
+  /** Pills render for any value except null, undefined or blank strings; false and 0 stay visible. */
+  hasPillValue(value: unknown): boolean {
+    if (value === null || value === undefined) return false;
+    return typeof value !== 'string' || value.trim() !== '';
+  }
+
   onRowAction(action: string, row: T): void {
     this.rowAction.emit({ action, row });
   }
