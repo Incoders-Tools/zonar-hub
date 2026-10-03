@@ -137,19 +137,35 @@
                 </div>
 
                 <div class="form-field users-page__permissions-field users-page__permissions-field--copy">
-                  <label>{{ 'admin.users.permissions.replicateFromUser' | t }}</label>
+                  <label for="admin-users-source-search">{{ 'admin.users.permissions.sourceSearch.label' | t }}</label>
+                  <input
+                    id="admin-users-source-search"
+                    type="search"
+                    autocomplete="off"
+                    aria-describedby="admin-users-source-search-hint"
+                    [placeholder]="'admin.users.permissions.sourceSearch.placeholder' | t"
+                    [value]="sourceSearchTerm()"
+                    [disabled]="replicatingPermissions()"
+                    (input)="onSourceSearchInput($any($event.target).value)"
+                    (keydown.enter)="onSourceSearchEnter($event)">
+                  <span id="admin-users-source-search-hint" class="form-field__hint">
+                    {{ 'admin.users.permissions.sourceSearch.minChars' | t }}
+                  </span>
+
+                  <label for="admin-users-source-user">{{ 'admin.users.permissions.replicateFromUser' | t }}</label>
                   <div class="users-page__permissions-copy-row">
                     <select
-                      [value]="copySourceUserId()"
+                      id="admin-users-source-user"
+                      aria-describedby="admin-users-source-status admin-users-source-copy-hint"
                       (change)="onCopySourceUserChanged($any($event.target).value)"
-                      [disabled]="availableSourceUsers().length === 0 || replicatingPermissions()">
-                      <option value="">
-                        {{ (availableSourceUsers().length === 0
-                          ? 'admin.users.permissions.noSourceUsers'
-                          : 'admin.users.permissions.selectSourceUser') | t }}
+                      [disabled]="sourceOptions().length === 0 || replicatingPermissions()">
+                      <option value="" [selected]="!copySourceUserId()">
+                        {{ 'admin.users.permissions.selectSourceUser' | t }}
                       </option>
-                      @for (sourceUser of availableSourceUsers(); track sourceUser.id) {
-                        <option [value]="sourceUser.id">{{ sourceUser.fullName }} ({{ sourceUser.email }})</option>
+                      @for (sourceUser of sourceOptions(); track sourceUser.id) {
+                        <option [value]="sourceUser.id" [selected]="sourceUser.id === copySourceUserId()">
+                          {{ sourceUser.fullName }} ({{ sourceUser.email }})
+                        </option>
                       }
                     </select>
                     <app-async-button
@@ -160,7 +176,20 @@
                       {{ 'admin.users.permissions.replicateAction' | t }}
                     </app-async-button>
                   </div>
-                  <span class="form-field__hint">
+                  <div class="users-page__source-status-row">
+                    <p
+                      id="admin-users-source-status"
+                      class="users-page__source-status"
+                      [class.users-page__source-status--error]="sourceSearchStatus() === 'error'"
+                      role="status"
+                      aria-live="polite">{{ sourceSearchMessage() }}</p>
+                    @if (sourceSearchStatus() === 'error') {
+                      <button type="button" class="users-page__source-retry" (click)="retrySourceSearch()">
+                        {{ 'common.retry' | t }}
+                      </button>
+                    }
+                  </div>
+                  <span id="admin-users-source-copy-hint" class="form-field__hint">
                     @if (replicatingPermissions()) {
                       {{ 'admin.users.permissions.replicating' | t }}
                     } @else {

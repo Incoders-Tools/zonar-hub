@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
+import { Component, DestroyRef, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -21,6 +21,8 @@ import { ActiveOrganizationService } from '../../../../core/services/active-orga
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ApiPermissionRepository } from '../../../../core/repositories/api/api-permission.repository';
+import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-admin-user.repository';
+import { PermissionSourceUser } from '../../../../core/repositories/admin-user.repository';
 import { PermissionModule, UserOrganizationPermissionAssignment } from '../../../../core/models';
 import { DEFAULT_ROLE_PERMISSIONS, SYSTEM_ADMIN_ONLY_TOOLS } from '../../../../core/auth/permissions.model';
 import { UsersFacadeService, UsersFilters } from './users-facade.service';
@@ -37,6 +39,19 @@ interface UserRow extends Record<string, unknown> {
   isActive: boolean;
   status: string;
   statusVariant: string;
+}
+
+type PermissionSourceSearchStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+const PERMISSION_SOURCE_SEARCH_DEBOUNCE_MS = 300;
+/** Mirrors the repository/API normalization so short terms never trigger a request. */
+const PERMISSION_SOURCE_MIN_MEANINGFUL_CHARACTERS = 2;
+const PERMISSION_SOURCE_REMOVED_CHARACTERS = /[*%,()"\\]/g;
+
+function countMeaningfulCharacters(term: string): number {
+  return [...term.replace(PERMISSION_SOURCE_REMOVED_CHARACTERS, '')]
+    .filter(character => character !== '_' && !/\s/.test(character))
+    .length;
 }
 
 @Component({
@@ -80,6 +95,7 @@ export class AdminUsersPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly permissionRepository = inject(ApiPermissionRepository);
+  private readonly adminUserRepository = inject(ApiAdminUserRepository);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   readonly isSystemAdmin = this.auth.isSystemAdmin;
@@ -97,6 +113,14 @@ export class AdminUsersPageComponent implements OnInit {
   readonly permissionsByOrganization = signal<Record<string, string[]>>({});
   readonly selectedPermissionOrganizationId = signal<string | null>(null);
   readonly copySourceUserId = signal<string>('');
+  readonly selectedSourceUser = signal<PermissionSourceUser | null>(null);
+  readonly sourceSearchTerm = signal('');
+  readonly sourceSearchStatus = signal<PermissionSourceSearchStatus>('idle');
+  private readonly sourceSearchResults = signal<PermissionSourceUser[]>([]);
+  private readonly sourceSearchTotalCount = signal(0);
+  private sourceSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  // Monotonic id of the latest source search; older responses are ignored when superseded
+  private sourceSearchRequestId = 0;
   readonly loadingPermissionCatalog = signal(false);
   readonly loadingUserPermissions = signal(false);
   readonly replicatingPermissions = signal(false);
@@ -159,17 +183,48 @@ export class AdminUsersPageComponent implements OnInit {
   });
 
   /**
-   * All admin users the current admin can see and use as a permission source.
-   * The constraint "any accessible organization" means: every user already
-   * surfaced by the facade — the facade itself is filtered by the admin's
-   * accessible organizations on the backend side. The user being edited is
-   * excluded (replicating from yourself is a no-op).
+   * Permission sources come from the dedicated bounded search, never from the
+   * Users list: the API decides which users the caller may copy from. The user
+   * being edited is excluded (replicating from yourself is a no-op).
    */
-  readonly availableSourceUsers = computed(() => {
+  private readonly visibleSourceSearchResults = computed(() => {
     const editingId = this.editingUser()?.id;
-    return this.facade.users()
-      .filter(u => u.id !== editingId)
-      .filter(u => (u.tenantIds ?? []).length > 0);
+    return this.sourceSearchResults().filter(u => u.id !== editingId);
+  });
+
+  /** Search results plus the current selection, so it stays selectable while results refresh. */
+  readonly sourceOptions = computed(() => {
+    const results = this.visibleSourceSearchResults();
+    const selected = this.selectedSourceUser();
+    if (!selected || results.some(u => u.id === selected.id)) {
+      return results;
+    }
+
+    return [selected, ...results];
+  });
+
+  readonly sourceSearchMessage = computed(() => {
+    switch (this.sourceSearchStatus()) {
+      case 'loading':
+        return this.i18n.translate('admin.users.permissions.sourceSearch.loading');
+      case 'error':
+        return this.i18n.translate('admin.users.permissions.sourceSearch.error');
+      case 'loaded': {
+        const shown = this.visibleSourceSearchResults().length;
+        const total = this.sourceSearchTotalCount() - (this.sourceSearchResults().length - shown);
+        if (total > shown) {
+          return this.i18n.translate('admin.users.permissions.sourceSearch.moreResults')
+            .replace('{shown}', String(shown))
+            .replace('{total}', String(total));
+        }
+
+        return shown === 0
+          ? this.i18n.translate('admin.users.permissions.sourceSearch.empty')
+          : this.i18n.translate('admin.users.permissions.sourceSearch.results').replace('{count}', String(shown));
+      }
+      default:
+        return '';
+    }
   });
 
   readonly canCopyPermissionsFromUser = computed(() => {
@@ -187,6 +242,8 @@ export class AdminUsersPageComponent implements OnInit {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.invalidateSourceSearch());
+
     // Reset transient UI whenever the active organization changes.
     // Reloading is owned by UsersFacadeService so each switch loads exactly once.
     effect(() => {
@@ -367,6 +424,7 @@ export class AdminUsersPageComponent implements OnInit {
 
   private async populateForm(): Promise<void> {
     this.suppressRolePrompt = true;
+    this.resetPermissionSourceSearch();
     const user = this.editingUser();
     if (user) {
       this.isEditing = true;
@@ -400,7 +458,6 @@ export class AdminUsersPageComponent implements OnInit {
       this.orderedTenantIds.set([]);
       this.permissionsByOrganization.set({});
       this.selectedPermissionOrganizationId.set(null);
-      this.copySourceUserId.set('');
     }
 
     this.syncPermissionOrganizations(Array.from(this.userTenantIds()));
@@ -513,6 +570,7 @@ export class AdminUsersPageComponent implements OnInit {
   closeFormPanel(): void {
     this.showFormPanel.set(false);
     this.editingUser.set(null);
+    this.resetPermissionSourceSearch();
     this.submitted = false;
   }
 
@@ -595,8 +653,84 @@ export class AdminUsersPageComponent implements OnInit {
     this.selectedPermissionOrganizationId.set(organizationId || null);
   }
 
+  /** Only ids offered by the current options are accepted; anything else clears the selection. */
   onCopySourceUserChanged(userId: string): void {
-    this.copySourceUserId.set(userId);
+    const source = this.sourceOptions().find(u => u.id === userId) ?? null;
+    this.selectedSourceUser.set(source);
+    this.copySourceUserId.set(source?.id ?? '');
+  }
+
+  onSourceSearchInput(term: string): void {
+    this.sourceSearchTerm.set(term);
+    this.invalidateSourceSearch();
+    this.sourceSearchResults.set([]);
+    this.sourceSearchTotalCount.set(0);
+
+    if (!this.hasSearchableSourceTerm()) {
+      this.sourceSearchStatus.set('idle');
+      return;
+    }
+
+    this.sourceSearchStatus.set('loading');
+    this.sourceSearchTimer = setTimeout(() => void this.runSourceSearch(), PERMISSION_SOURCE_SEARCH_DEBOUNCE_MS);
+  }
+
+  /** Enter searches right away instead of waiting for the debounce, and never submits the form. */
+  onSourceSearchEnter(event: Event): void {
+    event.preventDefault();
+    if (this.hasSearchableSourceTerm()) {
+      void this.runSourceSearch();
+    }
+  }
+
+  retrySourceSearch(): void {
+    if (this.hasSearchableSourceTerm()) {
+      void this.runSourceSearch();
+    }
+  }
+
+  private hasSearchableSourceTerm(): boolean {
+    return countMeaningfulCharacters(this.sourceSearchTerm()) >= PERMISSION_SOURCE_MIN_MEANINGFUL_CHARACTERS;
+  }
+
+  private async runSourceSearch(): Promise<void> {
+    this.invalidateSourceSearch();
+    const requestId = this.sourceSearchRequestId;
+    this.sourceSearchStatus.set('loading');
+
+    try {
+      const page = await this.adminUserRepository.searchPermissionSources({ search: this.sourceSearchTerm() });
+      if (requestId !== this.sourceSearchRequestId) return;
+
+      this.sourceSearchResults.set(page.items);
+      this.sourceSearchTotalCount.set(page.totalCount);
+      this.sourceSearchStatus.set('loaded');
+    } catch {
+      if (requestId !== this.sourceSearchRequestId) return;
+
+      this.sourceSearchResults.set([]);
+      this.sourceSearchTotalCount.set(0);
+      this.sourceSearchStatus.set('error');
+    }
+  }
+
+  /** Cancels a pending debounce and makes any in-flight response stale. */
+  private invalidateSourceSearch(): void {
+    if (this.sourceSearchTimer !== null) {
+      clearTimeout(this.sourceSearchTimer);
+      this.sourceSearchTimer = null;
+    }
+    this.sourceSearchRequestId++;
+  }
+
+  private resetPermissionSourceSearch(): void {
+    this.invalidateSourceSearch();
+    this.sourceSearchTerm.set('');
+    this.sourceSearchResults.set([]);
+    this.sourceSearchTotalCount.set(0);
+    this.sourceSearchStatus.set('idle');
+    this.selectedSourceUser.set(null);
+    this.copySourceUserId.set('');
   }
 
   /**
