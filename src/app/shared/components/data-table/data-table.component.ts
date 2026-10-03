@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed } from '@angular/core';
+import { Component, input, output, signal, computed, effect, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
@@ -7,6 +7,7 @@ import { FormatDatePipe } from '../../pipes/format-date.pipe';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { ErrorStateComponent } from '../error-state/error-state.component';
+import { DataTablePaginatorComponent } from '../data-table-paginator/data-table-paginator.component';
 
 export interface DataTableColumn {
   key: string;
@@ -23,7 +24,7 @@ export interface DataTableColumn {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [NgTemplateOutlet, MatIcon, MatSlideToggle, TranslatePipe, FormatDatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent],
+  imports: [NgTemplateOutlet, MatIcon, MatSlideToggle, TranslatePipe, FormatDatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, DataTablePaginatorComponent],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
 })
@@ -42,12 +43,20 @@ export class DataTableComponent<T extends Record<string, unknown>> {
   readonly rowActions = input<{ icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[]>([]);
   readonly rowActionsFilter = input<((row: T) => { icon: string; labelKey: string; action: string; variant?: 'default' | 'primary' | 'warn' | 'danger' }[]) | null>(null);
   readonly activeRowId = input<string | null>(null);
+  /** Controlled server pagination: `data` is the current page and is rendered as-is. */
+  readonly serverSide = input(false);
+  /** Current page (1-based) when `serverSide` is true. */
+  readonly page = input(1);
+  /** Total items across all pages when `serverSide` is true; falls back to `data().length`. */
+  readonly totalCount = input<number | null>(null);
 
   readonly rowSelected = output<T>();
   readonly selectionChanged = output<T[]>();
   readonly sorted = output<{ key: string; direction: 'asc' | 'desc' }>();
   readonly rowAction = output<{ action: string; row: T }>();
   readonly retried = output<void>();
+  /** Emits the requested page in `serverSide` mode; the parent must update `page` and `data`. */
+  readonly pageChange = output<number>();
 
   readonly selectedIds = signal<Set<string>>(new Set());
   readonly currentPage = signal(1);
@@ -67,14 +76,18 @@ export class DataTableComponent<T extends Record<string, unknown>> {
     });
   });
 
+  readonly showPagination = computed(() => this.paginated() || this.serverSide());
+  readonly activePage = computed(() => this.serverSide() ? this.page() : this.currentPage());
+  readonly totalItems = computed(() => this.serverSide() ? (this.totalCount() ?? this.data().length) : this.data().length);
+
   readonly totalPages = computed(() => {
-    if (!this.paginated()) return 1;
-    return Math.max(1, Math.ceil(this.data().length / this.pageSize()));
+    if (!this.showPagination()) return 1;
+    return Math.max(1, Math.ceil(this.totalItems() / this.pageSize()));
   });
 
   readonly paginatedData = computed(() => {
     const all = this.data();
-    if (!this.paginated()) return all;
+    if (this.serverSide() || !this.paginated()) return all;
     const start = (this.currentPage() - 1) * this.pageSize();
     return all.slice(start, start + this.pageSize());
   });
@@ -84,6 +97,21 @@ export class DataTableComponent<T extends Record<string, unknown>> {
     if (page.length === 0) return false;
     return page.every(row => this.selectedIds().has(this.getRowId(row)));
   });
+
+  constructor() {
+    // Server pages are disjoint datasets: drop the selection whenever the controlled page changes.
+    let previousPage: number | null = null;
+    effect(() => {
+      const page = this.page();
+      if (!this.serverSide()) return;
+      if (previousPage !== null && previousPage !== page) {
+        untracked(() => {
+          if (this.selectedIds().size > 0) this.clearSelection();
+        });
+      }
+      previousPage = page;
+    });
+  }
 
   getRowId(row: T): string {
     return String(row[this.trackByKey()] ?? '');
@@ -130,7 +158,11 @@ export class DataTableComponent<T extends Record<string, unknown>> {
 
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
+      if (this.serverSide()) {
+        this.pageChange.emit(page);
+      } else {
+        this.currentPage.set(page);
+      }
     }
   }
 

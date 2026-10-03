@@ -5,9 +5,13 @@
     <app-error-state (retried)="retried.emit()"></app-error-state>
   } @else if (data().length === 0) {
     <app-empty-state></app-empty-state>
+    @if (serverSide() && totalItems() > 0) {
+      <!-- Out-of-range server page: keep the pager so the user can navigate back -->
+      <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
+    }
   } @else {
     <!-- Top pagination -->
-    @if (paginated() && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
+    @if (showPagination() && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
     }
 
@@ -116,35 +120,19 @@
     </table>
 
     <!-- Bottom pagination -->
-    @if (paginated() && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
+    @if (showPagination() && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
     }
-
-    <!-- Pagination template -->
-    <ng-template #paginationTpl>
-      <div class="data-table__pagination">
-        <span class="data-table__pagination-info">
-          {{ 'admin.pagination.showing' | t }}
-          {{ (currentPage() - 1) * pageSize() + 1 }}–{{ currentPage() * pageSize() > data().length ? data().length : currentPage() * pageSize() }}
-          {{ 'admin.pagination.of' | t }}
-          {{ data().length }}
-        </span>
-        <div class="data-table__pagination-controls">
-          <button
-            class="data-table__pagination-btn"
-            [disabled]="currentPage() === 1"
-            (click)="goToPage(currentPage() - 1)">
-            {{ 'admin.pagination.prev' | t }}
-          </button>
-          <span class="data-table__pagination-page">{{ currentPage() }} / {{ totalPages() }}</span>
-          <button
-            class="data-table__pagination-btn"
-            [disabled]="currentPage() === totalPages()"
-            (click)="goToPage(currentPage() + 1)">
-            {{ 'admin.pagination.next' | t }}
-          </button>
-        </div>
-      </div>
-    </ng-template>
   }
+
+  <!-- Pagination template -->
+  <ng-template #paginationTpl>
+    <app-data-table-paginator
+      [page]="activePage()"
+      [pageSize]="pageSize()"
+      [totalCount]="totalItems()"
+      [visibleCount]="paginatedData().length"
+      (pageChange)="goToPage($event)">
+    </app-data-table-paginator>
+  </ng-template>
 </div>
