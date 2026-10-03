@@ -25,8 +25,35 @@ export interface AdminUserPage {
   totalCount: number;
 }
 
+/**
+ * Bounded search for users whose permissions can be copied. `search` needs at least two meaningful
+ * characters; `page` defaults to 1 and `pageSize` defaults to (and is capped at) 20.
+ */
+export interface PermissionSourceSearchQuery {
+  search: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Minimal permission-source projection; organization metadata is intentionally not exposed. */
+export interface PermissionSourceUser {
+  id: string;
+  fullName: string;
+  email: string;
+  roleId: string;
+  isActive: boolean;
+}
+
+export interface PermissionSourcePage {
+  items: PermissionSourceUser[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+
 export interface AdminUserRepository {
   getPage(query: AdminUserPageQuery): Promise<AdminUserPage>;
+  searchPermissionSources(query: PermissionSourceSearchQuery): Promise<PermissionSourcePage>;
   getAll(): Promise<AdminUser[]>;
   getById(id: string): Promise<AdminUser | undefined>;
   create(data: AdminUserCreatePayload): Promise<AdminUser>;

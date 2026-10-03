@@ -307,6 +307,142 @@ describe('ApiAdminUserRepository', () => {
     });
   });
 
+  describe('searchPermissionSources', () => {
+    const sourceDto = {
+      id: 'u-7',
+      fullName: 'Ana Lopez',
+      email: 'ana_lopez@zonarhub.dev',
+      roleId: 'role003',
+      isActive: false
+    };
+
+    it('requests the dedicated endpoint and maps the minimal source projection', async () => {
+      httpClient.get.and.returnValue(of({ items: [sourceDto], page: 2, pageSize: 5, totalCount: 6 }));
+
+      const result = await repository.searchPermissionSources({ search: 'ana', page: 2, pageSize: 5 });
+
+      expect(httpClient.get).toHaveBeenCalledOnceWith(
+        '/api/admin/users/permission-sources?search=ana&page=2&pageSize=5'
+      );
+      expect(result).toEqual({
+        items: [{
+          id: 'u-7',
+          fullName: 'Ana Lopez',
+          email: 'ana_lopez@zonarhub.dev',
+          roleId: 'role003',
+          isActive: false
+        }],
+        page: 2,
+        pageSize: 5,
+        totalCount: 6
+      });
+    });
+
+    it('defaults to the first page with the maximum page size of 20', async () => {
+      httpClient.get.and.returnValue(of({ items: [], page: 1, pageSize: 20, totalCount: 0 }));
+
+      await repository.searchPermissionSources({ search: 'ana' });
+
+      expect(httpClient.get).toHaveBeenCalledOnceWith(
+        '/api/admin/users/permission-sources?search=ana&page=1&pageSize=20'
+      );
+    });
+
+    it('normalizes a page below 1 to the first page like the API', async () => {
+      httpClient.get.and.returnValue(of({ items: [], page: 1, pageSize: 20, totalCount: 0 }));
+
+      await repository.searchPermissionSources({ search: 'ana', page: 0 });
+      await repository.searchPermissionSources({ search: 'ana', page: -3, pageSize: 10 });
+
+      expect(httpClient.get.calls.argsFor(0)[0]).toBe('/api/admin/users/permission-sources?search=ana&page=1&pageSize=20');
+      expect(httpClient.get.calls.argsFor(1)[0]).toBe('/api/admin/users/permission-sources?search=ana&page=1&pageSize=10');
+    });
+
+    it('removes wildcard and delimiter characters, keeps underscores and encodes the search', async () => {
+      httpClient.get.and.returnValue(of({ items: [], page: 1, pageSize: 20, totalCount: 0 }));
+
+      await repository.searchPermissionSources({ search: '  *ana_lo%pez, (co+1) "&\\ ' });
+
+      expect(httpClient.get).toHaveBeenCalledOnceWith(
+        '/api/admin/users/permission-sources?search=ana_lopez%20co%2B1%20%26&page=1&pageSize=20'
+      );
+    });
+
+    it('accepts exactly two meaningful characters', async () => {
+      httpClient.get.and.returnValue(of({ items: [], page: 1, pageSize: 20, totalCount: 0 }));
+
+      await repository.searchPermissionSources({ search: ' a_b ' });
+
+      expect(httpClient.get).toHaveBeenCalledOnceWith('/api/admin/users/permission-sources?search=a_b&page=1&pageSize=20');
+    });
+
+    it('rejects searches without two meaningful characters before calling the API', async () => {
+      const invalidSearches = [
+        '', '   ', 'a', ' a ', '__', '_a_', 'a _ ', '**', '%a%', '(a)', ',"\\', '*%,()"\\',
+        undefined as unknown as string, null as unknown as string, 42 as unknown as string
+      ];
+
+      for (const search of invalidSearches) {
+        await expectAsync(repository.searchPermissionSources({ search }))
+          .toBeRejectedWithError('common.validationFailed');
+      }
+      await expectAsync(repository.searchPermissionSources(undefined as never))
+        .toBeRejectedWithError('common.validationFailed');
+
+      expect(httpClient.get).not.toHaveBeenCalled();
+    });
+
+    it('rejects page sizes outside 1..20 and fractional paging before calling the API', async () => {
+      const invalidPaging: { page?: number; pageSize?: number }[] = [
+        { pageSize: 21 },
+        { pageSize: 200 },
+        { pageSize: 0 },
+        { pageSize: -1 },
+        { pageSize: 2.5 },
+        { pageSize: Number.NaN },
+        { page: 1.5 },
+        { page: Number.NaN },
+        { page: Number.POSITIVE_INFINITY }
+      ];
+
+      for (const paging of invalidPaging) {
+        await expectAsync(repository.searchPermissionSources({ search: 'ana', ...paging }))
+          .toBeRejectedWithError('common.validationFailed');
+      }
+
+      expect(httpClient.get).not.toHaveBeenCalled();
+    });
+
+    it('never falls back to the users list or the all scope', async () => {
+      httpClient.get.and.returnValue(of({ items: [], page: 1, pageSize: 20, totalCount: 0 }));
+
+      await repository.searchPermissionSources({ search: 'ana' });
+
+      expect(httpClient.get).toHaveBeenCalledTimes(1);
+      const url = httpClient.get.calls.argsFor(0)[0] as string;
+      expect(url.startsWith('/api/admin/users/permission-sources?')).toBeTrue();
+      expect(url).not.toContain('scope=');
+    });
+
+    it('treats a missing items array as an empty page', async () => {
+      httpClient.get.and.returnValue(of({ items: null, page: 1, pageSize: 20, totalCount: 0 }));
+
+      const result = await repository.searchPermissionSources({ search: 'ana' });
+
+      expect(result).toEqual({ items: [], page: 1, pageSize: 20, totalCount: 0 });
+    });
+
+    it('converts API errors into thrown error codes', async () => {
+      httpClient.get.and.returnValue(throwError(() => new HttpErrorResponse({
+        status: 400,
+        error: { code: 'admin_permissions.source_search_too_short' }
+      })));
+
+      await expectAsync(repository.searchPermissionSources({ search: 'ana' }))
+        .toBeRejectedWithError('admin_permissions.source_search_too_short');
+    });
+  });
+
   it('getAll should convert API error code into thrown error message', async () => {
     httpClient.get.and.returnValue(throwError(() => new HttpErrorResponse({
       status: 403,

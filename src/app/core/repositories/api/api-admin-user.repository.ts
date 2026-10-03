@@ -3,7 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../config/api-base-url.token';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../models/admin-user.model';
-import { AdminUserPage, AdminUserPageQuery, AdminUserRepository } from '../admin-user.repository';
+import {
+  AdminUserPage,
+  AdminUserPageQuery,
+  AdminUserRepository,
+  PermissionSourcePage,
+  PermissionSourceSearchQuery,
+  PermissionSourceUser
+} from '../admin-user.repository';
 import { extractApiErrorCode } from './api-error.util';
 
 interface AdminUserApiDto {
@@ -24,6 +31,26 @@ interface AdminUserApiDto {
 }
 
 const INVALID_REQUEST_CODE = 'common.validationFailed';
+
+/** Mirrors the API permission-source limits so invalid searches never reach the network. */
+const PERMISSION_SOURCE_MIN_SEARCH_LENGTH = 2;
+const PERMISSION_SOURCE_MAX_PAGE_SIZE = 20;
+const PERMISSION_SOURCE_REMOVED_CHARACTERS = /[*%,()"\\]/g;
+
+interface PermissionSourceUserDto {
+  id: string;
+  fullName: string;
+  email: string;
+  roleId: string;
+  isActive: boolean;
+}
+
+interface PermissionSourcesPageDto {
+  items: PermissionSourceUserDto[] | null;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
 
 interface AdminUsersPageDto {
   items: AdminUserApiDto[] | null;
@@ -70,6 +97,24 @@ export class ApiAdminUserRepository implements AdminUserRepository {
 
       return {
         items: (response.items ?? []).map(item => this.toModel(item)),
+        page: response.page,
+        pageSize: response.pageSize,
+        totalCount: response.totalCount
+      };
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error));
+    }
+  }
+
+  /** Dedicated bounded search; never widens into the Users list or its `all` scope. */
+  async searchPermissionSources(query: PermissionSourceSearchQuery): Promise<PermissionSourcePage> {
+    const url = `${this.endpoint}/permission-sources?${this.buildPermissionSourceQueryString(query)}`;
+
+    try {
+      const response = await firstValueFrom(this.http.get<PermissionSourcesPageDto>(url));
+
+      return {
+        items: (response.items ?? []).map(item => this.toPermissionSource(item)),
         page: response.page,
         pageSize: response.pageSize,
         totalCount: response.totalCount
@@ -184,6 +229,45 @@ export class ApiAdminUserRepository implements AdminUserRepository {
     return params
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join('&');
+  }
+
+  /**
+   * Applies the API search normalization (removed wildcard/delimiter characters, trim) and requires two
+   * characters other than `_` and whitespace. Page below 1 is normalized to 1 like the API; page size must be 1..20.
+   */
+  private buildPermissionSourceQueryString(query: PermissionSourceSearchQuery): string {
+    const rawSearch = query?.search;
+    if (typeof rawSearch !== 'string') {
+      throw new Error(INVALID_REQUEST_CODE);
+    }
+
+    const search = rawSearch.replace(PERMISSION_SOURCE_REMOVED_CHARACTERS, '').trim();
+    const meaningfulCount = [...search].filter(character => character !== '_' && !/\s/.test(character)).length;
+    if (meaningfulCount < PERMISSION_SOURCE_MIN_SEARCH_LENGTH) {
+      throw new Error(INVALID_REQUEST_CODE);
+    }
+
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? PERMISSION_SOURCE_MAX_PAGE_SIZE;
+    if (!Number.isInteger(page) || !this.isPositiveInteger(pageSize) || pageSize > PERMISSION_SOURCE_MAX_PAGE_SIZE) {
+      throw new Error(INVALID_REQUEST_CODE);
+    }
+
+    return [
+      `search=${encodeURIComponent(search)}`,
+      `page=${Math.max(page, 1)}`,
+      `pageSize=${pageSize}`
+    ].join('&');
+  }
+
+  private toPermissionSource(dto: PermissionSourceUserDto): PermissionSourceUser {
+    return {
+      id: dto.id,
+      fullName: dto.fullName,
+      email: dto.email,
+      roleId: dto.roleId,
+      isActive: dto.isActive
+    };
   }
 
   private isPositiveInteger(value: number): boolean {
