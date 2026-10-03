@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../../../core/models/admin-user.model';
 import { Organization } from '../../../../core/models';
 import { Tenant } from '../../../../core/models/user.model';
@@ -24,11 +24,15 @@ export class UsersFacadeService {
   readonly users = signal<AdminUser[]>([]);
   readonly tenants = signal<Tenant[]>([]);
 
+  // Monotonic id of the latest load; older responses are ignored when superseded
+  private loadRequestId = 0;
+  private loadedOrganizationId: string | null | undefined;
+
   constructor() {
-    // Reload users whenever the active organisation changes
+    // Single owner of reloads: once on init and once per active organisation change
     effect(() => {
       this.activeOrg.activeOrganizationId(); // reactive dependency
-      void this.load();
+      untracked(() => void this.load());
     });
   }
   readonly loading = signal(false);
@@ -116,17 +120,30 @@ export class UsersFacadeService {
   });
 
   async load(): Promise<void> {
+    const requestId = ++this.loadRequestId;
+    const organizationId = this.activeOrg.activeOrganizationId();
+    if (organizationId !== this.loadedOrganizationId) {
+      // Never show the previous organisation's users while the new one loads
+      this.users.set([]);
+      this.loadedOrganizationId = organizationId;
+    }
+
     try {
       this.loading.set(true);
       this.error.set(null);
       const data = await this.repository.getAll();
+      if (requestId !== this.loadRequestId) return;
       const organizations = await this.organizationRepository.getAll();
+      if (requestId !== this.loadRequestId) return;
       this.tenants.set(this.toAssignableTenants(organizations));
       this.users.set(this.withCurrentAuthenticatedUser(data));
     } catch (err) {
+      if (requestId !== this.loadRequestId) return;
       this.error.set(err instanceof Error ? err.message : 'Failed to load users');
     } finally {
-      this.loading.set(false);
+      if (requestId === this.loadRequestId) {
+        this.loading.set(false);
+      }
     }
   }
 

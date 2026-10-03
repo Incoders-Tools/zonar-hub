@@ -1,9 +1,25 @@
+import { computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminUsersPageComponent } from './admin-users-page.component';
 import { UsersFacadeService } from './users-facade.service';
 import { provideHttpClient } from '@angular/common/http';
 import { Tenant } from '../../../../core/models/user.model';
 import { ApiPermissionRepository } from '../../../../core/repositories/api/api-permission.repository';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
+
+class ActiveOrganizationServiceStub {
+  private readonly activeOrgIdState = signal<string | null>('org-1');
+  private readonly organizationChangeCounter = signal(0);
+
+  readonly activeOrganizationId = computed(() => this.activeOrgIdState());
+  readonly activeOrganizationName = computed(() => this.activeOrgIdState() ?? '');
+  readonly organizationChanged = this.organizationChangeCounter.asReadonly();
+
+  switchOrganization(orgId: string): void {
+    this.activeOrgIdState.set(orgId);
+    this.organizationChangeCounter.update(count => count + 1);
+  }
+}
 
 class ApiPermissionRepositoryStub {
   async getCatalog(): Promise<{ modules: any[] }> {
@@ -39,6 +55,7 @@ describe('AdminUsersPageComponent', () => {
   let component: AdminUsersPageComponent;
   let fixture: ComponentFixture<AdminUsersPageComponent>;
   let facade: UsersFacadeService;
+  let activeOrg: ActiveOrganizationServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -46,9 +63,12 @@ describe('AdminUsersPageComponent', () => {
       providers: [
         UsersFacadeService,
         provideHttpClient(),
-        { provide: ApiPermissionRepository, useClass: ApiPermissionRepositoryStub }
+        { provide: ApiPermissionRepository, useClass: ApiPermissionRepositoryStub },
+        { provide: ActiveOrganizationService, useClass: ActiveOrganizationServiceStub }
       ]
     }).compileComponents();
+
+    activeOrg = TestBed.inject(ActiveOrganizationService) as unknown as ActiveOrganizationServiceStub;
 
     fixture = TestBed.createComponent(AdminUsersPageComponent);
     component = fixture.componentInstance;
@@ -63,7 +83,30 @@ describe('AdminUsersPageComponent', () => {
   it('should load users on init', () => {
     const loadSpy = spyOn(facade, 'load');
     fixture.detectChanges();
-    expect(loadSpy).toHaveBeenCalled();
+    expect(loadSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should load users exactly once per active organization switch', () => {
+    const loadSpy = spyOn(facade, 'load').and.resolveTo();
+    fixture.detectChanges();
+    loadSpy.calls.reset();
+
+    activeOrg.switchOrganization('org-2');
+    fixture.detectChanges();
+
+    expect(loadSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should close transient panels when the active organization changes', () => {
+    spyOn(facade, 'load').and.resolveTo();
+    fixture.detectChanges();
+    component.openCreateForm();
+    expect(component.showFormPanel()).toBe(true);
+
+    activeOrg.switchOrganization('org-2');
+    fixture.detectChanges();
+
+    expect(component.showFormPanel()).toBe(false);
   });
 
   it('should apply filters', () => {

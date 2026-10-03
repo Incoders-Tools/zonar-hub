@@ -187,14 +187,14 @@ export class AdminUsersPageComponent implements OnInit {
   });
 
   constructor() {
-    // Reload data and reset transient UI whenever the active organization changes
+    // Reset transient UI whenever the active organization changes.
+    // Reloading is owned by UsersFacadeService so each switch loads exactly once.
     effect(() => {
       this.activeOrg.organizationChanged();
       this.closeFormPanel();
       this.closeDeleteDialog();
       this.closeBulkDeleteDialog();
       this.dismissRoleDefaults();
-      void this.facade.load();
     });
   }
 

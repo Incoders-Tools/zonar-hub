@@ -155,7 +155,133 @@ describe('UsersFacadeService', () => {
     expect(visibleIds).toContain('admin-1');
     expect(visibleIds).not.toContain('user-2');
   });
+
+  describe('load sequencing', () => {
+    let pendingUsers: Deferred<AdminUser[]>[];
+
+    beforeEach(() => {
+      pendingUsers = [];
+      spyOn(usersRepo, 'getAll').and.callFake(() => {
+        const deferred = createDeferred<AdminUser[]>();
+        pendingUsers.push(deferred);
+        return deferred.promise;
+      });
+      activeOrg.setActiveOrganization('org-1', 'Org One');
+    });
+
+    it('loads once on init and once per active organization switch', () => {
+      service = TestBed.inject(UsersFacadeService);
+      TestBed.tick();
+      expect(usersRepo.getAll).toHaveBeenCalledTimes(1);
+
+      activeOrg.setActiveOrganization('org-2', 'Org Two');
+      TestBed.tick();
+      expect(usersRepo.getAll).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears previous organization users while the new organization loads', async () => {
+      service = TestBed.inject(UsersFacadeService);
+      TestBed.tick();
+      pendingUsers[0].resolve([buildUser('user-1', 'one@zonar.dev', 'admin', 'role002', 'org-1')]);
+      await settle();
+      expect(service.users().map(user => user.id)).toEqual(['user-1']);
+
+      activeOrg.setActiveOrganization('org-2', 'Org Two');
+      TestBed.tick();
+
+      expect(service.users()).toEqual([]);
+      expect(service.loading()).toBeTrue();
+      expect(service.error()).toBeNull();
+    });
+
+    it('ignores a stale initial load success that resolves after the switched organization', async () => {
+      service = TestBed.inject(UsersFacadeService);
+      TestBed.tick();
+      activeOrg.setActiveOrganization('org-2', 'Org Two');
+      TestBed.tick();
+
+      pendingUsers[1].resolve([buildUser('user-2', 'two@zonar.dev', 'admin', 'role002', 'org-2')]);
+      await settle();
+      pendingUsers[0].resolve([buildUser('user-1', 'one@zonar.dev', 'admin', 'role002', 'org-1')]);
+      await settle();
+
+      expect(service.users().map(user => user.id)).toEqual(['user-2']);
+      expect(service.loading()).toBeFalse();
+      expect(service.error()).toBeNull();
+    });
+
+    it('ignores a stale initial load failure that rejects after the switched organization succeeded', async () => {
+      service = TestBed.inject(UsersFacadeService);
+      TestBed.tick();
+      activeOrg.setActiveOrganization('org-2', 'Org Two');
+      TestBed.tick();
+
+      pendingUsers[1].resolve([buildUser('user-2', 'two@zonar.dev', 'admin', 'role002', 'org-2')]);
+      await settle();
+      pendingUsers[0].reject(new Error('org-1 failed'));
+      await settle();
+
+      expect(service.users().map(user => user.id)).toEqual(['user-2']);
+      expect(service.error()).toBeNull();
+      expect(service.loading()).toBeFalse();
+    });
+
+    it('keeps loading truthful while a superseded load settles before the latest one', async () => {
+      service = TestBed.inject(UsersFacadeService);
+      TestBed.tick();
+      activeOrg.setActiveOrganization('org-2', 'Org Two');
+      TestBed.tick();
+
+      pendingUsers[0].reject(new Error('org-1 failed'));
+      await settle();
+
+      expect(service.loading()).toBeTrue();
+      expect(service.error()).toBeNull();
+      expect(service.users()).toEqual([]);
+
+      pendingUsers[1].resolve([buildUser('user-2', 'two@zonar.dev', 'admin', 'role002', 'org-2')]);
+      await settle();
+
+      expect(service.loading()).toBeFalse();
+      expect(service.users().map(user => user.id)).toEqual(['user-2']);
+    });
+
+    it('applies only the latest retry when an earlier load in the same organization settles later', async () => {
+      service = TestBed.inject(UsersFacadeService);
+      TestBed.tick();
+      const retry = service.load();
+
+      pendingUsers[1].reject(new Error('retry failed'));
+      await retry;
+      pendingUsers[0].resolve([buildUser('user-1', 'one@zonar.dev', 'admin', 'role002', 'org-1')]);
+      await settle();
+
+      expect(service.error()).toBe('retry failed');
+      expect(service.users()).toEqual([]);
+      expect(service.loading()).toBeFalse();
+    });
+  });
 });
+
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason: unknown) => void;
+}
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+async function settle(): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve));
+}
 
 function buildOrganization(id: string, displayName: string): Organization {
   return {
