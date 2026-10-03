@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../config/api-base-url.token';
 import { AdminUser, AdminUserCreatePayload, AdminUserUpdatePayload } from '../../models/admin-user.model';
-import { AdminUserRepository } from '../admin-user.repository';
+import { AdminUserPage, AdminUserPageQuery, AdminUserRepository } from '../admin-user.repository';
 import { extractApiErrorCode } from './api-error.util';
 
 interface AdminUserApiDto {
@@ -23,8 +23,10 @@ interface AdminUserApiDto {
   updatedAtUtc: string;
 }
 
+const INVALID_REQUEST_CODE = 'common.validationFailed';
+
 interface AdminUsersPageDto {
-  items: AdminUserApiDto[];
+  items: AdminUserApiDto[] | null;
   page: number;
   pageSize: number;
   totalCount: number;
@@ -60,6 +62,24 @@ export class ApiAdminUserRepository implements AdminUserRepository {
     return `${this.apiBaseUrl}/admin/users`;
   }
 
+  async getPage(query: AdminUserPageQuery): Promise<AdminUserPage> {
+    const url = `${this.endpoint}?${this.buildPageQueryString(query)}`;
+
+    try {
+      const response = await firstValueFrom(this.http.get<AdminUsersPageDto>(url));
+
+      return {
+        items: (response.items ?? []).map(item => this.toModel(item)),
+        page: response.page,
+        pageSize: response.pageSize,
+        totalCount: response.totalCount
+      };
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error));
+    }
+  }
+
+  /** Legacy unscoped first-200 read kept until the users facade migrates to `getPage`. */
   async getAll(): Promise<AdminUser[]> {
     try {
       const response = await firstValueFrom(
@@ -126,6 +146,48 @@ export class ApiAdminUserRepository implements AdminUserRepository {
 
   async deleteMany(ids: string[]): Promise<void> {
     await Promise.all(ids.map(id => this.delete(id)));
+  }
+
+  /** Validates the query before any request so an invalid scope can never widen into a global read. */
+  private buildPageQueryString(query: AdminUserPageQuery): string {
+    const scope = query?.scope;
+    const params: [string, string][] = [];
+
+    if (scope?.kind === 'organization') {
+      const organizationId = typeof scope.organizationId === 'string' ? scope.organizationId.trim() : '';
+      if (!organizationId) {
+        throw new Error(INVALID_REQUEST_CODE);
+      }
+      params.push(['scope', 'organization'], ['organizationId', organizationId]);
+    } else if (scope?.kind === 'all') {
+      params.push(['scope', 'all']);
+    } else {
+      throw new Error(INVALID_REQUEST_CODE);
+    }
+
+    if (!this.isPositiveInteger(query.page) || !this.isPositiveInteger(query.pageSize)) {
+      throw new Error(INVALID_REQUEST_CODE);
+    }
+    params.push(['page', String(query.page)], ['pageSize', String(query.pageSize)]);
+
+    const search = query.search?.trim();
+    if (search) {
+      params.push(['search', search]);
+    }
+    if (query.roleId) {
+      params.push(['roleId', query.roleId]);
+    }
+    if (query.isActive !== undefined) {
+      params.push(['isActive', String(query.isActive)]);
+    }
+
+    return params
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&');
+  }
+
+  private isPositiveInteger(value: number): boolean {
+    return Number.isInteger(value) && value > 0;
   }
 
   private toModel(dto: AdminUserApiDto): AdminUser {
