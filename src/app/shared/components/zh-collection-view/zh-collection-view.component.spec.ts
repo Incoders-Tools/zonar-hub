@@ -22,6 +22,11 @@ interface TestRow extends Record<string, unknown> {
       [paginated]="paginated"
       [rowActions]="rowActions"
       [rowActionsFilter]="filter"
+      [pageSize]="pageSize"
+      [serverSide]="serverSide"
+      [page]="page"
+      [totalCount]="totalCount"
+      (pageChange)="pageChanges.push($event)"
       (rowAction)="emitted.push($event)">
     </zh-collection-view>
   `
@@ -34,6 +39,11 @@ class TestHostComponent {
   emitted: { action: string; row: TestRow }[] = [];
   /** true → default mode is table (needed for tests that query DataTableComponent) */
   paginated = true;
+  pageSize = 10;
+  serverSide = false;
+  page = 1;
+  totalCount: number | null = null;
+  pageChanges: number[] = [];
 }
 
 const STORAGE_KEY = 'zh.collection-view.mode.test-key';
@@ -143,6 +153,100 @@ describe('ZhCollectionViewComponent', () => {
       card.query(By.css('.zh-collection-view__card-action')).nativeElement.click();
 
       expect(host.emitted).toEqual([{ action: 'delete', row: host.items[1] }]);
+    });
+  });
+
+  describe('pagination', () => {
+    const makeRows = (count: number): TestRow[] =>
+      Array.from({ length: count }, (_, i) => ({ id: String(i + 1), name: `Row ${i + 1}` }));
+
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+    function pagers(): HTMLElement[] {
+      return Array.from(el().querySelectorAll<HTMLElement>('.data-table__pagination'));
+    }
+    function nextBtn(): HTMLButtonElement {
+      return el().querySelectorAll<HTMLButtonElement>('.data-table__pagination-btn')[1];
+    }
+
+    it('keeps the client card mode unpaginated by default', () => {
+      host.items = makeRows(25);
+      host.pageSize = 20;
+      fixture.detectChanges();
+      showCards();
+
+      expect(el().querySelectorAll('.zh-collection-view__card').length).toBe(25);
+      expect(pagers().length).toBe(0);
+    });
+
+    describe('server mode', () => {
+      beforeEach(() => {
+        host.items = makeRows(25);
+        host.pageSize = 20;
+        host.serverSide = true;
+        host.page = 1;
+        host.totalCount = 45;
+        fixture.detectChanges();
+      });
+
+      it('renders a single pager in table mode with every supplied row', () => {
+        expect(el().querySelectorAll('tbody tr').length).toBe(25);
+        expect(pagers().length).toBe(1);
+        expect(el().querySelector('.data-table__pagination-page')?.textContent).toContain('1 / 3');
+
+        nextBtn().click();
+        expect(host.pageChanges).toEqual([2]);
+      });
+
+      it('renders every supplied card plus the shared pager in card mode', () => {
+        showCards();
+
+        expect(el().querySelectorAll('.zh-collection-view__card').length).toBe(25);
+        expect(pagers().length).toBe(1);
+        expect(el().querySelector('.data-table__pagination-page')?.textContent).toContain('1 / 3');
+
+        nextBtn().click();
+        expect(host.pageChanges).toEqual([2]);
+      });
+
+      it('reflects the controlled page in card mode', () => {
+        showCards();
+        host.page = 3;
+        host.items = makeRows(5);
+        fixture.detectChanges();
+
+        expect(el().querySelectorAll('.zh-collection-view__card').length).toBe(5);
+        expect(el().querySelector('.data-table__pagination-page')?.textContent).toContain('3 / 3');
+        expect(nextBtn().disabled).toBeTrue();
+      });
+
+      it('recovers from an out-of-range page in card mode', () => {
+        showCards();
+        host.pageSize = 10;
+        host.page = 5;
+        host.totalCount = 20;
+        host.items = [];
+        fixture.detectChanges();
+
+        expect(el().querySelector('app-empty-state')).not.toBeNull();
+        expect(pagers().length).toBe(1);
+        expect(el().querySelector('.data-table__pagination-info')?.textContent).toContain('0–0');
+        expect(nextBtn().disabled).toBeTrue();
+
+        el().querySelectorAll<HTMLButtonElement>('.data-table__pagination-btn')[0].click();
+        expect(host.pageChanges).toEqual([2]);
+      });
+
+      it('shows the empty state without a pager when the total is 0', () => {
+        showCards();
+        host.items = [];
+        host.totalCount = 0;
+        fixture.detectChanges();
+
+        expect(el().querySelector('app-empty-state')).not.toBeNull();
+        expect(pagers().length).toBe(0);
+      });
     });
   });
 });

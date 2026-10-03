@@ -39,6 +39,10 @@
       [trackByKey]="trackByKey()"
       [rowActions]="rowActions()"
       [rowActionsFilter]="rowActionsFilter()"
+      [serverSide]="serverSide()"
+      [page]="page()"
+      [totalCount]="totalCount()"
+      (pageChange)="onPageChange($event)"
       (rowAction)="onRowAction($event)"
       (selectionChanged)="onSelectionChanged($event)"
       (sorted)="onSorted($event)"
@@ -51,6 +55,9 @@
       <app-error-state (retried)="onRetried()"></app-error-state>
     } @else if (!hasItems()) {
       <app-empty-state [message]="emptyMessageKey()"></app-empty-state>
+      @if (serverSide() && serverTotal() > 0) {
+        <ng-container *ngTemplateOutlet="cardPagerTpl"></ng-container>
+      }
     } @else {
       <div class="zh-collection-view__cards">
         @for (row of items(); track row[trackByKey()]) {
@@ -81,6 +88,20 @@
           </div>
         }
       </div>
+      @if (serverSide()) {
+        <ng-container *ngTemplateOutlet="cardPagerTpl"></ng-container>
+      }
     }
   }
+
+  <!-- Card-mode pager: same shared component the table renders, so only one pager exists per mode -->
+  <ng-template #cardPagerTpl>
+    <app-data-table-paginator
+      [page]="page()"
+      [pageSize]="pageSize()"
+      [totalCount]="serverTotal()"
+      [visibleCount]="items().length"
+      (pageChange)="onPageChange($event)">
+    </app-data-table-paginator>
+  </ng-template>
 </div>
