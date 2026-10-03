@@ -1,0 +1,28 @@
+<nav class="data-table__pagination" [attr.aria-label]="'admin.pagination.label' | t">
+  <span class="data-table__pagination-info">
+    {{ 'admin.pagination.showing' | t }}
+    {{ rangeStart() }}–{{ rangeEnd() }}
+    {{ 'admin.pagination.of' | t }}
+    {{ totalCount() }}
+  </span>
+  <div class="data-table__pagination-controls">
+    <button
+      type="button"
+      class="data-table__pagination-btn"
+      [disabled]="page() <= 1"
+      (click)="previous()">
+      {{ 'admin.pagination.prev' | t }}
+    </button>
+    <span class="data-table__pagination-page" aria-live="polite" aria-atomic="true">
+      <span class="data-table__visually-hidden">{{ 'admin.pagination.page' | t }}</span>
+      {{ page() }} / {{ totalPages() }}
+    </span>
+    <button
+      type="button"
+      class="data-table__pagination-btn"
+      [disabled]="page() >= totalPages()"
+      (click)="go(page() + 1)">
+      {{ 'admin.pagination.next' | t }}
+    </button>
+  </div>
+</nav>
