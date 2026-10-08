@@ -113,6 +113,7 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
   protected readonly serverTotal = computed(() => this.totalCount() ?? this.items().length);
 
   setMode(mode: ZhCollectionViewMode): void {
+    const previousMode = this.mode();
     this.mode.set(mode);
     const key = this.viewKey();
     if (key) {
@@ -122,13 +123,20 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
         // ignore (private mode / unsupported)
       }
     }
+    if (previousMode !== mode && this.selectable() && this.currentSelection.length > 0) {
+      this.currentSelection = [];
+      this.selectionChanged.emit([]);
+    }
   }
 
   protected onRowAction(event: { action: string; row: T }): void {
     this.rowAction.emit(event);
   }
 
+  private currentSelection: T[] = [];
+
   protected onSelectionChanged(rows: T[]): void {
+    this.currentSelection = rows;
     this.selectionChanged.emit(rows);
   }
 

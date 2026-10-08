@@ -26,6 +26,8 @@ interface TestRow extends Record<string, unknown> {
       [serverSide]="serverSide"
       [page]="page"
       [totalCount]="totalCount"
+      [selectable]="selectable"
+      (selectionChanged)="selections.push($event)"
       (pageChange)="pageChanges.push($event)"
       (rowAction)="emitted.push($event)">
     </zh-collection-view>
@@ -44,6 +46,8 @@ class TestHostComponent {
   page = 1;
   totalCount: number | null = null;
   pageChanges: number[] = [];
+  selectable = false;
+  selections: TestRow[][] = [];
 }
 
 const STORAGE_KEY = 'zh.collection-view.mode.test-key';
@@ -247,6 +251,73 @@ describe('ZhCollectionViewComponent', () => {
         expect(el().querySelector('app-empty-state')).not.toBeNull();
         expect(pagers().length).toBe(0);
       });
+    });
+  });
+
+  describe('selection across mode switches', () => {
+    function el(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function rowCheckboxes(): HTMLInputElement[] {
+      return Array.from(el().querySelectorAll<HTMLInputElement>('app-data-table tbody input[type="checkbox"]'));
+    }
+
+    function showTable(): void {
+      fixture.debugElement.queryAll(By.css('.zh-collection-view__toggle-btn'))[0].nativeElement.click();
+      fixture.detectChanges();
+    }
+
+    beforeEach(() => {
+      host.selectable = true;
+      host.items = [{ id: '1', name: 'Row 1' }, { id: '2', name: 'Row 2' }];
+      fixture.detectChanges();
+    });
+
+    it('emits an empty selection exactly once when switching from table to cards with selected rows', () => {
+      rowCheckboxes()[0].click();
+      fixture.detectChanges();
+      expect(host.selections).toEqual([[{ id: '1', name: 'Row 1' }]]);
+
+      showCards();
+
+      expect(host.selections.length).toBe(2);
+      expect(host.selections[1]).toEqual([]);
+    });
+
+    it('does not re-emit when switching back to table, which starts with no checked rows', () => {
+      rowCheckboxes()[0].click();
+      fixture.detectChanges();
+      showCards();
+      showTable();
+
+      expect(host.selections).toEqual([[{ id: '1', name: 'Row 1' }], []]);
+      expect(rowCheckboxes().filter(box => box.checked).length).toBe(0);
+    });
+
+    it('does not emit when the mode changes without a selection', () => {
+      showCards();
+      showTable();
+
+      expect(host.selections).toEqual([]);
+    });
+
+    it('does not emit when the active mode is selected again', () => {
+      rowCheckboxes()[0].click();
+      fixture.detectChanges();
+      showTable();
+
+      expect(host.selections).toEqual([[{ id: '1', name: 'Row 1' }]]);
+    });
+
+    it('does not emit again after the table already cleared its selection', () => {
+      rowCheckboxes()[0].click();
+      fixture.detectChanges();
+      rowCheckboxes()[0].click();
+      fixture.detectChanges();
+      showCards();
+
+      expect(host.selections).toEqual([[{ id: '1', name: 'Row 1' }], []]);
     });
   });
 });

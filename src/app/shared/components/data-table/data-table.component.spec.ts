@@ -233,6 +233,39 @@ describe('DataTableComponent', () => {
         expect(el().querySelectorAll('tbody input[type="checkbox"]:checked').length).toBe(0);
       });
 
+      it('clears the selection when server data is replaced on the same page', () => {
+        const selections: string[][] = [];
+        fixture.componentInstance.selectionChanged.subscribe(rows => selections.push(rows.map(r => String(r['id']))));
+        fixture.componentRef.setInput('selectable', true);
+        fixture.detectChanges();
+
+        el().querySelector<HTMLInputElement>('tbody input[type="checkbox"]')!.click();
+        fixture.detectChanges();
+        expect(selections.at(-1)).toEqual(['1']);
+
+        // Same page, new server dataset (e.g. filter or scope change) that still contains row 1
+        fixture.componentRef.setInput('data', makeRows(3));
+        fixture.componentRef.setInput('totalCount', 3);
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.selectedIds().size).toBe(0);
+        expect(selections.at(-1)).toEqual([]);
+        expect(el().querySelectorAll('tbody input[type="checkbox"]:checked').length).toBe(0);
+      });
+
+      it('keeps the client-mode selection when data is replaced', () => {
+        fixture.componentRef.setInput('serverSide', false);
+        fixture.componentRef.setInput('selectable', true);
+        fixture.detectChanges();
+        el().querySelector<HTMLInputElement>('tbody input[type="checkbox"]')!.click();
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('data', makeRows(3));
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.selectedIds().has('1')).toBeTrue();
+      });
+
       it('recovers from an out-of-range page by requesting the last valid page', () => {
         fixture.componentRef.setInput('pageSize', 10);
         fixture.componentRef.setInput('page', 5);

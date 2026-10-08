@@ -249,9 +249,13 @@
     [selectable]="true"
     [rowActions]="rowActions"
     [rowActionsFilter]="userRowActionsFilter"
+    [serverSide]="true"
+    [page]="facade.page()"
+    [pageSize]="facade.pageSize"
+    [totalCount]="facade.totalCount()"
     emptyMessageKey="common.noResults"
+    (pageChange)="onPageChange($event)"
     (selectionChanged)="onSelectionChanged($event)"
-    (sorted)="onSorted($event)"
     (rowAction)="onRowActionClicked($event)"
     (retried)="facade.load()">
     <ng-template #cardTpl let-row>

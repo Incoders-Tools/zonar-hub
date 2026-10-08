@@ -268,12 +268,13 @@ export class AdminUsersPageComponent implements OnInit {
   isEditing = false;
   submitted = false;
 
+  // Not sortable: the server orders pages by email, id and sorting one page locally would mislead
   readonly columns: DataTableColumn[] = [
-    { key: 'email', labelKey: 'admin.users.column.email', sortable: true },
-    { key: 'fullName', labelKey: 'admin.users.column.name', sortable: true },
-    { key: 'roleName', labelKey: 'admin.users.column.role', sortable: true },
+    { key: 'email', labelKey: 'admin.users.column.email', sortable: false },
+    { key: 'fullName', labelKey: 'admin.users.column.name', sortable: false },
+    { key: 'roleName', labelKey: 'admin.users.column.role', sortable: false },
     { key: 'organizations', labelKey: 'admin.users.column.organizations', sortable: false },
-    { key: 'status', labelKey: 'admin.users.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
+    { key: 'status', labelKey: 'admin.users.column.status', sortable: false, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
   readonly rowActions = [
@@ -325,7 +326,7 @@ export class AdminUsersPageComponent implements OnInit {
   });
 
   readonly tableData = computed<UserRow[]>(() =>
-    this.facade.filteredUsers().map(user => ({
+    this.facade.users().map(user => ({
       id: user.id,
       email: user.email,
       fullName: user.fullName,
@@ -472,19 +473,23 @@ export class AdminUsersPageComponent implements OnInit {
       roleId: filters['roleId'] || undefined,
       isActive: filters['isActive'] || undefined
     };
+    this.selectedUsers.set([]);
     this.facade.applyFilters(mapped);
   }
 
   onFiltersCleared(): void {
+    this.selectedUsers.set([]);
     this.facade.clearFilters();
+  }
+
+  /** Selection never spans server pages, so bulk actions only target visible rows. */
+  onPageChange(page: number): void {
+    this.selectedUsers.set([]);
+    this.facade.goToPage(page);
   }
 
   onSelectionChanged(rows: UserRow[]): void {
     this.selectedUsers.set(rows);
-  }
-
-  onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
-    this.facade.sort(event.key, event.direction);
   }
 
   onRowActionClicked(event: { action: string; row: UserRow }): void {

@@ -54,8 +54,6 @@ export interface PermissionSourcePage {
 export interface AdminUserRepository {
   getPage(query: AdminUserPageQuery): Promise<AdminUserPage>;
   searchPermissionSources(query: PermissionSourceSearchQuery): Promise<PermissionSourcePage>;
-  getAll(): Promise<AdminUser[]>;
-  getById(id: string): Promise<AdminUser | undefined>;
   create(data: AdminUserCreatePayload): Promise<AdminUser>;
   update(id: string, data: AdminUserUpdatePayload): Promise<AdminUser>;
   delete(id: string): Promise<void>;

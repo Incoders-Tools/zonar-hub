@@ -99,17 +99,21 @@ export class DataTableComponent<T extends Record<string, unknown>> {
   });
 
   constructor() {
-    // Server pages are disjoint datasets: drop the selection whenever the controlled page changes.
+    // Server pages are disjoint datasets: drop the selection whenever the controlled page or its
+    // data changes (a filter or scope change replaces the dataset while staying on the same page).
     let previousPage: number | null = null;
+    let previousData: T[] | null = null;
     effect(() => {
       const page = this.page();
+      const data = this.data();
       if (!this.serverSide()) return;
-      if (previousPage !== null && previousPage !== page) {
+      if (previousData !== null && (previousPage !== page || previousData !== data)) {
         untracked(() => {
           if (this.selectedIds().size > 0) this.clearSelection();
         });
       }
       previousPage = page;
+      previousData = data;
     });
   }
 

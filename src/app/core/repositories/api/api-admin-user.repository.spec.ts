@@ -27,39 +27,11 @@ describe('ApiAdminUserRepository', () => {
     expect(repository).toBeTruthy();
   });
 
-  it('getAll should request paged endpoint and map DTO fields', async () => {
-    httpClient.get.and.returnValue(of({
-      items: [
-        {
-          id: 'u-1',
-          email: 'admin@zonarhub.dev',
-          fullName: 'Admin User',
-          role: 'admin',
-          roleId: 'role002',
-          roleName: 'admin',
-          organizationId: 'org-1',
-          organizationName: 'Org 1',
-          tenantIds: ['org-1', 'org-2'],
-          tenantNames: ['Org 1', 'Org 2'],
-          isActive: true,
-          createdAtUtc: '2026-05-01T09:00:00Z',
-          updatedAtUtc: '2026-05-01T09:30:00Z'
-        }
-      ],
-      page: 1,
-      pageSize: 200,
-      totalCount: 1
-    }));
+  it('does not expose the legacy unscoped first-200 list or lookup', () => {
+    const legacy = repository as unknown as Record<string, unknown>;
 
-    const result = await repository.getAll();
-
-    expect(httpClient.get).toHaveBeenCalledWith('/api/admin/users?page=1&pageSize=200');
-    expect(result.length).toBe(1);
-    expect(result[0].id).toBe('u-1');
-    expect(result[0].organizationName).toBe('Org 1');
-    expect(result[0].tenantIds).toEqual(['org-1', 'org-2']);
-    expect(result[0].createdAt).toBe('2026-05-01T09:00:00Z');
-    expect(result[0].updatedAt).toBe('2026-05-01T09:30:00Z');
+    expect(legacy['getAll']).toBeUndefined();
+    expect(legacy['getById']).toBeUndefined();
   });
 
   it('create should post payload and map response', async () => {
@@ -441,14 +413,5 @@ describe('ApiAdminUserRepository', () => {
       await expectAsync(repository.searchPermissionSources({ search: 'ana' }))
         .toBeRejectedWithError('admin_permissions.source_search_too_short');
     });
-  });
-
-  it('getAll should convert API error code into thrown error message', async () => {
-    httpClient.get.and.returnValue(throwError(() => new HttpErrorResponse({
-      status: 403,
-      error: { code: 'admin_users.forbidden' }
-    })));
-
-    await expectAsync(repository.getAll()).toBeRejectedWithError('admin_users.forbidden');
   });
 });

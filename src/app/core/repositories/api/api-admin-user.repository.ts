@@ -124,24 +124,6 @@ export class ApiAdminUserRepository implements AdminUserRepository {
     }
   }
 
-  /** Legacy unscoped first-200 read kept until the users facade migrates to `getPage`. */
-  async getAll(): Promise<AdminUser[]> {
-    try {
-      const response = await firstValueFrom(
-        this.http.get<AdminUsersPageDto>(`${this.endpoint}?page=1&pageSize=200`)
-      );
-
-      return (response.items ?? []).map(item => this.toModel(item));
-    } catch (error) {
-      throw new Error(extractApiErrorCode(error));
-    }
-  }
-
-  async getById(id: string): Promise<AdminUser | undefined> {
-    const allUsers = await this.getAll();
-    return allUsers.find(user => user.id === id);
-  }
-
   async create(data: AdminUserCreatePayload): Promise<AdminUser> {
     try {
       const request: CreateAdminUserRequest = {

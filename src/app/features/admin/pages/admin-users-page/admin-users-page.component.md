@@ -4,12 +4,12 @@
 User management component for system administrators. Provides complete CRUD operations for user accounts including role assignment, complex assignment, profile management, and bulk operations.
 
 ## Features
-- Display all users with email, name, role, complex assignment, and status
+- Display users of the active organization, server-paged (20 per page), with email, name, role, organizations, and status
 - Create new users with email invite or direct password
 - Edit existing users (full name, phone, role, complex, status)
 - Delete individual or bulk users with confirmation
-- Filter users by search, role, and active status
-- Sort by any column
+- Filter users by search, role, and active status (applied by the server)
+- Fixed server order (email, id); columns are not sortable
 - Role-based access control
 - Organization assignment list uses tenant scope for non-sysadmin users (all active tenant organizations)
 - Permissions are configured per assigned organization using a dynamic API catalog
@@ -18,6 +18,29 @@ User management component for system administrators. Provides complete CRUD oper
 - System-admin-only tools are disabled automatically for non-system-admin roles
 - Help dialog explaining user roles and permissions
 - Responsive design with Material Design 3
+
+## Users list (server pagination)
+`UsersFacadeService` reads `ApiAdminUserRepository.getPage` with `scope=organization` and the active
+organization id only. The `all` scope is not used yet, and the legacy unscoped first-200 `getAll`/`getById`
+reads were removed.
+
+- **Visibility is the API's decision**: the page renders the returned items as-is (including unassigned
+  users that the API includes in the organization scope). No client filtering, slicing, sorting or
+  injection of the current user.
+- **No active organization**: no request is sent and the list stays empty; it never widens to `all`.
+- **State**: `page` (starts at 1), `pageSize` (20) and `totalCount` (server total) drive the shared
+  `zh-collection-view` pager (`serverSide`, `page`, `pageSize`, `totalCount`, `pageChange`) in both table
+  and cards mode.
+- **Transitions**: filters reset to page 1; an organization switch resets to page 1 and clears the previous
+  organization's items. Every load gets a monotonic request id, so late success or error responses from a
+  superseded page, filter or organization are ignored.
+- **Organizations lookup**: assignable organizations are read once when the facade is created; paging and
+  filtering never re-read them. A lookup failure leaves the assignment list empty without failing the list.
+- **Mutations**: create, update, delete and bulk delete refetch the current page. Deletions first clamp the
+  page to the new last page when they empty it. Failed mutations report the error and do not refetch.
+- **Selection**: selection is per page. Page, filter and organization transitions clear the page-level
+  selection and the table selection (the shared table drops it whenever server data is replaced), so bulk
+  delete only targets visible rows.
 
 ## Permission source search
 The "replicate permissions from user" source is **not** derived from the Users table. It uses
@@ -52,7 +75,7 @@ enforcement), so cross-organization copying works without loading every user.
 - **users-help-dialog/**: Help dialog component
 
 ## Dependencies
-- `DataTableComponent`: For displaying tabular data with sorting
+- `ZhCollectionViewComponent` / `DataTableComponent`: table and cards with the shared server pager
 - `FilterPanelComponent`: For filtering users
 - `ConfirmDialogComponent`: For delete confirmation
 - `UsersFormPanelComponent`: For user form operations
@@ -138,6 +161,10 @@ Unit tests cover:
 - Filter application and clearing
 - Create form opening
 - Help dialog interactions
+- Server pagination: page 1 and page 2 in table and cards (no second slice), server page count,
+  unassigned users returned by the API, organization-only scope, no request without an active organization,
+  server filters, stale page success/error, disabled sorting, refetch after create/update/delete,
+  last-page clamp, selection reset on page/filter/organization transitions, page-only bulk delete
 - Permission source search: DOM labels and live region, independence from the Users list, 300ms debounce,
   minimum length, Enter, stale responses (query/form close/organization/edited user), edited-user
   exclusion, selection retention and reset, loading/empty/error/retry, refine hint, copy action
