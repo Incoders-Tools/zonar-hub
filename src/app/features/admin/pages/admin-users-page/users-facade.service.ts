@@ -4,6 +4,7 @@ import { Organization } from '../../../../core/models';
 import { Tenant } from '../../../../core/models/user.model';
 import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-admin-user.repository';
 import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
+import { AdminUserListScope } from '../../../../core/repositories/admin-user.repository';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
@@ -12,6 +13,13 @@ export interface UsersFilters {
   roleId?: string;
   isActive?: string;
 }
+
+/**
+ * Display scope of the users page: the active organization (default) or,
+ * for system admins only, every organization at once. Local to this page;
+ * it never widens the global organization switcher.
+ */
+export type UsersScope = 'organization' | 'all';
 
 const USERS_PAGE_SIZE = 20;
 
@@ -39,12 +47,14 @@ export class UsersFacadeService {
   readonly error = signal<string | null>(null);
   readonly saving = signal(false);
   readonly deleting = signal(false);
+  /** Current display scope; the API still owns filtering and the total count. */
+  readonly scope = signal<UsersScope>('organization');
 
   private readonly filters = signal<UsersFilters>({});
 
   // Monotonic id of the latest load; older responses are ignored when superseded
   private loadRequestId = 0;
-  private loadedOrganizationId: string | null | undefined;
+  private loadedContextKey: string | null | undefined;
 
   constructor() {
     // Organizations are read once; paging and filtering never re-read them
@@ -54,35 +64,64 @@ export class UsersFacadeService {
     effect(() => {
       this.activeOrg.activeOrganizationId(); // reactive dependency
       untracked(() => {
+        // A changed organization always restores organization mode
+        this.scope.set('organization');
         this.page.set(1);
         void this.load();
       });
     });
   }
 
+  /**
+   * Switches the local display scope. Switching to `all` is refused without the
+   * system admin role; repeated switches to the current scope are no-ops.
+   */
+  setScope(scope: UsersScope): void {
+    if (scope === this.scope()) return;
+    if (scope === 'all' && !this.auth.isSystemAdmin()) return;
+    this.scope.set(scope);
+    this.page.set(1);
+    void this.load();
+  }
+
   async load(): Promise<void> {
     const requestId = ++this.loadRequestId;
-    const organizationId = this.activeOrg.activeOrganizationId();
-    if (organizationId !== this.loadedOrganizationId) {
-      // Never show the previous organisation's users while the new one loads
-      this.users.set([]);
-      this.totalCount.set(0);
-      this.loadedOrganizationId = organizationId;
+
+    // Revoked admin rights must never keep the widened scope alive
+    if (this.scope() === 'all' && !this.auth.isSystemAdmin()) {
+      this.scope.set('organization');
     }
 
-    if (!organizationId) {
-      // Without an active organization there is no scope to list; never widen to `all`
+    const scope = this.scope();
+    const organizationId = this.activeOrg.activeOrganizationId();
+    const contextKey = scope === 'all' ? 'all' : `organization:${organizationId ?? ''}`;
+
+    if (contextKey !== this.loadedContextKey) {
+      // Never show the previous scope's or organisation's users while the new one loads
+      this.users.set([]);
+      this.totalCount.set(0);
+      this.loadedContextKey = contextKey;
+    }
+
+    const filters = this.filters();
+    let scopeQuery: AdminUserListScope;
+    if (scope === 'all') {
+      scopeQuery = { kind: 'all' };
+    } else if (organizationId) {
+      scopeQuery = { kind: 'organization', organizationId };
+    } else {
+      // Without an active organization there is no organization scope to list;
+      // never widen to `all` implicitly
       this.loading.set(false);
       this.error.set(null);
       return;
     }
 
-    const filters = this.filters();
     try {
       this.loading.set(true);
       this.error.set(null);
       const result = await this.repository.getPage({
-        scope: { kind: 'organization', organizationId },
+        scope: scopeQuery,
         page: this.page(),
         pageSize: this.pageSize,
         search: filters.search,

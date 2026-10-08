@@ -12,7 +12,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 | `data` | `T[]` | requerido | Filas renderizadas; `T extends Record<string, unknown>`. |
 | `loading` | `boolean` | `false` | Muestra `app-loading-state` y oculta la tabla. |
 | `error` | `boolean` | `false` | Muestra `app-error-state` con acción retry. |
-| `emptyMessageKey` | `string` | `'table.noData'` | Declarado, pero el template actual usa `app-empty-state` sin pasar este input. |
+| `emptyMessageKey` | `string` | `'table.noData'` | Mensaje del empty state; lo traduce el consumidor. |
 | `selectable` | `boolean` | `false` | Agrega checkbox por fila y checkbox de selección de página. |
 | `paginated` | `boolean` | `false` | Activa paginación cliente sobre `data`. |
 | `paginationPosition` | `'top' \| 'bottom' \| 'both'` | `'bottom'` | Ubicación de los controles de paginación. |
@@ -62,7 +62,7 @@ Componente propio en `../data-table-paginator/` (selector `app-data-table-pagina
 ## Estados y variantes
 - Loading: `app-loading-state`.
 - Error: `app-error-state` con `retried`.
-- Empty: `app-empty-state` sin mensaje personalizado efectivo actualmente.
+- Empty: `app-empty-state` con el mensaje de `emptyMessageKey` (default `table.noData`).
 - Selected: clase `data-table__row--selected`.
 - Active: clase `data-table__row--active`.
 - Disabled: solo en botones de paginación cuando están en límite (primera/última página, también con total 0); acciones no tienen disabled por API.
@@ -80,7 +80,7 @@ Componente propio en `../data-table-paginator/` (selector `app-data-table-pagina
 - Encabezados (`labelKey`), acciones, paginación y celdas con `translate` usan `TranslatePipe`.
 - Keys de paginación: `admin.pagination.showing`, `.of`, `.prev`, `.next`, `.label`, `.page` (es/en/pt).
 - Textos hardcodeados observados: `Select all rows`, `Select row`, símbolos de sort `▲/▼` y dash de icono vacío.
-- `emptyMessageKey` está declarado pero no se pasa al empty state.
+- `emptyMessageKey` se pasa al `app-empty-state`; los mensajes traducidos los provee el consumidor.
 
 ## Theming
 - Usa tokens `--zh-*` para superficies, borde, texto, estados, radios, espacios, transición y elevación.
@@ -91,6 +91,7 @@ Componente propio en `../data-table-paginator/` (selector `app-data-table-pagina
 - `data-table.component.spec.ts` cubre creación y el render type `pill`: sin pill para valores vacíos/nulos/en blanco, pill solo en la fila con valor, `false`/`0` visibles y `data-variant` desde `pillVariantKey`.
 - También verifica que los botones de acción por fila exponen la etiqueta traducida como `aria-label` y `title`.
 - Paginación: cliente default (slice local, `currentPage`, sin `pageChange`) y server (25 items con `pageSize` 20 sin segundo slice, `pageChange`, página controlada, prev/next disabled, labels accesibles, limpieza de selección al cambiar página, total 0).
+- Prueba del empty state con `emptyMessageKey` personalizado (default `table.noData`).
 - Faltan pruebas de loading/error, sort, acciones, resto de render types, retry y reorder.
 
 ## Guía de reutilización
@@ -102,6 +103,5 @@ Componente propio en `../data-table-paginator/` (selector `app-data-table-pagina
 ## Compliance gaps
 - Cobertura de tests parcial para un primitivo canónico (solo `pill` cubierto en profundidad).
 - Algunos textos/labels accesibles están hardcodeados y no pasan por i18n.
-- `emptyMessageKey` no se aplica en el template actual.
 - Acciones no soportan estado disabled.
 - Reorder por drag/drop no es plenamente accesible.

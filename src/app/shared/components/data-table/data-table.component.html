@@ -4,7 +4,7 @@
   } @else if (error()) {
     <app-error-state (retried)="retried.emit()"></app-error-state>
   } @else if (data().length === 0) {
-    <app-empty-state></app-empty-state>
+    <app-empty-state [message]="emptyMessageKey()"></app-empty-state>
     @if (serverSide() && totalItems() > 0) {
       <!-- Out-of-range server page: keep the pager so the user can navigate back -->
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>

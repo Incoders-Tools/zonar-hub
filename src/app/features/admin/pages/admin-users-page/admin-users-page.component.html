@@ -239,6 +239,50 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
+  <!-- Scope bar: organization context + system admin "all organizations" toggle -->
+  <div class="users-page__scope-bar">
+    <p
+      class="users-page__scope-context"
+      data-testid="users-scope-context"
+      [attr.data-scope]="facade.scope()">
+      @if (facade.scope() === 'all') {
+        {{ 'admin.users.scope.allToggle' | t }}
+      } @else if (activeOrganizationName()) {
+        {{ 'admin.users.scope.organizationLabel' | t }}: {{ activeOrganizationName() }}
+      } @else {
+        {{ 'admin.users.scope.noOrganization' | t }}
+      }
+    </p>
+    @if (isSystemAdmin()) {
+      <div class="users-page__scope-toggle-row">
+        <label class="users-page__scope-toggle" for="admin-users-scope-all">
+          <input
+            id="admin-users-scope-all"
+            data-testid="users-scope-all-toggle"
+            type="checkbox"
+            [checked]="facade.scope() === 'all'"
+            aria-describedby="admin-users-scope-all-hint"
+            (change)="onAllScopeChanged($any($event.target).checked)">
+          <span class="users-page__scope-toggle-label">{{ 'admin.users.scope.allToggle' | t }}</span>
+        </label>
+        <span id="admin-users-scope-all-hint" class="users-page__scope-toggle-hint">
+          {{ 'admin.users.scope.allToggleHint' | t }}
+        </span>
+      </div>
+    }
+  </div>
+
+  <!-- Scope-aware loading / error help (aria-live status) -->
+  @if (facade.loading() || facade.error()) {
+    <p class="users-page__state-help" role="status" aria-live="polite" data-testid="users-state-help">
+      @if (facade.loading()) {
+        {{ 'admin.users.state.loading' | t }}
+      } @else {
+        {{ 'admin.users.state.error' | t }}
+      }
+    </p>
+  }
+
   <!-- Collection (table + cards toggle) -->
   <zh-collection-view
     viewKey="admin-users"
@@ -253,7 +297,7 @@
     [page]="facade.page()"
     [pageSize]="facade.pageSize"
     [totalCount]="facade.totalCount()"
-    emptyMessageKey="common.noResults"
+    [emptyMessageKey]="emptyMessageKey()"
     (pageChange)="onPageChange($event)"
     (selectionChanged)="onSelectionChanged($event)"
     (rowAction)="onRowActionClicked($event)"

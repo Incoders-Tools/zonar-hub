@@ -16,7 +16,9 @@ import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-ad
 import { ApiOrganizationRepository } from '../../../../core/repositories/api/api-organization.repository';
 import { ApiPermissionRepository } from '../../../../core/repositories/api/api-permission.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
+import { TRANSLATIONS } from '../../../../core/i18n/i18n.translations';
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -137,12 +139,26 @@ class ApiPermissionRepositoryStub {
   }
 }
 
+class AuthServiceStub {
+  private readonly userState = signal<any | null>(null);
+
+  readonly currentUser = computed(() => this.userState());
+  readonly isSystemAdmin = computed(() => this.userState()?.role === 'system_admin');
+  readonly isAdmin = computed(() => ['admin', 'system_admin'].includes(this.userState()?.role));
+  readonly updateCurrentOrganizationAssignments = jasmine.createSpy('updateCurrentOrganizationAssignments');
+
+  setUser(user: any | null): void {
+    this.userState.set(user);
+  }
+}
+
 describe('AdminUsersPageComponent', () => {
   let component: AdminUsersPageComponent;
   let fixture: ComponentFixture<AdminUsersPageComponent>;
   let facade: UsersFacadeService;
   let activeOrg: ActiveOrganizationServiceStub;
   let adminUserRepository: ApiAdminUserRepositoryStub;
+  let auth: AuthServiceStub;
 
   beforeEach(async () => {
     localStorage.removeItem('zh.collection-view.mode.admin-users');
@@ -154,12 +170,14 @@ describe('AdminUsersPageComponent', () => {
         { provide: ApiAdminUserRepository, useClass: ApiAdminUserRepositoryStub },
         { provide: ApiOrganizationRepository, useClass: ApiOrganizationRepositoryStub },
         { provide: ApiPermissionRepository, useClass: ApiPermissionRepositoryStub },
-        { provide: ActiveOrganizationService, useClass: ActiveOrganizationServiceStub }
+        { provide: ActiveOrganizationService, useClass: ActiveOrganizationServiceStub },
+        { provide: AuthService, useClass: AuthServiceStub }
       ]
     }).compileComponents();
 
     activeOrg = TestBed.inject(ActiveOrganizationService) as unknown as ActiveOrganizationServiceStub;
     adminUserRepository = TestBed.inject(ApiAdminUserRepository) as unknown as ApiAdminUserRepositoryStub;
+    auth = TestBed.inject(AuthService) as unknown as AuthServiceStub;
 
     fixture = TestBed.createComponent(AdminUsersPageComponent);
     component = fixture.componentInstance;
@@ -1035,5 +1053,292 @@ describe('AdminUsersPageComponent', () => {
       expect(permissionRepository.getUserPermissions).toHaveBeenCalledOnceWith('ana');
       expect(component.permissionsByOrganization()['org-1']).toEqual(['dashboard']);
     }));
+  });
+
+  describe('organization context and scope toggle', () => {
+    const ALL_LOCALES = ['es', 'en', 'pt'] as const;
+    const NEW_SCOPE_KEYS = [
+      'admin.users.scope.organizationLabel',
+      'admin.users.scope.allToggle',
+      'admin.users.scope.allToggleHint',
+      'admin.users.scope.noOrganization',
+      'admin.users.state.loading',
+      'admin.users.state.error',
+      'admin.users.state.emptyOrganization',
+      'admin.users.state.emptyAll',
+      'admin.users.state.noOrganization'
+    ];
+
+    let i18n: I18nService;
+
+    beforeEach(() => {
+      i18n = TestBed.inject(I18nService);
+    });
+
+    function host(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function scopeContext(): HTMLElement | null {
+      return host().querySelector<HTMLElement>('[data-testid="users-scope-context"]');
+    }
+
+    function allToggle(): HTMLInputElement | null {
+      return host().querySelector<HTMLInputElement>('input[data-testid="users-scope-all-toggle"]');
+    }
+
+    function stateHelp(): HTMLElement | null {
+      return host().querySelector<HTMLElement>('[data-testid="users-state-help"]');
+    }
+
+    function emptyMessage(): string {
+      return (host().querySelector('app-empty-state .empty-state__message')?.textContent ?? '').trim();
+    }
+
+    function tableRows(): HTMLElement[] {
+      return Array.from(host().querySelectorAll<HTMLElement>('app-data-table tbody tr'));
+    }
+
+    function cards(): HTMLElement[] {
+      return Array.from(host().querySelectorAll<HTMLElement>('.zh-collection-view__card'));
+    }
+
+    function pagerText(): string {
+      return (host().querySelector('.data-table__pagination-page')?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    }
+
+    function nextButton(): HTMLButtonElement {
+      return host().querySelectorAll<HTMLButtonElement>('.data-table__pagination-btn')[1];
+    }
+
+    function lastQuery(): AdminUserPageQuery {
+      return adminUserRepository.getPage.calls.mostRecent().args[0] as AdminUserPageQuery;
+    }
+
+    async function stabilize(): Promise<void> {
+      fixture.detectChanges();
+      await new Promise(resolve => setTimeout(resolve));
+      fixture.detectChanges();
+    }
+
+    function serveTotal(totalCount: number): void {
+      adminUserRepository.getPage.and.callFake((query: AdminUserPageQuery) => {
+        const offset = (query.page - 1) * query.pageSize;
+        const count = Math.max(0, Math.min(query.pageSize, totalCount - offset));
+        return Promise.resolve(usersPage(pageOfUsers(count, offset), query.page, totalCount));
+      });
+    }
+
+    function becomeSystemAdmin(): void {
+      auth.setUser({ ...adminUser('sys-1', 'Sys Admin'), role: 'system_admin' });
+    }
+
+    async function setAllScope(checked: boolean): Promise<void> {
+      const toggle = allToggle()!;
+      toggle.checked = checked;
+      toggle.dispatchEvent(new Event('change'));
+      await stabilize();
+    }
+
+    it('shows the organization context and hides the scope toggle without the system admin role', async () => {
+      auth.setUser({ ...adminUser('admin-1', 'Admin User'), role: 'admin' });
+      fixture.detectChanges();
+      await stabilize();
+
+      expect(scopeContext()).not.toBeNull();
+      expect(scopeContext()!.getAttribute('data-scope')).toBe('organization');
+      expect(scopeContext()!.textContent).toContain(i18n.translate('admin.users.scope.organizationLabel'));
+      expect(scopeContext()!.textContent).toContain('org-1');
+      expect(allToggle()).toBeNull();
+    });
+
+    it('labels the toggle and switches the page to the all scope', async () => {
+      becomeSystemAdmin();
+      fixture.detectChanges();
+      await stabilize();
+
+      const toggle = allToggle()!;
+      expect(toggle.type).toBe('checkbox');
+      const label = host().querySelector<HTMLLabelElement>('label[for="admin-users-scope-all"]');
+      expect(label?.textContent?.trim()).toBe(i18n.translate('admin.users.scope.allToggle'));
+      expect(toggle.getAttribute('aria-describedby')).toBe('admin-users-scope-all-hint');
+      expect(host().querySelector('#admin-users-scope-all-hint')?.textContent?.trim())
+        .toBe(i18n.translate('admin.users.scope.allToggleHint'));
+
+      await setAllScope(true);
+
+      expect(facade.scope()).toBe('all');
+      expect(toggle.checked).toBeTrue();
+      expect(scopeContext()!.getAttribute('data-scope')).toBe('all');
+      expect(scopeContext()!.textContent).toContain(i18n.translate('admin.users.scope.allToggle'));
+      expect(lastQuery().scope).toEqual({ kind: 'all' });
+    });
+
+    it('is keyboard operable: a focusable native checkbox with an associated label', async () => {
+      becomeSystemAdmin();
+      fixture.detectChanges();
+      await stabilize();
+
+      const toggle = allToggle()!;
+      toggle.focus();
+      expect(host().ownerDocument.activeElement).toBe(toggle);
+      expect(host().querySelector('label[for="admin-users-scope-all"]')).not.toBeNull();
+
+      // Space on a focused native checkbox toggles checkedness and emits change;
+      // the handler behind that event is what switches the page scope.
+      await setAllScope(true);
+      expect(facade.scope()).toBe('all');
+
+      await setAllScope(false);
+      expect(facade.scope()).toBe('organization');
+    });
+
+    it('returns to the organization scope and context when the toggle is switched off', async () => {
+      becomeSystemAdmin();
+      fixture.detectChanges();
+      await stabilize();
+      await setAllScope(true);
+      expect(facade.scope()).toBe('all');
+
+      await setAllScope(false);
+
+      expect(facade.scope()).toBe('organization');
+      expect(scopeContext()!.getAttribute('data-scope')).toBe('organization');
+      expect(scopeContext()!.textContent).toContain('org-1');
+      expect(lastQuery().scope).toEqual({ kind: 'organization', organizationId: 'org-1' });
+    });
+
+    it('restores organization mode and unchecks the toggle when the active organization changes', async () => {
+      becomeSystemAdmin();
+      fixture.detectChanges();
+      await stabilize();
+      await setAllScope(true);
+      expect(facade.scope()).toBe('all');
+
+      activeOrg.switchOrganization('org-2');
+      await stabilize();
+
+      expect(facade.scope()).toBe('organization');
+      expect(allToggle()!.checked).toBeFalse();
+      expect(lastQuery().scope).toEqual({ kind: 'organization', organizationId: 'org-2' });
+    });
+
+    it('clears the selection when the scope changes', async () => {
+      serveTotal(45);
+      becomeSystemAdmin();
+      await stabilize();
+
+      host().querySelectorAll<HTMLInputElement>('app-data-table tbody input[type="checkbox"]')[0].click();
+      await stabilize();
+      expect(component.selectedUsers().length).toBe(1);
+
+      await setAllScope(true);
+
+      expect(component.selectedUsers()).toEqual([]);
+      expect(host().querySelectorAll('app-data-table tbody input[type="checkbox"]:checked').length).toBe(0);
+    });
+
+    it('serves the all scope pages from the server in table mode without slicing', async () => {
+      serveTotal(45);
+      becomeSystemAdmin();
+      await stabilize();
+      await setAllScope(true);
+
+      expect(lastQuery()).toEqual(jasmine.objectContaining({ scope: { kind: 'all' }, page: 1, pageSize: 20 }));
+      expect(tableRows().length).toBe(20);
+      expect(pagerText()).toContain('1 / 3');
+
+      nextButton().click();
+      await stabilize();
+
+      expect(lastQuery()).toEqual(jasmine.objectContaining({ scope: { kind: 'all' }, page: 2 }));
+      expect(tableRows().length).toBe(20);
+      expect(tableRows()[0].textContent).toContain('User 21');
+      expect(pagerText()).toContain('2 / 3');
+    });
+
+    it('serves the all scope pages from the server in cards mode without slicing', async () => {
+      localStorage.setItem('zh.collection-view.mode.admin-users', 'cards');
+      serveTotal(45);
+      becomeSystemAdmin();
+      await stabilize();
+      await setAllScope(true);
+
+      expect(cards().length).toBe(20);
+      expect(pagerText()).toContain('1 / 3');
+
+      nextButton().click();
+      await stabilize();
+
+      expect(lastQuery()).toEqual(jasmine.objectContaining({ scope: { kind: 'all' }, page: 2 }));
+      expect(cards().length).toBe(20);
+      expect(cards()[0].textContent).toContain('User 21');
+      expect(pagerText()).toContain('2 / 3');
+    });
+
+    it('shows scope-aware empty help in es, en and pt', async () => {
+      await stabilize();
+
+      for (const locale of ALL_LOCALES) {
+        i18n.setLocale(locale);
+        fixture.detectChanges();
+        expect(emptyMessage()).toBe(TRANSLATIONS[locale]['admin.users.state.emptyOrganization']);
+      }
+
+      becomeSystemAdmin();
+      await stabilize();
+      await setAllScope(true);
+
+      for (const locale of ALL_LOCALES) {
+        i18n.setLocale(locale);
+        fixture.detectChanges();
+        expect(emptyMessage()).toBe(TRANSLATIONS[locale]['admin.users.state.emptyAll']);
+      }
+
+      activeOrg.switchOrganization(null);
+      await stabilize();
+
+      for (const locale of ALL_LOCALES) {
+        i18n.setLocale(locale);
+        fixture.detectChanges();
+        expect(emptyMessage()).toBe(TRANSLATIONS[locale]['admin.users.state.noOrganization']);
+      }
+    });
+
+    it('shows translated loading and error help in a polite status region, in es, en and pt', async () => {
+      const pending = deferred<AdminUserPage>();
+      adminUserRepository.getPage.and.returnValue(pending.promise);
+
+      fixture.detectChanges();
+      fixture.detectChanges();
+
+      for (const locale of ALL_LOCALES) {
+        i18n.setLocale(locale);
+        fixture.detectChanges();
+        expect(stateHelp()).not.toBeNull();
+        expect(stateHelp()!.getAttribute('role')).toBe('status');
+        expect(stateHelp()!.textContent?.trim()).toBe(TRANSLATIONS[locale]['admin.users.state.loading']);
+      }
+
+      pending.reject(new Error('boom'));
+      await stabilize();
+
+      for (const locale of ALL_LOCALES) {
+        i18n.setLocale(locale);
+        fixture.detectChanges();
+        expect(stateHelp()).not.toBeNull();
+        expect(stateHelp()!.textContent?.trim()).toBe(TRANSLATIONS[locale]['admin.users.state.error']);
+      }
+    });
+
+    it('translates every new scope and state key in es, en and pt', () => {
+      for (const locale of ALL_LOCALES) {
+        for (const key of NEW_SCOPE_KEYS) {
+          expect(TRANSLATIONS[locale][key])
+            .withContext(`${locale} is missing ${key}`)
+            .toBeTruthy();
+        }
+      }
+    });
   });
 });

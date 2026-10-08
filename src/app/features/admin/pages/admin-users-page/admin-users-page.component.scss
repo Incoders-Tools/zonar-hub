@@ -38,6 +38,56 @@
     gap: var(--zh-space-sm);
   }
 
+  &__scope-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zh-space-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--zh-space-md);
+  }
+
+  &__scope-context {
+    margin: 0;
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+    color: var(--zh-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__scope-toggle-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--zh-space-sm);
+    flex-wrap: wrap;
+  }
+
+  &__scope-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-primary);
+    cursor: pointer;
+
+    input[type='checkbox'] {
+      cursor: pointer;
+      margin: 0;
+    }
+  }
+
+  &__scope-toggle-hint {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+  }
+
+  &__state-help {
+    margin: 0 0 var(--zh-space-md);
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+  }
+
   &__form-panel {
     background: var(--zh-surface-elevated);
     border: 1px solid var(--zh-border-subtle);

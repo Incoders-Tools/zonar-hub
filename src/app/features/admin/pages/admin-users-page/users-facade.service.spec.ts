@@ -201,6 +201,172 @@ describe('UsersFacadeService', () => {
     });
   });
 
+  describe('all organizations scope', () => {
+    it('requests the all scope only after an explicit switch by a system admin', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+      usersRepo.getPage.calls.reset();
+
+      service.setScope('all');
+      await settle();
+
+      expect(service.scope()).toBe('all');
+      expect(usersRepo.getPage).toHaveBeenCalledTimes(1);
+      expect(lastQuery()).toEqual(jasmine.objectContaining({ scope: { kind: 'all' }, page: 1 }));
+    });
+
+    it('refuses the all scope for callers without the system admin role', async () => {
+      auth.setUser(buildCurrentUser('admin-1', 'admin', ['org-1']));
+      await startIn('org-1');
+      usersRepo.getPage.calls.reset();
+
+      service.setScope('all');
+      await settle();
+
+      expect(service.scope()).toBe('organization');
+      expect(usersRepo.getPage).not.toHaveBeenCalled();
+    });
+
+    it('treats repeated switches to the current scope as no-ops', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+      usersRepo.getPage.calls.reset();
+
+      service.setScope('organization');
+      await settle();
+      expect(usersRepo.getPage).not.toHaveBeenCalled();
+
+      service.setScope('all');
+      service.setScope('all');
+      await settle();
+      expect(usersRepo.getPage).toHaveBeenCalledTimes(1);
+      expect(lastQuery().scope).toEqual({ kind: 'all' });
+    });
+
+    it('resets to the first page whenever the scope changes', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+      service.goToPage(3);
+      await settle();
+
+      service.setScope('all');
+      await settle();
+      expect(service.page()).toBe(1);
+      expect(lastQuery().page).toBe(1);
+
+      service.goToPage(2);
+      await settle();
+
+      service.setScope('organization');
+      await settle();
+      expect(service.page()).toBe(1);
+      expect(lastQuery()).toEqual(jasmine.objectContaining({
+        scope: { kind: 'organization', organizationId: 'org-1' },
+        page: 1
+      }));
+    });
+
+    it('keeps the filters while switching scope', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+      service.applyFilters({ search: 'ana' });
+      await settle();
+
+      service.setScope('all');
+      await settle();
+
+      expect(lastQuery()).toEqual(jasmine.objectContaining({ scope: { kind: 'all' }, search: 'ana' }));
+    });
+
+    it('allows a system admin to list every organization without an active organization', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn(null);
+      expect(usersRepo.getPage).not.toHaveBeenCalled();
+
+      service.setScope('all');
+      await settle();
+
+      expect(lastQuery().scope).toEqual({ kind: 'all' });
+    });
+
+    it('clears the current rows while the new scope loads', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      usersRepo.getPage.and.resolveTo(page([buildUser('org-user', 'admin', 'role002', 'org-1')], 1, 1));
+      await startIn('org-1');
+      expect(service.users().map(user => user.id)).toEqual(['org-user']);
+
+      const pendingAll = createDeferred<AdminUserPage>();
+      usersRepo.getPage.and.returnValue(pendingAll.promise);
+      service.setScope('all');
+
+      expect(service.users()).toEqual([]);
+      expect(service.totalCount()).toBe(0);
+      expect(service.loading()).toBeTrue();
+      expect(service.error()).toBeNull();
+
+      pendingAll.resolve(page([buildUser('global-user', 'viewer', 'role003', 'org-2')], 1, 1));
+      await settle();
+      expect(service.users().map(user => user.id)).toEqual(['global-user']);
+      expect(service.totalCount()).toBe(1);
+      expect(service.loading()).toBeFalse();
+    });
+
+    it('ignores a stale response from the superseded scope', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+
+      const orgPage = createDeferred<AdminUserPage>();
+      const allPage = createDeferred<AdminUserPage>();
+      usersRepo.getPage.and.returnValues(orgPage.promise, allPage.promise);
+
+      service.goToPage(2);
+      service.setScope('all');
+      allPage.resolve(page([buildUser('global-1', 'viewer', 'role003', 'org-2')], 1, 1));
+      await settle();
+      orgPage.resolve(page([buildUser('stale-1', 'admin', 'role002', 'org-1')], 2, 99));
+      await settle();
+
+      expect(service.users().map(user => user.id)).toEqual(['global-1']);
+      expect(service.totalCount()).toBe(1);
+      expect(service.loading()).toBeFalse();
+      expect(service.error()).toBeNull();
+    });
+
+    it('falls back to the organization scope when the system admin role is revoked', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+      service.setScope('all');
+      await settle();
+      expect(lastQuery().scope).toEqual({ kind: 'all' });
+
+      auth.setUser(buildCurrentUser('admin-1', 'admin', ['org-1']));
+      await service.load();
+
+      expect(service.scope()).toBe('organization');
+      expect(lastQuery().scope).toEqual({ kind: 'organization', organizationId: 'org-1' });
+    });
+
+    it('restores organization mode and resets the page on an active organization switch', async () => {
+      auth.setUser(buildCurrentUser('sys-1', 'system_admin'));
+      await startIn('org-1');
+      service.setScope('all');
+      await settle();
+      service.goToPage(2);
+      await settle();
+
+      activeOrg.setActiveOrganization('org-2', 'Org Two');
+      TestBed.tick();
+      await settle();
+
+      expect(service.scope()).toBe('organization');
+      expect(service.page()).toBe(1);
+      expect(lastQuery()).toEqual(jasmine.objectContaining({
+        scope: { kind: 'organization', organizationId: 'org-2' },
+        page: 1
+      }));
+    });
+  });
+
   describe('organization lookup', () => {
     it('reads organizations once and never again on pagination or filtering', async () => {
       auth.setUser(buildCurrentUser('sys-1', 'system_admin'));

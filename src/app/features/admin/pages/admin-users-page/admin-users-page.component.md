@@ -5,6 +5,7 @@ User management component for system administrators. Provides complete CRUD oper
 
 ## Features
 - Display users of the active organization, server-paged (20 per page), with email, name, role, organizations, and status
+- System admins can switch the page to the **all organizations** display scope via a local toggle; the global organization switcher is never widened
 - Create new users with email invite or direct password
 - Edit existing users (full name, phone, role, complex, status)
 - Delete individual or bulk users with confirmation
@@ -20,27 +21,36 @@ User management component for system administrators. Provides complete CRUD oper
 - Responsive design with Material Design 3
 
 ## Users list (server pagination)
-`UsersFacadeService` reads `ApiAdminUserRepository.getPage` with `scope=organization` and the active
-organization id only. The `all` scope is not used yet, and the legacy unscoped first-200 `getAll`/`getById`
-reads were removed.
+`UsersFacadeService` reads `ApiAdminUserRepository.getPage` with the active organization scope by
+default. A system admin can switch to the explicit `all` scope on this page only; the legacy unscoped
+first-200 `getAll`/`getById` reads were removed.
 
 - **Visibility is the API's decision**: the page renders the returned items as-is (including unassigned
   users that the API includes in the organization scope). No client filtering, slicing, sorting or
   injection of the current user.
-- **No active organization**: no request is sent and the list stays empty; it never widens to `all`.
+- **Display scope** (`UsersScope`): `organization` (default) or `all`. The `all` scope is **page-local**,
+  requires `system_admin` (enforced in `setScope` and re-checked on every load, so a revoked role falls
+  back to the organization scope), resets to page 1 and is restored to the organization scope on any
+  active-organization switch.
+- **No active organization**: in organization mode no request is sent and the list stays empty; it never
+  widens to `all` implicitly (only the explicit system-admin toggle can).
 - **State**: `page` (starts at 1), `pageSize` (20) and `totalCount` (server total) drive the shared
   `zh-collection-view` pager (`serverSide`, `page`, `pageSize`, `totalCount`, `pageChange`) in both table
   and cards mode.
-- **Transitions**: filters reset to page 1; an organization switch resets to page 1 and clears the previous
-  organization's items. Every load gets a monotonic request id, so late success or error responses from a
-  superseded page, filter or organization are ignored.
+- **Transitions**: filters reset to page 1; an organization switch resets to page 1, restores the
+  organization scope and clears the previous organization's items; a scope switch resets to page 1 and
+  clears the previous scope's items. Every load gets a monotonic request id, so late success or error
+  responses from a superseded page, scope, filter or organization are ignored.
 - **Organizations lookup**: assignable organizations are read once when the facade is created; paging and
   filtering never re-read them. A lookup failure leaves the assignment list empty without failing the list.
 - **Mutations**: create, update, delete and bulk delete refetch the current page. Deletions first clamp the
   page to the new last page when they empty it. Failed mutations report the error and do not refetch.
-- **Selection**: selection is per page. Page, filter and organization transitions clear the page-level
+- **Selection**: selection is per page. Page, filter, scope and organization transitions clear the page-level
   selection and the table selection (the shared table drops it whenever server data is replaced), so bulk
   delete only targets visible rows.
+- **Scope context and helpers**: a context label (`users-scope-context`) shows the current scope; a polite
+  aria-live status region (`users-state-help`) announces loading and error states; empty messages are
+  scope-aware (`emptyAll` / `emptyOrganization` / `noOrganization`), all translated.
 
 ## Permission source search
 The "replicate permissions from user" source is **not** derived from the Users table. It uses
@@ -100,6 +110,15 @@ enforcement), so cross-organization copying works without loading every user.
 - admin.users.filter.status
 - admin.users.status.active
 - admin.users.status.inactive
+- admin.users.scope.organizationLabel
+- admin.users.scope.allToggle
+- admin.users.scope.allToggleHint
+- admin.users.scope.noOrganization
+- admin.users.state.loading
+- admin.users.state.error
+- admin.users.state.emptyOrganization
+- admin.users.state.emptyAll
+- admin.users.state.noOrganization
 - admin.users.role.systemAdmin
 - admin.users.role.admin
 - admin.users.role.viewer
@@ -165,6 +184,11 @@ Unit tests cover:
   unassigned users returned by the API, organization-only scope, no request without an active organization,
   server filters, stale page success/error, disabled sorting, refetch after create/update/delete,
   last-page clamp, selection reset on page/filter/organization transitions, page-only bulk delete
+- All-organizations scope: system-admin gated toggle (native checkbox with label, hint and
+  `aria-describedby`), keyboard operability, page-1 reset and filter retention, switching without an
+  active organization, stale scope responses ignored, role-revocation fallback, organization switch
+  restoring organization mode with cleared selection, accurate server paging without slicing in table
+  and cards, and scope/state help translated (es/en/pt) in a polite aria-live region
 - Permission source search: DOM labels and live region, independence from the Users list, 300ms debounce,
   minimum length, Enter, stale responses (query/form close/organization/edited user), edited-user
   exclusion, selection retention and reset, loading/empty/error/retry, refine hint, copy action

@@ -293,4 +293,19 @@ describe('DataTableComponent', () => {
       });
     });
   });
+
+  describe('empty state message', () => {
+    it('renders the supplied emptyMessageKey instead of the default message', () => {
+      const i18n = TestBed.inject(I18nService);
+      fixture.componentRef.setInput('data', []);
+      fixture.componentRef.setInput('emptyMessageKey', 'common.noResults');
+      fixture.detectChanges();
+
+      const message = (fixture.nativeElement as HTMLElement)
+        .querySelector('.empty-state__message')?.textContent?.trim();
+
+      expect(message).toBe(i18n.translate('common.noResults'));
+      expect(message).not.toBe(i18n.translate('table.noData'));
+    });
+  });
 });

@@ -25,7 +25,7 @@ import { ApiAdminUserRepository } from '../../../../core/repositories/api/api-ad
 import { PermissionSourceUser } from '../../../../core/repositories/admin-user.repository';
 import { PermissionModule, UserOrganizationPermissionAssignment } from '../../../../core/models';
 import { DEFAULT_ROLE_PERMISSIONS, SYSTEM_ADMIN_ONLY_TOOLS } from '../../../../core/auth/permissions.model';
-import { UsersFacadeService, UsersFilters } from './users-facade.service';
+import { UsersFacadeService, UsersFilters, UsersScope } from './users-facade.service';
 
 interface UserRow extends Record<string, unknown> {
   id: string;
@@ -343,6 +343,20 @@ export class AdminUsersPageComponent implements OnInit {
 
   readonly hasSelection = computed(() => this.selectedUsers().length > 0);
 
+  /** Active organization name shown in the page's scope context label. */
+  readonly activeOrganizationName = this.activeOrg.activeOrganizationName;
+
+  /** Scope-aware empty message: all, organization, or no active organization. */
+  readonly emptyMessageKey = computed(() => {
+    if (this.facade.scope() === 'all') {
+      return 'admin.users.state.emptyAll';
+    }
+    if (!this.activeOrg.activeOrganizationId()) {
+      return 'admin.users.state.noOrganization';
+    }
+    return 'admin.users.state.emptyOrganization';
+  });
+
   readonly helpSections: HelpSection[] = [
     { titleKey: 'admin.users.help.description' },
     { titleKey: 'admin.users.help.roles', items: [
@@ -486,6 +500,17 @@ export class AdminUsersPageComponent implements OnInit {
   onPageChange(page: number): void {
     this.selectedUsers.set([]);
     this.facade.goToPage(page);
+  }
+
+  /**
+   * Local "all organizations" display scope for system admins. Page-local only:
+   * it never changes the global organization switcher.
+   */
+  onAllScopeChanged(checked: boolean): void {
+    const next: UsersScope = checked ? 'all' : 'organization';
+    if (next === this.facade.scope()) return;
+    this.facade.setScope(next);
+    this.selectedUsers.set([]);
   }
 
   onSelectionChanged(rows: UserRow[]): void {
