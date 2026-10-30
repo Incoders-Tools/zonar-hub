@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../config/api-base-url.token';
+import { publicRequestContext } from '../../http/public-request.context';
 import { PublicOrganization, PublicTournament, PublicTournamentSport } from '../../models';
 import { extractApiErrorCode } from './api-error.util';
 
@@ -9,7 +10,8 @@ import { extractApiErrorCode } from './api-error.util';
  * Server contract: anonymous, read-only showcase (see API `docs/api/public-tournaments.md`).
  * - GET /api/public/tournaments?limit=N → { items: PublicTournament[] }
  * - GET /api/public/tournaments/{slug}  → PublicTournament, or 404 `public_tournaments.not_found`
- * Unlike the admin repository it needs no active organization and sends no organization filter.
+ * Unlike the admin repository it needs no active organization and sends no organization filter;
+ * requests carry `PUBLIC_REQUEST`, so no credentials or tenant/organization headers are attached.
  */
 type PublicSportDto = Omit<PublicTournamentSport, 'iconSource'> & { iconSource: string | null };
 type PublicOrganizationDto = Omit<PublicOrganization, 'links'> & { links?: PublicOrganization['links'] | null };
@@ -35,7 +37,7 @@ export class ApiPublicTournamentRepository {
     try {
       const params = limit === undefined ? undefined : new HttpParams().set('limit', limit);
       const response = await firstValueFrom(
-        this.http.get<PublicTournamentListResponse>(this.endpoint, { params })
+        this.http.get<PublicTournamentListResponse>(this.endpoint, { params, context: publicRequestContext() })
       );
       return response.items.map(dto => this.toModel(dto));
     } catch (error) {
@@ -47,7 +49,9 @@ export class ApiPublicTournamentRepository {
   async getBySlug(slug: string): Promise<PublicTournament | undefined> {
     try {
       const dto = await firstValueFrom(
-        this.http.get<PublicTournamentDto>(`${this.endpoint}/${encodeURIComponent(slug)}`)
+        this.http.get<PublicTournamentDto>(`${this.endpoint}/${encodeURIComponent(slug)}`, {
+          context: publicRequestContext()
+        })
       );
       return this.toModel(dto);
     } catch (error) {

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { API_BASE_URL } from '../../config/api-base-url.token';
+import { PUBLIC_REQUEST } from '../../http/public-request.context';
 import { ActiveOrganizationService } from '../../services/active-organization.service';
 import { buildPublicTournament } from '../../models/public-tournament.testing';
 import { ApiPublicTournamentRepository } from './api-public-tournament.repository';
@@ -38,6 +39,7 @@ describe('ApiPublicTournamentRepository', () => {
     expect(request.request.params.keys()).toEqual([]);
     expect(request.request.headers.has('X-Organization-Id')).toBeFalse();
     expect(request.request.withCredentials).toBeFalse();
+    expect(request.request.context.get(PUBLIC_REQUEST)).toBeTrue();
     request.flush({ items: [tournament] });
 
     expect(await result).toEqual([tournament]);
@@ -58,6 +60,7 @@ describe('ApiPublicTournamentRepository', () => {
 
     const request = http.expectOne('/api/public/tournaments/copa%20verano%2F%C3%B1');
     expect(request.request.method).toBe('GET');
+    expect(request.request.context.get(PUBLIC_REQUEST)).toBeTrue();
     request.flush(tournament);
 
     expect(await result).toEqual(tournament);
