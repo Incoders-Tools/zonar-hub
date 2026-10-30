@@ -211,4 +211,54 @@ describe('OrganizationFacadeService', () => {
       expect(notification.success).toHaveBeenCalledTimes(1);
     });
   });
+  describe('public profile', () => {
+    const profile = {
+      publicProfileEnabled: true,
+      websiteUrl: 'https://org2.example.com',
+      instagramUrl: '',
+      facebookUrl: '',
+      tiktokUrl: '',
+      youtubeUrl: '',
+      whatsappPhone: '+5491122334455',
+      contactEmail: ''
+    };
+
+    it('passes the consent and links to the repository on create', async () => {
+      const repo = TestBed.inject(ApiOrganizationRepository) as unknown as ApiOrganizationRepositoryStub;
+
+      await service.createOrganization(
+        { displayName: 'Org 2', type: 'circuito', isActive: true, ...profile },
+        ['sport-1']
+      );
+
+      expect(repo.create.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining(profile));
+    });
+
+    it('shows the translated API validation key when an update is rejected', async () => {
+      const repo = TestBed.inject(ApiOrganizationRepository) as unknown as ApiOrganizationRepositoryStub;
+      repo.update.and.rejectWith(new Error('organizations.errors.website_url_invalid'));
+
+      expect(await service.updateOrganization('org-1', { websiteUrl: 'javascript:alert(1)' })).toBeFalse();
+
+      expect(notification.error).toHaveBeenCalledOnceWith('organizations.errors.website_url_invalid');
+    });
+
+    it('keeps the generic update error for non-organization failures', async () => {
+      const repo = TestBed.inject(ApiOrganizationRepository) as unknown as ApiOrganizationRepositoryStub;
+      repo.update.and.rejectWith(new Error('common.networkUnavailable'));
+
+      expect(await service.updateOrganization('org-1', { displayName: 'X' })).toBeFalse();
+
+      expect(notification.error).toHaveBeenCalledOnceWith('admin.organizations.toast.updateError');
+    });
+
+    it('shows the translated API validation key when a create is rejected', async () => {
+      const repo = TestBed.inject(ApiOrganizationRepository) as unknown as ApiOrganizationRepositoryStub;
+      repo.create.and.rejectWith(new Error('organizations.errors.contact_email_invalid'));
+
+      expect(await service.createOrganization({ displayName: 'Org 2', type: 'circuito', isActive: true }, ['sport-1'])).toBeFalse();
+
+      expect(notification.error).toHaveBeenCalledOnceWith('organizations.errors.contact_email_invalid');
+    });
+  });
 });

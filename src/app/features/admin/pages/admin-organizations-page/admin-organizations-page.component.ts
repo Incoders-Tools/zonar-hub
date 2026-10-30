@@ -238,7 +238,15 @@ export class AdminOrganizationsPageComponent implements OnInit {
         legalName: data.legalName,
         description: data.description,
         type: data.type ?? 'circuito',
-        isActive: data.isActive ?? true
+        isActive: data.isActive ?? true,
+        publicProfileEnabled: data.publicProfileEnabled,
+        websiteUrl: data.websiteUrl,
+        instagramUrl: data.instagramUrl,
+        facebookUrl: data.facebookUrl,
+        tiktokUrl: data.tiktokUrl,
+        youtubeUrl: data.youtubeUrl,
+        whatsappPhone: data.whatsappPhone,
+        contactEmail: data.contactEmail
       }, data.selectedSportIds);
     }
     if (success) this.closeFormPanel();

@@ -18,9 +18,69 @@ interface OrganizationApiDto {
   createdAt: string;
   createdByUserId: string;
   updatedAt?: string;
+  publicProfileEnabled?: boolean;
+  websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  tiktokUrl?: string | null;
+  youtubeUrl?: string | null;
+  whatsappPhone?: string | null;
+  contactEmail?: string | null;
 }
 
-interface OrganizationWriteRequest {
+/**
+ * Public-profile consent and links. The API PUT replaces all of them (an omitted link is
+ * cleared), so every write sends the eight fields, with blank links as null.
+ */
+interface OrganizationPublicProfileRequest {
+  publicProfileEnabled: boolean;
+  websiteUrl: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  tiktokUrl: string | null;
+  youtubeUrl: string | null;
+  whatsappPhone: string | null;
+  contactEmail: string | null;
+}
+
+type OrganizationProfileLinkField = Exclude<keyof OrganizationPublicProfileRequest, 'publicProfileEnabled'>;
+
+const PROFILE_LINK_FIELDS: readonly OrganizationProfileLinkField[] = [
+  'websiteUrl', 'instagramUrl', 'facebookUrl', 'tiktokUrl', 'youtubeUrl', 'whatsappPhone', 'contactEmail'
+];
+
+const ORGANIZATION_ERROR_PREFIX = 'organizations.errors.';
+
+interface OrganizationProblemPayload {
+  detail?: unknown;
+  errors?: Record<string, unknown>;
+}
+
+/**
+ * Prefers the translatable `organizations.errors.*` key of an API problem: first a field message
+ * of a validation problem, then the problem detail. Anything else keeps the shared mapping.
+ */
+function organizationErrorKey(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    const payload = error.error as OrganizationProblemPayload | null | undefined;
+    const fieldMessages = Object.values(payload?.errors ?? {}).flatMap(messages => Array.isArray(messages) ? messages : []);
+    const fieldKey = fieldMessages.find(
+      (message): message is string => typeof message === 'string' && message.startsWith(ORGANIZATION_ERROR_PREFIX)
+    );
+    if (fieldKey) return fieldKey;
+    if (typeof payload?.detail === 'string' && payload.detail.startsWith(ORGANIZATION_ERROR_PREFIX)) {
+      return payload.detail;
+    }
+  }
+  return extractApiErrorCode(error);
+}
+
+function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+interface OrganizationWriteRequest extends OrganizationPublicProfileRequest {
   tenantId: string | null;
   displayName: string;
   legalName?: string;
@@ -30,7 +90,7 @@ interface OrganizationWriteRequest {
   createdByUserId: string;
 }
 
-interface OrganizationUpdateRequest {
+interface OrganizationUpdateRequest extends OrganizationPublicProfileRequest {
   displayName: string;
   legalName?: string;
   description?: string;
@@ -55,7 +115,7 @@ export class ApiOrganizationRepository extends OrganizationRepository {
       );
       return response.items.map(row => this.toModel(row));
     } catch (error) {
-      throw new Error(extractApiErrorCode(error));
+      throw new Error(organizationErrorKey(error));
     }
   }
 
@@ -66,7 +126,7 @@ export class ApiOrganizationRepository extends OrganizationRepository {
       );
       return this.toModel(row);
     } catch (error) {
-      throw new Error(extractApiErrorCode(error));
+      throw new Error(organizationErrorKey(error));
     }
   }
 
@@ -79,7 +139,7 @@ export class ApiOrganizationRepository extends OrganizationRepository {
       );
       return response.items.map(row => this.toModel(row));
     } catch (error) {
-      throw new Error(extractApiErrorCode(error));
+      throw new Error(organizationErrorKey(error));
     }
   }
 
@@ -94,7 +154,8 @@ export class ApiOrganizationRepository extends OrganizationRepository {
         description: data.description,
         type: data.type,
         logoUrl: data.logoUrl,
-        createdByUserId: data.createdByUserId
+        createdByUserId: data.createdByUserId,
+        ...this.toPublicProfileRequest(data)
       };
 
       const created = await firstValueFrom(
@@ -102,7 +163,7 @@ export class ApiOrganizationRepository extends OrganizationRepository {
       );
       return this.toModel(created);
     } catch (error) {
-      throw new Error(extractApiErrorCode(error));
+      throw new Error(organizationErrorKey(error));
     }
   }
 
@@ -119,7 +180,8 @@ export class ApiOrganizationRepository extends OrganizationRepository {
         description: changes.description ?? current.description,
         type: changes.type ?? current.type,
         logoUrl: changes.logoUrl ?? current.logoUrl,
-        isActive: changes.isActive ?? current.isActive
+        isActive: changes.isActive ?? current.isActive,
+        ...this.toPublicProfileRequest(this.mergePublicProfile(current, changes))
       };
 
       const updated = await firstValueFrom(
@@ -127,7 +189,7 @@ export class ApiOrganizationRepository extends OrganizationRepository {
       );
       return this.toModel(updated);
     } catch (error) {
-      throw new Error(extractApiErrorCode(error));
+      throw new Error(organizationErrorKey(error));
     }
   }
 
@@ -135,12 +197,39 @@ export class ApiOrganizationRepository extends OrganizationRepository {
     try {
       await firstValueFrom(this.http.delete<void>(`${this.endpoint}/${id}`));
     } catch (error) {
-      throw new Error(extractApiErrorCode(error));
+      throw new Error(organizationErrorKey(error));
     }
   }
 
   override async deactivate(id: string): Promise<Organization> {
     return this.update(id, { isActive: false });
+  }
+
+  /** A field present in `changes` wins, even when blank (that clears it); absent fields keep the stored value. */
+  private mergePublicProfile(
+    current: Organization,
+    changes: Partial<Organization>
+  ): Partial<Organization> {
+    const merged: Partial<Organization> = {
+      publicProfileEnabled: changes.publicProfileEnabled ?? current.publicProfileEnabled
+    };
+    for (const field of PROFILE_LINK_FIELDS) {
+      merged[field] = field in changes ? changes[field] : current[field];
+    }
+    return merged;
+  }
+
+  private toPublicProfileRequest(source: Partial<Organization>): OrganizationPublicProfileRequest {
+    return {
+      publicProfileEnabled: source.publicProfileEnabled ?? false,
+      websiteUrl: blankToNull(source.websiteUrl),
+      instagramUrl: blankToNull(source.instagramUrl),
+      facebookUrl: blankToNull(source.facebookUrl),
+      tiktokUrl: blankToNull(source.tiktokUrl),
+      youtubeUrl: blankToNull(source.youtubeUrl),
+      whatsappPhone: blankToNull(source.whatsappPhone),
+      contactEmail: blankToNull(source.contactEmail)
+    };
   }
 
   private toModel(dto: OrganizationApiDto): Organization {
@@ -155,7 +244,15 @@ export class ApiOrganizationRepository extends OrganizationRepository {
       isActive: dto.isActive,
       createdAt: dto.createdAt,
       createdByUserId: dto.createdByUserId,
-      updatedAt: dto.updatedAt
+      updatedAt: dto.updatedAt,
+      publicProfileEnabled: dto.publicProfileEnabled ?? false,
+      websiteUrl: dto.websiteUrl ?? undefined,
+      instagramUrl: dto.instagramUrl ?? undefined,
+      facebookUrl: dto.facebookUrl ?? undefined,
+      tiktokUrl: dto.tiktokUrl ?? undefined,
+      youtubeUrl: dto.youtubeUrl ?? undefined,
+      whatsappPhone: dto.whatsappPhone ?? undefined,
+      contactEmail: dto.contactEmail ?? undefined
     };
   }
 }

@@ -6,6 +6,18 @@ import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
+/** Consent and links editable from the organization form; all optional in the model. */
+export type OrganizationPublicProfileData = Pick<
+  Organization,
+  'publicProfileEnabled' | 'websiteUrl' | 'instagramUrl' | 'facebookUrl' | 'tiktokUrl' | 'youtubeUrl' | 'whatsappPhone' | 'contactEmail'
+>;
+
+/** API validation keys (`organizations.errors.*`) are translated, so they replace the generic toast. */
+function feedbackKey(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : '';
+  return message.startsWith('organizations.errors.') ? message : fallback;
+}
+
 export interface OrganizationFilters {
   name?: string;
   type?: string;
@@ -96,7 +108,7 @@ export class OrganizationFacadeService {
   }
 
   async createOrganization(
-    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'>,
+    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'> & OrganizationPublicProfileData,
     selectedSportIds: string[]
   ): Promise<boolean> {
     this.savingState.set(true);
@@ -133,8 +145,8 @@ export class OrganizationFacadeService {
       this.notification.success('admin.organizations.toast.created');
       await this.load();
       return true;
-    } catch {
-      this.notification.error('admin.organizations.toast.createError');
+    } catch (error) {
+      this.notification.error(feedbackKey(error, 'admin.organizations.toast.createError'));
       return false;
     } finally {
       this.savingState.set(false);
@@ -155,8 +167,8 @@ export class OrganizationFacadeService {
       await this.load();
       this.activeOrg.refreshOrganizations();
       return true;
-    } catch {
-      this.notification.error('admin.organizations.toast.updateError');
+    } catch (error) {
+      this.notification.error(feedbackKey(error, 'admin.organizations.toast.updateError'));
       return false;
     } finally {
       this.savingState.set(false);
