@@ -1,0 +1,51 @@
+@let org = organization();
+<section class="public-organization"
+         [class.public-organization--compact]="compact()"
+         [attr.aria-label]="'publicOrganization.organizedBy' | t">
+  <div class="public-organization__header">
+    @if (org.logoUrl) {
+      <img class="public-organization__logo" [src]="org.logoUrl" alt="" loading="lazy" />
+    } @else {
+      <span class="public-organization__logo-fallback" aria-hidden="true">
+        <mat-icon>apartment</mat-icon>
+      </span>
+    }
+    <div class="public-organization__identity">
+      <span class="public-organization__eyebrow">{{ 'publicOrganization.organizedBy' | t }}</span>
+      <span class="public-organization__name">{{ org.displayName }}</span>
+      <span class="public-organization__type">{{ typeKey() | t }}</span>
+    </div>
+  </div>
+
+  @if (!compact() && org.description) {
+    <p class="public-organization__description">{{ org.description }}</p>
+  }
+
+  @if (links().length > 0) {
+    <ul class="public-organization__links" [attr.aria-label]="'publicOrganization.links.listLabel' | t">
+      @for (link of links(); track link.kind) {
+        <li>
+          @if (link.newTab) {
+            <a class="public-organization__link"
+               [attr.data-link]="link.kind"
+               [href]="link.href"
+               target="_blank"
+               rel="noopener noreferrer"
+               [attr.aria-label]="link.label"
+               [attr.title]="link.label">
+              <mat-icon aria-hidden="true">{{ link.icon }}</mat-icon>
+            </a>
+          } @else {
+            <a class="public-organization__link"
+               [attr.data-link]="link.kind"
+               [href]="link.href"
+               [attr.aria-label]="link.label"
+               [attr.title]="link.label">
+              <mat-icon aria-hidden="true">{{ link.icon }}</mat-icon>
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
