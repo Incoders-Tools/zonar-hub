@@ -6,6 +6,7 @@ import { TournamentService } from '../../../../core/services/tournament.service'
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
 import { ChatbotBubbleComponent } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
 import { PlansPricingComponent } from '../../../../shared/components/plans-pricing/plans-pricing.component';
+import { SportIconComponent } from '../../../../shared/components/sport-icon/sport-icon.component';
 
 interface FeatureCard {
   icon: string;
@@ -27,7 +28,7 @@ interface FaqItem {
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent, ChatbotBubbleComponent, PlansPricingComponent],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent, ChatbotBubbleComponent, PlansPricingComponent, SportIconComponent],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
@@ -36,10 +37,10 @@ export class HomePageComponent implements OnInit {
   readonly showTutorial = signal(false);
 
   readonly sports = [
-    { id: '1c65fdf8-76fc-4a91-a2b5-1d70791bfde1', key: 'padel',  icon: '🎾' },
-    { id: 'f57e77a7-24ba-4fd3-a0d3-0b89df6222d2', key: 'tenis',  icon: '🎾' },
-    { id: '293aabec-31db-4f5a-9e22-8eb218f4d11a', key: 'futbol', icon: '⚽' },
-    { id: '725d42b7-2298-4f55-acf4-4ab99f910fd2', key: 'rugby',  icon: '🏉' },
+    { id: '1c65fdf8-76fc-4a91-a2b5-1d70791bfde1', key: 'padel',  icon: 'padel', iconSource: 'svg' },
+    { id: 'f57e77a7-24ba-4fd3-a0d3-0b89df6222d2', key: 'tenis',  icon: '🎾',    iconSource: 'unicode' },
+    { id: '293aabec-31db-4f5a-9e22-8eb218f4d11a', key: 'futbol', icon: '⚽',    iconSource: 'unicode' },
+    { id: '725d42b7-2298-4f55-acf4-4ab99f910fd2', key: 'rugby',  icon: '🏉',    iconSource: 'unicode' },
   ] as const;
   readonly expandedFaq = signal<number | null>(null);
   readonly billingCycle = signal<'monthly' | 'annual'>('monthly');

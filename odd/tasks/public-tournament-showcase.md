@@ -1,0 +1,43 @@
+# Public tournament showcase (phase 1) and padel paddle icon
+
+Cross-repo feature: frontend `R:\repositories\incoders\zonar-hub` (this file) and API `C:\repositories\incoders\zonar-hub-api`, both on branch `feat/public-tournament-showcase` from `origin/dev`.
+Phase 1 only: the live draw/results grid (S7) is deferred to a separate feature by user decision (L2). Push, PR and merge are separate user decisions.
+
+## Specs
+
+- **S1 Padel icon.** "corregir el icon de Padel y hacerlo semejante a los demas en estilo pero debe ser una paleta y no una raqueta. Tanto en la home como en el backoffice. Si no existe el icon conocido debemos construirlo."
+- **S2 Tournament visibility.** "un torneo deberia poder definir si se muestra publicamente o no"
+- **S3 Share link.** "si se muestra publicamente debe generar un link para que la organization pueda compartirla a los competidores"
+- **S4 ZonarHub tournaments section.** "debemos mostrarlo en la seccion torneos de ZonarHube, es decir para que los usuarios que entren puedan ver que existen usuarios reales con datos reales para dar confianza."
+- **S5 Organization public-profile consent.** "deberiamos mostrar datos de la organizacion si es que la configuracion lo permite (Deberia tener una configuracion tipo: deseo aparecer gratuitamente en las promociones o secciones publicas de ZonarHube con mis datos para promocionarme dentro del mundo deportivo. Es win-win. ZonarHub gana confianza del resto de los participantes (clubes, jugadores, organizations, etc) y la organizacion gana visibilidad en otro canal mas ademas de redes."
+- **S6 Organization social links.** "Si organization tiene redes y demas las linkeamos cuando listamos su torneo."
+- **S7 Live grid (DEFERRED, phase 2).** "Si se ingresa al torneo debe mostrarse la grilla y la actualizacion real que va llevando cada club o cada organizacion o usuario." Phase 1 keeps an explicit translated empty/coming-soon state where the grid will go; no draw/match/result persistence exists today in the API or DB.
+- **S8 Security fix (user decision L2).** "¿Corrijo también el chequeo de pertenencia en GET /admin/tournaments?" → "Sí, como commit aparte". Today `GetTournamentsHandler` lists any `organizationId` the caller sends.
+
+### Design decisions (parent, binding for workers)
+
+- **D1 Icon.** Rebuild `public/uploads/sports-icons/padel.svg` as a padel paddle (solid perforated face, open throat/bridge, short grip, no strings) in the same style as `pickleball.svg` (viewBox 128x128, rotated paddle, dark frame, coloured face, ball). Render sport icons through `<app-sport-icon>` everywhere a sport icon is shown (home sport cards and the backoffice places that print `sport.icon` as raw text), so the `svg` source shows the drawing, not the word.
+- **D2 DB (additive migration only).** `tournaments`: `is_public boolean not null default false`, `public_slug text null` + unique partial index where not null. `organizations`: `public_profile_enabled boolean not null default false`, `website_url`, `instagram_url`, `facebook_url`, `tiktok_url`, `youtube_url`, `whatsapp_phone`, `contact_email` (all `text null`). Follow existing migration/grant conventions; no data rewrite.
+- **D3 Slug.** API generates `public_slug` the first time a tournament is saved with `is_public = true`: slugified name + `-` + short random suffix; never regenerated afterwards (toggling off/on keeps the same link). Clients never set it.
+- **D4 Admin contract.** Tournament create/update requests gain `isPublic`; responses gain `isPublic` and `publicSlug`. Organization create/update requests and responses gain `publicProfileEnabled` and the seven link fields. Validation: URLs absolute `http`/`https`, email format, phone `+` and digits, sane max lengths.
+- **D5 Public API (anonymous, read-only).** `GET /api/public/tournaments` lists tournaments with `is_public && is_active && status != cancelled`, from all organizations, ordered by start date. `GET /api/public/tournaments/{slug}` returns one or 404 when not public. Public DTO excludes internal/admin fields (ids of admin entities, `observations`, `selected_court_ids`, `sum_value`, created-by data). `organization` is `null` unless `public_profile_enabled`; when enabled it carries display name, logo, description, type and the non-empty links.
+- **D6 Frontend public.** `/tournaments` and the home upcoming section read the public API (works anonymously, no active organization needed). The tournament detail route resolves by public slug. Organization block (logo, name, social links opening in a new tab with `rel="noopener noreferrer"`) only when the API sends it.
+- **D7 Frontend backoffice.** Tournament form: "show publicly" toggle with business help; when saved public, show the share link (`{origin}/tournaments/{publicSlug}`) with a copy action. Organization form: "public profile" section with the consent toggle, help text explaining the benefit, and the link fields.
+
+## Tasks
+
+| ID | Specs | Repo / route | Commit |
+| --- | --- | --- | --- |
+| T1 Pin `System.Security.Cryptography.Pkcs` 10.0.14 (build break from GHSA-846f/2fmv) | prerequisite | API / inline | API `5d9d6c6` (build 0 errors, 352/352 tests) |
+| T2 Tenant check on `GET /admin/tournaments` list | S8 | API / worker | |
+| T3 Padel paddle SVG + `<app-sport-icon>` in home and backoffice | S1 | Front / worker | |
+| T4 Migration + domain + admin contract: tournament visibility/slug, organization consent/links | S2, S3, S5, S6 | API / worker | |
+| T5 Anonymous public tournaments endpoints | S4, S5, S6 | API / worker | |
+| T6 Backoffice: tournament visibility + share link; organization public profile | S2, S3, S5, S6 | Front / worker | |
+| T7 Public showcase: list, home, detail by slug, organization block, grid coming-soon state | S4, S5, S6, S7 | Front / worker | |
+
+## Log
+
+- **L1** (user, 2026-10-30, verbatim): "En este proyecto debemos intentar corregir el icon de Padel y hacerlo semejante a los demas en estilo pero debe ser una paleta y no una raqueta. Tanto en la home como en el backoffice. Si no existe el icon conocido debemos construirlo. Ademas debemos revisar como esta actualmente armada la seccion publica de torneos. Se supone que un torneo deberia poder definir si se muestra publicamente o no, y si se muestra publicamente debe generar un link para que la organization pueda compartirla a los competidores, pero ademas, debemos mostrarlo en la seccion torneos de ZonarHube, es decir para que los usuarios que entren puedan ver que existen usuarios reales con datos reales para dar confianza. De hecho deberiamos mostrar datos de la organizacion si es que la configuracion lo permite (Deberia tener una configuracion tipo: deseo aparecer gratuitamente en las promociones o secciones publicas de ZonarHube con mis datos para promocionarme dentro del mundo deportivo. Es win-win. ZonarHub gana confianza del resto de los participantes (clubes, jugadores, organizations, etc) y la organizacion gana visibilidad en otro canal mas ademas de redes. Si organization tiene redes y demas las linkeamos cuando listamos su torneo. Si se ingresa al torneo debe mostrarse la grilla y la actualizacion real que va llevando cada club o cada organizacion o usuario."
+- **L2** (user decisions): scope "Por fases (recomendado)" — now icon, visibility, share link, public API, organization public profile with consent and links, `/tournaments` showcase and detail; grid and live results as a separate feature. Security: "Sí, como commit aparte (recomendado)".
+- **L3** (exploration evidence): padel shown as `🎾` emoji on home (`home-page.component.ts:39`) and as raw `sport.icon` text in 4 backoffice templates; `padel.svg` is a strung racket. Public `/tournaments` reads `GET /api/admin/tournaments` (AdminOrAbove + active organization) so anonymous visitors see nothing. No visibility, slug, organization links or consent exist. No draw/match/result tables or endpoints; `BracketService` returns `null`; registrations have no endpoint, so phase 1 has no real participants to show.

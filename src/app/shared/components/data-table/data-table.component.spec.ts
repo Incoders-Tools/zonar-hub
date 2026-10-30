@@ -308,4 +308,40 @@ describe('DataTableComponent', () => {
       expect(message).not.toBe(i18n.translate('table.noData'));
     });
   });
+
+  describe('sportIcon render type', () => {
+    const sportColumns: DataTableColumn[] = [
+      { key: 'name', labelKey: 'table.name' },
+      { key: 'icon', labelKey: 'table.icon', renderType: 'sportIcon', iconSourceKey: 'iconSource' }
+    ];
+
+    function renderRows(data: Record<string, unknown>[]): HTMLElement[] {
+      fixture.componentRef.setInput('columns', sportColumns);
+      fixture.componentRef.setInput('data', data);
+      fixture.detectChanges();
+      return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('tbody tr'));
+    }
+
+    it('renders the svg drawing for an svg-source sport instead of its key', () => {
+      const [row] = renderRows([{ id: '1', name: 'Padel', icon: 'padel', iconSource: 'svg' }]);
+
+      const img = row.querySelector<HTMLImageElement>('img.sport-icon--svg');
+      expect(img?.getAttribute('src')).toBe('uploads/sports-icons/padel.svg');
+      expect(row.querySelector('.sport-icon--unicode')).toBeNull();
+    });
+
+    it('renders the emoji text for a unicode-source sport', () => {
+      const [row] = renderRows([{ id: '1', name: 'Futbol', icon: '⚽', iconSource: 'unicode' }]);
+
+      expect(row.querySelector('.sport-icon--unicode')?.textContent?.trim()).toBe('⚽');
+      expect(row.querySelector('img')).toBeNull();
+    });
+
+    it('renders a dash when the sport has no icon', () => {
+      const [row] = renderRows([{ id: '1', name: 'Empty', icon: '', iconSource: 'unicode' }]);
+
+      expect(row.querySelector('.sport-icon')).toBeNull();
+      expect(row.querySelector('.data-table__icon-empty')?.textContent?.trim()).toBe('—');
+    });
+  });
 });

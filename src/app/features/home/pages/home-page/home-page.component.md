@@ -25,6 +25,7 @@ This component currently does not emit external `@Output()` events.
 - Angular standalone component
 - Angular Router
 - shared translation pipe
+- shared `app-sport-icon` for the sport cards (padel uses the `svg` source and renders `uploads/sports-icons/padel.svg`; the other sports render their emoji at 40px)
 - global theme tokens from `src/styles.scss`
 
 ## States

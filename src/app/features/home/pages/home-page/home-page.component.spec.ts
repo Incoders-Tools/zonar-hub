@@ -45,4 +45,18 @@ describe('HomePageComponent', () => {
     const cards = element.querySelectorAll('.feature-card');
     expect(cards.length).toBeGreaterThan(0);
   });
+
+  it('renders the padel sport card with the padel paddle drawing', () => {
+    const cards = Array.from(element.querySelectorAll<HTMLElement>('.sport-card'));
+    const padelImg = cards[0].querySelector<HTMLImageElement>('img.sport-icon--svg');
+
+    expect(padelImg?.getAttribute('src')).toBe('uploads/sports-icons/padel.svg');
+  });
+
+  it('keeps the emoji icon for the other sport cards', () => {
+    const icons = Array.from(element.querySelectorAll<HTMLElement>('.sport-card .sport-icon--unicode'))
+      .map(icon => icon.textContent?.trim());
+
+    expect(icons).toEqual(['🎾', '⚽', '🏉']);
+  });
 });

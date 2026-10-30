@@ -7,6 +7,7 @@ import { StepperComponent, StepperStep } from '../../../../shared/components/ste
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
 import { DateInputComponent } from '../../../../shared/components/date-input/date-input.component';
+import { SportIconComponent } from '../../../../shared/components/sport-icon/sport-icon.component';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { OnboardingStateService } from '../../../../core/services/onboarding-state.service';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -55,7 +56,8 @@ interface OrgTypeOption {
     AsyncButtonComponent,
     FormShellComponent,
     DateInputComponent,
-    DateInputComponent
+    DateInputComponent,
+    SportIconComponent
   ],
   templateUrl: './admin-onboarding-page.component.html',
   styleUrl: './admin-onboarding-page.component.scss'

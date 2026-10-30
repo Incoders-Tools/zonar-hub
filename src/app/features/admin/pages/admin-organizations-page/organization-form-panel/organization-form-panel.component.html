@@ -73,7 +73,7 @@
                   class="organization-form-panel__sport-option"
                   [class.organization-form-panel__sport-option--active]="isSportSelected(sport.id)"
                   (click)="toggleSport(sport.id)">
-                  <span class="organization-form-panel__sport-icon">{{ sport.icon }}</span>
+                  <app-sport-icon [icon]="sport.icon" [source]="sport.iconSource" [size]="18"></app-sport-icon>
                   <span class="organization-form-panel__sport-label">{{ sport.name }}</span>
                 </button>
               }

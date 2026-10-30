@@ -8,15 +8,19 @@ import { LoadingStateComponent } from '../loading-state/loading-state.component'
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { ErrorStateComponent } from '../error-state/error-state.component';
 import { DataTablePaginatorComponent } from '../data-table-paginator/data-table-paginator.component';
+import { SportIconComponent } from '../sport-icon/sport-icon.component';
+import { SportIconSource } from '../../../core/models/sport.model';
 
 export interface DataTableColumn {
   key: string;
   labelKey: string;
   sortable?: boolean;
   order?: number;
-  renderType?: 'text' | 'pill' | 'date' | 'toggle' | 'icon';
+  renderType?: 'text' | 'pill' | 'date' | 'toggle' | 'icon' | 'sportIcon';
   translate?: boolean;
   pillVariantKey?: string;
+  /** For sportIcon columns: row key holding the icon source ('unicode' | 'svg'); defaults to 'unicode' */
+  iconSourceKey?: string;
   /** For toggle columns: action name emitted when toggled */
   toggleAction?: string;
 }
@@ -24,7 +28,7 @@ export interface DataTableColumn {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [NgTemplateOutlet, MatIcon, MatSlideToggle, TranslatePipe, FormatDatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, DataTablePaginatorComponent],
+  imports: [NgTemplateOutlet, MatIcon, MatSlideToggle, TranslatePipe, FormatDatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, DataTablePaginatorComponent, SportIconComponent],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
 })
@@ -205,6 +209,10 @@ export class DataTableComponent<T extends Record<string, unknown>> {
   hasPillValue(value: unknown): boolean {
     if (value === null || value === undefined) return false;
     return typeof value !== 'string' || value.trim() !== '';
+  }
+
+  getIconSource(row: T, column: DataTableColumn): SportIconSource {
+    return column.iconSourceKey && row[column.iconSourceKey] === 'svg' ? 'svg' : 'unicode';
   }
 
   onRowAction(action: string, row: T): void {

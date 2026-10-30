@@ -5,6 +5,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
+import { SportIconComponent } from '../../../../../shared/components/sport-icon/sport-icon.component';
 import { Organization, OrganizationType, Sport } from '../../../../../core/models';
 
 interface OrgTypeOption {
@@ -27,7 +28,7 @@ export interface OrganizationFormSubmitData {
 @Component({
   selector: 'app-organization-form-panel',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe, AsyncButtonComponent, FormShellComponent, ActiveToggleComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, AsyncButtonComponent, FormShellComponent, ActiveToggleComponent, SportIconComponent],
   templateUrl: './organization-form-panel.component.html',
   styleUrl: './organization-form-panel.component.scss'
 })
