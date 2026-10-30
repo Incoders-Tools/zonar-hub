@@ -6,28 +6,26 @@ Displays the published tournament draw (zone allocations and pair assignments) f
 
 ## Business context
 
-- Accessed via `/tournaments/:id/draw`
-- Shows zone cards with pair names and seed indicators
-- Read-only public view — no editing capabilities
-- Displays loading, empty (not published), and populated states
+- Route: `/tournaments/:slug/draw`. The tournament is resolved by its public slug through `PublicTournamentService`; the back link uses `publicTournamentPath`.
+- Draws are not published through the public API yet (phase 2), so the page shows the "draw not published" state after the tournament loads.
+- Read-only public view — no editing capabilities.
 
 ## Inputs / Outputs
 
-Routed page component. Reads tournament `id` from route params.
+Routed page component. Reads `slug` from route params.
 
 ## Dependencies
 
-- `TournamentService` — loads tournament metadata for the title
-- `DrawPlannerService` — retrieves the published draw result
+- `PublicTournamentService` — loads the tournament name for the title
 - `TranslatePipe` — all UI text is translated
 
 ## States
 
 | State | Description |
 |-------|-------------|
-| Loading | Spinner with loading text |
+| Loading | Spinner with loading text while the tournament loads |
 | Empty | "Draw not published" message |
-| Loaded | Grid of zone cards with pair lists |
+| Loaded | Grid of zone cards with pair lists (once a public draw source exists) |
 
 ## Accessibility
 
@@ -45,9 +43,9 @@ All colors via `--zh-*` design tokens. Zone cards use `--zh-surface-card`, seede
 
 ## Test expectations
 
-- Component creates successfully
-- Shows empty state when no draw result
 - Tournament starts null (async load)
+- Shows the not-published state after loading
+- Loads the tournament by slug and links back to the public detail
 
 ## Reuse guidance
 

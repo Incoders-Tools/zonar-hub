@@ -1,0 +1,62 @@
+@let t = tournament();
+<article class="public-tournament-card">
+  @if (imageUrl(); as image) {
+    <img class="public-tournament-card__image" [src]="image" alt="" loading="lazy" />
+  }
+
+  <div class="public-tournament-card__body">
+    <div class="public-tournament-card__top">
+      @if (t.sport; as sport) {
+        <app-sport-icon class="public-tournament-card__sport"
+                        [icon]="sport.icon"
+                        [source]="sport.iconSource"
+                        [alt]="sport.name"
+                        [size]="28"></app-sport-icon>
+      }
+      @if (statusName(); as status) {
+        <app-status-badge class="public-tournament-card__status" [status]="statusVariant()" [label]="status"></app-status-badge>
+      }
+    </div>
+
+    <h3 class="public-tournament-card__name">
+      <a class="public-tournament-card__title-link" [routerLink]="detailPath()">{{ t.name }}</a>
+    </h3>
+
+    <p class="public-tournament-card__dates">
+      <mat-icon aria-hidden="true">event</mat-icon>
+      <span>
+        <span class="public-tournament-card__sr-only">{{ 'tournaments.dates' | t }}:</span>
+        {{ t.startDate | formatDate }}@if (t.endDate && t.endDate !== t.startDate) { — {{ t.endDate | formatDate }}}
+      </span>
+    </p>
+
+    @if (t.complex; as complex) {
+      <p class="public-tournament-card__complex">
+        <mat-icon aria-hidden="true">location_on</mat-icon>
+        <span>
+          <span class="public-tournament-card__sr-only">{{ 'tournaments.complex' | t }}:</span>
+          {{ complex.name }}@if (complex.address) {<span class="public-tournament-card__address"> · {{ complex.address }}</span>}
+        </span>
+      </p>
+    }
+
+    @if (tags().length > 0) {
+      <ul class="public-tournament-card__tags">
+        @for (tag of tags(); track $index) {
+          <li class="public-tournament-card__tag">{{ tag }}</li>
+        }
+      </ul>
+    }
+
+    @if (t.organization; as organization) {
+      <app-public-organization-card class="public-tournament-card__organization"
+                                    [organization]="organization"
+                                    [compact]="true"></app-public-organization-card>
+    }
+
+    <a class="public-tournament-card__cta" [routerLink]="detailPath()" [attr.aria-label]="('publicTournaments.card.viewDetails' | t) + ': ' + t.name">
+      {{ 'publicTournaments.card.viewDetails' | t }}
+      <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+    </a>
+  </div>
+</article>

@@ -1,39 +1,22 @@
 <section class="tournament-list">
-  <div class="tournament-list__header">
+  <header class="tournament-list__header">
     <h1>{{ 'tournaments.title' | t }}</h1>
-    <p>{{ 'tournaments.subtitle' | t }}</p>
-  </div>
+    <p>{{ 'publicTournaments.list.subtitle' | t }}</p>
+  </header>
 
   @if (loading()) {
-    <div class="tournament-list__loading">
-      <span class="spinner"></span>
-      <span>{{ 'states.loading' | t }}</span>
-    </div>
+    <app-loading-state messageKey="publicTournaments.list.loading"></app-loading-state>
+  } @else if (error(); as errorKey) {
+    <app-error-state title="publicTournaments.list.errorTitle" [message]="errorKey" (retried)="load()"></app-error-state>
   } @else if (tournaments().length === 0) {
-    <div class="tournament-list__empty">
-      <p>{{ 'states.emptyTournaments' | t }}</p>
-    </div>
+    <app-empty-state message="publicTournaments.list.empty"></app-empty-state>
   } @else {
-    <div class="tournament-list__grid">
-      @for (tournament of tournaments(); track tournament.id) {
-        <a class="tournament-card" [routerLink]="['/tournaments', tournament.id]">
-          <div class="tournament-card__status" [class]="getStatusClass(tournament.statusId)">
-            {{ tournament.statusLabel }}
-          </div>
-          <h3 class="tournament-card__name">{{ tournament.name }}</h3>
-          <div class="tournament-card__meta">
-            <span>📍 {{ tournament.complexName }}</span>
-            <span>📅 {{ tournament.startDate | formatDate }}</span>
-          </div>
-          <div class="tournament-card__details">
-            <span>{{ tournament.categoryName }}</span>
-            <span>{{ tournament.genderLabel }}</span>
-          </div>
-          <div class="tournament-card__slots">
-            {{ tournament.maxPairs }} {{ 'tournaments.slots' | t }}
-          </div>
-        </a>
+    <ul class="tournament-list__grid">
+      @for (tournament of tournaments(); track tournament.slug) {
+        <li>
+          <app-public-tournament-card [tournament]="tournament"></app-public-tournament-card>
+        </li>
       }
-    </div>
+    </ul>
   }
 </section>

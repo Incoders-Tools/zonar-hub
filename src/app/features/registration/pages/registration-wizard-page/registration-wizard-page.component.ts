@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { PUBLIC_TOURNAMENTS_ROUTE } from '../../../../core/services/public-tournament-link.service';
 import { WizardFacadeService } from './wizard-facade.service';
 
 @Component({
@@ -186,7 +187,10 @@ export class RegistrationWizardPageComponent implements OnInit {
       const reg = await this.facade.submitRegistration(availability);
       this.registrationId = reg.id;
       this.notifications.success('registration.success');
-      this.router.navigate(['/tournaments', t.id, 'confirmed-pairs']);
+      // Public tournament pages are addressed by slug; without one there is no public page to land on.
+      this.router.navigate(t.publicSlug
+        ? [`/${PUBLIC_TOURNAMENTS_ROUTE}`, t.publicSlug, 'confirmed-pairs']
+        : [`/${PUBLIC_TOURNAMENTS_ROUTE}`]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'registration.errorSubmit';
       if (message === 'registration.duplicatePair') {
