@@ -17,6 +17,7 @@ import { TenantContextService } from '../../../../core/services/tenant-context.s
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PublicTournamentLinkService } from '../../../../core/services/public-tournament-link.service';
 
 interface TournamentRow extends Record<string, unknown> {
   id: string;
@@ -28,6 +29,8 @@ interface TournamentRow extends Record<string, unknown> {
   statusLabel: string;
   statusVariant: string;
   maxPairs: string;
+  /** Share-link slug, set only when the tournament is public and already has one. */
+  publicSlug: string | null;
 }
 
 @Component({
@@ -67,6 +70,7 @@ export class AdminTournamentsPageComponent implements OnInit {
   private readonly tenantContext = inject(TenantContextService);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly router = inject(Router);
+  private readonly publicLink = inject(PublicTournamentLinkService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -107,6 +111,18 @@ export class AdminTournamentsPageComponent implements OnInit {
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
+  private readonly copyPublicLinkAction = {
+    icon: 'link', labelKey: 'admin.tournaments.share.copyPublicLink', action: 'copyPublicLink', variant: 'default' as const
+  };
+
+  /** Public tournaments with a share link also get "copy public link", placed before delete. */
+  readonly tournamentRowActionsFor = (row: TournamentRow) => {
+    if (!row.publicSlug) return this.tournamentRowActions;
+    const actions = [...this.tournamentRowActions];
+    actions.splice(actions.length - 1, 0, this.copyPublicLinkAction);
+    return actions;
+  };
+
   readonly filterFields = computed<FilterField[]>(() => [
     { key: 'name', labelKey: 'admin.tournaments.filter.name', type: 'text' },
     {
@@ -145,7 +161,8 @@ export class AdminTournamentsPageComponent implements OnInit {
         endDate: t.endDate,
         statusLabel: status.labelKey,
         statusVariant: status.key === 'upcoming' ? 'info' : status.key === 'in_progress' ? 'warning' : 'finished',
-        maxPairs: t.maxPairs != null ? String(t.maxPairs) : '∞'
+        maxPairs: t.maxPairs != null ? String(t.maxPairs) : '∞',
+        publicSlug: t.isPublic && t.publicSlug ? t.publicSlug : null
       };
     })
   );
@@ -159,7 +176,8 @@ export class AdminTournamentsPageComponent implements OnInit {
       'admin.tournaments.help.section3Item1',
       'admin.tournaments.help.section3Item2',
       'admin.tournaments.help.section3Item3'
-    ] }
+    ] },
+    { titleKey: 'admin.tournaments.help.publicTitle', contentKey: 'admin.tournaments.help.publicText' }
   ];
 
   ngOnInit(): void {
@@ -185,6 +203,8 @@ export class AdminTournamentsPageComponent implements OnInit {
       this.confirmDelete(event.row);
     } else if (event.action === 'share') {
       this.openShare(event.row);
+    } else if (event.action === 'copyPublicLink' && event.row.publicSlug) {
+      void this.publicLink.copyShareUrl(event.row.publicSlug);
     }
   }
 

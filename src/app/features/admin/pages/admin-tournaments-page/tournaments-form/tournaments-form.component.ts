@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
@@ -17,6 +18,7 @@ import { dateRangeValidator } from '../../../../../shared/validators/date-range.
 import { ActiveToggleComponent } from '../../../../../shared/components/active-toggle/active-toggle.component';
 import { DateInputComponent } from '../../../../../shared/components/date-input/date-input.component';
 import { ZhSelectComponent } from '../../../../../shared/components/zh-select/zh-select.component';
+import { PublicTournamentLinkService } from '../../../../../core/services/public-tournament-link.service';
 
 @Component({
   selector: 'app-tournaments-form',
@@ -25,6 +27,7 @@ import { ZhSelectComponent } from '../../../../../shared/components/zh-select/zh
     CommonModule,
     ReactiveFormsModule,
     MatInputModule,
+    MatIcon,
     TranslatePipe,
     FormShellComponent,
     AsyncButtonComponent,
@@ -44,6 +47,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   readonly facade = inject(TournamentsFacadeService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dateFormatService = inject(DateFormatService);
+  private readonly publicLink = inject(PublicTournamentLinkService);
 
   readonly tournament = input<Tournament | null>(null);
   readonly saving = input(false);
@@ -142,6 +146,25 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   // Courts selection
   readonly selectedCourtIds = signal<Set<string>>(new Set());
 
+  // Public visibility: the slug belongs to the saved tournament and survives visibility changes.
+  readonly isPublic = signal(false);
+  private readonly publicSlug = computed(() => this.tournament()?.publicSlug ?? null);
+  readonly publicShareUrl = computed(() => {
+    const slug = this.publicSlug();
+    return this.isPublic() && slug ? this.publicLink.shareUrl(slug) : null;
+  });
+  readonly publicLinkPending = computed(() => this.isPublic() && !this.publicSlug());
+
+  onPublicToggled(value: boolean): void {
+    this.form.get('isPublic')!.setValue(value);
+    this.form.markAsDirty();
+  }
+
+  copyPublicLink(): void {
+    const slug = this.publicSlug();
+    if (slug) void this.publicLink.copyShareUrl(slug);
+  }
+
   constructor() {
     // Safety-net effect: re-fires when modalities finish loading so that if the
     // user selected a sport before facade.load() populated modalities (race
@@ -218,6 +241,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       categoryId: [''],
       maxPairs: ['', [Validators.min(2)]],
       isActive: [true],
+      isPublic: [false],
       registrationStartDate: [{ value: '', disabled: true }],
       registrationEndDate: [{ value: '', disabled: true }],
       registrationFeePerPair: [''],
@@ -300,6 +324,11 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
     this.form.get('registrationStartDate')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       this._regStartDate.set(value || '');
     });
+
+    this.form.get('isPublic')!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+      this.isPublic.set(!!value);
+    });
+    this.isPublic.set(false);
   }
 
   private populateForm(): void {
@@ -330,6 +359,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
         categoryId: tournament.categoryId || '',
         maxPairs: tournament.maxPairs,
         isActive: tournament.isActive ?? true,
+        isPublic: tournament.isPublic ?? false,
         registrationStartDate: tournament.registrationStartDate || '',
         registrationEndDate: tournament.registrationEndDate || '',
         registrationFeePerPair: tournament.registrationFeePerPair || '',
@@ -368,7 +398,8 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       const nextOrder = this.facade.getNextSortOrder();
       this.form.patchValue({
         sortOrder: nextOrder,
-        isActive: true
+        isActive: true,
+        isPublic: false
       });
     }
   }
@@ -444,6 +475,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       registrationFeePerPair: formValue.registrationFeePerPair ? Number(formValue.registrationFeePerPair) : undefined,
       prizeMoney: formValue.prizeMoney ? Number(formValue.prizeMoney) : undefined,
       pointsToAward: formValue.pointsToAward ? Number(formValue.pointsToAward) : undefined,
+      isPublic: !!formValue.isPublic,
       selectedCourtIds: Array.from(this.selectedCourtIds())
     };
 
