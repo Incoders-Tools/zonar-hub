@@ -1,0 +1,72 @@
+@if (isButton()) {
+  <button
+    type="button"
+    class="match-card match-card--button"
+    [class.match-card--highlighted]="isHighlighted()"
+    [attr.data-match-id]="match().id"
+    [attr.data-status]="match().status"
+    [attr.aria-label]="match().ariaLabel"
+    (click)="activate($event)">
+    <ng-container [ngTemplateOutlet]="body" />
+  </button>
+} @else {
+  <article
+    class="match-card"
+    [class.match-card--bye]="match().isBye"
+    [class.match-card--highlighted]="isHighlighted()"
+    [attr.data-match-id]="match().id"
+    [attr.data-status]="match().status"
+    [attr.aria-label]="match().ariaLabel">
+    <ng-container [ngTemplateOutlet]="body" />
+  </article>
+}
+
+<ng-template #body>
+  @for (side of sides(); track $index) {
+    <span
+      class="match-card__row"
+      [class.match-card__row--winner]="side.isWinner"
+      [class.match-card__row--loser]="side.isLoser"
+      [class.match-card__row--bye]="side.state === 'bye'"
+      [class.match-card__row--pending]="side.state === 'pending'"
+      [class.match-card__row--highlighted]="side.isHighlighted">
+      @switch (side.state) {
+        @case ('participant') {
+          <span class="match-card__seed" [class.match-card__seed--empty]="!side.seedRank">{{ side.seedRank ?? '' }}</span>
+          <span class="match-card__names">
+            @for (line of side.lines; track $index) {
+              <span class="match-card__name">{{ line }}</span>
+            }
+          </span>
+        }
+        @case ('bye') {
+          <span class="match-card__bye">{{ side.name }}</span>
+        }
+        @default {
+          <span class="match-card__placeholder">{{ side.name }}</span>
+        }
+      }
+      @if (side.sets.length > 0) {
+        <span class="match-card__sets">
+          @for (set of side.sets; track $index) {
+            <span class="match-card__set" [class.match-card__set--won]="set.won">{{ set.games }}@if (set.tiebreak != null) {<sup class="match-card__tiebreak">{{ set.tiebreak }}</sup>}</span>
+          }
+        </span>
+      }
+      <span class="match-card__check">
+        @if (side.isWinner) {
+          <mat-icon class="match-card__winner-icon" aria-hidden="true">check</mat-icon>
+          <span class="match-card__sr-only">{{ 'bracket.match.winner' | t }}</span>
+        }
+      </span>
+    </span>
+  }
+  @if (match().hasResult && !match().isBye) {
+    <span class="match-card__meta">
+      <span class="match-card__status" [attr.data-status]="match().status">{{ match().statusLabel }}</span>
+      @if (match().courtName) {
+        <span class="match-card__court">{{ match().courtName }}</span>
+      }
+    </span>
+  }
+</ng-template>

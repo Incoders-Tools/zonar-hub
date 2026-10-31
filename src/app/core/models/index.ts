@@ -22,3 +22,4 @@ export * from './email-template.model';
 export * from './admin-dashboard-summary.model';
 export * from './permission.model';
 export * from './public-tournament.model';
+export * from './tournament-draw.model';

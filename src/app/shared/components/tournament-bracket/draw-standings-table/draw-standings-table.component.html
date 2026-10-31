@@ -1,0 +1,29 @@
+<div class="standings">
+  <table class="standings__table">
+    <caption class="standings__caption">{{ caption() }}</caption>
+    <thead>
+      <tr>
+        <th scope="col" class="standings__num"><abbr [attr.title]="'bracket.standings.position' | t">{{ 'bracket.standings.positionShort' | t }}</abbr></th>
+        <th scope="col" class="standings__pair-head">{{ 'bracket.standings.pair' | t }}</th>
+        <th scope="col" class="standings__num"><abbr [attr.title]="'bracket.standings.played' | t">{{ 'bracket.standings.playedShort' | t }}</abbr></th>
+        <th scope="col" class="standings__num"><abbr [attr.title]="'bracket.standings.won' | t">{{ 'bracket.standings.wonShort' | t }}</abbr></th>
+        <th scope="col" class="standings__num"><abbr [attr.title]="'bracket.standings.lost' | t">{{ 'bracket.standings.lostShort' | t }}</abbr></th>
+        <th scope="col" class="standings__num"><abbr [attr.title]="'bracket.standings.sets' | t">{{ 'bracket.standings.setsShort' | t }}</abbr></th>
+        <th scope="col" class="standings__num"><abbr [attr.title]="'bracket.standings.games' | t">{{ 'bracket.standings.gamesShort' | t }}</abbr></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.participantId) {
+        <tr [class.standings__row--highlighted]="row.isHighlighted">
+          <td class="standings__num standings__position">{{ row.position }}</td>
+          <th scope="row" class="standings__pair">{{ row.name }}</th>
+          <td class="standings__num">{{ row.played }}</td>
+          <td class="standings__num">{{ row.won }}</td>
+          <td class="standings__num">{{ row.lost }}</td>
+          <td class="standings__num">{{ row.setsDiff }}</td>
+          <td class="standings__num">{{ row.gamesDiff }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
