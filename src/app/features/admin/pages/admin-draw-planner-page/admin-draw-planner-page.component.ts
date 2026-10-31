@@ -1,355 +1,521 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
-import { ProgressBarComponent } from '../../../../shared/components/progress-bar/progress-bar.component';
-import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
-import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { ZhSelectComponent, ZhSelectOption } from '../../../../shared/components/zh-select/zh-select.component';
+import { FormShellComponent } from '../../../../shared/components/form-shell/form-shell.component';
+import { ChildCollectionGridComponent, ChildGridColumn } from '../../../../shared/components/child-collection-grid/child-collection-grid.component';
+import { ProgressBarComponent } from '../../../../shared/components/progress-bar/progress-bar.component';
+import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { TournamentBracketComponent } from '../../../../shared/components/tournament-bracket/tournament-bracket.component';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { DrawPlannerService } from '../../../../core/services/draw-planner.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { DrawPlannerResult } from '../../../../core/models';
+import {
+  DrawFormat,
+  DrawParticipationFormat,
+  DrawRandomizationMode,
+  Tournament,
+  TournamentDraw,
+  TournamentDrawRequest
+} from '../../../../core/models';
+import {
+  DRAW_MAX_PARTICIPANTS,
+  DRAW_MIN_PARTICIPANTS,
+  DrawFormatSettings,
+  DrawParticipantEntry,
+  DrawParticipantIssue,
+  DrawParticipantPasteResult,
+  drawFormatSettingsFromOptions,
+  drawOptionsForRequest,
+  isValidDrawSeed,
+  parseDrawParticipantPaste,
+  toDrawRequestParticipants,
+  validateDrawParticipantEntries
+} from '../../../../core/services/draw-participant-entries';
 
-interface PlannerStage {
-  labelKey: string;
-  target: number;
+type DrawAction = 'preview' | 'regenerate' | 'save' | 'publish' | 'unpublish' | 'delete';
+
+type ParticipantRow = FormGroup<{
+  /** Draw-local id of a loaded participant; null for new rows. */
+  id: FormControl<string | null>;
+  /** Pair: optional override of "Member 1 / Member 2"; team: the team name. Unused for individual. */
+  displayName: FormControl<string>;
+  member1: FormControl<string>;
+  member2: FormControl<string>;
+  /** Team members separated by "/". */
+  teamMembers: FormControl<string>;
+  seedRank: FormControl<number | null>;
+  separationKey: FormControl<string>;
+}>;
+
+const DEFAULT_SETTINGS: DrawFormatSettings = {
+  thirdPlaceMatch: false,
+  legs: 1,
+  groupSizing: 'size',
+  groupCount: 2,
+  groupSize: 4,
+  qualifiersPerGroup: 2,
+  thirdSetSuperTiebreak: true
+};
+
+const FORMATS: DrawFormat[] = ['singleElimination', 'roundRobin', 'groupsThenKnockout'];
+const PARTICIPATION_FORMATS: DrawParticipationFormat[] = ['pair', 'individual', 'team'];
+const RANDOMIZATION_MODES: DrawRandomizationMode[] = ['seeded', 'random'];
+
+function seedValidator(control: AbstractControl<string>): ValidationErrors | null {
+  return isValidDrawSeed(control.value) ? null : { seed: true };
 }
 
-const PLANNER_STAGES: PlannerStage[] = [
-  { labelKey: 'planner.stage.validating', target: 12 },
-  { labelKey: 'planner.stage.loadingRegistrations', target: 30 },
-  { labelKey: 'planner.stage.analyzingAvailability', target: 50 },
-  { labelKey: 'planner.stage.generatingZones', target: 72 },
-  { labelKey: 'planner.stage.assigningSchedule', target: 88 },
-  { labelKey: 'planner.stage.preparingPreview', target: 95 }
-];
+function interpolate(template: string, params: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => (name in params ? String(params[name]) : match));
+}
 
+/** Tournament modality → participation format: singles are individual, team modalities team, the rest pairs. */
+function participationFormatFor(tournament: Tournament | null): DrawParticipationFormat {
+  const modality = (tournament?.modalityKey ?? tournament?.modalityName ?? '').toLowerCase();
+  if (modality.includes('single') || modality.includes('individual')) return 'individual';
+  if (modality.includes('team') || modality.includes('equip')) return 'team';
+  return 'pair';
+}
+
+/**
+ * Admin draw page (D9) at `/admin/tournaments/:tournamentId/draw`: participants (rows or paste), format and
+ * options, randomization, preview, save draft, publish/unpublish and delete for the tournament's single draw (D1).
+ * Without a tournament id (`/admin/draw-planner`) it is a tournament picker that opens the draw page.
+ */
 @Component({
   selector: 'app-admin-draw-planner-page',
   standalone: true,
   imports: [
-    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
     MatIcon,
     TranslatePipe,
-    FormatDatePipe,
-    ProgressBarComponent,
-    ZhCollectionViewComponent,
     AsyncButtonComponent,
     ConfirmDialogComponent,
     HelpButtonComponent,
-    ZhSelectComponent
+    ZhSelectComponent,
+    FormShellComponent,
+    ChildCollectionGridComponent,
+    ProgressBarComponent,
+    LoadingStateComponent,
+    ErrorStateComponent,
+    EmptyStateComponent,
+    StatusBadgeComponent,
+    TournamentBracketComponent
   ],
+  providers: [DrawPlannerService],
   templateUrl: './admin-draw-planner-page.component.html',
   styleUrl: './admin-draw-planner-page.component.scss'
 })
 export class AdminDrawPlannerPageComponent {
+  protected readonly planner = inject(DrawPlannerService);
   protected readonly tournamentService = inject(TournamentService);
-  protected readonly drawPlannerService = inject(DrawPlannerService);
   private readonly notifications = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
-  // --- Tab state ---
-  readonly activeTab = signal<'generate' | 'drafts'>('generate');
+  readonly minParticipants = DRAW_MIN_PARTICIPANTS;
+  readonly maxParticipants = DRAW_MAX_PARTICIPANTS;
 
-  // --- Help sections ---
-  readonly helpSections: HelpSection[] = [
-    { titleKey: 'drawPlanner.help.overview.title', contentKey: 'drawPlanner.help.overview.content' },
-    {
-      titleKey: 'drawPlanner.help.steps.title',
-      items: [
-        'drawPlanner.help.steps.step1',
-        'drawPlanner.help.steps.step2',
-        'drawPlanner.help.steps.step3',
-        'drawPlanner.help.steps.step4',
-        'drawPlanner.help.steps.step5'
-      ]
-    },
-    { titleKey: 'drawPlanner.help.zones.title', contentKey: 'drawPlanner.help.zones.content' },
-    { titleKey: 'drawPlanner.help.drafts.title', contentKey: 'drawPlanner.help.drafts.content' },
-    { titleKey: 'drawPlanner.help.tips.title', contentKey: 'drawPlanner.help.tips.content' }
-  ];
-  readonly helpVideoUrl = 'https://www.youtube.com/embed/PLACEHOLDER_DRAW_VIDEO';
+  readonly form = new FormGroup({
+    format: new FormControl<DrawFormat>('singleElimination', { nonNullable: true }),
+    participationFormat: new FormControl<DrawParticipationFormat>('pair', { nonNullable: true }),
+    randomizationMode: new FormControl<DrawRandomizationMode>('seeded', { nonNullable: true }),
+    seed: new FormControl('', { nonNullable: true, validators: [seedValidator] }),
+    thirdPlaceMatch: new FormControl(DEFAULT_SETTINGS.thirdPlaceMatch, { nonNullable: true }),
+    legs: new FormControl(DEFAULT_SETTINGS.legs, { nonNullable: true, validators: [Validators.required, Validators.min(1), Validators.max(2)] }),
+    groupSizing: new FormControl<'count' | 'size'>(DEFAULT_SETTINGS.groupSizing, { nonNullable: true }),
+    groupCount: new FormControl(DEFAULT_SETTINGS.groupCount, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    groupSize: new FormControl(DEFAULT_SETTINGS.groupSize, { nonNullable: true, validators: [Validators.required, Validators.min(2)] }),
+    qualifiersPerGroup: new FormControl(DEFAULT_SETTINGS.qualifiersPerGroup, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    thirdSetSuperTiebreak: new FormControl(DEFAULT_SETTINGS.thirdSetSuperTiebreak, { nonNullable: true }),
+    participants: new FormArray<ParticipantRow>([])
+  });
 
-  // --- Tournament options for the zh-select ---
-  readonly tournamentOptions = computed<ZhSelectOption[]>(() =>
-    this.tournamentService.upcomingTournaments().map(t => ({
-      value: t.id,
-      label: `${t.name}${t.categoryName ? ' — ' + t.categoryName : ''}`
-    }))
-  );
+  /** Paste box: one participant per line (syntax in `parseDrawParticipantPaste` and the page help). */
+  readonly pasteControl = new FormControl('', { nonNullable: true });
+  /** Tournament picker of `/admin/draw-planner`. */
+  readonly pickerControl = new FormControl('', { nonNullable: true });
 
-  // --- Generate tab state ---
-  readonly selectedTournamentId = signal('');
-  readonly pairsPerZone = signal(4);
-  readonly generating = signal(false);
-  readonly savingDraft = signal(false);
-  readonly publishing = signal(false);
-  readonly progress = signal(0);
-  readonly currentStageLabel = signal('');
-  readonly result = signal<DrawPlannerResult | null>(null);
-
-  // --- Saved draws state ---
-  readonly savedDraws = signal<DrawPlannerResult[]>([]);
-  readonly loadingDraws = signal(false);
-  readonly deletingDraft = signal(false);
+  readonly tournamentId = signal<string | null>(null);
+  readonly busyAction = signal<DrawAction | null>(null);
   readonly showDeleteConfirm = signal(false);
-  readonly drawToDelete = signal<DrawPlannerResult | null>(null);
+  readonly pasteResult = signal<DrawParticipantPasteResult | null>(null);
+  readonly progress = signal(0);
+  private progressTimer: ReturnType<typeof setInterval> | null = null;
 
-  // --- Computed signals ---
-  readonly selectedTournament = computed(() => {
-    const id = this.selectedTournamentId();
-    return id ? this.tournamentService.getTournamentById(id) : undefined;
+  /** Raw form value as a signal, so the computed state below follows every edit. */
+  private readonly formValue = signal(this.form.getRawValue());
+  private readonly formValid = signal(this.form.valid);
+
+  readonly participationFormat = computed(() => this.formValue().participationFormat);
+  readonly format = computed(() => this.formValue().format);
+
+  readonly entries = computed<DrawParticipantEntry[]>(() => {
+    const format = this.participationFormat();
+    return this.formValue().participants.map(row => this.rowToEntry(row, format));
   });
 
-  readonly tournamentPreview = computed(() => {
-    const t = this.selectedTournament();
-    if (!t) return null;
+  readonly issues = computed(() => validateDrawParticipantEntries(this.entries(), this.participationFormat()));
 
-    const now = new Date();
-    const start = new Date(t.startDate);
-    const end = new Date(t.endDate);
+  readonly draw = this.planner.draw;
+  readonly shownDraw = this.planner.shownDraw;
+  readonly hasResults = this.planner.hasResults;
+  readonly isPreview = computed(() => this.planner.preview() != null);
+  readonly drawStatus = computed(() => this.draw()?.status ?? 'none');
+  readonly isBusy = computed(() => this.busyAction() != null);
+  readonly isGenerating = computed(() => this.busyAction() === 'preview' || this.busyAction() === 'regenerate');
 
-    let statusKey: string;
-    let statusVariant: string;
-    if (now < start) {
-      statusKey = 'planner.preview.statusUpcoming';
-      statusVariant = 'upcoming';
-    } else if (now <= end) {
-      statusKey = 'planner.preview.statusInProgress';
-      statusVariant = 'in-progress';
-    } else {
-      statusKey = 'planner.preview.statusFinished';
-      statusVariant = 'finished';
+  /** Preview, regenerate and save need a valid form and participant list, no results (D1) and no running action. */
+  readonly canSubmit = computed(() =>
+    this.formValid() && this.issues().length === 0 && !this.hasResults() && !this.isBusy());
+  readonly canPublish = computed(() =>
+    this.drawStatus() === 'draft' && !this.isPreview() && !this.isBusy());
+  readonly canDelete = computed(() =>
+    this.drawStatus() === 'draft' && !this.hasResults() && !this.isBusy());
+
+  readonly participantColumns = computed<ChildGridColumn[]>(() => {
+    const seed: ChildGridColumn = { key: 'seedRank', labelKey: 'adminDraw.participants.columns.seed', type: 'number', width: '8rem' };
+    const club: ChildGridColumn = { key: 'separationKey', labelKey: 'adminDraw.participants.columns.club', type: 'text' };
+    switch (this.participationFormat()) {
+      case 'individual':
+        return [{ key: 'member1', labelKey: 'adminDraw.participants.columns.player', type: 'text', required: true }, seed, club];
+      case 'team':
+        return [
+          { key: 'displayName', labelKey: 'adminDraw.participants.columns.team', type: 'text', required: true },
+          { key: 'teamMembers', labelKey: 'adminDraw.participants.columns.teamMembers', type: 'text', required: true },
+          seed,
+          club
+        ];
+      default:
+        return [
+          { key: 'member1', labelKey: 'adminDraw.participants.columns.player1', type: 'text', required: true },
+          { key: 'member2', labelKey: 'adminDraw.participants.columns.player2', type: 'text', required: true },
+          { key: 'displayName', labelKey: 'adminDraw.participants.columns.displayNameOptional', type: 'text' },
+          seed,
+          club
+        ];
     }
-
-    const modalityKey = (t.modalityKey ?? t.modalityName ?? '').toLowerCase();
-    const maxLabelKey =
-      modalityKey.includes('single') || modalityKey.includes('individual')
-        ? 'planner.preview.maxPlayers'
-        : modalityKey.includes('team') || modalityKey.includes('equip')
-          ? 'planner.preview.maxTeams'
-          : 'planner.preview.maxPairs';
-
-    return {
-      name: t.name,
-      sport: t.sportName ?? null,
-      modality: t.modalityName ?? null,
-      complex: t.complexName,
-      maxPairs: t.maxPairs,
-      maxLabelKey,
-      startDate: t.startDate,
-      endDate: t.endDate,
-      statusKey,
-      statusVariant,
-      registrationStart: t.registrationStartDate,
-      registrationEnd: t.registrationEndDate,
-      ruleSetDescription: t.ruleSetDescription ?? null,
-      courtsCount: (t.selectedCourtIds ?? []).length
-    };
   });
 
-  readonly filteredDraws = computed(() =>
-    this.savedDraws().filter(d => d.status !== 'finished')
-  );
+  readonly formatOptions = computed<ZhSelectOption[]>(() =>
+    FORMATS.map(value => ({ value, label: this.t(`adminDraw.options.format.${value}`) })));
+  readonly participationOptions = computed<ZhSelectOption[]>(() =>
+    PARTICIPATION_FORMATS.map(value => ({ value, label: this.t(`adminDraw.options.participation.${value}`) })));
+  readonly randomizationOptions = computed<ZhSelectOption[]>(() =>
+    RANDOMIZATION_MODES.map(value => ({
+      value, label: this.t(`adminDraw.randomization.mode.${value}`), description: this.t(`adminDraw.randomization.mode.${value}Hint`)
+    })));
+  readonly legsOptions = computed<ZhSelectOption[]>(() =>
+    [1, 2].map(legs => ({ value: String(legs), label: this.t(`adminDraw.options.legs.${legs}`) })));
+  readonly tournamentOptions = computed<ZhSelectOption[]>(() =>
+    this.tournamentService.tournaments().map(tournament => ({ value: tournament.id, label: tournament.name })));
 
-  readonly savedDrawsTableData = computed(() =>
-    this.filteredDraws().map(d => ({
-      id: d.id,
-      name: d.name,
-      tournamentName: d.tournamentName,
-      status: d.status,
-      statusLabelKey: `planner.drafts.status.${d.status}`,
-      generatedAt: d.generatedAt
-    }))
-  );
+  /** Separation conflicts of the shown draw with participant names resolved. */
+  readonly conflicts = computed(() => {
+    const draw = this.shownDraw();
+    if (!draw) return [];
+    const names = new Map(draw.participants.map(participant => [participant.id, participant.displayName]));
+    return draw.separationConflicts.map(conflict => ({
+      key: conflict.key,
+      kindKey: `adminDraw.conflicts.kind.${conflict.kind}`,
+      names: conflict.participantIds.map(id => names.get(id) ?? id).join(', ')
+    }));
+  });
 
-  // --- Table config ---
-  readonly savedDrawColumns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'planner.drafts.name', sortable: true },
-    { key: 'tournamentName', labelKey: 'planner.drafts.tournament', sortable: true },
-    { key: 'statusLabelKey', labelKey: 'planner.drafts.status', renderType: 'pill', translate: true, pillVariantKey: 'status' },
-    { key: 'generatedAt', labelKey: 'planner.drafts.createdAt', renderType: 'date', sortable: true }
+  readonly progressStageKey = computed(() => {
+    const value = this.progress();
+    if (value < 35) return 'adminDraw.progress.validating';
+    if (value < 75) return 'adminDraw.progress.generating';
+    return 'adminDraw.progress.rendering';
+  });
+
+  readonly helpSections: HelpSection[] = [
+    { titleKey: 'adminDraw.help.overview.title', contentKey: 'adminDraw.help.overview.content' },
+    {
+      titleKey: 'adminDraw.help.steps.title',
+      items: ['adminDraw.help.steps.step1', 'adminDraw.help.steps.step2', 'adminDraw.help.steps.step3', 'adminDraw.help.steps.step4']
+    },
+    {
+      titleKey: 'adminDraw.help.paste.title',
+      items: ['adminDraw.help.paste.pair', 'adminDraw.help.paste.individual', 'adminDraw.help.paste.team', 'adminDraw.help.paste.markers']
+    },
+    { titleKey: 'adminDraw.help.states.title', contentKey: 'adminDraw.help.states.content' },
+    { titleKey: 'adminDraw.help.results.title', contentKey: 'adminDraw.help.results.content' },
+    { titleKey: 'adminDraw.help.visibility.title', contentKey: 'adminDraw.help.visibility.content' }
   ];
 
-  readonly savedDrawActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit' },
-    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
-  ];
-
-  readonly savedDrawActionsFilter = (row: Record<string, unknown>) => {
-    if (row['status'] === 'draft') {
-      return [
-        { icon: 'edit', labelKey: 'common.edit', action: 'edit' },
-        { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
-      ];
-    }
-    return [];
-  };
-
-  // --- Tab methods ---
-  switchTab(tab: 'generate' | 'drafts'): void {
-    this.activeTab.set(tab);
-    if (tab === 'drafts') {
-      this.loadSavedDraws();
-    }
-  }
-
-  // --- Generate tab methods ---
-  async generate(): Promise<void> {
-    const id = this.selectedTournamentId();
-    if (!id) return;
-
-    this.generating.set(true);
-    this.progress.set(0);
-    this.currentStageLabel.set('');
-    this.result.set(null);
-
-    // On mobile, scroll to the progress bar so the user can follow the generation
-    if (window.innerWidth < 768) {
-      setTimeout(() => {
-        document.getElementById('draw-progress-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
-    }
-
-    try {
-      await this.simulateStages();
-
-      const drawResult = await this.drawPlannerService.generateDraw({
-        tournamentId: id,
-        registrationCount: this.selectedTournament()?.maxPairs ?? 16,
-        confirmedPairsCount: this.selectedTournament()?.maxPairs ?? 16,
-        availabilityCoverage: 80,
-        tournamentType: this.selectedTournament()?.tournamentTypeName ?? 'groups',
-        category: this.selectedTournament()?.categoryName ?? '',
-        gender: this.selectedTournament()?.genderLabel ?? '',
-        targetGroupSize: this.pairsPerZone(),
-        autoManualMix: 'auto',
-        seedingStrategy: 'ranking',
-        availabilityStrategy: 'best-effort'
-      });
-
-      drawResult.tournamentName = this.selectedTournament()?.name ?? '';
-
-      this.progress.set(100);
-      this.currentStageLabel.set('');
-      this.result.set(drawResult);
-      this.notifications.success('drawPlanner.generated');
-
-      // On mobile, scroll to the result once generation is complete
-      if (window.innerWidth < 768) {
-        setTimeout(() => {
-          document.getElementById('draw-result-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+  constructor() {
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.syncFormState());
+    this.form.statusChanges.pipe(takeUntilDestroyed()).subscribe(() => this.formValid.set(this.form.valid));
+    this.pasteControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.pasteResult.set(null));
+    this.pickerControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(id => {
+      if (id) void this.router.navigate(['/admin/tournaments', id, 'draw']);
+    });
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const id = params.get('tournamentId');
+      this.tournamentId.set(id);
+      if (id) {
+        void this.loadTournament(id);
+      } else {
+        void this.tournamentService.loadTournaments();
       }
-    } finally {
-      this.generating.set(false);
-    }
+    });
+    this.destroyRef.onDestroy(() => this.stopProgress());
   }
 
-  async saveDraft(): Promise<void> {
-    const r = this.result();
-    if (!r) return;
+  get participants(): FormArray<ParticipantRow> {
+    return this.form.controls.participants;
+  }
 
-    this.savingDraft.set(true);
-    try {
-      const saved = await this.drawPlannerService.saveDraft(r);
-      this.result.set(saved);
-      this.notifications.success('drawPlanner.savedDraft');
-    } finally {
-      this.savingDraft.set(false);
-    }
+  readonly createRow = (): ParticipantRow => this.buildRow();
+
+  issueText(issue: DrawParticipantIssue, prefixKey: string): string {
+    const message = interpolate(this.t(`adminDraw.participants.issues.${issue.key}`), {
+      min: DRAW_MIN_PARTICIPANTS, max: DRAW_MAX_PARTICIPANTS
+    });
+    return issue.position == null ? message : `${interpolate(this.t(prefixKey), { n: issue.position })}: ${message}`;
+  }
+
+  countText(): string {
+    return interpolate(this.t('adminDraw.participants.count'), {
+      count: this.entries().length, min: DRAW_MIN_PARTICIPANTS, max: DRAW_MAX_PARTICIPANTS
+    });
+  }
+
+  async reload(): Promise<void> {
+    const id = this.tournamentId();
+    if (id) await this.loadTournament(id);
+  }
+
+  /** Replaces the participant rows (paste import, loaded draw). */
+  replaceParticipants(entries: DrawParticipantEntry[]): void {
+    this.participants.clear({ emitEvent: false });
+    entries.forEach(entry => this.participants.push(this.buildRow(entry), { emitEvent: false }));
+    this.participants.updateValueAndValidity();
+  }
+
+  checkPaste(): void {
+    this.pasteResult.set(parseDrawParticipantPaste(this.pasteControl.value, this.participationFormat()));
+  }
+
+  canImportPaste(): boolean {
+    const result = this.pasteResult();
+    return !!result && result.issues.length === 0 && result.entries.length > 0;
+  }
+
+  importPaste(mode: 'replace' | 'append'): void {
+    const result = this.pasteResult();
+    if (!result || !this.canImportPaste()) return;
+    this.replaceParticipants(mode === 'replace' ? result.entries : [...this.entries(), ...result.entries]);
+    this.pasteControl.setValue('');
+    this.notifications.success('adminDraw.messages.pasteImported');
+  }
+
+  async preview(): Promise<void> {
+    if (!this.canSubmit()) return;
+    await this.run('preview', async () => {
+      const preview = await this.planner.generatePreview(this.buildRequest());
+      // Keep the seed the API used, so saving reproduces exactly the previewed draw.
+      this.form.controls.seed.setValue(preview.seed ?? this.form.controls.seed.value);
+    });
+  }
+
+  /** New random seed: clears the seed so the API picks one, then previews. */
+  async regenerate(): Promise<void> {
+    if (!this.canSubmit()) return;
+    this.form.controls.seed.setValue('');
+    await this.run('regenerate', async () => {
+      const preview = await this.planner.generatePreview(this.buildRequest());
+      this.form.controls.seed.setValue(preview.seed ?? '');
+    });
+  }
+
+  async save(): Promise<void> {
+    if (!this.canSubmit()) return;
+    await this.run('save', async () => {
+      const draw = await this.planner.saveDraft(this.buildRequest());
+      this.form.controls.seed.setValue(draw.seed ?? this.form.controls.seed.value);
+      this.notifications.success('adminDraw.messages.saved');
+    });
   }
 
   async publish(): Promise<void> {
-    const r = this.result();
-    if (!r) return;
-
-    this.publishing.set(true);
-    try {
-      let planId = r.id;
-      const existsInSaved = this.drawPlannerService.savedDraws().some(d => d.id === planId);
-      if (!existsInSaved) {
-        const saved = await this.drawPlannerService.saveDraft(r);
-        planId = saved.id;
-      }
-      const published = await this.drawPlannerService.publishDraw(planId);
-      this.result.set(published);
-      this.notifications.success('drawPlanner.published');
-    } finally {
-      this.publishing.set(false);
-    }
+    if (!this.canPublish()) return;
+    await this.run('publish', async () => {
+      await this.planner.publish();
+      this.notifications.success('adminDraw.messages.published');
+    });
   }
 
-  // --- Saved draws methods ---
-  async loadSavedDraws(): Promise<void> {
-    this.loadingDraws.set(true);
-    try {
-      const draws = await this.drawPlannerService.getSavedDraws();
-      this.savedDraws.set(draws);
-    } finally {
-      this.loadingDraws.set(false);
-    }
+  async unpublish(): Promise<void> {
+    if (this.drawStatus() !== 'published' || this.isBusy()) return;
+    await this.run('unpublish', async () => {
+      await this.planner.unpublish();
+      this.notifications.success('adminDraw.messages.unpublished');
+    });
   }
 
-  onDrawRowAction(event: { action: string; row: Record<string, unknown> }): void {
-    const drawId = event.row['id'] as string;
-    const draw = this.savedDraws().find(d => d.id === drawId);
-    if (!draw) return;
-
-    if (event.action === 'edit') {
-      this.editDraft(draw);
-    } else if (event.action === 'delete') {
-      this.drawToDelete.set(draw);
-      this.showDeleteConfirm.set(true);
-    }
-  }
-
-  editDraft(draw: DrawPlannerResult): void {
-    this.selectedTournamentId.set(draw.tournamentId);
-    this.result.set(draw);
-    this.activeTab.set('generate');
-  }
-
-  async confirmDelete(): Promise<void> {
-    const draw = this.drawToDelete();
-    if (!draw) return;
-
-    this.deletingDraft.set(true);
-    try {
-      await this.drawPlannerService.deleteDraft(draw.id);
-      this.showDeleteConfirm.set(false);
-      this.drawToDelete.set(null);
-      await this.loadSavedDraws();
-      this.notifications.success('drawPlanner.draftDeleted');
-    } finally {
-      this.deletingDraft.set(false);
-    }
+  requestDelete(): void {
+    if (this.canDelete()) this.showDeleteConfirm.set(true);
   }
 
   cancelDelete(): void {
     this.showDeleteConfirm.set(false);
-    this.drawToDelete.set(null);
   }
 
-  // --- Private ---
-  private async simulateStages(): Promise<void> {
-    for (const stage of PLANNER_STAGES) {
-      this.currentStageLabel.set(stage.labelKey);
-      const current = this.progress();
-      const steps = 5;
-      const increment = (stage.target - current) / steps;
-      for (let i = 0; i < steps; i++) {
-        await this.delay(120 + i * 40);
-        this.progress.update(v => Math.min(stage.target, v + increment));
-      }
+  async confirmDelete(): Promise<void> {
+    await this.run('delete', async () => {
+      await this.planner.delete();
+      this.showDeleteConfirm.set(false);
+      this.notifications.success('adminDraw.messages.deleted');
+    });
+  }
+
+  discardPreview(): void {
+    this.planner.discardPreview();
+  }
+
+  isFieldInvalid(name: 'seed' | 'legs' | 'groupCount' | 'groupSize' | 'qualifiersPerGroup'): boolean {
+    const control = this.form.controls[name];
+    return control.invalid && (control.dirty || control.touched);
+  }
+
+  private async loadTournament(id: string): Promise<void> {
+    await this.planner.load(id);
+    this.applyDraw(this.planner.draw(), this.planner.tournament());
+  }
+
+  /** Fills the form from the stored draw, or resets it to the defaults of the tournament. */
+  private applyDraw(draw: TournamentDraw | null, tournament: Tournament | null): void {
+    if (!draw) {
+      this.form.patchValue({
+        ...DEFAULT_SETTINGS,
+        format: 'singleElimination',
+        participationFormat: participationFormatFor(tournament),
+        randomizationMode: 'seeded',
+        seed: ''
+      }, { emitEvent: false });
+      this.replaceParticipants([]);
+      return;
+    }
+
+    const settings = drawFormatSettingsFromOptions(draw.options, DEFAULT_SETTINGS);
+    const hasSeeds = draw.participants.some(participant => participant.seedRank != null);
+    this.form.patchValue({
+      ...settings,
+      format: draw.format,
+      participationFormat: draw.participationFormat,
+      randomizationMode: draw.randomizationMode ?? (hasSeeds ? 'seeded' : 'random'),
+      seed: draw.seed ?? ''
+    }, { emitEvent: false });
+    this.replaceParticipants(draw.participants.map(participant => ({
+      id: participant.id,
+      displayName: participant.displayName,
+      members: participant.members,
+      seedRank: participant.seedRank,
+      separationKey: participant.separationKey ?? null
+    })));
+  }
+
+  private buildRow(entry?: DrawParticipantEntry): ParticipantRow {
+    const format = this.form?.controls.participationFormat.value ?? 'pair';
+    const members = entry?.members ?? [];
+    const defaultName = members.join(' / ');
+    const displayName = entry && (format === 'team' || entry.displayName !== defaultName) ? entry.displayName : '';
+    return new FormGroup({
+      id: new FormControl<string | null>(entry?.id ?? null),
+      displayName: new FormControl(format === 'individual' ? '' : displayName, { nonNullable: true }),
+      member1: new FormControl(format === 'team' ? '' : members[0] ?? '', { nonNullable: true }),
+      member2: new FormControl(format === 'team' ? '' : members[1] ?? '', { nonNullable: true }),
+      teamMembers: new FormControl(format === 'team' ? members.join(' / ') : '', { nonNullable: true }),
+      seedRank: new FormControl<number | null>(entry?.seedRank ?? null),
+      separationKey: new FormControl(entry?.separationKey ?? '', { nonNullable: true })
+    });
+  }
+
+  private rowToEntry(row: ReturnType<ParticipantRow['getRawValue']>, format: DrawParticipationFormat): DrawParticipantEntry {
+    const seedRank = row.seedRank == null || (row.seedRank as unknown) === '' ? null : Number(row.seedRank);
+    const separationKey = row.separationKey.trim() || null;
+    if (format === 'individual') {
+      const name = row.member1.trim();
+      return { id: row.id, displayName: name, members: [name], seedRank, separationKey };
+    }
+    if (format === 'team') {
+      const members = row.teamMembers.split('/').map(member => member.trim()).filter(Boolean);
+      return { id: row.id, displayName: row.displayName.trim(), members, seedRank, separationKey };
+    }
+    const members = [row.member1.trim(), row.member2.trim()];
+    return { id: row.id, displayName: row.displayName.trim() || members.join(' / '), members, seedRank, separationKey };
+  }
+
+  private buildRequest(): TournamentDrawRequest {
+    const value = this.form.getRawValue();
+    const seed = value.seed.trim();
+    return {
+      format: value.format,
+      participationFormat: value.participationFormat,
+      randomization: seed ? { mode: value.randomizationMode, seed } : { mode: value.randomizationMode },
+      options: drawOptionsForRequest(value.format, {
+        thirdPlaceMatch: value.thirdPlaceMatch,
+        legs: Number(value.legs),
+        groupSizing: value.groupSizing,
+        groupCount: Number(value.groupCount),
+        groupSize: Number(value.groupSize),
+        qualifiersPerGroup: Number(value.qualifiersPerGroup),
+        thirdSetSuperTiebreak: value.thirdSetSuperTiebreak
+      }),
+      participants: toDrawRequestParticipants(this.entries())
+    };
+  }
+
+  private async run(action: DrawAction, work: () => Promise<void>): Promise<void> {
+    this.busyAction.set(action);
+    if (action === 'preview' || action === 'regenerate') this.startProgress();
+    try {
+      await work();
+    } catch (error) {
+      this.notifications.error(error instanceof Error ? error.message : 'common.unexpectedError');
+    } finally {
+      this.stopProgress();
+      this.busyAction.set(null);
     }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  /** Simulated staged progress (planner rule): fast at first, slowing down near the end until the API answers. */
+  private startProgress(): void {
+    this.stopProgress();
+    this.progress.set(8);
+    this.progressTimer = setInterval(() => this.progress.update(value => value + (95 - value) * 0.12), 150);
+  }
+
+  private stopProgress(): void {
+    if (this.progressTimer) {
+      clearInterval(this.progressTimer);
+      this.progressTimer = null;
+    }
+    this.progress.set(0);
+  }
+
+  private syncFormState(): void {
+    this.formValue.set(this.form.getRawValue());
+    this.formValid.set(this.form.valid);
+  }
+
+  private t(key: string): string {
+    return this.i18n.translate(key);
   }
 }

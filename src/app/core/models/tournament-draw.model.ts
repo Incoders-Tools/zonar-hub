@@ -14,6 +14,8 @@ export type DrawPhaseKind = 'groupStage' | 'knockout' | 'roundRobin';
 export type DrawSlotKind = 'participant' | 'bye' | 'winnerOf' | 'loserOf' | 'groupPosition';
 export type DrawMatchStatus = 'scheduled' | 'inProgress' | 'completed' | 'walkover' | 'retired';
 export type DrawSide = 'home' | 'away';
+export type DrawRandomizationMode = 'random' | 'seeded';
+export type DrawSeparationConflictKind = 'firstRoundMatch' | 'sameGroup';
 
 export interface DrawParticipant {
   /** Draw-local participant id. */
@@ -57,11 +59,17 @@ export interface DrawSlot {
   resolvedParticipantId?: string | null;
 }
 
+/** Tie-break points of a 7-6 set (domain shape `TiebreakScore(Home, Away)`). */
+export interface DrawTiebreakScore {
+  home: number;
+  away: number;
+}
+
 export interface DrawSetScore {
   home: number;
   away: number;
-  /** Tie-break points of the loser of a 7-6 set, when recorded. */
-  tiebreak?: number | null;
+  /** Tie-break points of a 7-6 set, when recorded. A super tie-break is stored as the set's games instead. */
+  tiebreak?: DrawTiebreakScore | null;
 }
 
 export interface DrawMatchResult {
@@ -102,8 +110,13 @@ export interface DrawPhase {
   rounds: DrawRound[];
 }
 
+/** Participants sharing a separation key (club) that the engine could not keep apart (API `SeparationConflict`). */
 export interface DrawSeparationConflict {
-  [key: string]: unknown;
+  key: string;
+  participantIds: string[];
+  kind: DrawSeparationConflictKind;
+  /** Match id (`firstRoundMatch`) or group id (`sameGroup`). */
+  locationId: string;
 }
 
 export interface TournamentDraw {
@@ -111,11 +124,56 @@ export interface TournamentDraw {
   format: DrawFormat;
   participationFormat: DrawParticipationFormat;
   seed: string | null;
+  /** Set when the payload carries it (`randomizationMode` or `randomization.mode`); D7 does not require it. */
+  randomizationMode?: DrawRandomizationMode | null;
   publishedAt: string | null;
   options: Record<string, unknown> | null;
   participants: DrawParticipant[];
   phases: DrawPhase[];
   separationConflicts: DrawSeparationConflict[];
+}
+
+// ---------------------------------------------------------------------------
+// Admin write contract (D5). The repository serialises these shapes as the request body.
+// ---------------------------------------------------------------------------
+
+export interface TournamentDrawRequestParticipant {
+  /** Draw-local id, unique within the request. */
+  id: string;
+  displayName: string;
+  members: string[];
+  seedRank?: number | null;
+  /** Club or organisation the engine keeps apart in the first round and in groups. */
+  separationKey?: string | null;
+}
+
+export interface TournamentDrawRequestOptions {
+  knockout?: { thirdPlaceMatch: boolean };
+  roundRobin?: { legs: number };
+  /** Exactly one of `groupCount` / `groupSize`. */
+  groups?: { groupCount?: number; groupSize?: number; qualifiersPerGroup: number };
+  scoring?: { thirdSetSuperTiebreak: boolean };
+}
+
+export interface TournamentDrawRequest {
+  format: DrawFormat;
+  participationFormat: DrawParticipationFormat;
+  /** `seed` is an unsigned 64-bit decimal string; without it the API generates one and returns it. */
+  randomization: { mode: DrawRandomizationMode; seed?: string | null };
+  options: TournamentDrawRequestOptions;
+  participants: TournamentDrawRequestParticipant[];
+}
+
+/** Body of `PUT matches/{matchId}/result` (D5); validated by the API (D3/D4). Used by result entry (F3). */
+export interface TournamentDrawMatchResultRequest {
+  status: DrawMatchStatus;
+  sets: DrawSetScore[];
+  winnerSide: DrawSide | null;
+  courtId?: string | null;
+  courtName?: string | null;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,6 +199,8 @@ const PARTICIPATION_FORMAT_BY_NUMBER: Record<number, DrawParticipationFormat> = 
 const SLOT_KINDS: readonly DrawSlotKind[] = ['participant', 'bye', 'winnerOf', 'loserOf', 'groupPosition'];
 const SIDES: readonly DrawSide[] = ['home', 'away'];
 const STATUSES: readonly DrawStatus[] = ['draft', 'published'];
+const RANDOMIZATION_MODES: readonly DrawRandomizationMode[] = ['random', 'seeded'];
+const CONFLICT_KINDS: readonly DrawSeparationConflictKind[] = ['firstRoundMatch', 'sameGroup'];
 
 /** `InProgress`, `in_progress`, `in-progress` and `inProgress` all become `inProgress`. */
 function toCamelCase(value: string): string {
@@ -190,13 +250,33 @@ function normalizeSlot(slot: DrawSlot | null | undefined): DrawSlot {
   return { ...(slot ?? {}), kind: toDrawSlotKind(slot?.kind) ?? 'bye' } as DrawSlot;
 }
 
+/**
+ * Tie-breaks are `{ home, away }` (L7). A legacy number is the loser's points: the winner then has
+ * `max(7, points + 2)`.
+ */
+function normalizeTiebreak(set: DrawSetScore): DrawTiebreakScore | null {
+  const tiebreak = set.tiebreak as DrawTiebreakScore | number | null | undefined;
+  if (tiebreak == null) {
+    return null;
+  }
+  if (typeof tiebreak === 'number') {
+    const winner = Math.max(7, tiebreak + 2);
+    return set.home > set.away ? { home: winner, away: tiebreak } : { home: tiebreak, away: winner };
+  }
+  return { home: tiebreak.home, away: tiebreak.away };
+}
+
+function normalizeSet(set: DrawSetScore): DrawSetScore {
+  return { home: set.home, away: set.away, tiebreak: normalizeTiebreak(set) };
+}
+
 function normalizeResult(result: DrawMatchResult | null | undefined): DrawMatchResult | null {
   if (!result) {
     return null;
   }
   return {
     status: toDrawMatchStatus(result.status) ?? 'scheduled',
-    sets: result.sets ?? [],
+    sets: (result.sets ?? []).map(normalizeSet),
     winnerSide: toDrawSide(result.winnerSide),
     courtName: result.courtName ?? null,
     scheduledAt: result.scheduledAt ?? null,
@@ -243,9 +323,11 @@ export function normalizeTournamentDraw(draw: TournamentDraw): TournamentDraw {
     });
   }
 
+  const raw = draw as TournamentDraw & { randomization?: { mode?: unknown } | null };
   return {
     ...draw,
     status: toMember(draw.status, STATUSES) ?? 'draft',
+    randomizationMode: toMember(raw.randomizationMode ?? raw.randomization?.mode, RANDOMIZATION_MODES),
     format: toDrawFormat(draw.format) ?? 'singleElimination',
     participationFormat: toDrawParticipationFormat(draw.participationFormat) ?? 'pair',
     seed: draw.seed == null ? null : String(draw.seed),
@@ -257,6 +339,19 @@ export function normalizeTournamentDraw(draw: TournamentDraw): TournamentDraw {
       seedRank: participant.seedRank ?? null
     })),
     phases,
-    separationConflicts: draw.separationConflicts ?? []
+    separationConflicts: (draw.separationConflicts ?? []).map(conflict => ({
+      ...conflict,
+      participantIds: conflict.participantIds ?? [],
+      kind: toMember(conflict.kind, CONFLICT_KINDS) ?? 'firstRoundMatch'
+    }))
   };
+}
+
+/**
+ * True when any match carries a stored result (D1): the draw can then no longer be regenerated, replaced or
+ * deleted. A result row in `scheduled` status (court or time only) counts too, matching the API check.
+ */
+export function tournamentDrawHasResults(draw: TournamentDraw | null | undefined): boolean {
+  return (draw?.phases ?? []).some(phase =>
+    phase.rounds.some(round => round.matches.some(match => match.result != null)));
 }

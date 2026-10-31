@@ -52,7 +52,7 @@ The component never calls HTTP. Parents load the draw through a service and shou
 ## Rendering rules
 
 - **Pair rows**: member surnames (last word of each member name) in uppercase, one per line; the participant display name when it has no members. Seed rank shown when present.
-- **Scores**: one cell per set, right-aligned; the set winner's games are bold; tie-break points appear as a superscript on the side that lost the tie-break set.
+- **Scores**: one cell per set, right-aligned; the set winner's games are bold; tie-break points (`DrawSetScore.tiebreak = { home, away }`, L7) appear as a superscript with the own points of the side that lost the tie-break set; the accessible score reads `7-6(7-5)`. A super tie-break is stored as the set's games (`10-8`).
 - **Winner**: check icon plus visually hidden "Winner" text, only for `completed`, `walkover` and `retired` results with a `winnerSide`.
 - **BYE**: a bye side shows `BYE`; bye matches are rendered as `article` (not activatable).
 - **Pending slots**: `winnerOf` / `loserOf` show "Winner of R1 M3" / "Loser of R2 M1" (round number and match number of the source match); `groupPosition` shows "1st of Group A". Resolved slots (`resolvedParticipantId`) show the participant.

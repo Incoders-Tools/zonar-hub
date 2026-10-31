@@ -57,8 +57,10 @@ export function buildMatchResult(overrides: Partial<DrawMatchResult> = {}): Draw
   };
 }
 
-export function sets(...scores: Array<[number, number] | [number, number, number]>): DrawSetScore[] {
-  return scores.map(([home, away, tiebreak]) => (tiebreak == null ? { home, away } : { home, away, tiebreak }));
+/** `[home, away]` or `[home, away, tiebreakHome, tiebreakAway]` per set. */
+export function sets(...scores: Array<[number, number] | [number, number, number, number]>): DrawSetScore[] {
+  return scores.map(([home, away, tiebreakHome, tiebreakAway]) =>
+    (tiebreakHome == null || tiebreakAway == null ? { home, away } : { home, away, tiebreak: { home: tiebreakHome, away: tiebreakAway } }));
 }
 
 function standardOrder(size: number): number[] {
@@ -339,6 +341,6 @@ export function buildFivePairRoundRobinDraw(): TournamentDraw {
   const [first, second] = rounds[0].matches;
   return withResults(draw, {
     [first.id]: buildMatchResult({ status: 'completed', sets: sets([6, 2], [6, 2]), winnerSide: 'home' }),
-    [second.id]: buildMatchResult({ status: 'completed', sets: sets([6, 7, 5], [6, 4], [10, 7]), winnerSide: 'home' })
+    [second.id]: buildMatchResult({ status: 'completed', sets: sets([6, 7, 5, 7], [6, 4], [10, 7]), winnerSide: 'home' })
   });
 }

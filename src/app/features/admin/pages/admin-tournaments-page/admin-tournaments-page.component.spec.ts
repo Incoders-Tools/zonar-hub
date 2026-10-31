@@ -2,13 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { AdminTournamentsPageComponent } from './admin-tournaments-page.component';
 import { TournamentsFacadeService } from './tournaments-facade.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { TenantContextService } from '../../../../core/services/tenant-context.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { PermissionService } from '../../../../core/auth/permission.service';
 import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { Tournament } from '../../../../core/models';
 
@@ -29,9 +30,11 @@ const tournaments: Tournament[] = [
 describe('AdminTournamentsPageComponent public link action', () => {
   let fixture: ComponentFixture<AdminTournamentsPageComponent>;
   let notification: jasmine.SpyObj<NotificationService>;
+  let allowedTools: string[];
 
   beforeEach(async () => {
     localStorage.removeItem('zh.collection-view.mode.admin-tournaments');
+    allowedTools = ['tournaments', 'draw-planner'];
     notification = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error']);
     const facade = {
       load: jasmine.createSpy('load').and.resolveTo(),
@@ -55,7 +58,8 @@ describe('AdminTournamentsPageComponent public link action', () => {
         { provide: AuthService, useValue: { isSystemAdmin: signal(false) } },
         { provide: TenantContextService, useValue: { planType: signal('pro') } },
         { provide: ActiveOrganizationService, useValue: { organizationChanged: signal(0), activeOrganizationId: signal('org-1') } },
-        { provide: NotificationService, useValue: notification }
+        { provide: NotificationService, useValue: notification },
+        { provide: PermissionService, useValue: { hasTool: (key: string) => allowedTools.includes(key) } }
       ]
     })
       .overrideComponent(AdminTournamentsPageComponent, {
@@ -99,9 +103,9 @@ describe('AdminTournamentsPageComponent public link action', () => {
     it(`offers the copy public link action only for public tournaments with a link (${mode})`, async () => {
       await render(mode);
 
-      expect(actionIcons(container('Copa Pública', mode))).toEqual(['edit', 'share', 'link', 'delete']);
-      expect(actionIcons(container('Copa Privada', mode))).toEqual(['edit', 'share', 'delete']);
-      expect(actionIcons(container('Copa Sin Enlace', mode))).toEqual(['edit', 'share', 'delete']);
+      expect(actionIcons(container('Copa Pública', mode))).toEqual(['edit', 'account_tree', 'share', 'link', 'delete']);
+      expect(actionIcons(container('Copa Privada', mode))).toEqual(['edit', 'account_tree', 'share', 'delete']);
+      expect(actionIcons(container('Copa Sin Enlace', mode))).toEqual(['edit', 'account_tree', 'share', 'delete']);
     });
   }
 
@@ -123,5 +127,21 @@ describe('AdminTournamentsPageComponent public link action', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-social-share-preview')).toBeTruthy();
+  });
+
+  it('opens the draw page of the row from the draw action', async () => {
+    await render('table');
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    clickAction(container('Copa Privada', 'table'), 'account_tree');
+
+    expect(navigate).toHaveBeenCalledOnceWith(['/admin/tournaments', 't-2', 'draw']);
+  });
+
+  it('hides the draw action without the draw planner tool', async () => {
+    allowedTools = ['tournaments'];
+    await render('table');
+
+    expect(actionIcons(container('Copa Pública', 'table'))).toEqual(['edit', 'share', 'link', 'delete']);
   });
 });

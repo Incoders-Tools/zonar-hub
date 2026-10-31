@@ -192,7 +192,13 @@ export const routes: Routes = [
         data: { toolKey: 'teams' }, canActivate: [toolGuard]
       },
       {
+        // Without a tournament id the draw page is a tournament picker that opens `tournaments/:tournamentId/draw`.
         path: 'draw-planner',
+        loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent),
+        data: { toolKey: 'draw-planner' }, canActivate: [toolGuard]
+      },
+      {
+        path: 'tournaments/:tournamentId/draw',
         loadComponent: () => import('./features/admin/pages/admin-draw-planner-page/admin-draw-planner-page.component').then(m => m.AdminDrawPlannerPageComponent),
         data: { toolKey: 'draw-planner' }, canActivate: [toolGuard]
       },

@@ -284,7 +284,7 @@ class DrawViewBuilder {
     const away = this.side(match, 'away', winnerSide);
     const statusLabel = this.t(`bracket.status.${status}`);
     const scoreText = (result?.sets ?? [])
-      .map(set => `${set.home}-${set.away}${set.tiebreak != null ? `(${set.tiebreak})` : ''}`)
+      .map(set => `${set.home}-${set.away}${set.tiebreak ? `(${set.tiebreak.home}-${set.tiebreak.away})` : ''}`)
       .join(', ');
     const isBye = match.home.kind === 'bye' || match.away.kind === 'bye';
 
@@ -331,7 +331,8 @@ class DrawViewBuilder {
     const sets: DrawSetView[] = (match.result?.sets ?? []).map(set => {
       const own = side === 'home' ? set.home : set.away;
       const other = side === 'home' ? set.away : set.home;
-      return { games: own, tiebreak: set.tiebreak != null && own < other ? set.tiebreak : null, won: own > other };
+      const ownTiebreak = set.tiebreak ? (side === 'home' ? set.tiebreak.home : set.tiebreak.away) : null;
+      return { games: own, tiebreak: ownTiebreak != null && own < other ? ownTiebreak : null, won: own > other };
     });
     const base = {
       sets,

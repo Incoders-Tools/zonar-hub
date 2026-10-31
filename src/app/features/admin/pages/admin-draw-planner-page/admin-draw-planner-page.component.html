@@ -1,260 +1,360 @@
-<div class="draw-planner">
-  <div class="draw-planner__header-row">
-    <h1>{{ 'admin.drawPlanner' | t }}</h1>
-    <app-help-button
-      [titleKey]="'drawPlanner.help.title'"
-      [sections]="helpSections"
-      [videoUrl]="helpVideoUrl">
-    </app-help-button>
-  </div>
-
-  <!-- Tournament Selection -->
-  <div class="planner-section">
-    <h2>{{ 'drawPlanner.selectTournament' | t }}</h2>
-    <p class="draw-planner__notice">{{ 'drawPlanner.upcomingOnly' | t }}</p>
-    <div class="field">
-      <zh-select
-        [placeholder]="('drawPlanner.chooseTournament' | t)"
-        [options]="tournamentOptions()"
-        [ngModel]="selectedTournamentId()"
-        (ngModelChange)="selectedTournamentId.set($event)">
-      </zh-select>
+<div class="draw-admin">
+  <header class="draw-admin__header">
+    <div class="draw-admin__heading">
+      <a class="draw-admin__back" routerLink="/admin/tournaments">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        <span>{{ 'adminDraw.page.back' | t }}</span>
+      </a>
+      <h1 class="draw-admin__title">
+        {{ 'adminDraw.page.title' | t }}
+        @if (planner.tournament(); as tournament) {
+          <span class="draw-admin__tournament">{{ tournament.name }}</span>
+        }
+      </h1>
     </div>
-  </div>
-
-  <!-- Tournament Preview Panel -->
-  @if (tournamentPreview()) {
-    <div class="draw-planner__preview">
-      <div class="draw-planner__preview-grid">
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.name' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.name }}</span>
-        </div>
-        @if (tournamentPreview()!.sport) {
-          <div class="draw-planner__preview-item">
-            <span class="draw-planner__preview-label">{{ 'planner.preview.sport' | t }}</span>
-            <span class="draw-planner__preview-value">{{ tournamentPreview()!.sport }}</span>
-          </div>
-        }
-        @if (tournamentPreview()!.modality) {
-          <div class="draw-planner__preview-item">
-            <span class="draw-planner__preview-label">{{ 'planner.preview.modality' | t }}</span>
-            <span class="draw-planner__preview-value">{{ tournamentPreview()!.modality }}</span>
-          </div>
-        }
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.complex' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.complex }}</span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ tournamentPreview()!.maxLabelKey | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.maxPairs }}</span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.startDate' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.startDate | formatDate }}</span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.endDate' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.endDate | formatDate }}</span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.status' | t }}</span>
-          <span class="draw-planner__preview-badge" [attr.data-variant]="tournamentPreview()!.statusVariant">
-            {{ tournamentPreview()!.statusKey | t }}
-          </span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.registrationStart' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.registrationStart | formatDate }}</span>
-        </div>
-        <div class="draw-planner__preview-item">
-          <span class="draw-planner__preview-label">{{ 'planner.preview.registrationEnd' | t }}</span>
-          <span class="draw-planner__preview-value">{{ tournamentPreview()!.registrationEnd | formatDate }}</span>
-        </div>
-      </div>
-
-      <!-- Rule Set highlight -->
-      <div class="draw-planner__preview-rule">
-        <span class="draw-planner__preview-rule-label">{{ 'planner.preview.ruleSet' | t }}</span>
-        @if (tournamentPreview()!.ruleSetDescription) {
-          <span class="draw-planner__preview-rule-value">{{ tournamentPreview()!.ruleSetDescription }}</span>
-        } @else {
-          <span class="draw-planner__preview-rule-empty">{{ 'planner.preview.noRuleSet' | t }}</span>
-        }
-      </div>
-    </div>
-
-    <!-- Courts Summary Card -->
-    <div class="draw-planner__courts-summary">
-      <div class="draw-planner__courts-summary-header">
-        <span class="draw-planner__courts-summary-icon">
-          <mat-icon>sports_tennis</mat-icon>
-        </span>
-        <span class="draw-planner__courts-summary-title">{{ 'planner.preview.courts' | t }}</span>
-      </div>
-      @if (tournamentPreview()!.courtsCount > 0) {
-        <div class="draw-planner__courts-summary-body">
-          <div class="draw-planner__courts-summary-stat">
-            <span class="draw-planner__courts-summary-count">{{ tournamentPreview()!.courtsCount }}</span>
-            <span class="draw-planner__courts-summary-desc">{{ 'planner.preview.courtsCount' | t }}</span>
-          </div>
-          <div class="draw-planner__courts-summary-complex">
-            <mat-icon class="draw-planner__courts-summary-complex-icon">location_on</mat-icon>
-            <span>{{ tournamentPreview()!.complex }}</span>
-          </div>
-          <div class="draw-planner__courts-summary-range">
-            <mat-icon class="draw-planner__courts-summary-complex-icon">date_range</mat-icon>
-            <span>{{ tournamentPreview()!.startDate | formatDate }} — {{ tournamentPreview()!.endDate | formatDate }}</span>
-          </div>
-        </div>
-      } @else {
-        <p class="draw-planner__courts-summary-empty">{{ 'planner.preview.noCourts' | t }}</p>
+    <div class="draw-admin__header-actions">
+      @if (tournamentId() && planner.tournament()) {
+        <app-status-badge class="draw-admin__status" [status]="drawStatus()" [label]="'adminDraw.status.' + drawStatus()" />
       }
+      <app-help-button [titleKey]="'adminDraw.help.title'" [sections]="helpSections" />
     </div>
-  }
+  </header>
 
-  <!-- Tabs -->
-  @if (selectedTournament()) {
-    <div class="draw-planner__tabs">
-      <button
-        class="draw-planner__tab"
-        [class.draw-planner__tab--active]="activeTab() === 'generate'"
-        (click)="switchTab('generate')">
-        {{ 'planner.tab.generate' | t }}
-      </button>
-      <button
-        class="draw-planner__tab"
-        [class.draw-planner__tab--active]="activeTab() === 'drafts'"
-        (click)="switchTab('drafts')">
-        {{ 'planner.tab.drafts' | t }}
-      </button>
-    </div>
+  @if (!tournamentId()) {
+    <!-- /admin/draw-planner: choose the tournament whose draw to manage -->
+    <section class="draw-admin__picker">
+      <h2 class="draw-admin__section-title">{{ 'adminDraw.picker.title' | t }}</h2>
+      <p class="draw-admin__hint">{{ 'adminDraw.picker.description' | t }}</p>
+      @if (tournamentService.loading()) {
+        <app-loading-state />
+      } @else if (tournamentOptions().length === 0) {
+        <app-empty-state message="adminDraw.picker.empty" />
+      } @else {
+        <zh-select
+          [label]="'adminDraw.picker.label' | t"
+          [placeholder]="'adminDraw.picker.placeholder' | t"
+          [options]="tournamentOptions()"
+          [formControl]="pickerControl" />
+      }
+    </section>
+  } @else if (planner.loading()) {
+    <app-loading-state messageKey="adminDraw.page.loading" />
+  } @else if (planner.error()) {
+    <app-error-state [message]="planner.error()!" (retried)="reload()" />
+  } @else if (!planner.tournament()) {
+    <app-empty-state message="adminDraw.page.notFound" />
+  } @else {
+    <div class="draw-admin__layout">
+      <app-form-shell titleKey="adminDraw.form.title" descriptionKey="adminDraw.form.description">
+        <form class="draw-admin__form" [formGroup]="form" (ngSubmit)="preview()">
+          <!-- Format and options -->
+          <section class="draw-admin__section" aria-labelledby="draw-admin-format-title">
+            <h3 class="draw-admin__section-title" id="draw-admin-format-title">{{ 'adminDraw.options.title' | t }}</h3>
+            <div class="draw-admin__grid">
+              <zh-select
+                [label]="'adminDraw.options.format.label' | t"
+                [options]="formatOptions()"
+                [hint]="('adminDraw.options.format.' + format() + 'Hint') | t"
+                formControlName="format" />
+              <zh-select
+                [label]="'adminDraw.options.participation.label' | t"
+                [options]="participationOptions()"
+                [hint]="'adminDraw.options.participation.hint' | t"
+                formControlName="participationFormat" />
+            </div>
 
-    <div class="draw-planner__tab-content">
-      <!-- Tab 1: Generate -->
-      @if (activeTab() === 'generate') {
-        <!-- Configuration -->
-        <div class="planner-section">
-          <h2>{{ 'drawPlanner.configuration' | t }}</h2>
-          <div class="field">
-            <label>{{ 'drawPlanner.pairsPerZone' | t }}</label>
-            <input type="number" min="2" max="8" [ngModel]="pairsPerZone()" (ngModelChange)="pairsPerZone.set($event)" />
-          </div>
-          <app-async-button
-            [loading]="generating()"
-            [disabled]="generating()"
-            (clicked)="generate()">
-            {{ 'drawPlanner.generate' | t }}
-          </app-async-button>
-        </div>
-
-        <!-- Progress -->
-        @if (generating()) {
-          <div class="planner-section" id="draw-progress-anchor">
-            <app-progress-bar
-              [progress]="progress()"
-              titleKey="planner.generate"
-              [stageLabel]="currentStageLabel() | t"
-              [showPercentage]="true">
-            </app-progress-bar>
-          </div>
-        }
-
-        <!-- Result Preview -->
-        @if (result()) {
-          <div class="planner-section" id="draw-result-anchor">
-            <h2>{{ 'drawPlanner.result' | t }}</h2>
-
-            @if (result()!.warnings.length > 0) {
-              <div class="warnings">
-                @for (w of result()!.warnings; track w.type) {
-                  <div class="warning-item">{{ w.message }}</div>
+            @if (format() === 'groupsThenKnockout') {
+              <fieldset class="draw-admin__fieldset">
+                <legend>{{ 'adminDraw.options.groups.sizing' | t }}</legend>
+                <label class="draw-admin__choice">
+                  <input type="radio" formControlName="groupSizing" value="size" />
+                  {{ 'adminDraw.options.groups.bySize' | t }}
+                </label>
+                <label class="draw-admin__choice">
+                  <input type="radio" formControlName="groupSizing" value="count" />
+                  {{ 'adminDraw.options.groups.byCount' | t }}
+                </label>
+              </fieldset>
+              <div class="draw-admin__grid">
+                @if (form.controls.groupSizing.value === 'count') {
+                  <div class="draw-admin__field">
+                    <label for="draw-admin-group-count">{{ 'adminDraw.options.groups.count' | t }}</label>
+                    <input id="draw-admin-group-count" type="number" min="1" formControlName="groupCount"
+                      [attr.aria-invalid]="isFieldInvalid('groupCount')" />
+                    @if (isFieldInvalid('groupCount')) {
+                      <span class="draw-admin__error">{{ 'adminDraw.options.groups.countInvalid' | t }}</span>
+                    }
+                  </div>
+                } @else {
+                  <div class="draw-admin__field">
+                    <label for="draw-admin-group-size">{{ 'adminDraw.options.groups.size' | t }}</label>
+                    <input id="draw-admin-group-size" type="number" min="2" formControlName="groupSize"
+                      [attr.aria-invalid]="isFieldInvalid('groupSize')" />
+                    @if (isFieldInvalid('groupSize')) {
+                      <span class="draw-admin__error">{{ 'adminDraw.options.groups.sizeInvalid' | t }}</span>
+                    }
+                  </div>
                 }
+                <div class="draw-admin__field">
+                  <label for="draw-admin-qualifiers">{{ 'adminDraw.options.groups.qualifiers' | t }}</label>
+                  <input id="draw-admin-qualifiers" type="number" min="1" formControlName="qualifiersPerGroup"
+                    [attr.aria-invalid]="isFieldInvalid('qualifiersPerGroup')" />
+                  <span class="draw-admin__field-hint">{{ 'adminDraw.options.groups.qualifiersHint' | t }}</span>
+                  @if (isFieldInvalid('qualifiersPerGroup')) {
+                    <span class="draw-admin__error">{{ 'adminDraw.options.groups.qualifiersInvalid' | t }}</span>
+                  }
+                </div>
               </div>
             }
 
-            <div class="zones-grid">
-              @for (zone of result()!.zones; track zone.zoneName) {
-                <div class="zone-card">
-                  <h3>{{ zone.zoneName }}</h3>
-                  <ul>
-                    @for (a of zone.pairs; track a.registrationId) {
-                      <li>
-                        {{ a.player1Name }} & {{ a.player2Name }}
-                        @if (a.seedPosition) { <span class="seeded">#{{ a.seedPosition }}</span> }
-                      </li>
-                    }
-                  </ul>
-                </div>
-              }
-            </div>
+            @if (format() !== 'singleElimination') {
+              <fieldset class="draw-admin__fieldset">
+                <legend>{{ 'adminDraw.options.legs.label' | t }}</legend>
+                <label class="draw-admin__choice">
+                  <input type="radio" formControlName="legs" [value]="1" />
+                  {{ 'adminDraw.options.legs.1' | t }}
+                </label>
+                <label class="draw-admin__choice">
+                  <input type="radio" formControlName="legs" [value]="2" />
+                  {{ 'adminDraw.options.legs.2' | t }}
+                </label>
+              </fieldset>
+            }
 
-            <div class="result-actions">
-              <app-async-button
-                variant="secondary"
-                [loading]="savingDraft()"
-                [disabled]="savingDraft() || publishing()"
-                (clicked)="saveDraft()">
-                {{ 'drawPlanner.saveDraft' | t }}
-              </app-async-button>
-              <app-async-button
-                [loading]="publishing()"
-                [disabled]="savingDraft() || publishing()"
-                (clicked)="publish()">
-                {{ 'drawPlanner.publish' | t }}
-              </app-async-button>
-            </div>
-          </div>
-        }
-      }
+            @if (format() !== 'roundRobin') {
+              <label class="draw-admin__choice">
+                <input type="checkbox" formControlName="thirdPlaceMatch" />
+                {{ 'adminDraw.options.thirdPlaceMatch' | t }}
+              </label>
+            }
+            <label class="draw-admin__choice">
+              <input type="checkbox" formControlName="thirdSetSuperTiebreak" />
+              {{ 'adminDraw.options.superTiebreak' | t }}
+            </label>
+            <p class="draw-admin__field-hint">{{ 'adminDraw.options.superTiebreakHint' | t }}</p>
+          </section>
 
-      <!-- Tab 2: Saved Draws -->
-      @if (activeTab() === 'drafts') {
-        <div class="planner-section">
-          <h2>{{ 'planner.tab.drafts' | t }}</h2>
-          <zh-collection-view
-            viewKey="admin-draw-planner"
-            [items]="savedDrawsTableData()"
-            [columns]="savedDrawColumns"
-            [loading]="loadingDraws()"
-            [rowActions]="savedDrawActions"
-            [rowActionsFilter]="savedDrawActionsFilter"
-            emptyMessageKey="planner.drafts.empty"
-            (rowAction)="onDrawRowAction($event)">
-            <ng-template #cardTpl let-row>
-              <div class="zh-list-card">
-                <div class="zh-list-card__header">
-                  <div class="zh-list-card__title">
-                    <span class="zh-list-card__eyebrow">{{ row.tournamentName }}</span>
-                    <h3 class="zh-list-card__name">{{ row.name }}</h3>
-                  </div>
-                  <span class="zh-list-card__status">
-                    {{ row.statusLabelKey | t }}
-                  </span>
-                </div>
-                <div class="zh-list-card__meta">
-                  <span><strong>{{ 'planner.drafts.createdAt' | t }}:</strong> {{ row.generatedAt }}</span>
-                </div>
+          <!-- Participants -->
+          <section class="draw-admin__section draw-admin__participants" aria-labelledby="draw-admin-participants-title">
+            <div class="draw-admin__section-header">
+              <h3 class="draw-admin__section-title" id="draw-admin-participants-title">{{ 'adminDraw.participants.title' | t }}</h3>
+              <span class="draw-admin__count" role="status">{{ countText() }}</span>
+            </div>
+            <p class="draw-admin__field-hint">{{ ('adminDraw.participants.hint.' + participationFormat()) | t }}</p>
+            <app-child-collection-grid
+              mode="edit"
+              [columns]="participantColumns()"
+              [formArray]="participants"
+              [rowFactory]="createRow"
+              [reorderable]="true"
+              [disabled]="hasResults()"
+              [maxRows]="maxParticipants"
+              addLabelKey="adminDraw.participants.add"
+              removeLabelKey="adminDraw.participants.remove"
+              emptyMessageKey="adminDraw.participants.empty" />
+            @if (issues().length > 0 && participants.length > 0) {
+              <ul class="draw-admin__issues" aria-live="polite">
+                @for (issue of issues(); track $index) {
+                  <li>{{ issueText(issue, 'adminDraw.participants.rowPrefix') }}</li>
+                }
+              </ul>
+            }
+          </section>
+
+          <!-- Randomization -->
+          <section class="draw-admin__section" aria-labelledby="draw-admin-randomization-title">
+            <h3 class="draw-admin__section-title" id="draw-admin-randomization-title">{{ 'adminDraw.randomization.title' | t }}</h3>
+            <div class="draw-admin__grid">
+              <zh-select
+                [label]="'adminDraw.randomization.mode.label' | t"
+                [options]="randomizationOptions()"
+                [hint]="('adminDraw.randomization.mode.' + form.controls.randomizationMode.value + 'Hint') | t"
+                formControlName="randomizationMode" />
+              <div class="draw-admin__field">
+                <label for="draw-admin-seed">{{ 'adminDraw.randomization.seed.label' | t }}</label>
+                <input id="draw-admin-seed" type="text" inputmode="numeric" autocomplete="off" formControlName="seed"
+                  [placeholder]="'adminDraw.randomization.seed.placeholder' | t"
+                  [attr.aria-invalid]="isFieldInvalid('seed')"
+                  aria-describedby="draw-admin-seed-hint" />
+                <span class="draw-admin__field-hint" id="draw-admin-seed-hint">{{ 'adminDraw.randomization.seed.hint' | t }}</span>
+                @if (isFieldInvalid('seed')) {
+                  <span class="draw-admin__error">{{ 'adminDraw.randomization.seed.invalid' | t }}</span>
+                }
               </div>
-            </ng-template>
-          </zh-collection-view>
+            </div>
+          </section>
+        </form>
+
+        <!-- Paste a list -->
+        <section class="draw-admin__section draw-admin__paste" aria-labelledby="draw-admin-paste-title">
+          <h3 class="draw-admin__section-title" id="draw-admin-paste-title">{{ 'adminDraw.paste.title' | t }}</h3>
+          <p class="draw-admin__field-hint" id="draw-admin-paste-hint">{{ ('adminDraw.paste.syntax.' + participationFormat()) | t }}</p>
+          <label class="draw-admin__sr-only" for="draw-admin-paste">{{ 'adminDraw.paste.label' | t }}</label>
+          <textarea id="draw-admin-paste" class="draw-admin__textarea" rows="6" [formControl]="pasteControl"
+            [placeholder]="('adminDraw.paste.placeholder.' + participationFormat()) | t"
+            aria-describedby="draw-admin-paste-hint"></textarea>
+          <div class="draw-admin__paste-actions">
+            <button type="button" class="draw-admin__secondary-btn" data-action="paste-check"
+              [disabled]="!pasteControl.value.trim() || hasResults()" (click)="checkPaste()">
+              {{ 'adminDraw.paste.check' | t }}
+            </button>
+            <button type="button" class="draw-admin__secondary-btn" data-action="paste-replace"
+              [disabled]="!canImportPaste()" (click)="importPaste('replace')">
+              {{ 'adminDraw.paste.replace' | t }}
+            </button>
+            <button type="button" class="draw-admin__secondary-btn" data-action="paste-append"
+              [disabled]="!canImportPaste()" (click)="importPaste('append')">
+              {{ 'adminDraw.paste.append' | t }}
+            </button>
+          </div>
+          @if (pasteResult(); as result) {
+            @if (result.issues.length > 0) {
+              <ul class="draw-admin__issues draw-admin__paste-issues" aria-live="polite">
+                @for (issue of result.issues; track $index) {
+                  <li>{{ issueText(issue, 'adminDraw.paste.linePrefix') }}</li>
+                }
+              </ul>
+            } @else {
+              <p class="draw-admin__field-hint" role="status">{{ 'adminDraw.paste.ready' | t }}</p>
+              <ol class="draw-admin__paste-preview">
+                @for (entry of result.entries; track $index) {
+                  <li>
+                    <span>{{ entry.displayName }}</span>
+                    @if (participationFormat() === 'team') {
+                      <span class="draw-admin__muted">({{ entry.members.join(', ') }})</span>
+                    }
+                    @if (entry.seedRank != null) {
+                      <span class="draw-admin__chip">{{ 'adminDraw.paste.seed' | t }} {{ entry.seedRank }}</span>
+                    }
+                    @if (entry.separationKey) {
+                      <span class="draw-admin__chip">{{ entry.separationKey }}</span>
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          }
+        </section>
+
+        <div formActions class="draw-admin__form-actions">
+          <app-async-button data-action="preview" [loading]="busyAction() === 'preview'" [disabled]="!canSubmit()" (clicked)="preview()">
+            {{ 'adminDraw.actions.preview' | t }}
+          </app-async-button>
+          @if (draw()) {
+            <app-async-button data-action="regenerate" variant="secondary" [loading]="busyAction() === 'regenerate'"
+              [disabled]="!canSubmit()" (clicked)="regenerate()">
+              {{ 'adminDraw.actions.regenerate' | t }}
+            </app-async-button>
+          }
+          <app-async-button data-action="save" variant="secondary" [loading]="busyAction() === 'save'" [disabled]="!canSubmit()" (clicked)="save()">
+            {{ 'adminDraw.actions.save' | t }}
+          </app-async-button>
+        </div>
+      </app-form-shell>
+
+      <!-- Business help for the form actions -->
+      <div class="draw-admin__hints">
+        @if (hasResults()) {
+          <p class="draw-admin__hint draw-admin__hint--warning" data-hint="results-lock">
+            <mat-icon aria-hidden="true">lock</mat-icon>{{ 'adminDraw.hints.resultsLock' | t }}
+          </p>
+        } @else if (issues().length > 0) {
+          <p class="draw-admin__hint" data-hint="fix-participants">{{ 'adminDraw.hints.fixParticipants' | t }}</p>
+        }
+        @if (drawStatus() === 'published') {
+          <p class="draw-admin__hint" data-hint="published-edit">{{ 'adminDraw.hints.publishedEdit' | t }}</p>
+        }
+        <p class="draw-admin__hint" data-hint="regenerate">{{ 'adminDraw.hints.regenerate' | t }}</p>
+      </div>
+
+      <!-- Draw state: publish / unpublish / delete -->
+      <section class="draw-admin__state" aria-labelledby="draw-admin-state-title">
+        <h2 class="draw-admin__section-title" id="draw-admin-state-title">{{ 'adminDraw.state.title' | t }}</h2>
+        <p class="draw-admin__hint">{{ ('adminDraw.state.description.' + drawStatus()) | t }}</p>
+        @if (draw()) {
+          <div class="draw-admin__state-actions">
+            @if (drawStatus() === 'published') {
+              <app-async-button data-action="unpublish" variant="secondary" [loading]="busyAction() === 'unpublish'"
+                [disabled]="isBusy()" (clicked)="unpublish()">
+                {{ 'adminDraw.actions.unpublish' | t }}
+              </app-async-button>
+            } @else {
+              <app-async-button data-action="publish" [loading]="busyAction() === 'publish'" [disabled]="!canPublish()" (clicked)="publish()">
+                {{ 'adminDraw.actions.publish' | t }}
+              </app-async-button>
+            }
+            <app-async-button data-action="delete" variant="danger" [disabled]="!canDelete()" (clicked)="requestDelete()">
+              {{ 'adminDraw.actions.delete' | t }}
+            </app-async-button>
+          </div>
+          @if (isPreview() && drawStatus() === 'draft') {
+            <p class="draw-admin__hint" data-hint="save-before-publish">{{ 'adminDraw.hints.saveBeforePublish' | t }}</p>
+          }
+          @if (drawStatus() === 'published') {
+            <p class="draw-admin__hint" data-hint="unpublish-to-delete">{{ 'adminDraw.hints.unpublishToDelete' | t }}</p>
+          } @else if (hasResults()) {
+            <p class="draw-admin__hint" data-hint="results-delete">{{ 'adminDraw.hints.resultsDelete' | t }}</p>
+          }
+        }
+        <p class="draw-admin__hint" data-hint="public-visibility">
+          <mat-icon aria-hidden="true">{{ planner.tournament()?.isPublic ? 'public' : 'lock' }}</mat-icon>
+          {{ (planner.tournament()?.isPublic ? 'adminDraw.hints.publicTournament' : 'adminDraw.hints.privateTournament') | t }}
+        </p>
+      </section>
+
+      @if (isGenerating()) {
+        <div class="draw-admin__progress">
+          <app-progress-bar
+            [progress]="progress()"
+            titleKey="adminDraw.progress.title"
+            [stageLabel]="progressStageKey() | t"
+            [showPercentage]="true" />
         </div>
       }
+
+      <!-- Generated draw -->
+      <section class="draw-admin__result" aria-labelledby="draw-admin-result-title">
+        <div class="draw-admin__section-header">
+          <h2 class="draw-admin__section-title" id="draw-admin-result-title">{{ 'adminDraw.result.title' | t }}</h2>
+          @if (isPreview()) {
+            <button type="button" class="draw-admin__secondary-btn" data-action="discard-preview" (click)="discardPreview()">
+              {{ 'adminDraw.actions.discardPreview' | t }}
+            </button>
+          }
+        </div>
+        @if (shownDraw(); as shown) {
+          <p class="draw-admin__result-label" [class.draw-admin__result-label--preview]="isPreview()">
+            {{ (isPreview() ? 'adminDraw.result.preview' : 'adminDraw.result.' + shown.status) | t }}
+          </p>
+          @if (conflicts().length > 0) {
+            <div class="draw-admin__conflicts" role="status">
+              <p class="draw-admin__conflicts-title">
+                <mat-icon aria-hidden="true">warning</mat-icon>{{ 'adminDraw.conflicts.title' | t }}
+              </p>
+              <ul>
+                @for (conflict of conflicts(); track $index) {
+                  <li><strong>{{ conflict.key }}</strong> — {{ conflict.names }} ({{ conflict.kindKey | t }})</li>
+                }
+              </ul>
+            </div>
+          }
+          <app-tournament-bracket [draw]="shown" />
+        } @else {
+          <app-empty-state message="adminDraw.result.empty" />
+        }
+      </section>
     </div>
   }
 
-  <!-- Delete Confirmation Dialog -->
   @if (showDeleteConfirm()) {
     <app-confirm-dialog
-      titleKey="planner.drafts.deleteTitle"
-      messageKey="planner.drafts.deleteMessage"
-      warningKey="planner.drafts.deleteWarning"
-      confirmLabelKey="common.delete"
+      titleKey="adminDraw.delete.title"
+      messageKey="adminDraw.delete.message"
+      warningKey="adminDraw.delete.warning"
+      confirmLabelKey="adminDraw.actions.delete"
       confirmVariant="danger"
-      [loading]="deletingDraft()"
+      [loading]="busyAction() === 'delete'"
       (confirmed)="confirmDelete()"
-      (cancelled)="cancelDelete()">
-    </app-confirm-dialog>
+      (cancelled)="cancelDelete()" />
   }
 </div>
