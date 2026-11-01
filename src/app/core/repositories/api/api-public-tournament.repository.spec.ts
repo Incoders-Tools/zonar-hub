@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../../config/api-base-url.token';
 import { PUBLIC_REQUEST } from '../../http/public-request.context';
 import { ActiveOrganizationService } from '../../services/active-organization.service';
 import { buildPublicTournament } from '../../models/public-tournament.testing';
+import { buildKnockoutDraw } from '../../models/tournament-draw.testing';
 import { ApiPublicTournamentRepository } from './api-public-tournament.repository';
 
 describe('ApiPublicTournamentRepository', () => {
@@ -107,6 +108,60 @@ describe('ApiPublicTournamentRepository', () => {
     http.expectOne('/api/public/tournaments').flush(null, { status: 503, statusText: 'Service Unavailable' });
 
     await expectAsync(result).toBeRejectedWithError('common.networkUnavailable');
+  });
+
+  describe('getDraw', () => {
+    it('loads the published draw from GET /api/public/tournaments/{slug}/draw as a public request', async () => {
+      const result = repository.getDraw('copa verano/ñ');
+
+      const request = http.expectOne('/api/public/tournaments/copa%20verano%2F%C3%B1/draw');
+      expect(request.request.method).toBe('GET');
+      expect(request.request.context.get(PUBLIC_REQUEST)).toBeTrue();
+      expect(request.request.withCredentials).toBeFalse();
+      expect(request.request.headers.has('X-Organization-Id')).toBeFalse();
+      request.flush({ ...buildKnockoutDraw(4), status: 'published' });
+
+      const draw = await result;
+      expect(draw?.status).toBe('published');
+      expect(draw?.phases[0].kind).toBe('knockout');
+      expect(activeOrganizationReads).toBe(0);
+    });
+
+    it('normalises the draw enums and optional collections', async () => {
+      const raw = buildKnockoutDraw(2) as unknown as Record<string, unknown>;
+      const result = repository.getDraw('open-norte-abc123');
+
+      http.expectOne('/api/public/tournaments/open-norte-abc123/draw').flush({
+        ...raw,
+        format: 'SingleElimination',
+        separationConflicts: undefined
+      });
+
+      const draw = await result;
+      expect(draw?.format).toBe('singleElimination');
+      expect(draw?.separationConflicts).toEqual([]);
+    });
+
+    for (const code of ['public_draws.not_found', 'public_tournaments.not_found']) {
+      it(`resolves to null when the API answers 404 ${code}`, async () => {
+        const result = repository.getDraw('open-norte-abc123');
+
+        http.expectOne('/api/public/tournaments/open-norte-abc123/draw').flush(
+          { code, detail: `${code.split('.')[0]}.errors.not_found` },
+          { status: 404, statusText: 'Not Found' }
+        );
+
+        expect(await result).toBeNull();
+      });
+    }
+
+    it('rejects other failures with the translated error key', async () => {
+      const result = repository.getDraw('open-norte-abc123');
+
+      http.expectOne('/api/public/tournaments/open-norte-abc123/draw').flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+      await expectAsync(result).toBeRejectedWithError('common.networkUnavailable');
+    });
   });
 
   it('rejects a server error on the detail route instead of reporting not found', async () => {

@@ -1,31 +1,21 @@
 <div class="public-draw">
-  @if (tournament() && detailPath()) {
-    <a [routerLink]="detailPath()" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
+  <header class="public-draw__header">
+    @if (detailPath(); as path) {
+      <a [routerLink]="path" class="public-draw__back">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        {{ 'tournaments.backToDetail' | t }}
+      </a>
+    }
     <h1>{{ 'draw.title' | t }}</h1>
-    <p class="subtitle">{{ tournament()!.name }}</p>
-  }
+    @if (tournament(); as t) {
+      <p class="public-draw__subtitle">{{ t.name }}</p>
+    }
+  </header>
 
-  @if (loading()) {
-    <div class="loading"><span class="spinner"></span> {{ 'states.loading' | t }}</div>
-  } @else if (!drawResult()) {
-    <div class="empty">{{ 'draw.notPublished' | t }}</div>
-  } @else {
-    <div class="zones">
-      @for (zone of drawResult()!.zones; track zone.zoneName) {
-        <div class="zone-card">
-          <h3 class="zone-card__title">{{ zone.zoneName }}</h3>
-          <ul class="zone-card__pairs">
-            @for (pair of zone.pairs; track pair.registrationId) {
-              <li>
-                <span class="pair-label">{{ pair.player1Name }} & {{ pair.player2Name }}</span>
-                <span class="pair-seed" [class.seeded]="!!pair.seedPosition">
-                  @if (pair.seedPosition) { ★ }
-                </span>
-              </li>
-            }
-          </ul>
-        </div>
-      }
+  <app-public-draw-panel>
+    <div class="public-draw__empty" role="status">
+      <mat-icon class="public-draw__empty-icon" aria-hidden="true">account_tree</mat-icon>
+      <p>{{ 'draw.notPublished' | t }}</p>
     </div>
-  }
+  </app-public-draw-panel>
 </div>

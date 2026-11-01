@@ -9,7 +9,6 @@ export * from './tournament-status.model';
 export * from './tournament-admin.model';
 export * from './catalog.model';
 export * from './content.model';
-export * from './draw-planner.model';
 export * from './operational.model';
 export * from './bracket.model';
 export * from './app-log.model';

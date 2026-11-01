@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { buildPublicTournament } from '../models/public-tournament.testing';
+import { buildKnockoutDraw } from '../models/tournament-draw.testing';
 import { ApiPublicTournamentRepository } from '../repositories/api/api-public-tournament.repository';
 import { ApiTournamentAdminRepository } from '../repositories/api/api-tournament-admin.repository';
 import { PublicTournamentService } from './public-tournament.service';
@@ -10,7 +11,7 @@ describe('PublicTournamentService', () => {
   let service: PublicTournamentService;
 
   beforeEach(() => {
-    repository = jasmine.createSpyObj<ApiPublicTournamentRepository>('ApiPublicTournamentRepository', ['getAll', 'getBySlug']);
+    repository = jasmine.createSpyObj<ApiPublicTournamentRepository>('ApiPublicTournamentRepository', ['getAll', 'getBySlug', 'getDraw']);
     TestBed.configureTestingModule({
       providers: [{ provide: ApiPublicTournamentRepository, useValue: repository }]
     });
@@ -57,6 +58,15 @@ describe('PublicTournamentService', () => {
 
     expect(await service.getBySlug('open-norte-abc123')).toEqual(tournament);
     expect(await service.getBySlug('missing')).toBeNull();
+  });
+
+  it('returns the published draw of a slug, or null when there is none', async () => {
+    const draw = buildKnockoutDraw(4);
+    repository.getDraw.withArgs('open-norte-abc123').and.resolveTo(draw);
+    repository.getDraw.withArgs('missing').and.resolveTo(null);
+
+    expect(await service.getDraw('open-norte-abc123')).toEqual(draw);
+    expect(await service.getDraw('missing')).toBeNull();
   });
 
   it('propagates detail failures so the page can offer a retry', async () => {

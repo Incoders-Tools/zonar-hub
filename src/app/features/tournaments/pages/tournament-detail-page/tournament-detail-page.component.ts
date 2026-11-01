@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -14,6 +14,8 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { SportIconComponent } from '../../../../shared/components/sport-icon/sport-icon.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { PublicOrganizationCardComponent } from '../../../../shared/components/public-organization-card/public-organization-card.component';
+import { PublicDrawLiveService } from '../../../../core/services/public-draw-live.service';
+import { PublicDrawPanelComponent } from '../../components/public-draw-panel/public-draw-panel.component';
 
 export type TournamentTab = 'bracket' | 'results' | 'participants';
 
@@ -28,16 +30,18 @@ interface TournamentTabDefinition {
 
 /**
  * Public tournament detail resolved by its share slug (`/tournaments/:slug`).
- * The draw, live results and participants are not public yet (phase 2), so each tab shows a
- * translated coming-soon state instead of placeholder data.
+ * Once the tournament is loaded, its published draw is kept live by the page-scoped `PublicDrawLiveService`
+ * (D10, S5): the draw tab shows the bracket and the results tab its list view. Without a published draw, and on
+ * the participants tab (not public yet), a translated coming-soon state is shown instead of placeholder data.
  */
 @Component({
   selector: 'app-tournament-detail-page',
   standalone: true,
   imports: [
-    RouterLink, MatIcon, DecimalPipe, TranslatePipe, FormatDatePipe, LoadingStateComponent, ErrorStateComponent,
-    SportIconComponent, StatusBadgeComponent, PublicOrganizationCardComponent
+    RouterLink, MatIcon, DecimalPipe, NgTemplateOutlet, TranslatePipe, FormatDatePipe, LoadingStateComponent, ErrorStateComponent,
+    SportIconComponent, StatusBadgeComponent, PublicOrganizationCardComponent, PublicDrawPanelComponent
   ],
+  providers: [PublicDrawLiveService],
   templateUrl: './tournament-detail-page.component.html',
   styleUrl: './tournament-detail-page.component.scss'
 })
@@ -46,6 +50,7 @@ export class TournamentDetailPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(I18nService);
   private readonly publicTournaments = inject(PublicTournamentService);
+  private readonly liveDraw = inject(PublicDrawLiveService);
   private slug = '';
   private requestId = 0;
 
@@ -62,6 +67,8 @@ export class TournamentDetailPageComponent implements OnInit {
   ];
 
   readonly activeTabDefinition = computed(() => this.tabs.find(tab => tab.id === this.activeTab()) ?? this.tabs[0]);
+  /** The draw and results tabs show the published draw; participants are not public yet. */
+  readonly showsDraw = computed(() => this.activeTab() !== 'participants');
 
   readonly statusName = computed(() => {
     const status = this.tournament()?.status;
@@ -77,6 +84,7 @@ export class TournamentDetailPageComponent implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.slug = params.get('slug') ?? '';
+      this.liveDraw.stop();
       void this.load();
     });
   }
@@ -89,6 +97,9 @@ export class TournamentDetailPageComponent implements OnInit {
       if (requestId !== this.requestId) return;
       this.tournament.set(tournament);
       this.state.set(tournament ? 'loaded' : 'notFound');
+      if (tournament) {
+        this.liveDraw.start(this.slug);
+      }
     } catch (error) {
       if (requestId !== this.requestId) return;
       this.tournament.set(null);
