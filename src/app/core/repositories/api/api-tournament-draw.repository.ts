@@ -16,7 +16,10 @@ import { extractApiErrorCode } from './api-error.util';
  * Failures reject with an `Error` whose message is a translation key (`drawErrorKey`).
  */
 
-/** Draw engine and result codes the API returns in the problem `code` (domain `DrawErrors` / `MatchResultErrors`). */
+/**
+ * Codes the API returns in the problem `code`: draw engine (`DrawErrors`), use cases (`TournamentDrawErrors`) and
+ * results (`MatchResultErrors`).
+ */
 const KNOWN_DRAW_CODES = new Set([
   'draws.participants_min',
   'draws.participants_max',
@@ -40,6 +43,8 @@ const KNOWN_DRAW_CODES = new Set([
   'draws.knockout_min_qualifiers',
   'draws.results_exist',
   'draws.not_found',
+  'draws.not_draft',
+  'draws.invalid_seed',
   'draws.results.invalid_set',
   'draws.results.invalid_super_tiebreak',
   'draws.results.incomplete_score',

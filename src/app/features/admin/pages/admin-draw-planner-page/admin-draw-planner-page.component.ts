@@ -16,18 +16,22 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { TournamentBracketComponent } from '../../../../shared/components/tournament-bracket/tournament-bracket.component';
+import { MatchResultDialogComponent } from './match-result-dialog/match-result-dialog.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { DrawPlannerService } from '../../../../core/services/draw-planner.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import {
   DrawFormat,
+  DrawMatch,
   DrawParticipationFormat,
   DrawRandomizationMode,
   Tournament,
   TournamentDraw,
+  TournamentDrawMatchResultRequest,
   TournamentDrawRequest
 } from '../../../../core/models';
+import { matchResultAvailability } from '../../../../core/services/match-result-rules';
 import {
   DRAW_MAX_PARTICIPANTS,
   DRAW_MIN_PARTICIPANTS,
@@ -112,7 +116,8 @@ function participationFormatFor(tournament: Tournament | null): DrawParticipatio
     ErrorStateComponent,
     EmptyStateComponent,
     StatusBadgeComponent,
-    TournamentBracketComponent
+    TournamentBracketComponent,
+    MatchResultDialogComponent
   ],
   providers: [DrawPlannerService],
   templateUrl: './admin-draw-planner-page.component.html',
@@ -155,6 +160,11 @@ export class AdminDrawPlannerPageComponent {
   readonly showDeleteConfirm = signal(false);
   readonly pasteResult = signal<DrawParticipantPasteResult | null>(null);
   readonly progress = signal(0);
+  /** Match whose result dialog is open (F3). */
+  readonly resultMatch = signal<DrawMatch | null>(null);
+  readonly resultSaving = signal(false);
+  /** Translation key of the last result save failure, shown inside the dialog. */
+  readonly resultErrorKey = signal<string | null>(null);
   private progressTimer: ReturnType<typeof setInterval> | null = null;
 
   /** Raw form value as a signal, so the computed state below follows every edit. */
@@ -186,6 +196,8 @@ export class AdminDrawPlannerPageComponent {
     this.drawStatus() === 'draft' && !this.isPreview() && !this.isBusy());
   readonly canDelete = computed(() =>
     this.drawStatus() === 'draft' && !this.hasResults() && !this.isBusy());
+  /** Results are entered on the saved draw only, never on an unsaved preview. */
+  readonly canEnterResults = computed(() => this.draw() != null && !this.isPreview());
 
   readonly participantColumns = computed<ChildGridColumn[]>(() => {
     const seed: ChildGridColumn = { key: 'seedRank', labelKey: 'adminDraw.participants.columns.seed', type: 'number', width: '8rem' };
@@ -255,6 +267,17 @@ export class AdminDrawPlannerPageComponent {
     },
     { titleKey: 'adminDraw.help.states.title', contentKey: 'adminDraw.help.states.content' },
     { titleKey: 'adminDraw.help.results.title', contentKey: 'adminDraw.help.results.content' },
+    {
+      titleKey: 'adminDraw.help.resultEntry.title',
+      items: [
+        'adminDraw.help.resultEntry.open',
+        'adminDraw.help.resultEntry.sets',
+        'adminDraw.help.resultEntry.superTiebreak',
+        'adminDraw.help.resultEntry.statuses',
+        'adminDraw.help.resultEntry.lock',
+        'adminDraw.help.resultEntry.clear'
+      ]
+    },
     { titleKey: 'adminDraw.help.visibility.title', contentKey: 'adminDraw.help.visibility.content' }
   ];
 
@@ -387,6 +410,49 @@ export class AdminDrawPlannerPageComponent {
 
   discardPreview(): void {
     this.planner.discardPreview();
+  }
+
+  /** Opens the result dialog for a match with both participants known; otherwise explains why it cannot. */
+  openResult(match: DrawMatch): void {
+    if (!this.canEnterResults() || this.resultSaving()) return;
+    const availability = matchResultAvailability(match);
+    if (availability !== 'available') {
+      this.notifications.warning(`draws.errors.results.${availability}`);
+      return;
+    }
+    this.resultErrorKey.set(null);
+    this.resultMatch.set(match);
+  }
+
+  closeResult(): void {
+    if (this.resultSaving()) return;
+    this.resultMatch.set(null);
+    this.resultErrorKey.set(null);
+  }
+
+  saveResult(body: TournamentDrawMatchResultRequest): Promise<void> {
+    return this.recordResult(body, 'adminDraw.resultDialog.messages.saved');
+  }
+
+  clearResult(body: TournamentDrawMatchResultRequest): Promise<void> {
+    return this.recordResult(body, 'adminDraw.resultDialog.messages.cleared');
+  }
+
+  /** Saves through the planner, which replaces the stored draw with the re-resolved response (bracket refresh). */
+  private async recordResult(body: TournamentDrawMatchResultRequest, successKey: string): Promise<void> {
+    const match = this.resultMatch();
+    if (!match || this.resultSaving()) return;
+    this.resultSaving.set(true);
+    this.resultErrorKey.set(null);
+    try {
+      await this.planner.saveMatchResult(match.id, body);
+      this.resultMatch.set(null);
+      this.notifications.success(successKey);
+    } catch (error) {
+      this.resultErrorKey.set(error instanceof Error ? error.message : 'common.unexpectedError');
+    } finally {
+      this.resultSaving.set(false);
+    }
   }
 
   isFieldInvalid(name: 'seed' | 'legs' | 'groupCount' | 'groupSize' | 'qualifiersPerGroup'): boolean {

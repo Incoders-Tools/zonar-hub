@@ -76,10 +76,16 @@ describe('tournament draw enum normalisation', () => {
     expect(normalizeTournamentDraw(buildKnockoutDraw(2)).randomizationMode).toBeNull();
   });
 
-  it('reports results only when a match has a stored result', () => {
+  it('reports results only when a match has started or been decided, like the API (scheduled rows do not count)', () => {
     expect(tournamentDrawHasResults(null)).toBeFalse();
     expect(tournamentDrawHasResults(buildKnockoutDraw(4))).toBeFalse();
     expect(tournamentDrawHasResults(buildEightPairKnockoutDraw())).toBeTrue();
+    const scheduledOnly = withResults(buildKnockoutDraw(4), {
+      'KO-R1-M1': buildMatchResult({ status: 'scheduled', courtName: 'Central', scheduledAt: '2026-11-20T10:00:00Z' })
+    });
+    expect(tournamentDrawHasResults(scheduledOnly)).toBeFalse();
+    const started = withResults(buildKnockoutDraw(4), { 'KO-R1-M1': buildMatchResult({ status: 'inProgress' }) });
+    expect(tournamentDrawHasResults(started)).toBeTrue();
   });
 
   it('drops phases of an unknown kind', () => {

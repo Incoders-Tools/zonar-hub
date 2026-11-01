@@ -12,8 +12,13 @@ import { Tournament, TournamentDraw, TournamentDrawRequest } from '../../../../c
 import {
   buildDrawParticipants,
   buildEightPairKnockoutDraw,
-  buildKnockoutDraw
+  buildKnockoutDraw,
+  buildMatchResult,
+  sets,
+  withResults
 } from '../../../../core/models/tournament-draw.testing';
+import { TournamentBracketComponent } from '../../../../shared/components/tournament-bracket/tournament-bracket.component';
+import { By } from '@angular/platform-browser';
 
 const tournament = {
   id: 't-1', organizationId: 'org-1', name: 'Copa Verano', complexId: 'c-1', complexName: 'Arena', categoryId: '',
@@ -361,5 +366,128 @@ describe('AdminDrawPlannerPageComponent', () => {
     await click('preview');
 
     expect(lastRequest(drawRepo.preview).participants.map(participant => participant.id)).toEqual(['x0', 'x1']);
+  });
+
+  describe('result entry (F3)', () => {
+    function matchCard(id: string): HTMLButtonElement | null {
+      return element.querySelector(`.draw-admin__result button[data-match-id="${id}"]`);
+    }
+
+    function showList(): void {
+      (element.querySelectorAll('.draw-admin__result .draw-view__mode-btn')[1] as HTMLButtonElement).click();
+      fixture.detectChanges();
+    }
+
+    function selectMatch(id: string): void {
+      const bracket = fixture.debugElement.query(By.directive(TournamentBracketComponent)).componentInstance as TournamentBracketComponent;
+      const match = draftWithResults().phases.flatMap(phase => phase.rounds.flatMap(round => round.matches)).find(item => item.id === id)!;
+      bracket.matchSelected.emit(match);
+      fixture.detectChanges();
+    }
+
+    it('opens the result dialog when a resolvable match of the saved draw is activated', async () => {
+      drawRepo.get.and.resolveTo(draftWithResults());
+      await render();
+
+      matchCard('KO-R1-M1')!.click();
+      fixture.detectChanges();
+
+      expect(element.querySelector('app-match-result-dialog')).not.toBeNull();
+      expect(element.querySelector('[data-hint="result-entry"]')).not.toBeNull();
+    });
+
+    it('explains why a match without both participants cannot take a result', async () => {
+      drawRepo.get.and.resolveTo(draftWithResults());
+      await render();
+
+      selectMatch('KO-R2-M2');
+
+      expect(element.querySelector('app-match-result-dialog')).toBeNull();
+      expect(notifications.warning).toHaveBeenCalledWith('draws.errors.results.participants_pending');
+    });
+
+    it('does not offer result entry on an unsaved preview', async () => {
+      drawRepo.preview.and.resolveTo(draftDraw());
+      await render();
+      fillPairs([['Ana', 'Bea'], ['Caro', 'Dani']]);
+      await click('preview');
+
+      matchCard('KO-R1-M1')!.click();
+      fixture.detectChanges();
+      expect(element.querySelector('app-match-result-dialog')).toBeNull();
+      expect(element.querySelector('[data-hint="result-entry-preview"]')).not.toBeNull();
+      expect(element.querySelector('[data-hint="result-entry"]')).toBeNull();
+    });
+
+    it('saves the result and refreshes the bracket from the response (the winner reaches the next match)', async () => {
+      const draw = withResults(draftDraw(), {});
+      drawRepo.get.and.resolveTo(draw);
+      const response = withResults(draw, {
+        'KO-R1-M1': buildMatchResult({ status: 'completed', sets: sets([6, 4], [6, 3]), winnerSide: 'home' })
+      });
+      drawRepo.saveMatchResult.and.resolveTo(response);
+      await render();
+
+      matchCard('KO-R1-M1')!.click();
+      fixture.detectChanges();
+      const dialog = element.querySelector('app-match-result-dialog')!;
+      (dialog.querySelector('[data-field="status"] input[value="walkover"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+      (dialog.querySelector('[data-field="winner"] input[value="home"]') as HTMLInputElement).click();
+      fixture.detectChanges();
+      (dialog.querySelector('[data-action="save-result"] button') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(drawRepo.saveMatchResult).toHaveBeenCalledOnceWith('t-1', 'KO-R1-M1', {
+        status: 'walkover', sets: [], winnerSide: 'home', courtName: null, scheduledAt: null, startedAt: null, finishedAt: null
+      });
+      expect(element.querySelector('app-match-result-dialog')).toBeNull();
+      expect(notifications.success).toHaveBeenCalledWith('adminDraw.resultDialog.messages.saved');
+      showList();
+      const final = element.querySelector('.draw-admin__result [data-match-id="KO-R2-M1"]')!;
+      const winnerName = draw.participants[0].members[0].split(' ').pop()!.toUpperCase();
+      expect(final.textContent).toContain(winnerName);
+    });
+
+    it('keeps the dialog open with the translated API error when saving fails', async () => {
+      drawRepo.get.and.resolveTo(draftWithResults());
+      drawRepo.saveMatchResult.and.rejectWith(new Error('draws.errors.results.locked_by_next_match'));
+      await render();
+
+      matchCard('KO-R1-M1')!.click();
+      fixture.detectChanges();
+      (element.querySelector('#match-result-court') as HTMLInputElement).value = 'Central';
+      element.querySelector('#match-result-court')!.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      (element.querySelector('[data-action="save-result"] button') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(element.querySelector('app-match-result-dialog')).not.toBeNull();
+      expect(text('.match-result__api-error')).toBe('No se puede cambiar: el ganador ya jugó el partido siguiente.');
+    });
+
+    it('clears a result after confirmation and refreshes the draw', async () => {
+      const draw = draftWithResults();
+      drawRepo.get.and.resolveTo(draw);
+      drawRepo.saveMatchResult.and.resolveTo(withResults(draw, { 'KO-R1-M3': buildMatchResult({ status: 'scheduled', courtName: 'Cancha 3' }) }));
+      await render();
+
+      selectMatch('KO-R1-M3');
+      (element.querySelector('[data-action="clear-result"] button') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      (element.querySelector('app-match-result-dialog app-confirm-dialog app-async-button button') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(drawRepo.saveMatchResult).toHaveBeenCalledOnceWith('t-1', 'KO-R1-M3', {
+        status: 'scheduled', sets: [], winnerSide: null, courtName: 'Cancha 3', scheduledAt: null, startedAt: null, finishedAt: null
+      });
+      expect(notifications.success).toHaveBeenCalledWith('adminDraw.resultDialog.messages.cleared');
+      expect(element.querySelector('app-match-result-dialog')).toBeNull();
+    });
+
+    it('lists the result rules and the lock rule in the page help', async () => {
+      await render();
+      expect(component.helpSections.some(section => section.titleKey === 'adminDraw.help.resultEntry.title')).toBeTrue();
+    });
   });
 });

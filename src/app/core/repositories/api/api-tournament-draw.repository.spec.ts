@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../../config/api-base-url.token';
 import { TournamentDrawRequest } from '../../models/tournament-draw.model';
 import { buildKnockoutDraw } from '../../models/tournament-draw.testing';
 import { ApiTournamentDrawRepository } from './api-tournament-draw.repository';
+import { TRANSLATIONS } from '../../i18n/i18n.translations';
 
 const DRAW_URL = '/api/admin/tournaments/t-1/draw';
 
@@ -145,10 +146,42 @@ describe('ApiTournamentDrawRepository', () => {
 
     const call = http.expectOne(`${DRAW_URL}/matches/KO-R1-M1/result`);
     expect(call.request.method).toBe('PUT');
-    expect(call.request.body.winnerSide).toBe('home');
-    expect(call.request.body.sets[1].tiebreak).toEqual({ home: 7, away: 3 });
+    // Field names of the API `MatchResultBody` / `SetScoreBody` / `TiebreakScoreBody`.
+    expect(call.request.body).toEqual({
+      status: 'completed',
+      sets: [{ home: 6, away: 4 }, { home: 7, away: 6, tiebreak: { home: 7, away: 3 } }],
+      winnerSide: 'home',
+      courtName: 'Central',
+      scheduledAt: null,
+      startedAt: '2026-11-20T10:00:00Z',
+      finishedAt: '2026-11-20T11:20:00Z'
+    });
     call.flush(rawDraw());
     expect((await saved).format).toBe('singleElimination');
+  });
+
+  it('reads the API response fields: randomizationMode, options.scoring and an omitted separationConflicts', async () => {
+    const found = repository.get('t-1');
+    const body = {
+      ...rawDraw('published'),
+      randomizationMode: 'seeded',
+      options: { knockout: { thirdPlaceMatch: false }, roundRobin: null, groups: null, scoring: { bestOf: 3, thirdSetSuperTiebreak: false } }
+    };
+    delete (body as Record<string, unknown>)['separationConflicts'];
+    http.expectOne(DRAW_URL).flush(body);
+
+    const draw = await found;
+    expect(draw?.randomizationMode).toBe('seeded');
+    expect(draw?.options?.['scoring']).toEqual({ bestOf: 3, thirdSetSuperTiebreak: false });
+    expect(draw?.separationConflicts).toEqual([]);
+  });
+
+  it('maps a failed match result to the translated result key', async () => {
+    const saved = repository.saveMatchResult('t-1', 'KO-R2-M1', {
+      status: 'scheduled', sets: [], winnerSide: null, scheduledAt: null, startedAt: null, finishedAt: null
+    });
+    http.expectOne(`${DRAW_URL}/matches/KO-R2-M1/result`).flush(...problem('draws.results.participants_pending', 409));
+    await expectAsync(saved).toBeRejectedWithError('draws.errors.results.participants_pending');
   });
 
   describe('error keys', () => {
@@ -175,6 +208,33 @@ describe('ApiTournamentDrawRepository', () => {
 
     it('maps result codes to draws.errors.results', async () => {
       expect(await failingSave('draws.results.locked_by_next_match', 409)).toBe('draws.errors.results.locked_by_next_match');
+    });
+
+    it('maps every API result code (MatchResultErrors) to a key translated in es, en and pt', async () => {
+      const codes: Array<[string, number]> = [
+        ['invalid_status', 400], ['invalid_winner_side', 400], ['invalid_set', 400], ['invalid_super_tiebreak', 400],
+        ['too_many_sets', 400], ['incomplete_score', 400], ['score_decided', 400], ['winner_mismatch', 400],
+        ['winner_required', 400], ['winner_not_allowed', 400], ['sets_not_allowed_for_walkover', 400],
+        ['sets_not_allowed_for_scheduled', 400], ['invalid_times', 400], ['unknown_match', 404],
+        ['duplicate_result', 409], ['bye_match', 409], ['participants_pending', 409], ['locked_by_next_match', 409]
+      ];
+      for (const [name, status] of codes) {
+        const key = await failingSave(`draws.results.${name}`, status);
+        expect(key).toBe(`draws.errors.results.${name}`);
+        for (const locale of ['es', 'en', 'pt'] as const) {
+          expect(TRANSLATIONS[locale][key]).withContext(`${locale} ${key}`).toBeTruthy();
+        }
+      }
+    });
+
+    it('maps the API use-case codes invalid_seed and not_draft (TournamentDrawErrors)', async () => {
+      expect(await failingSave('draws.invalid_seed', 400)).toBe('draws.errors.invalid_seed');
+      expect(await failingSave('draws.not_draft', 409)).toBe('draws.errors.not_draft');
+      for (const key of ['draws.errors.invalid_seed', 'draws.errors.not_draft']) {
+        for (const locale of ['es', 'en', 'pt'] as const) {
+          expect(TRANSLATIONS[locale][key]).withContext(`${locale} ${key}`).toBeTruthy();
+        }
+      }
     });
 
     it('maps the tenant refusal to its translated key', async () => {

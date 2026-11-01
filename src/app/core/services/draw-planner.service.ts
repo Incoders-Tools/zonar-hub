@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Tournament, TournamentDraw, TournamentDrawRequest, tournamentDrawHasResults } from '../models';
+import { Tournament, TournamentDraw, TournamentDrawMatchResultRequest, TournamentDrawRequest, tournamentDrawHasResults } from '../models';
 import { ApiTournamentAdminRepository } from '../repositories/api/api-tournament-admin.repository';
 import { ApiTournamentDrawRepository } from '../repositories/api/api-tournament-draw.repository';
 
@@ -85,6 +85,13 @@ export class DrawPlannerService {
     await this.drawRepository.delete(this.requireTournamentId());
     this.drawState.set(null);
     this.previewState.set(null);
+  }
+
+  /** Records, replaces or clears one match result (F3); the stored draw becomes the re-resolved draw of the API. */
+  async saveMatchResult(matchId: string, result: TournamentDrawMatchResultRequest): Promise<TournamentDraw> {
+    const draw = await this.drawRepository.saveMatchResult(this.requireTournamentId(), matchId, result);
+    this.drawState.set(draw);
+    return draw;
   }
 
   discardPreview(): void {

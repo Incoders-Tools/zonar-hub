@@ -338,12 +338,32 @@
               </ul>
             </div>
           }
-          <app-tournament-bracket [draw]="shown" />
+          @if (canEnterResults()) {
+            <p class="draw-admin__hint" data-hint="result-entry">
+              <mat-icon aria-hidden="true">scoreboard</mat-icon>{{ 'adminDraw.hints.resultEntry' | t }}
+            </p>
+          } @else if (isPreview()) {
+            <p class="draw-admin__hint" data-hint="result-entry-preview">{{ 'adminDraw.hints.resultEntryPreview' | t }}</p>
+          }
+          <app-tournament-bracket [draw]="shown" [interactive]="canEnterResults()" (matchSelected)="openResult($event)" />
         } @else {
           <app-empty-state message="adminDraw.result.empty" />
         }
       </section>
     </div>
+  }
+
+  @if (resultMatch(); as match) {
+    @if (draw(); as savedDraw) {
+      <app-match-result-dialog
+        [draw]="savedDraw"
+        [match]="match"
+        [saving]="resultSaving()"
+        [errorKey]="resultErrorKey()"
+        (submitted)="saveResult($event)"
+        (cleared)="clearResult($event)"
+        (cancelled)="closeResult()" />
+    }
   }
 
   @if (showDeleteConfirm()) {

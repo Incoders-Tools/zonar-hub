@@ -1,0 +1,141 @@
+<div class="match-result__overlay" (click)="cancel()">
+  <div class="match-result__panel" role="dialog" aria-modal="true" [attr.aria-labelledby]="idPrefix + '-versus'"
+    (click)="$event.stopPropagation()" (keydown.escape)="cancel()">
+    <app-form-shell titleKey="adminDraw.resultDialog.title">
+      <p class="match-result__versus" [id]="idPrefix + '-versus'">
+        <span class="match-result__name">{{ homeName() }}</span>
+        <span class="match-result__vs">{{ 'adminDraw.resultDialog.versus' | t }}</span>
+        <span class="match-result__name">{{ awayName() }}</span>
+      </p>
+
+      @if (locked()) {
+        <p class="match-result__hint match-result__hint--warning" data-hint="result-locked">
+          <mat-icon aria-hidden="true">lock</mat-icon>{{ 'adminDraw.resultDialog.lockedHint' | t }}
+        </p>
+      }
+
+      <form class="match-result__form" [formGroup]="form" (ngSubmit)="submit()">
+        <fieldset class="match-result__fieldset" data-field="status">
+          <legend>{{ 'adminDraw.resultDialog.fields.status' | t }}</legend>
+          <div class="match-result__choices">
+            @for (option of statuses; track option) {
+              <label class="match-result__choice" [class.match-result__choice--active]="status() === option">
+                <input type="radio" formControlName="status" [value]="option" [attr.value]="option" />
+                {{ ('bracket.status.' + option) | t }}
+              </label>
+            }
+          </div>
+          <p class="match-result__field-hint" data-hint="status">{{ ('adminDraw.resultDialog.statusHint.' + status()) | t }}</p>
+        </fieldset>
+
+        @if (needsWinner()) {
+          <fieldset class="match-result__fieldset" data-field="winner">
+            <legend>{{ 'adminDraw.resultDialog.fields.winner' | t }} *</legend>
+            <div class="match-result__choices">
+              <label class="match-result__choice" [class.match-result__choice--active]="form.controls.winnerSide.value === 'home'">
+                <input type="radio" formControlName="winnerSide" value="home" />
+                {{ homeName() }}
+              </label>
+              <label class="match-result__choice" [class.match-result__choice--active]="form.controls.winnerSide.value === 'away'">
+                <input type="radio" formControlName="winnerSide" value="away" />
+                {{ awayName() }}
+              </label>
+            </div>
+          </fieldset>
+        }
+
+        @if (allowsSets()) {
+          <fieldset class="match-result__fieldset" data-field="sets" formArrayName="sets">
+            <legend>{{ 'adminDraw.resultDialog.fields.sets' | t }}</legend>
+            <p class="match-result__field-hint">{{ 'adminDraw.resultDialog.rulesHint' | t }}</p>
+            @if (rules().thirdSetSuperTiebreak) {
+              <p class="match-result__field-hint">{{ 'adminDraw.resultDialog.superTiebreakHint' | t }}</p>
+            }
+            <div class="match-result__sets">
+              <span class="match-result__sets-head" aria-hidden="true"></span>
+              <span class="match-result__sets-head" aria-hidden="true">{{ homeName() }}</span>
+              <span class="match-result__sets-head" aria-hidden="true">{{ awayName() }}</span>
+              @for (row of setRows; track $index; let index = $index) {
+                <div class="match-result__set" [attr.data-set]="index" [formGroupName]="index">
+                  <span class="match-result__set-label">{{ setLabel(index) }}</span>
+                  <input class="match-result__number" type="number" min="0" inputmode="numeric" formControlName="home"
+                    data-side="home" [attr.aria-label]="inputLabel(index, 'home')" />
+                  <input class="match-result__number" type="number" min="0" inputmode="numeric" formControlName="away"
+                    data-side="away" [attr.aria-label]="inputLabel(index, 'away')" />
+                  @if (showsTiebreak(index)) {
+                    <span class="match-result__set-label match-result__set-label--tiebreak">{{ 'adminDraw.resultDialog.fields.tiebreak' | t }}</span>
+                    <input class="match-result__number" type="number" min="0" inputmode="numeric" formControlName="tiebreakHome"
+                      data-tiebreak="home" [attr.aria-label]="inputLabel(index, 'home', true)" />
+                    <input class="match-result__number" type="number" min="0" inputmode="numeric" formControlName="tiebreakAway"
+                      data-tiebreak="away" [attr.aria-label]="inputLabel(index, 'away', true)" />
+                  }
+                </div>
+              }
+            </div>
+          </fieldset>
+        }
+
+        <div class="match-result__grid">
+          <div class="match-result__field">
+            <label for="match-result-court">{{ 'adminDraw.resultDialog.fields.courtName' | t }}</label>
+            <input id="match-result-court" type="text" autocomplete="off" formControlName="courtName"
+              [placeholder]="'adminDraw.resultDialog.fields.courtPlaceholder' | t" />
+          </div>
+          <div class="match-result__field">
+            <label for="match-result-scheduled">{{ 'adminDraw.resultDialog.fields.scheduledAt' | t }}</label>
+            <input id="match-result-scheduled" type="datetime-local" formControlName="scheduledAt" />
+          </div>
+          <div class="match-result__field">
+            <label for="match-result-started">{{ 'adminDraw.resultDialog.fields.startedAt' | t }}</label>
+            <input id="match-result-started" type="datetime-local" formControlName="startedAt" />
+          </div>
+          <div class="match-result__field">
+            <label for="match-result-finished">{{ 'adminDraw.resultDialog.fields.finishedAt' | t }}</label>
+            <input id="match-result-finished" type="datetime-local" formControlName="finishedAt" [attr.min]="startedAt()"
+              aria-describedby="match-result-finished-hint" />
+            <span class="match-result__field-hint" id="match-result-finished-hint">{{ 'adminDraw.resultDialog.fields.finishedHint' | t }}</span>
+          </div>
+        </div>
+
+        <div class="match-result__messages" aria-live="polite">
+          @if (issueText()) {
+            <p class="match-result__issue">{{ issueText() }}</p>
+          }
+        </div>
+        @if (errorKey(); as key) {
+          <p class="match-result__api-error" role="alert">{{ key | t }}</p>
+        }
+      </form>
+
+      <div formActions class="match-result__actions">
+        @if (canClear()) {
+          <app-async-button class="match-result__clear" data-action="clear-result" variant="danger"
+            [disabled]="locked() || saving()" (clicked)="requestClear()">
+            {{ 'adminDraw.resultDialog.actions.clear' | t }}
+          </app-async-button>
+        }
+        <button type="button" class="match-result__cancel" data-action="cancel-result" [disabled]="saving()" (click)="cancel()">
+          {{ 'common.cancel' | t }}
+        </button>
+        <app-async-button data-action="save-result" [loading]="saving()" [disabled]="!canSubmit()" (clicked)="submit()">
+          {{ 'adminDraw.resultDialog.actions.save' | t }}
+        </app-async-button>
+      </div>
+      @if (issue() && !saving()) {
+        <p class="match-result__field-hint" data-hint="save-disabled">{{ 'adminDraw.resultDialog.disabledHint' | t }}</p>
+      }
+    </app-form-shell>
+  </div>
+</div>
+
+@if (showClearConfirm()) {
+  <app-confirm-dialog
+    titleKey="adminDraw.resultDialog.clear.title"
+    messageKey="adminDraw.resultDialog.clear.message"
+    warningKey="adminDraw.resultDialog.clear.warning"
+    confirmLabelKey="adminDraw.resultDialog.actions.clear"
+    confirmVariant="danger"
+    [loading]="saving()"
+    (confirmed)="confirmClear()"
+    (cancelled)="cancelClear()" />
+}

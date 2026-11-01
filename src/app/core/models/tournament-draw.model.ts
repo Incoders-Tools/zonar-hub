@@ -164,7 +164,10 @@ export interface TournamentDrawRequest {
   participants: TournamentDrawRequestParticipant[];
 }
 
-/** Body of `PUT matches/{matchId}/result` (D5); validated by the API (D3/D4). Used by result entry (F3). */
+/**
+ * Body of `PUT matches/{matchId}/result` (D5, API `MatchResultBody`); validated by the API (D3/D4). Times are ISO-8601
+ * with offset. Status `scheduled` without sets or winner clears the score (court and schedule kept). Used by F3.
+ */
 export interface TournamentDrawMatchResultRequest {
   status: DrawMatchStatus;
   sets: DrawSetScore[];
@@ -348,10 +351,11 @@ export function normalizeTournamentDraw(draw: TournamentDraw): TournamentDraw {
 }
 
 /**
- * True when any match carries a stored result (D1): the draw can then no longer be regenerated, replaced or
- * deleted. A result row in `scheduled` status (court or time only) counts too, matching the API check.
+ * True when any match has started or been decided (D1): the draw can then no longer be regenerated, replaced or
+ * deleted. A result row in `scheduled` status (court or time only, or a cleared result) does not count, matching
+ * the API check `TournamentDrawScope.HasResults`.
  */
 export function tournamentDrawHasResults(draw: TournamentDraw | null | undefined): boolean {
   return (draw?.phases ?? []).some(phase =>
-    phase.rounds.some(round => round.matches.some(match => match.result != null)));
+    phase.rounds.some(round => round.matches.some(match => match.result != null && match.result.status !== 'scheduled')));
 }
