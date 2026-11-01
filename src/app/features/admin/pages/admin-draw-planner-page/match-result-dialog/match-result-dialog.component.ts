@@ -6,9 +6,12 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { ConfirmDialogComponent } from '../../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FormShellComponent } from '../../../../../shared/components/form-shell/form-shell.component';
+import { ZhSelectComponent, ZhSelectOption } from '../../../../../shared/components/zh-select/zh-select.component';
 import { matchResultValidator } from '../../../../../shared/validators/match-result.validator';
 import { I18nService } from '../../../../../core/i18n/i18n.service';
+import { DrawCourtsStatus } from '../../../../../core/services/draw-planner.service';
 import {
+  DrawCourt,
   DrawMatch,
   DrawMatchStatus,
   DrawSide,
@@ -22,6 +25,7 @@ import {
   MatchResultFormValue,
   MatchResultIssue,
   MatchResultLock,
+  OTHER_COURT,
   clearMatchResultRequest,
   isMatchResultLocked,
   isSuperTiebreakSet,
@@ -47,13 +51,13 @@ let nextId = 0;
 
 /**
  * Result dialog of one draw match (F3, D3/D4): status, winner, sets (third set as super tie-break when the draw
- * options say so), court and times. Validates with the shared match result rules before emitting the D5 body;
+ * options say so), court (a listed court of the tournament or free text, D13) and times. Validates with the shared match result rules before emitting the D5 body;
  * the page saves it and passes back `saving` and the translated API `errorKey`.
  */
 @Component({
   selector: 'app-match-result-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule, MatIcon, TranslatePipe, AsyncButtonComponent, ConfirmDialogComponent, FormShellComponent],
+  imports: [ReactiveFormsModule, MatIcon, TranslatePipe, AsyncButtonComponent, ConfirmDialogComponent, FormShellComponent, ZhSelectComponent],
   templateUrl: './match-result-dialog.component.html',
   styleUrl: './match-result-dialog.component.scss'
 })
@@ -68,13 +72,19 @@ export class MatchResultDialogComponent implements OnInit {
   readonly saving = input(false);
   /** Translation key of the last API failure, shown inside the dialog. */
   readonly errorKey = input<string | null>(null);
+  /** Courts of the tournament (D13), loaded and cached by the page. */
+  readonly courts = input<DrawCourt[]>([]);
+  readonly courtsStatus = input<DrawCourtsStatus>('ready');
 
   readonly submitted = output<TournamentDrawMatchResultRequest>();
   readonly cleared = output<TournamentDrawMatchResultRequest>();
   readonly cancelled = output<void>();
+  /** The court list failed to load and the user asked to try again. */
+  readonly courtsRetried = output<void>();
 
   readonly idPrefix = `match-result-${nextId++}`;
   readonly statuses = STATUSES;
+  readonly otherCourt = OTHER_COURT;
 
   /** Read by the form validator: plain fields, set in `ngOnInit` once the inputs are known. */
   private rulesValue: DrawScoringRules = DEFAULT_SCORING_RULES;
@@ -84,6 +94,7 @@ export class MatchResultDialogComponent implements OnInit {
     status: new FormControl<DrawMatchStatus>('scheduled', { nonNullable: true }),
     winnerSide: new FormControl<DrawSide | null>(null),
     sets: new FormArray<SetRow>([]),
+    courtId: new FormControl('', { nonNullable: true }),
     courtName: new FormControl('', { nonNullable: true }),
     scheduledAt: new FormControl('', { nonNullable: true }),
     startedAt: new FormControl('', { nonNullable: true }),
@@ -100,6 +111,23 @@ export class MatchResultDialogComponent implements OnInit {
   readonly needsWinner = computed(() => statusRequiresWinner(this.status()));
   readonly allowsSets = computed(() => statusAllowsSets(this.status()));
   readonly startedAt = computed(() => this.value().startedAt || null);
+  /** "Other court" is chosen: the free-text court input shows. */
+  readonly showsCourtName = computed(() => this.value().courtId === OTHER_COURT);
+  readonly courtsLoading = computed(() => this.courtsStatus() === 'loading' || this.courtsStatus() === 'idle');
+
+  /**
+   * Listed courts, then the stored court when it is no longer listed (kept with its stored name so editing the
+   * result does not drop it), then "other court". The "no court" choice is the select placeholder.
+   */
+  readonly courtOptions = computed<ZhSelectOption[]>(() => {
+    const options: ZhSelectOption[] = this.courts().map(court => ({ value: court.id, label: court.name }));
+    const stored = this.match().result;
+    if (stored?.courtId && !options.some(option => option.value === stored.courtId)) {
+      options.push({ value: stored.courtId, label: stored.courtName || stored.courtId });
+    }
+    options.push({ value: OTHER_COURT, label: this.i18n.translate('adminDraw.resultDialog.courts.other') });
+    return options;
+  });
 
   readonly homeName = computed(() => this.participantName(this.match().home));
   readonly awayName = computed(() => this.participantName(this.match().away));
@@ -173,6 +201,10 @@ export class MatchResultDialogComponent implements OnInit {
 
   cancelClear(): void {
     this.showClearConfirm.set(false);
+  }
+
+  retryCourts(): void {
+    this.courtsRetried.emit();
   }
 
   cancel(): void {

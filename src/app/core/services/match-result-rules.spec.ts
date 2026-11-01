@@ -14,6 +14,7 @@ import {
   DEFAULT_SCORING_RULES,
   DrawScoringRules,
   MatchResultFormValue,
+  OTHER_COURT,
   clearMatchResultRequest,
   findDrawMatch,
   isMatchResultLocked,
@@ -50,6 +51,7 @@ function formValue(overrides: Partial<MatchResultFormValue> = {}): MatchResultFo
       { home: 6, away: 3, tiebreakHome: null, tiebreakAway: null },
       { home: null, away: null, tiebreakHome: null, tiebreakAway: null }
     ],
+    courtId: '',
     courtName: '',
     scheduledAt: '',
     startedAt: '',
@@ -234,6 +236,7 @@ describe('match-result-rules', () => {
           { home: 6, away: 7, tiebreakHome: 5, tiebreakAway: 7 },
           { home: 10, away: 8, tiebreakHome: null, tiebreakAway: null }
         ],
+        courtId: OTHER_COURT,
         courtName: '  Central ',
         scheduledAt: '2026-11-20T09:30',
         startedAt: '2026-11-20T10:00',
@@ -248,6 +251,38 @@ describe('match-result-rules', () => {
         startedAt: new Date('2026-11-20T10:00').toISOString(),
         finishedAt: new Date('2026-11-20T11:20').toISOString()
       });
+    });
+
+    it('sends the chosen court id without a name, the free text for another court and no court otherwise', () => {
+      const listed = toMatchResultRequest(formValue({ courtId: 'court-2', courtName: 'stale text' }), RULES);
+      expect(listed.courtId).toBe('court-2');
+      expect('courtName' in listed).toBeFalse();
+
+      const other = toMatchResultRequest(formValue({ courtId: OTHER_COURT, courtName: ' Club vecino ' }), RULES);
+      expect(other.courtName).toBe('Club vecino');
+      expect('courtId' in other).toBeFalse();
+      expect(toMatchResultRequest(formValue({ courtId: OTHER_COURT, courtName: '  ' }), RULES).courtName).toBeNull();
+
+      const none = toMatchResultRequest(formValue({ courtId: '', courtName: 'hidden text' }), RULES);
+      expect(none.courtName).toBeNull();
+      expect('courtId' in none).toBeFalse();
+    });
+
+    it('preselects the stored court id, or another court with the stored name, or no court', () => {
+      const byId = matchResultFormValue(buildMatchResult({ courtId: 'court-2', courtName: 'Central' }), RULES);
+      expect([byId.courtId, byId.courtName]).toEqual(['court-2', '']);
+      const byName = matchResultFormValue(buildMatchResult({ courtName: 'Club vecino' }), RULES);
+      expect([byName.courtId, byName.courtName]).toEqual([OTHER_COURT, 'Club vecino']);
+      const none = matchResultFormValue(buildMatchResult(), RULES);
+      expect([none.courtId, none.courtName]).toEqual(['', '']);
+    });
+
+    it('keeps the court id when clearing a result recorded on a listed court', () => {
+      const cleared = clearMatchResultRequest(buildMatchResult({
+        status: 'completed', sets: sets([6, 4], [6, 3]), winnerSide: 'home', courtId: 'court-2', courtName: 'Central'
+      }));
+      expect(cleared.courtId).toBe('court-2');
+      expect('courtName' in cleared).toBeFalse();
     });
 
     it('drops sets and the winner when the status does not carry them', () => {

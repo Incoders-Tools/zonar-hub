@@ -2837,5 +2837,16 @@ export const EN_TRANSLATIONS: TranslationDictionary = {
   'adminDraw.resultDialog.clear.message': 'The match returns to scheduled, without sets or winner. The court and the planned time are kept.',
   'adminDraw.resultDialog.clear.warning': 'If the winner already appeared in the next match, they are removed from it.',
   'adminDraw.resultDialog.messages.saved': 'Result saved.',
-  'adminDraw.resultDialog.messages.cleared': 'Result cleared.'
+  'adminDraw.resultDialog.messages.cleared': 'Result cleared.',
+  'draws.errors.concurrent_modification': 'Someone else changed this draw; it was reloaded. Review the changes and repeat the action if it is still needed.',
+  'draws.errors.results.invalid_court': 'The selected court does not belong to the tournament complex.',
+  'adminDraw.help.resultEntry.court': 'Pick the court from the tournament courts (the selected ones or, if none, the active courts of the complex). Use "Other court" to type one that is not listed.',
+  'adminDraw.help.resultEntry.concurrency': 'If someone else changes the draw while you edit it, your change is not saved: the page reloads the draw so you can repeat it on the current version.',
+  'adminDraw.resultDialog.fields.otherCourtName': 'Other court name',
+  'adminDraw.resultDialog.courts.none': 'No court assigned',
+  'adminDraw.resultDialog.courts.other': 'Other court',
+  'adminDraw.resultDialog.courts.loading': 'Loading the tournament courts…',
+  'adminDraw.resultDialog.courts.empty': 'The tournament has no available courts: use "Other court" to type the name.',
+  'adminDraw.resultDialog.courts.loadError': 'The courts could not be loaded.',
+  'adminDraw.resultDialog.courts.hint': 'Courts of the tournament complex. Choose "Other court" if it is not listed.'
 };

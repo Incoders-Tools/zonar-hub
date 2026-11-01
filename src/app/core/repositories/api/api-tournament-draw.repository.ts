@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../config/api-base-url.token';
 import {
+  DrawCourt,
   TournamentDraw,
   TournamentDrawMatchResultRequest,
   TournamentDrawRequest,
@@ -12,7 +13,7 @@ import { extractApiErrorCode } from './api-error.util';
 
 /**
  * Admin draw endpoints (D5) under `/api/admin/tournaments/{tournamentId}/draw`: preview, save draft, read,
- * publish, unpublish, delete and match results. Every draw response goes through `normalizeTournamentDraw`.
+ * publish, unpublish, delete, match results and the courts eligible for results (D13). Every draw response goes through `normalizeTournamentDraw`.
  * Failures reject with an `Error` whose message is a translation key (`drawErrorKey`).
  */
 
@@ -45,6 +46,7 @@ const KNOWN_DRAW_CODES = new Set([
   'draws.not_found',
   'draws.not_draft',
   'draws.invalid_seed',
+  'draws.concurrent_modification',
   'draws.results.invalid_set',
   'draws.results.invalid_super_tiebreak',
   'draws.results.incomplete_score',
@@ -62,7 +64,8 @@ const KNOWN_DRAW_CODES = new Set([
   'draws.results.duplicate_result',
   'draws.results.bye_match',
   'draws.results.participants_pending',
-  'draws.results.locked_by_next_match'
+  'draws.results.locked_by_next_match',
+  'draws.results.invalid_court'
 ]);
 
 const DRAW_CODE_PREFIX = 'draws.';
@@ -74,7 +77,8 @@ const TOURNAMENT_FORBIDDEN_KEY = 'tournaments.errors.forbidden';
 
 /**
  * Translation key of a draw API failure:
- * - `draws.<code>` / `draws.errors.<code>` → `draws.errors.<code>` (unknown draw codes → `draws.errors.unexpected`);
+ * - `draws.<code>` / `draws.errors.<code>` → `draws.errors.<code>` (unknown draw codes → `draws.errors.unexpected`),
+ *   including the D12 revision conflict `draws.errors.concurrent_modification` (409);
  * - the tenant refusal → `tournaments.errors.forbidden`;
  * - a 409 without a known draw code → `draws.errors.results_exist` (D1: the draw already has results);
  * - otherwise the shared `extractApiErrorCode` key (`common.*`).
@@ -173,6 +177,16 @@ export class ApiTournamentDrawRepository {
   saveMatchResult(tournamentId: string, matchId: string, result: TournamentDrawMatchResultRequest): Promise<TournamentDraw> {
     const url = `${this.endpoint(tournamentId)}/matches/${encodeURIComponent(matchId)}/result`;
     return this.write(tournamentId, this.http.put<TournamentDraw | null>(url, result));
+  }
+
+  /** Courts a result can be recorded on (D13), ordered by name by the API; empty when the tournament has none. */
+  async getCourts(tournamentId: string): Promise<DrawCourt[]> {
+    try {
+      const courts = await firstValueFrom(this.http.get<DrawCourt[] | null>(`${this.endpoint(tournamentId)}/courts`));
+      return (courts ?? []).map(court => ({ id: court.id, name: court.name }));
+    } catch (error) {
+      throw new Error(drawErrorKey(error));
+    }
   }
 
   /** Normalises the returned draw; a write answered without a body reads the draw back. */

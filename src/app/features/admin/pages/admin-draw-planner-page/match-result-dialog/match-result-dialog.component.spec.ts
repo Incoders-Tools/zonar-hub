@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatchResultDialogComponent } from './match-result-dialog.component';
-import { DrawMatch, TournamentDraw, TournamentDrawMatchResultRequest } from '../../../../../core/models';
+import { DrawCourt, DrawMatch, TournamentDraw, TournamentDrawMatchResultRequest } from '../../../../../core/models';
+import { DrawCourtsStatus } from '../../../../../core/services/draw-planner.service';
+import { OTHER_COURT } from '../../../../../core/services/match-result-rules';
 import {
   buildEightPairKnockoutDraw,
   buildKnockoutDraw,
@@ -9,6 +11,8 @@ import {
   sets,
   withResults
 } from '../../../../../core/models/tournament-draw.testing';
+
+const COURTS: DrawCourt[] = [{ id: 'court-1', name: 'Central' }, { id: 'court-2', name: 'Lateral' }];
 
 function matchOf(draw: TournamentDraw, id: string): DrawMatch {
   return draw.phases.flatMap(phase => phase.rounds.flatMap(round => round.matches)).find(match => match.id === id)!;
@@ -20,25 +24,51 @@ describe('MatchResultDialogComponent', () => {
   let submitted: TournamentDrawMatchResultRequest[];
   let cleared: TournamentDrawMatchResultRequest[];
   let cancelled: number;
+  let courtRetries: number;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [MatchResultDialogComponent, NoopAnimationsModule] }).compileComponents();
   });
 
-  function render(draw: TournamentDraw, matchId: string, inputs: { saving?: boolean; errorKey?: string | null } = {}): void {
+  function render(
+    draw: TournamentDraw,
+    matchId: string,
+    inputs: { saving?: boolean; errorKey?: string | null; courts?: DrawCourt[]; courtsStatus?: DrawCourtsStatus } = {}
+  ): void {
     fixture = TestBed.createComponent(MatchResultDialogComponent);
     element = fixture.nativeElement;
     fixture.componentRef.setInput('draw', draw);
     fixture.componentRef.setInput('match', matchOf(draw, matchId));
     fixture.componentRef.setInput('saving', inputs.saving ?? false);
     fixture.componentRef.setInput('errorKey', inputs.errorKey ?? null);
+    fixture.componentRef.setInput('courts', inputs.courts ?? COURTS);
+    fixture.componentRef.setInput('courtsStatus', inputs.courtsStatus ?? 'ready');
     submitted = [];
+    courtRetries = 0;
     cleared = [];
     cancelled = 0;
     fixture.componentInstance.submitted.subscribe(body => submitted.push(body));
     fixture.componentInstance.cleared.subscribe(body => cleared.push(body));
     fixture.componentInstance.cancelled.subscribe(() => cancelled++);
+    fixture.componentInstance.courtsRetried.subscribe(() => courtRetries++);
     fixture.detectChanges();
+  }
+
+  function courtSelect(): HTMLSelectElement {
+    const select = element.querySelector<HTMLSelectElement>('#match-result-court-choice');
+    if (!select) throw new Error('court select not rendered');
+    return select;
+  }
+
+  function chooseCourt(value: string): void {
+    const select = courtSelect();
+    select.value = value;
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  function courtOptions(): string[] {
+    return Array.from(courtSelect().options).map(option => option.textContent?.trim() ?? '');
   }
 
   function text(selector: string): string {
@@ -83,6 +113,7 @@ describe('MatchResultDialogComponent', () => {
     expect(element.querySelector<HTMLInputElement>('[data-field="winner"] input[value="home"]')!.checked).toBeTrue();
     expect(element.querySelector<HTMLInputElement>('[data-set="0"] input[data-side="home"]')!.value).toBe('6');
     expect(element.querySelector<HTMLInputElement>('[data-set="1"] input[data-side="away"]')!.value).toBe('3');
+    expect(courtSelect().value).toBe(OTHER_COURT);
     expect(element.querySelector<HTMLInputElement>('#match-result-court')!.value).toBe('Cancha 1');
     expect(element.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
   });
@@ -177,6 +208,7 @@ describe('MatchResultDialogComponent', () => {
     type('[data-set="0"] input[data-tiebreak="home"]', '5');
     type('[data-set="0"] input[data-tiebreak="away"]', '7');
     setGames(1, 3, 6);
+    chooseCourt(OTHER_COURT);
     type('#match-result-court', ' Central ');
     type('#match-result-started', '2026-11-20T10:00');
     type('#match-result-finished', '2026-11-20T11:30');
@@ -193,6 +225,90 @@ describe('MatchResultDialogComponent', () => {
       startedAt: new Date('2026-11-20T10:00').toISOString(),
       finishedAt: new Date('2026-11-20T11:30').toISOString()
     }]);
+  });
+
+  describe('court picker (D13)', () => {
+    function walkoverFor(side: 'home' | 'away'): void {
+      setStatus('walkover');
+      setWinner(side);
+    }
+
+    it('lists the eligible courts between "no court" and "other court", with the free text hidden', () => {
+      render(buildKnockoutDraw(4), 'KO-R1-M1');
+
+      expect(courtOptions()).toEqual(['Sin cancha asignada', 'Central', 'Lateral', 'Otra cancha']);
+      expect(courtSelect().value).toBe('');
+      expect(element.querySelector('#match-result-court')).toBeNull();
+      expect(element.querySelector('label[for="match-result-court-choice"]')?.textContent).toContain('Cancha');
+    });
+
+    it('submits the chosen court id without a court name', () => {
+      render(buildKnockoutDraw(4), 'KO-R1-M1');
+      walkoverFor('home');
+      chooseCourt('court-2');
+
+      saveButton().click();
+
+      expect(submitted).toEqual([{
+        status: 'walkover', sets: [], winnerSide: 'home', courtId: 'court-2', scheduledAt: null, startedAt: null, finishedAt: null
+      }]);
+    });
+
+    it('reveals the free-text input for another court and submits its name', () => {
+      render(buildKnockoutDraw(4), 'KO-R1-M1');
+      walkoverFor('away');
+      chooseCourt(OTHER_COURT);
+      type('#match-result-court', ' Club vecino ');
+
+      saveButton().click();
+
+      expect(submitted).toEqual([{
+        status: 'walkover', sets: [], winnerSide: 'away', courtName: 'Club vecino', scheduledAt: null, startedAt: null, finishedAt: null
+      }]);
+      chooseCourt('court-1');
+      expect(element.querySelector('#match-result-court')).toBeNull();
+    });
+
+    it('preselects the stored court id', () => {
+      const draw = withResults(buildKnockoutDraw(4), {
+        'KO-R1-M1': buildMatchResult({ status: 'walkover', winnerSide: 'home', courtId: 'court-2', courtName: 'Lateral' })
+      });
+      render(draw, 'KO-R1-M1');
+
+      expect(courtSelect().value).toBe('court-2');
+      expect(element.querySelector('#match-result-court')).toBeNull();
+    });
+
+    it('keeps a stored court that is no longer listed as an option with its stored name', () => {
+      const draw = withResults(buildKnockoutDraw(4), {
+        'KO-R1-M1': buildMatchResult({ status: 'walkover', winnerSide: 'home', courtId: 'court-9', courtName: 'Vieja' })
+      });
+      render(draw, 'KO-R1-M1');
+
+      expect(courtOptions()).toEqual(['Sin cancha asignada', 'Central', 'Lateral', 'Vieja', 'Otra cancha']);
+      expect(courtSelect().value).toBe('court-9');
+    });
+
+    it('explains the loading, empty and error states of the court list and retries on demand', () => {
+      render(buildKnockoutDraw(4), 'KO-R1-M1', { courts: [], courtsStatus: 'loading' });
+      expect(text('[data-hint="courts-loading"]')).toBe('Cargando las canchas del torneo…');
+      expect(courtOptions()).toEqual(['Sin cancha asignada', 'Otra cancha']);
+
+      render(buildKnockoutDraw(4), 'KO-R1-M1', { courts: [], courtsStatus: 'ready' });
+      expect(text('[data-hint="courts-empty"]')).toBe('El torneo no tiene canchas habilitadas: usá "Otra cancha" para escribir el nombre.');
+
+      render(buildKnockoutDraw(4), 'KO-R1-M1', { courts: [], courtsStatus: 'error' });
+      expect(text('[data-hint="courts-error"]')).toContain('No se pudieron cargar las canchas.');
+      element.querySelector<HTMLButtonElement>('[data-action="retry-courts"]')!.click();
+      expect(courtRetries).toBe(1);
+      chooseCourt(OTHER_COURT);
+      expect(element.querySelector('#match-result-court')).not.toBeNull();
+    });
+
+    it('shows the translated message when the API refuses the court', () => {
+      render(buildEightPairKnockoutDraw(), 'KO-R1-M1', { errorKey: 'draws.errors.results.invalid_court' });
+      expect(text('.match-result__api-error')).toBe('La cancha elegida no pertenece al complejo del torneo.');
+    });
   });
 
   it('prevents a duplicate submission while saving', () => {

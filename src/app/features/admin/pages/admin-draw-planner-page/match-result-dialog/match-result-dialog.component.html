@@ -76,10 +76,30 @@
         }
 
         <div class="match-result__grid">
-          <div class="match-result__field">
-            <label for="match-result-court">{{ 'adminDraw.resultDialog.fields.courtName' | t }}</label>
-            <input id="match-result-court" type="text" autocomplete="off" formControlName="courtName"
-              [placeholder]="'adminDraw.resultDialog.fields.courtPlaceholder' | t" />
+          <div class="match-result__field match-result__field--court" data-field="court">
+            <zh-select inputId="match-result-court-choice" formControlName="courtId"
+              [label]="'adminDraw.resultDialog.fields.courtName' | t"
+              [placeholder]="'adminDraw.resultDialog.courts.none' | t"
+              [options]="courtOptions()" />
+            @if (courtsLoading()) {
+              <span class="match-result__field-hint" data-hint="courts-loading">{{ 'adminDraw.resultDialog.courts.loading' | t }}</span>
+            } @else if (courtsStatus() === 'error') {
+              <span class="match-result__field-hint match-result__field-hint--error" data-hint="courts-error">
+                {{ 'adminDraw.resultDialog.courts.loadError' | t }}
+                <button type="button" class="match-result__link" data-action="retry-courts" (click)="retryCourts()">
+                  {{ 'common.retry' | t }}
+                </button>
+              </span>
+            } @else if (courts().length === 0) {
+              <span class="match-result__field-hint" data-hint="courts-empty">{{ 'adminDraw.resultDialog.courts.empty' | t }}</span>
+            } @else {
+              <span class="match-result__field-hint" data-hint="courts">{{ 'adminDraw.resultDialog.courts.hint' | t }}</span>
+            }
+            @if (showsCourtName()) {
+              <label for="match-result-court">{{ 'adminDraw.resultDialog.fields.otherCourtName' | t }}</label>
+              <input id="match-result-court" type="text" autocomplete="off" formControlName="courtName"
+                [placeholder]="'adminDraw.resultDialog.fields.courtPlaceholder' | t" />
+            }
           </div>
           <div class="match-result__field">
             <label for="match-result-scheduled">{{ 'adminDraw.resultDialog.fields.scheduledAt' | t }}</label>

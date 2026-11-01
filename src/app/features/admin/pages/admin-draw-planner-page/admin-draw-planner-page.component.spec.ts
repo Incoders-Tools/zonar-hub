@@ -63,8 +63,9 @@ describe('AdminDrawPlannerPageComponent', () => {
 
   beforeEach(async () => {
     drawRepo = jasmine.createSpyObj<ApiTournamentDrawRepository>('ApiTournamentDrawRepository',
-      ['get', 'preview', 'saveDraft', 'publish', 'unpublish', 'delete', 'saveMatchResult']);
+      ['get', 'preview', 'saveDraft', 'publish', 'unpublish', 'delete', 'saveMatchResult', 'getCourts']);
     drawRepo.get.and.resolveTo(null);
+    drawRepo.getCourts.and.resolveTo([{ id: 'court-1', name: 'Central' }, { id: 'court-2', name: 'Lateral' }]);
     notifications = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error', 'warning', 'info']);
     params = new BehaviorSubject(convertToParamMap({ tournamentId: 't-1' }));
     tournamentService = {
@@ -289,6 +290,48 @@ describe('AdminDrawPlannerPageComponent', () => {
     expect(text('.draw-admin__status')).toBe('Sin grilla');
   });
 
+  describe('concurrent modification (D12)', () => {
+    it('reloads the draw and explains it when saving the draft conflicts', async () => {
+      drawRepo.get.and.returnValues(Promise.resolve(draftDraw()), Promise.resolve(publishedDraw()));
+      drawRepo.saveDraft.and.rejectWith(new Error('draws.errors.concurrent_modification'));
+      await render();
+
+      await click('save');
+
+      expect(notifications.warning).toHaveBeenCalledWith('draws.errors.concurrent_modification');
+      expect(notifications.error).not.toHaveBeenCalled();
+      expect(drawRepo.get).toHaveBeenCalledTimes(2);
+      expect(text('.draw-admin__status')).toBe('Publicada');
+    });
+
+    it('reloads the draw when publishing conflicts', async () => {
+      drawRepo.get.and.returnValues(Promise.resolve(draftDraw()), Promise.resolve(null));
+      drawRepo.publish.and.rejectWith(new Error('draws.errors.concurrent_modification'));
+      await render();
+
+      await click('publish');
+
+      expect(notifications.warning).toHaveBeenCalledWith('draws.errors.concurrent_modification');
+      expect(drawRepo.get).toHaveBeenCalledTimes(2);
+      expect(text('.draw-admin__status')).toBe('Sin grilla');
+    });
+
+    it('closes the delete confirmation and reloads the draw when deleting conflicts', async () => {
+      drawRepo.get.and.returnValues(Promise.resolve(draftDraw()), Promise.resolve(publishedDraw()));
+      drawRepo.delete.and.rejectWith(new Error('draws.errors.concurrent_modification'));
+      await render();
+
+      await click('delete');
+      (element.querySelector('app-confirm-dialog app-async-button button') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(element.querySelector('app-confirm-dialog')).toBeNull();
+      expect(notifications.warning).toHaveBeenCalledWith('draws.errors.concurrent_modification');
+      expect(drawRepo.get).toHaveBeenCalledTimes(2);
+      expect(text('.draw-admin__status')).toBe('Publicada');
+    });
+  });
+
   it('changes the member inputs with the participation format', async () => {
     await render();
     fillPairs([['Ana', 'Bea'], ['Caro', 'Dani']]);
@@ -483,6 +526,62 @@ describe('AdminDrawPlannerPageComponent', () => {
       });
       expect(notifications.success).toHaveBeenCalledWith('adminDraw.resultDialog.messages.cleared');
       expect(element.querySelector('app-match-result-dialog')).toBeNull();
+    });
+
+    it('loads the tournament courts once for every result dialog of the page', async () => {
+      drawRepo.get.and.resolveTo(draftWithResults());
+      await render();
+      expect(drawRepo.getCourts).not.toHaveBeenCalled();
+
+      matchCard('KO-R1-M1')!.click();
+      await settle(fixture);
+      const options = Array.from(element.querySelectorAll('#match-result-court-choice option')).map(option => option.textContent?.trim());
+      expect(options).toEqual(['Sin cancha asignada', 'Central', 'Lateral', 'Otra cancha']);
+
+      (element.querySelector('[data-action="cancel-result"]') as HTMLButtonElement).click();
+      await settle(fixture);
+      matchCard('KO-R1-M2')!.click();
+      await settle(fixture);
+
+      expect(element.querySelector('app-match-result-dialog')).not.toBeNull();
+      expect(drawRepo.getCourts).toHaveBeenCalledOnceWith('t-1');
+    });
+
+    it('retries the court list after a failure', async () => {
+      drawRepo.get.and.resolveTo(draftWithResults());
+      drawRepo.getCourts.and.rejectWith(new Error('common.networkUnavailable'));
+      await render();
+
+      matchCard('KO-R1-M1')!.click();
+      await settle(fixture);
+      expect(element.querySelector('[data-hint="courts-error"]')).not.toBeNull();
+
+      drawRepo.getCourts.and.resolveTo([{ id: 'court-1', name: 'Central' }]);
+      (element.querySelector('[data-action="retry-courts"]') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(drawRepo.getCourts).toHaveBeenCalledTimes(2);
+      expect(element.querySelector('[data-hint="courts-error"]')).toBeNull();
+      expect(element.querySelector('#match-result-court-choice option[value="court-1"]')).not.toBeNull();
+    });
+
+    it('closes the dialog, explains and reloads the draw when someone else changed it meanwhile', async () => {
+      const reloaded = withResults(draftWithResults(), {
+        'KO-R1-M3': buildMatchResult({ status: 'walkover', winnerSide: 'away' })
+      });
+      drawRepo.get.and.returnValues(Promise.resolve(draftWithResults()), Promise.resolve(reloaded));
+      drawRepo.saveMatchResult.and.rejectWith(new Error('draws.errors.concurrent_modification'));
+      await render();
+
+      selectMatch('KO-R1-M3');
+      (element.querySelector('[data-action="save-result"] button') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(element.querySelector('app-match-result-dialog')).toBeNull();
+      expect(notifications.warning).toHaveBeenCalledWith('draws.errors.concurrent_modification');
+      expect(drawRepo.get).toHaveBeenCalledTimes(2);
+      expect(component.draw()).toEqual(reloaded);
+      expect(drawRepo.getCourts).toHaveBeenCalledTimes(1);
     });
 
     it('lists the result rules and the lock rule in the page help', async () => {

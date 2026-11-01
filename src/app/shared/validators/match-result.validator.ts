@@ -8,7 +8,7 @@ import {
 
 /**
  * FormGroup-level validator of a match result form (F3). The group value must have the `MatchResultFormValue`
- * shape (status, winnerSide, sets[], courtName, scheduledAt, startedAt, finishedAt). The rules live in
+ * shape (status, winnerSide, sets[], courtId, courtName, scheduledAt, startedAt, finishedAt). The rules live in
  * `core/services/match-result-rules.ts` (mirror of the API domain); this only adapts them to Reactive Forms.
  *
  * Error: `{ matchResult: MatchResultIssue }`; translate it with `matchResultIssueKey`.

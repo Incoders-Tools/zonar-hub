@@ -2859,5 +2859,16 @@ export const ES_TRANSLATIONS: TranslationDictionary = {
   'adminDraw.resultDialog.clear.message': 'El partido vuelve a programado, sin sets ni ganador. Se conservan la cancha y el horario programado.',
   'adminDraw.resultDialog.clear.warning': 'Si el ganador ya figuraba en el partido siguiente, deja de aparecer ahí.',
   'adminDraw.resultDialog.messages.saved': 'Resultado guardado.',
-  'adminDraw.resultDialog.messages.cleared': 'Resultado borrado.'
+  'adminDraw.resultDialog.messages.cleared': 'Resultado borrado.',
+  'draws.errors.concurrent_modification': 'Alguien más modificó esta grilla: se volvió a cargar. Revisá los cambios y repetí la acción si sigue haciendo falta.',
+  'draws.errors.results.invalid_court': 'La cancha elegida no pertenece al complejo del torneo.',
+  'adminDraw.help.resultEntry.court': 'La cancha se elige entre las canchas del torneo (las seleccionadas o, si no hay, las activas del complejo). Usá "Otra cancha" para escribir una que no figure.',
+  'adminDraw.help.resultEntry.concurrency': 'Si otra persona cambia la grilla mientras la editás, tu cambio no se guarda: la página vuelve a cargar la grilla para que lo repitas sobre la versión actual.',
+  'adminDraw.resultDialog.fields.otherCourtName': 'Nombre de la otra cancha',
+  'adminDraw.resultDialog.courts.none': 'Sin cancha asignada',
+  'adminDraw.resultDialog.courts.other': 'Otra cancha',
+  'adminDraw.resultDialog.courts.loading': 'Cargando las canchas del torneo…',
+  'adminDraw.resultDialog.courts.empty': 'El torneo no tiene canchas habilitadas: usá "Otra cancha" para escribir el nombre.',
+  'adminDraw.resultDialog.courts.loadError': 'No se pudieron cargar las canchas.',
+  'adminDraw.resultDialog.courts.hint': 'Canchas del complejo del torneo. Elegí "Otra cancha" si no figura.'
 };

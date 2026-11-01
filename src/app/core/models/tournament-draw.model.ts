@@ -76,10 +76,19 @@ export interface DrawMatchResult {
   status: DrawMatchStatus;
   sets: DrawSetScore[];
   winnerSide: DrawSide | null;
+  /** Admin responses only (D13): the listed court the result was recorded on. Public responses never carry it. */
+  courtId?: string | null;
+  /** Court name: the listed court's name when `courtId` is set, else the free text entered. */
   courtName: string | null;
   scheduledAt: string | null;
   startedAt: string | null;
   finishedAt: string | null;
+}
+
+/** Court eligible for a tournament's results (D13, `GET draw/courts`): selected courts, else the complex's active courts. */
+export interface DrawCourt {
+  id: string;
+  name: string;
 }
 
 export interface DrawMatch {
@@ -172,7 +181,9 @@ export interface TournamentDrawMatchResultRequest {
   status: DrawMatchStatus;
   sets: DrawSetScore[];
   winnerSide: DrawSide | null;
+  /** A listed court (`DrawCourt.id`); sent without `courtName`, the API stores the court's current name. */
   courtId?: string | null;
+  /** Free-text court, used when no listed court is chosen. */
   courtName?: string | null;
   scheduledAt: string | null;
   startedAt: string | null;
@@ -281,6 +292,7 @@ function normalizeResult(result: DrawMatchResult | null | undefined): DrawMatchR
     status: toDrawMatchStatus(result.status) ?? 'scheduled',
     sets: (result.sets ?? []).map(normalizeSet),
     winnerSide: toDrawSide(result.winnerSide),
+    ...(result.courtId ? { courtId: result.courtId } : {}),
     courtName: result.courtName ?? null,
     scheduledAt: result.scheduledAt ?? null,
     startedAt: result.startedAt ?? null,

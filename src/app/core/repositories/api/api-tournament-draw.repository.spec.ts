@@ -160,6 +160,59 @@ describe('ApiTournamentDrawRepository', () => {
     expect((await saved).format).toBe('singleElimination');
   });
 
+  it('sends courtId without courtName when a listed court is chosen', async () => {
+    const saved = repository.saveMatchResult('t-1', 'KO-R1-M1', {
+      status: 'scheduled', sets: [], winnerSide: null, courtId: 'court-2', scheduledAt: null, startedAt: null, finishedAt: null
+    });
+
+    const call = http.expectOne(`${DRAW_URL}/matches/KO-R1-M1/result`);
+    expect(call.request.body).toEqual({
+      status: 'scheduled', sets: [], winnerSide: null, courtId: 'court-2', scheduledAt: null, startedAt: null, finishedAt: null
+    });
+    expect('courtName' in call.request.body).toBeFalse();
+    call.flush(rawDraw());
+    await saved;
+  });
+
+  it('reads the court id of an admin result and leaves it out of a result without one', async () => {
+    const found = repository.get('t-1');
+    const body = buildKnockoutDraw(4) as unknown as Record<string, unknown>;
+    const phases = body['phases'] as Array<{ rounds: Array<{ matches: Array<Record<string, unknown>> }> }>;
+    phases[0].rounds[0].matches[0]['result'] = {
+      status: 'scheduled', sets: [], winnerSide: null, courtId: 'court-2', courtName: 'Central',
+      scheduledAt: null, startedAt: null, finishedAt: null
+    };
+    phases[0].rounds[0].matches[1]['result'] = {
+      status: 'scheduled', sets: [], winnerSide: null, courtName: 'Lateral', scheduledAt: null, startedAt: null, finishedAt: null
+    };
+    http.expectOne(DRAW_URL).flush(body);
+
+    const draw = await found;
+    const [first, second] = draw!.phases[0].rounds[0].matches;
+    expect(first.result?.courtId).toBe('court-2');
+    expect(first.result?.courtName).toBe('Central');
+    expect(second.result && 'courtId' in second.result).toBeFalse();
+  });
+
+  it('lists the eligible courts of the tournament', async () => {
+    const courts = repository.getCourts('t 1');
+
+    const call = http.expectOne('/api/admin/tournaments/t%201/draw/courts');
+    expect(call.request.method).toBe('GET');
+    call.flush([{ id: 'court-1', name: 'Central' }, { id: 'court-2', name: 'Lateral' }]);
+    expect(await courts).toEqual([{ id: 'court-1', name: 'Central' }, { id: 'court-2', name: 'Lateral' }]);
+  });
+
+  it('maps a failed court list to its translated key', async () => {
+    const courts = repository.getCourts('t-1');
+    http.expectOne(`${DRAW_URL}/courts`).flush(...problem('tournaments.forbidden', 403));
+    await expectAsync(courts).toBeRejectedWithError('tournaments.errors.forbidden');
+
+    const empty = repository.getCourts('t-1');
+    http.expectOne(`${DRAW_URL}/courts`).flush(null);
+    expect(await empty).toEqual([]);
+  });
+
   it('reads the API response fields: randomizationMode, options.scoring and an omitted separationConflicts', async () => {
     const found = repository.get('t-1');
     const body = {
@@ -216,7 +269,8 @@ describe('ApiTournamentDrawRepository', () => {
         ['too_many_sets', 400], ['incomplete_score', 400], ['score_decided', 400], ['winner_mismatch', 400],
         ['winner_required', 400], ['winner_not_allowed', 400], ['sets_not_allowed_for_walkover', 400],
         ['sets_not_allowed_for_scheduled', 400], ['invalid_times', 400], ['unknown_match', 404],
-        ['duplicate_result', 409], ['bye_match', 409], ['participants_pending', 409], ['locked_by_next_match', 409]
+        ['duplicate_result', 409], ['bye_match', 409], ['participants_pending', 409], ['locked_by_next_match', 409],
+        ['invalid_court', 400]
       ];
       for (const [name, status] of codes) {
         const key = await failingSave(`draws.results.${name}`, status);
@@ -234,6 +288,13 @@ describe('ApiTournamentDrawRepository', () => {
         for (const locale of ['es', 'en', 'pt'] as const) {
           expect(TRANSLATIONS[locale][key]).withContext(`${locale} ${key}`).toBeTruthy();
         }
+      }
+    });
+
+    it('maps the D12 revision conflict to its own key, not to results-exist', async () => {
+      expect(await failingSave('draws.concurrent_modification', 409)).toBe('draws.errors.concurrent_modification');
+      for (const locale of ['es', 'en', 'pt'] as const) {
+        expect(TRANSLATIONS[locale]['draws.errors.concurrent_modification']).withContext(locale).toBeTruthy();
       }
     });
 

@@ -62,11 +62,17 @@ export interface MatchResultSetInput {
   tiebreakAway: number | null;
 }
 
+/** Court choice of the result form for a court that is not listed: the free text `courtName` is sent instead. */
+export const OTHER_COURT = '__other__';
+
 /** Raw value of the result form. Date-times use the `datetime-local` format (`YYYY-MM-DDTHH:mm`, local time). */
 export interface MatchResultFormValue {
   status: DrawMatchStatus;
   winnerSide: DrawSide | null;
   sets: MatchResultSetInput[];
+  /** Court choice (D13): a listed court id, `OTHER_COURT` (free text in `courtName`) or `''` (no court). */
+  courtId: string;
+  /** Free-text court; only sent when `courtId` is `OTHER_COURT`. */
   courtName: string;
   scheduledAt: string;
   startedAt: string;
@@ -354,11 +360,24 @@ export function matchResultFormValue(result: DrawMatchResult | null, rules: Draw
     status: result?.status ?? 'scheduled',
     winnerSide: result?.winnerSide ?? null,
     sets,
-    courtName: result?.courtName ?? '',
+    ...courtFormValue(result),
     scheduledAt: toDateTimeLocal(result?.scheduledAt),
     startedAt: toDateTimeLocal(result?.startedAt),
     finishedAt: toDateTimeLocal(result?.finishedAt)
   };
+}
+
+/** A stored court id preselects that court; a name without id preselects "other court" with the name. */
+function courtFormValue(result: DrawMatchResult | null): Pick<MatchResultFormValue, 'courtId' | 'courtName'> {
+  if (result?.courtId) return { courtId: result.courtId, courtName: '' };
+  if (result?.courtName) return { courtId: OTHER_COURT, courtName: result.courtName };
+  return { courtId: '', courtName: '' };
+}
+
+/** Court part of the D5 body: `courtId` alone for a listed court, else `courtName` (free text or null). */
+function courtRequest(courtId: string | null | undefined, courtName: string | null | undefined): Pick<TournamentDrawMatchResultRequest, 'courtId' | 'courtName'> {
+  if (courtId && courtId !== OTHER_COURT) return { courtId };
+  return { courtName: courtId === OTHER_COURT ? courtName?.trim() || null : null };
 }
 
 function isBlank(value: number | null | undefined): boolean {
@@ -400,7 +419,7 @@ export function toMatchResultRequest(value: MatchResultFormValue, rules: DrawSco
     status: value.status,
     sets,
     winnerSide: statusRequiresWinner(value.status) ? value.winnerSide : null,
-    courtName: value.courtName.trim() || null,
+    ...courtRequest(value.courtId, value.courtName),
     scheduledAt: fromDateTimeLocal(value.scheduledAt),
     startedAt: fromDateTimeLocal(value.startedAt),
     finishedAt: fromDateTimeLocal(value.finishedAt)
@@ -438,7 +457,7 @@ export function clearMatchResultRequest(current: DrawMatchResult | null): Tourna
     status: 'scheduled',
     sets: [],
     winnerSide: null,
-    courtName: current?.courtName ?? null,
+    ...(current?.courtId ? { courtId: current.courtId } : { courtName: current?.courtName ?? null }),
     scheduledAt: current?.scheduledAt ?? null,
     startedAt: null,
     finishedAt: null

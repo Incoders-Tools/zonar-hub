@@ -1,11 +1,16 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Tournament, TournamentDraw, TournamentDrawMatchResultRequest, TournamentDrawRequest, tournamentDrawHasResults } from '../models';
+import { DrawCourt, Tournament, TournamentDraw, TournamentDrawMatchResultRequest, TournamentDrawRequest, tournamentDrawHasResults } from '../models';
 import { ApiTournamentAdminRepository } from '../repositories/api/api-tournament-admin.repository';
 import { ApiTournamentDrawRepository } from '../repositories/api/api-tournament-draw.repository';
+
+/** Court list of the result dialog: not requested yet, loading, loaded (possibly empty) or failed. */
+export type DrawCourtsStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /**
  * State of the admin draw page (D9) for one tournament: the tournament, its stored draw (D1: at most one, draft or
  * published) and the last unsaved preview. Provided by the page, so each visit starts clean.
+ *
+ * The courts eligible for results (D13) load on first use and stay cached for the tournament (`loadCourts`).
  *
  * Write methods update the state and reject with an `Error` whose message is a translation key; the page turns it
  * into a notification.
@@ -21,6 +26,10 @@ export class DrawPlannerService {
   private readonly previewState = signal<TournamentDraw | null>(null);
   private readonly loadingState = signal(false);
   private readonly errorState = signal<string | null>(null);
+  private readonly courtsState = signal<DrawCourt[]>([]);
+  private readonly courtsStatusState = signal<DrawCourtsStatus>('idle');
+  /** Tournament the cached courts belong to. */
+  private courtsTournamentId: string | null = null;
 
   readonly tournament = this.tournamentState.asReadonly();
   /** The stored draw, or null when the tournament has none yet. */
@@ -30,6 +39,8 @@ export class DrawPlannerService {
   readonly loading = this.loadingState.asReadonly();
   /** Translation key of the last load failure, or null. */
   readonly error = this.errorState.asReadonly();
+  readonly courts = this.courtsState.asReadonly();
+  readonly courtsStatus = this.courtsStatusState.asReadonly();
 
   readonly hasResults = computed(() => tournamentDrawHasResults(this.drawState()));
   /** The draw shown in the page: the unsaved preview first, else the stored draw. */
@@ -37,6 +48,11 @@ export class DrawPlannerService {
 
   async load(tournamentId: string): Promise<void> {
     this.tournamentIdState.set(tournamentId);
+    if (this.courtsTournamentId !== tournamentId) {
+      this.courtsTournamentId = null;
+      this.courtsState.set([]);
+      this.courtsStatusState.set('idle');
+    }
     this.loadingState.set(true);
     this.errorState.set(null);
     this.previewState.set(null);
@@ -53,6 +69,29 @@ export class DrawPlannerService {
       this.drawState.set(null);
     } finally {
       this.loadingState.set(false);
+    }
+  }
+
+  /**
+   * Loads the tournament's eligible courts once: later calls reuse the cache (or the running request); only a
+   * failed load is retried. Never rejects: a failure sets `courtsStatus` to `error`.
+   */
+  async loadCourts(): Promise<void> {
+    const tournamentId = this.requireTournamentId();
+    const status = this.courtsStatusState();
+    if (this.courtsTournamentId === tournamentId && (status === 'loading' || status === 'ready')) return;
+
+    this.courtsTournamentId = tournamentId;
+    this.courtsStatusState.set('loading');
+    try {
+      const courts = await this.drawRepository.getCourts(tournamentId);
+      if (this.courtsTournamentId !== tournamentId) return;
+      this.courtsState.set(courts);
+      this.courtsStatusState.set('ready');
+    } catch {
+      if (this.courtsTournamentId !== tournamentId) return;
+      this.courtsState.set([]);
+      this.courtsStatusState.set('error');
     }
   }
 

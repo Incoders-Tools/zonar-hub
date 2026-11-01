@@ -47,6 +47,13 @@ import {
   validateDrawParticipantEntries
 } from '../../../../core/services/draw-participant-entries';
 
+/** D12: another user changed the draw since it was read; the page reloads it. */
+const CONCURRENT_MODIFICATION_KEY = 'draws.errors.concurrent_modification';
+
+function errorKeyOf(error: unknown): string {
+  return error instanceof Error ? error.message : 'common.unexpectedError';
+}
+
 type DrawAction = 'preview' | 'regenerate' | 'save' | 'publish' | 'unpublish' | 'delete';
 
 type ParticipantRow = FormGroup<{
@@ -275,7 +282,9 @@ export class AdminDrawPlannerPageComponent {
         'adminDraw.help.resultEntry.superTiebreak',
         'adminDraw.help.resultEntry.statuses',
         'adminDraw.help.resultEntry.lock',
-        'adminDraw.help.resultEntry.clear'
+        'adminDraw.help.resultEntry.clear',
+        'adminDraw.help.resultEntry.court',
+        'adminDraw.help.resultEntry.concurrency'
       ]
     },
     { titleKey: 'adminDraw.help.visibility.title', contentKey: 'adminDraw.help.visibility.content' }
@@ -422,6 +431,11 @@ export class AdminDrawPlannerPageComponent {
     }
     this.resultErrorKey.set(null);
     this.resultMatch.set(match);
+    void this.planner.loadCourts();
+  }
+
+  retryCourts(): void {
+    void this.planner.loadCourts();
   }
 
   closeResult(): void {
@@ -449,7 +463,13 @@ export class AdminDrawPlannerPageComponent {
       this.resultMatch.set(null);
       this.notifications.success(successKey);
     } catch (error) {
-      this.resultErrorKey.set(error instanceof Error ? error.message : 'common.unexpectedError');
+      const key = errorKeyOf(error);
+      if (key === CONCURRENT_MODIFICATION_KEY) {
+        this.resultMatch.set(null);
+        await this.reloadAfterConflict();
+      } else {
+        this.resultErrorKey.set(key);
+      }
     } finally {
       this.resultSaving.set(false);
     }
@@ -554,11 +574,23 @@ export class AdminDrawPlannerPageComponent {
     try {
       await work();
     } catch (error) {
-      this.notifications.error(error instanceof Error ? error.message : 'common.unexpectedError');
+      const key = errorKeyOf(error);
+      if (key === CONCURRENT_MODIFICATION_KEY) {
+        this.showDeleteConfirm.set(false);
+        await this.reloadAfterConflict();
+      } else {
+        this.notifications.error(key);
+      }
     } finally {
       this.stopProgress();
       this.busyAction.set(null);
     }
+  }
+
+  /** D12: the draw changed elsewhere; explain it and show the stored draw again (the form follows it). */
+  private async reloadAfterConflict(): Promise<void> {
+    this.notifications.warning(CONCURRENT_MODIFICATION_KEY);
+    await this.reload();
   }
 
   /** Simulated staged progress (planner rule): fast at first, slowing down near the end until the API answers. */

@@ -74,6 +74,8 @@ One participant per line; empty lines are ignored.
 
 Every action uses `app-async-button` (loading + duplicate-click guard). API failures show the translated key from `drawErrorKey` as an error toast.
 
+Concurrent modification (D12): when save draft, publish, unpublish, delete or a result save (or clear) answers `draws.errors.concurrent_modification` (409, someone else changed the draw), the page shows it as a warning toast ("Someone else changed this draw; it was reloaded"), closes the result dialog and the delete confirmation, and reloads the tournament and its draw (the form follows the stored draw).
+
 ## Result entry (F3)
 
 - Only on the saved draw: the bracket is `interactive` when a draw is stored and no unsaved preview is shown (hint `result-entry`); on a preview the hint `result-entry-preview` asks to save first.
@@ -81,6 +83,7 @@ Every action uses `app-async-button` (loading + duplicate-click guard). API fail
 - Save: `DrawPlannerService.saveMatchResult` → `PUT matches/{matchId}/result`; the stored draw becomes the API response (re-resolved), so the bracket shows the winner in the next match and the standings at once. Success toast `adminDraw.resultDialog.messages.saved`.
 - Clear result: confirm dialog, then status `scheduled` without sets or winner (court and planned time kept). Toast `adminDraw.resultDialog.messages.cleared`.
 - Failures keep the dialog open with the translated API message (`draws.errors.results.*`: `locked_by_next_match`, `participants_pending`, `bye_match`, `unknown_match`, score codes). Saving is guarded against double submission (page and dialog).
+- Courts (D13): opening the first result dialog loads the tournament's eligible courts once (`DrawPlannerService.loadCourts` → `GET draw/courts`); later dialogs reuse the cache; a failed load is retried from the dialog's retry link. The cache is reset only when the page loads another tournament.
 - Lock rule: once the winner played the next match (a non-scheduled result there; for a group match, a started match fed by its group) the outcome cannot change; court and times still can.
 
 ## States
@@ -90,7 +93,7 @@ Every action uses `app-async-button` (loading + duplicate-click guard). API fail
 
 ## Business help
 
-Inline hints (`data-hint`): result entry (or save first on a preview), results lock, fix participants, saving a published draw returns it to draft, preview vs save vs regenerate, save before publish, unpublish before delete, a draw with results cannot be deleted, and public visibility (public tournament → shown on its public page; private tournament → not public until the tournament is public). The help button explains the steps, the paste syntax, states, results, result entry (opening a match, set rules, super tie-break, statuses, the lock rule, clearing) and visibility (clubs are never shown publicly).
+Inline hints (`data-hint`): result entry (or save first on a preview), results lock, fix participants, saving a published draw returns it to draft, preview vs save vs regenerate, save before publish, unpublish before delete, a draw with results cannot be deleted, and public visibility (public tournament → shown on its public page; private tournament → not public until the tournament is public). The help button explains the steps, the paste syntax, states, results, result entry (opening a match, set rules, super tie-break, statuses, the lock rule, clearing, the court picker, concurrent changes) and visibility (clubs are never shown publicly).
 
 ## Accessibility notes
 
@@ -100,7 +103,7 @@ Inline hints (`data-hint`): result entry (or save first on a preview), results l
 
 ## i18n notes
 
-Keys under `adminDraw.*` (page, including `adminDraw.resultDialog.*` and `adminDraw.help.resultEntry.*`) and `draws.errors.*` (API problem codes: engine, `invalid_seed`, `not_draft`, and `draws.errors.results.*`), plus `admin.tournaments.actions.draw`, in es, en and pt. Messages with counts use `{count}`, `{min}`, `{max}` and `{n}` placeholders interpolated in the component.
+Keys under `adminDraw.*` (page, including `adminDraw.resultDialog.*` and `adminDraw.help.resultEntry.*`) and `draws.errors.*` (API problem codes: engine, `invalid_seed`, `not_draft`, `concurrent_modification`, and `draws.errors.results.*` including `invalid_court`), plus `admin.tournaments.actions.draw`, in es, en and pt. Messages with counts use `{count}`, `{min}`, `{max}` and `{n}` placeholders interpolated in the component.
 
 ## Theming notes
 
@@ -116,4 +119,3 @@ Only `--zh-*` semantic tokens (surfaces, borders, text, primary, warning, danger
 
 - Changing the participation format keeps the row values of the shared controls (`member1`, `member2`, `displayName`); team members are not converted from pair rows.
 - Whether a draw "has results" is computed from the loaded draw like the API (`TournamentDrawScope.HasResults`): any match result other than `scheduled`; a scheduled row with only court/time, or a cleared result, does not lock the draw. The API remains the authority and answers 409 otherwise.
-- Courts are free text (`courtName`); `courtId` is not offered yet.

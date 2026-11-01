@@ -2838,5 +2838,16 @@ export const PT_TRANSLATIONS: TranslationDictionary = {
   'adminDraw.resultDialog.clear.message': 'O jogo volta para agendado, sem sets nem vencedor. A quadra e o horário agendado são mantidos.',
   'adminDraw.resultDialog.clear.warning': 'Se o vencedor já aparecia no jogo seguinte, ele deixa de aparecer ali.',
   'adminDraw.resultDialog.messages.saved': 'Resultado salvo.',
-  'adminDraw.resultDialog.messages.cleared': 'Resultado apagado.'
+  'adminDraw.resultDialog.messages.cleared': 'Resultado apagado.',
+  'draws.errors.concurrent_modification': 'Outra pessoa alterou esta chave; ela foi recarregada. Revise as alterações e repita a ação se ainda for necessário.',
+  'draws.errors.results.invalid_court': 'A quadra escolhida não pertence ao complexo do torneio.',
+  'adminDraw.help.resultEntry.court': 'Escolha a quadra entre as quadras do torneio (as selecionadas ou, se não houver, as ativas do complexo). Use "Outra quadra" para digitar uma que não aparece.',
+  'adminDraw.help.resultEntry.concurrency': 'Se outra pessoa alterar a chave enquanto você a edita, sua alteração não é salva: a página recarrega a chave para que você a repita na versão atual.',
+  'adminDraw.resultDialog.fields.otherCourtName': 'Nome da outra quadra',
+  'adminDraw.resultDialog.courts.none': 'Sem quadra atribuída',
+  'adminDraw.resultDialog.courts.other': 'Outra quadra',
+  'adminDraw.resultDialog.courts.loading': 'Carregando as quadras do torneio…',
+  'adminDraw.resultDialog.courts.empty': 'O torneio não tem quadras disponíveis: use "Outra quadra" para digitar o nome.',
+  'adminDraw.resultDialog.courts.loadError': 'Não foi possível carregar as quadras.',
+  'adminDraw.resultDialog.courts.hint': 'Quadras do complexo do torneio. Escolha "Outra quadra" se não aparecer.'
 };
