@@ -23,7 +23,7 @@ Supported locales are defined in:
 - `src/app/core/i18n/i18n.types.ts`
 
 Translations are stored in:
-- `src/app/core/i18n/i18n.translations.ts`
+- the per-locale files `src/app/core/i18n/i18n.{es,en,pt}.ts`
 
 Translation resolution is implemented through:
 - `src/app/core/i18n/i18n.service.ts`
@@ -35,7 +35,7 @@ Do not assume translation work is complete merely because a UI uses keys.
 
 ## Additional rules
 
-- never accept a feature as complete if required keys are missing from `i18n.translations.ts`
+- never accept a feature as complete if required keys are missing from the per-locale files `i18n.{es,en,pt}.ts`
 - require the same translation tree in all locales defined by `AppLocale`
 - define feature-scoped keys instead of ad-hoc global keys
 - ensure admin users can preview the application in different locales
@@ -49,7 +49,7 @@ Before considering work complete:
 
 1. identify every new or modified user-facing string
 2. verify it uses a translation key instead of hardcoded text
-3. verify the key exists in `src/app/core/i18n/i18n.translations.ts`
+3. verify the key exists in the per-locale files `src/app/core/i18n/i18n.{es,en,pt}.ts`
 4. verify the key exists for every locale defined by `AppLocale`
 5. verify locale trees remain structurally aligned
 6. verify unresolved keys cannot reach the rendered UI
@@ -58,7 +58,7 @@ Before considering work complete:
 
 The task is incomplete if:
 
-- a key is referenced in HTML or TS but missing from `i18n.translations.ts`
+- a key is referenced in HTML or TS but missing from the per-locale files `i18n.{es,en,pt}.ts`
 - one locale is missing a required key
 - locale trees drift
 - raw user-facing text was introduced where translations are required

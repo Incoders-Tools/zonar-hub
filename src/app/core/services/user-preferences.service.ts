@@ -114,7 +114,7 @@ export class UserPreferencesService {
   /** Apply the effective settings to the actual runtime services */
   applyEffectiveSettings(): void {
     const settings = this.effective();
-    this.i18n.setLocale(settings.locale);
+    void this.i18n.setLocale(settings.locale);
     this.themeService.setTheme(settings.theme);
     this.dateFormatService.setFormat(settings.dateFormat);
     // Timezone is consumed directly via effective().timezone
