@@ -12,6 +12,7 @@ import { ApiTournamentRuleRepository } from '../../../../core/repositories/api/a
 import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 export interface TournamentFilters {
   name?: string;
@@ -32,6 +33,7 @@ export class TournamentsFacadeService {
   private readonly courtRepo = inject(ApiCourtRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly i18n = inject(I18nService);
+  private readonly notification = inject(NotificationService);
   private lastOrgId: string | null | undefined = undefined;
 
   constructor() {
@@ -420,7 +422,10 @@ export class TournamentsFacadeService {
 
       return true;
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      const message = (error as Error).message;
+      this.errorState.set(message);
+      // The tenant refusal has a translated key; any other failure keeps the generic toast.
+      this.notification.error(message === 'tournaments.errors.forbidden' ? message : 'toast.error');
       return false;
     } finally {
       this.savingState.set(false);

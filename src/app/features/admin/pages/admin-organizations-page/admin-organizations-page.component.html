@@ -64,6 +64,7 @@
     [error]="!!facade.error()"
     [selectable]="true"
     [rowActions]="rowActions"
+    [rowActionsFilter]="organizationRowActionsFilter"
     emptyMessageKey="admin.organizations.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
     (sorted)="onSorted($event)"
@@ -81,9 +82,14 @@
               <p class="zh-list-card__subtitle">{{ row.legalName }}</p>
             }
           </div>
-          <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
-            {{ row.statusLabel | t }}
-          </span>
+          <div class="organizations-page__card-badges">
+            @if (row.isPrimary) {
+              <span class="zh-list-card__status zh-list-card__status--info">{{ 'org.selector.primary' | t }}</span>
+            }
+            <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant || 'neutral' }}">
+              {{ row.statusLabel | t }}
+            </span>
+          </div>
         </div>
       </div>
     </ng-template>
@@ -99,6 +105,19 @@
     [loading]="facade.deleting()"
     (confirmed)="executeDelete()"
     (cancelled)="cancelDelete()">
+  </app-confirm-dialog>
+}
+
+@if (pendingPrimaryId()) {
+  <app-confirm-dialog
+    titleKey="org.selector.confirmTitle"
+    messageKey="org.selector.confirmMessage"
+    warningKey="org.selector.confirmWarning"
+    confirmLabelKey="org.selector.setPrimary"
+    confirmVariant="primary"
+    [loading]="facade.savingPrimary()"
+    (confirmed)="confirmPrimary()"
+    (cancelled)="cancelPrimary()">
   </app-confirm-dialog>
 }
 

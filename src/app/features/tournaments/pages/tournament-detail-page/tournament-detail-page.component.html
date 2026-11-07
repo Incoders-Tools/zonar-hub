@@ -1,171 +1,161 @@
 <div class="tournament-detail">
-  @if (loading()) {
-    <div class="tournament-detail__loading">
-      <span class="spinner"></span> {{ 'states.loading' | t }}
-    </div>
-  } @else if (!tournament()) {
-    <div class="tournament-detail__error">
-      <h2>{{ 'states.notFound' | t }}</h2>
-      <a routerLink="/tournaments">{{ 'tournaments.backToList' | t }}</a>
-    </div>
-  } @else {
-    @let t = tournament()!;
-    <div class="tournament-detail__header">
-      <a routerLink="/tournaments" class="tournament-detail__back">← {{ 'tournaments.backToList' | t }}</a>
-      <h1>{{ t.name }}</h1>
-      <p class="tournament-detail__meta">
-        📍 {{ t.complexName }} · 📅 {{ t.startDate | formatDate }} — {{ t.endDate | formatDate }} · {{ t.categoryName }} {{ t.genderLabel }}
-      </p>
-      <span class="tournament-detail__status" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span>
-      @if (canRegister) {
-        <a class="btn btn--primary btn--sm" [routerLink]="['/tournaments', t.id, 'register']">
-          {{ 'tournaments.register' | t }}
-        </a>
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-state messageKey="publicTournaments.detail.loading"></app-loading-state>
+    }
+    @case ('error') {
+      <app-error-state title="publicTournaments.detail.errorTitle" [message]="errorKey()" (retried)="load()"></app-error-state>
+    }
+    @case ('notFound') {
+      <div class="tournament-detail__not-found" role="status">
+        <mat-icon class="tournament-detail__not-found-icon" aria-hidden="true">search_off</mat-icon>
+        <h2>{{ 'publicTournaments.detail.notFound.title' | t }}</h2>
+        <p>{{ 'publicTournaments.detail.notFound.message' | t }}</p>
+        <a [routerLink]="listPath">{{ 'tournaments.backToList' | t }}</a>
+      </div>
+    }
+    @case ('loaded') {
+      @let t = tournament()!;
+      <a [routerLink]="listPath" class="tournament-detail__back">
+        <mat-icon aria-hidden="true">arrow_back</mat-icon>
+        {{ 'tournaments.backToList' | t }}
+      </a>
+
+      @if (heroImage(); as image) {
+        <img class="tournament-detail__hero" [src]="image" alt="" />
       }
-    </div>
 
-    <!-- Tabs -->
-    <nav class="tournament-tabs" role="tablist">
-      <button class="tournament-tabs__tab"
-              [class.tournament-tabs__tab--active]="activeTab() === 'bracket'"
-              (click)="setTab('bracket')"
-              role="tab"
-              [attr.aria-selected]="activeTab() === 'bracket'">
-        <mat-icon>account_tree</mat-icon>
-        <span>{{ 'tournaments.tab.bracket' | t }}</span>
-      </button>
-      <button class="tournament-tabs__tab"
-              [class.tournament-tabs__tab--active]="activeTab() === 'results'"
-              (click)="setTab('results')"
-              role="tab"
-              [attr.aria-selected]="activeTab() === 'results'">
-        <mat-icon>scoreboard</mat-icon>
-        <span>{{ 'tournaments.tab.results' | t }}</span>
-      </button>
-      <button class="tournament-tabs__tab"
-              [class.tournament-tabs__tab--active]="activeTab() === 'participants'"
-              (click)="setTab('participants')"
-              role="tab"
-              [attr.aria-selected]="activeTab() === 'participants'">
-        <mat-icon>groups</mat-icon>
-        <span>{{ 'tournaments.tab.participants' | t }}</span>
-      </button>
-    </nav>
-
-    <!-- Tab content -->
-    <div class="tournament-detail__content" role="tabpanel">
-
-      <!-- ── Bracket ── -->
-      @if (activeTab() === 'bracket') {
-        @if (bracket(); as b) {
-          <app-tournament-bracket [bracket]="b"></app-tournament-bracket>
-        } @else {
-          <div class="empty-state">
-            <mat-icon class="empty-state__icon">account_tree</mat-icon>
-            <p>{{ 'tournaments.bracket.notAvailable' | t }}</p>
-          </div>
+      <header class="tournament-detail__header">
+        <div class="tournament-detail__title-row">
+          @if (t.sport; as sport) {
+            <app-sport-icon [icon]="sport.icon" [source]="sport.iconSource" [alt]="sport.name" [size]="40"></app-sport-icon>
+          }
+          <h1>{{ t.name }}</h1>
+        </div>
+        @if (statusName(); as status) {
+          <app-status-badge class="tournament-detail__status" [status]="statusVariant()" [label]="status"></app-status-badge>
         }
-      }
+      </header>
 
-      <!-- ── Results ── -->
-      @if (activeTab() === 'results') {
-        @if (bracket(); as b) {
-          <div class="results-list">
-            @for (round of b.rounds; track round.name) {
-              <div class="results-round">
-                <h3 class="results-round__title">{{ round.name | t }}</h3>
-                <div class="results-round__matches">
-                  @for (match of round.matches; track match.id) {
-                    <div class="results-match" [class.results-match--played]="match.winnerId">
-                      <!-- Match meta (court + date) -->
-                      @if (match.courtName || match.scheduledAt) {
-                        <div class="results-match__meta">
-                          @if (match.courtName) {
-                            <span class="results-match__court">📍 {{ match.courtName }}</span>
-                          }
-                          @if (match.scheduledAt) {
-                            <span class="results-match__date">📅 {{ match.scheduledAt | formatDate }}</span>
-                          }
-                          <span class="results-match__status"
-                                [class.results-match__status--played]="match.winnerId">
-                            {{ (match.winnerId ? 'tournaments.results.played' : 'tournaments.results.pending') | t }}
-                          </span>
-                        </div>
-                      }
-                      <!-- Participants + scores -->
-                      <div class="results-match__body">
-                        <div class="results-match__side"
-                             [class.results-match__side--winner]="match.winnerId === match.pair1?.id">
-                          @if (match.winnerId === match.pair1?.id) {
-                            <mat-icon class="results-match__trophy">emoji_events</mat-icon>
-                          }
-                          <span class="results-match__name">
-                            {{ formatPair(match.pair1?.player1 ?? '—', match.pair1?.player2) }}
-                          </span>
-                          @if (match.pair1?.seed) {
-                            <span class="results-match__seed">★{{ match.pair1!.seed }}</span>
-                          }
-                          <span class="results-match__score">{{ match.score1.join(' - ') }}</span>
-                        </div>
-                        <span class="results-match__vs">vs</span>
-                        <div class="results-match__side"
-                             [class.results-match__side--winner]="match.winnerId === match.pair2?.id">
-                          @if (match.winnerId === match.pair2?.id) {
-                            <mat-icon class="results-match__trophy">emoji_events</mat-icon>
-                          }
-                          <span class="results-match__name">
-                            {{ formatPair(match.pair2?.player1 ?? '—', match.pair2?.player2) }}
-                          </span>
-                          @if (match.pair2?.seed) {
-                            <span class="results-match__seed">★{{ match.pair2!.seed }}</span>
-                          }
-                          <span class="results-match__score">{{ match.score2.join(' - ') }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
+      <div class="tournament-detail__layout">
+        <div class="tournament-detail__main">
+          <dl class="tournament-detail__info">
+            <div class="tournament-detail__info-item">
+              <dt>{{ 'tournaments.dates' | t }}</dt>
+              <dd>{{ t.startDate | formatDate }}@if (t.endDate && t.endDate !== t.startDate) { — {{ t.endDate | formatDate }}}</dd>
+            </div>
+            @if (t.registrationStartDate || t.registrationEndDate) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'tournaments.registrationWindow' | t }}</dt>
+                <dd>{{ t.registrationStartDate | formatDate }} — {{ t.registrationEndDate | formatDate }}</dd>
               </div>
             }
-          </div>
-        } @else {
-          <div class="empty-state">
-            <mat-icon class="empty-state__icon">scoreboard</mat-icon>
-            <p>{{ 'tournaments.results.notAvailable' | t }}</p>
-          </div>
-        }
-      }
-
-      <!-- ── Participants (singles / doubles / teams) ── -->
-      @if (activeTab() === 'participants') {
-        @if (confirmedParticipants().length > 0) {
-          <div class="participants-list">
-            @for (entry of confirmedParticipants(); track entry.id; let i = $index) {
-              <div class="participant-row">
-                <span class="participant-row__index">{{ i + 1 }}</span>
-                @if (entry.seed) {
-                  <span class="participant-row__seed">★ {{ entry.seed }}</span>
-                }
-                <span class="participant-row__names">
-                  @if (entry.names.length === 1) {
-                    {{ entry.names[0] }}
-                  } @else if (entry.names.length === 2) {
-                    {{ entry.names[0] }} / {{ entry.names[1] }}
-                  } @else {
-                    {{ entry.names.join(' · ') }}
+            @if (t.complex; as complex) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'tournaments.complex' | t }}</dt>
+                <dd>
+                  {{ complex.name }}
+                  @if (complex.address) {
+                    <span class="tournament-detail__muted">{{ complex.address }}</span>
                   }
-                </span>
-                <span class="participant-row__category">{{ entry.category }}</span>
+                </dd>
               </div>
             }
-          </div>
-        } @else {
-          <div class="empty-state">
-            <mat-icon class="empty-state__icon">groups</mat-icon>
-            <p>{{ 'tournaments.participants.empty' | t }}</p>
-          </div>
+            @if (t.category; as category) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'tournaments.category' | t }}</dt>
+                <dd>{{ category.name }}</dd>
+              </div>
+            }
+            @if (t.gender; as gender) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'tournaments.gender' | t }}</dt>
+                <dd>{{ gender.name }}</dd>
+              </div>
+            }
+            @if (modalityName(); as modality) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'publicTournaments.field.modality' | t }}</dt>
+                <dd>{{ modality }}</dd>
+              </div>
+            }
+            @if (t.maxPairs != null) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'tournaments.maxPairs' | t }}</dt>
+                <dd>{{ t.maxPairs }}</dd>
+              </div>
+            }
+            @if (t.registrationFeePerPair != null) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'publicTournaments.field.registrationFee' | t }}</dt>
+                <dd>{{ t.registrationFeePerPair | number: '1.0-2' }}</dd>
+              </div>
+            }
+            @if (t.prizeMoney != null) {
+              <div class="tournament-detail__info-item">
+                <dt>{{ 'publicTournaments.field.prizeMoney' | t }}</dt>
+                <dd>{{ t.prizeMoney | number: '1.0-2' }}</dd>
+              </div>
+            }
+          </dl>
+
+          @if (t.description) {
+            <section class="tournament-detail__text tournament-detail__description">
+              <h2>{{ 'publicTournaments.field.description' | t }}</h2>
+              <p>{{ t.description }}</p>
+            </section>
+          }
+          @if (t.rules) {
+            <section class="tournament-detail__text">
+              <h2>{{ 'tournaments.rules' | t }}</h2>
+              <p>{{ t.rules }}</p>
+            </section>
+          }
+        </div>
+
+        @if (t.organization; as organization) {
+          <aside class="tournament-detail__aside">
+            <app-public-organization-card [organization]="organization"></app-public-organization-card>
+          </aside>
         }
-      }
-    </div>
+      </div>
+
+      <nav class="tournament-tabs" role="tablist" [attr.aria-label]="'publicTournaments.detail.tabsLabel' | t">
+        @for (tab of tabs; track tab.id) {
+          <button type="button"
+                  class="tournament-tabs__tab"
+                  role="tab"
+                  [id]="'tournament-tab-' + tab.id"
+                  [class.tournament-tabs__tab--active]="activeTab() === tab.id"
+                  [attr.aria-selected]="activeTab() === tab.id"
+                  aria-controls="tournament-tabpanel"
+                  (click)="setTab(tab.id)">
+            <mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon>
+            <span>{{ tab.labelKey | t }}</span>
+          </button>
+        }
+      </nav>
+
+      <div class="tournament-detail__content"
+           id="tournament-tabpanel"
+           role="tabpanel"
+           [attr.aria-labelledby]="'tournament-tab-' + activeTab()">
+        @if (showsDraw()) {
+          <app-public-draw-panel [mode]="activeTab() === 'results' ? 'list' : 'bracket'">
+            <ng-container *ngTemplateOutlet="comingSoon"></ng-container>
+          </app-public-draw-panel>
+        } @else {
+          <ng-container *ngTemplateOutlet="comingSoon"></ng-container>
+        }
+      </div>
+
+      <ng-template #comingSoon>
+        <div class="tournament-detail__coming-soon" role="status">
+          <mat-icon class="tournament-detail__coming-soon-icon" aria-hidden="true">{{ activeTabDefinition().icon }}</mat-icon>
+          <h2>{{ 'publicTournaments.comingSoon.title' | t }}</h2>
+          <p>{{ activeTabDefinition().comingSoonKey | t }}</p>
+        </div>
+      </ng-template>
+    }
   }
 </div>

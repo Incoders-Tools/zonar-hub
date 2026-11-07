@@ -1,9 +1,14 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { TenantContextService } from '../services/tenant-context.service';
+import { PUBLIC_REQUEST } from '../http/public-request.context';
 import { AuthService } from './auth.service';
 
 export const tenantHeaderInterceptor: HttpInterceptorFn = (req, next) => {
+  if (req.context.get(PUBLIC_REQUEST)) {
+    return next(req);
+  }
+
   const tenantContext = inject(TenantContextService);
   const auth = inject(AuthService);
   const tenantId = tenantContext.tenantId();

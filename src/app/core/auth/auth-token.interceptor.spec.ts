@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ImpersonationService } from '../impersonation/impersonation.service';
 import { buildImpersonationTarget } from '../../testing/helpers/build-impersonation-session';
 import { API_BASE_URL } from '../config/api-base-url.token';
+import { publicRequestContext } from '../http/public-request.context';
 import { AuthService } from './auth.service';
 import { authTokenInterceptor } from './auth-token.interceptor';
 
@@ -78,6 +79,28 @@ describe('authTokenInterceptor (impersonation variants)', () => {
     http.get('/api/resource').subscribe();
     const req = controller.expectOne('/api/resource');
     expect(req.request.headers.get('X-Tenant-Id')).toBe('tenant-real');
+    req.flush({});
+  });
+
+  // ---------------------------------------------------------------------------
+  // Public requests — anonymous endpoints never receive credentials
+  // ---------------------------------------------------------------------------
+
+  it('sends no Authorization or X-Tenant-Id on a public request even with a session', () => {
+    setup(false);
+    http.get('/api/public/tournaments', { context: publicRequestContext() }).subscribe();
+    const req = controller.expectOne('/api/public/tournaments');
+    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('X-Tenant-Id')).toBeFalse();
+    req.flush({});
+  });
+
+  it('sends no impersonation credentials on a public request', () => {
+    setup(true);
+    http.get('/api/public/tournaments', { context: publicRequestContext() }).subscribe();
+    const req = controller.expectOne('/api/public/tournaments');
+    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('X-Tenant-Id')).toBeFalse();
     req.flush({});
   });
 

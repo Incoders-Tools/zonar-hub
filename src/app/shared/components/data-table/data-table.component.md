@@ -12,7 +12,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 | `data` | `T[]` | requerido | Filas renderizadas; `T extends Record<string, unknown>`. |
 | `loading` | `boolean` | `false` | Muestra `app-loading-state` y oculta la tabla. |
 | `error` | `boolean` | `false` | Muestra `app-error-state` con acción retry. |
-| `emptyMessageKey` | `string` | `'table.noData'` | Declarado, pero el template actual usa `app-empty-state` sin pasar este input. |
+| `emptyMessageKey` | `string` | `'table.noData'` | Mensaje del empty state; lo traduce el consumidor. |
 | `selectable` | `boolean` | `false` | Agrega checkbox por fila y checkbox de selección de página. |
 | `paginated` | `boolean` | `false` | Activa paginación cliente sobre `data`. |
 | `paginationPosition` | `'top' \| 'bottom' \| 'both'` | `'bottom'` | Ubicación de los controles de paginación. |
@@ -22,6 +22,9 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 | `rowActions` | `{ icon; labelKey; action; variant? }[]` | `[]` | Acciones por fila con icono Material. |
 | `rowActionsFilter` | `(row: T) => actions[] \| null` | `null` | Permite acciones condicionales por fila. |
 | `activeRowId` | `string \| null` | `null` | Marca una fila como activa si coincide con `trackByKey`. |
+| `serverSide` | `boolean` | `false` | Opt-in de paginación server controlada: `data` es la página actual y se renderiza tal cual (sin segundo slice). Muestra el pager aunque `paginated` sea false. |
+| `page` | `number` | `1` | Página actual (1-based) en modo `serverSide`. Ignorado en modo cliente (usa `currentPage` interno). |
+| `totalCount` | `number \| null` | `null` | Total de items en todas las páginas en modo `serverSide`; si es `null` usa `data.length`. |
 
 ### Outputs
 | Output | Payload | Cuándo emite |
@@ -31,9 +34,13 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 | `sorted` | `{ key: string; direction: 'asc' \| 'desc' }` | Al hacer click en una columna `sortable`. No ordena datos internamente. |
 | `rowAction` | `{ action: string; row: T }` | Al accionar botón de fila o toggle de columna. |
 | `retried` | `void` | Desde `app-error-state`. |
+| `pageChange` | `number` | Solo en `serverSide`: página solicitada por prev/next. No cambia la página internamente; el padre debe actualizar `page` y `data`. En modo cliente no emite. |
 
 ### Modelo auxiliar
-`DataTableColumn` soporta `renderType: 'text' | 'pill' | 'date' | 'toggle' | 'icon'`, `translate`, `pillVariantKey`, `sortable`, `order` y `toggleAction`.
+`DataTableColumn` soporta `renderType: 'text' | 'pill' | 'date' | 'toggle' | 'icon' | 'sportIcon'`, `translate`, `pillVariantKey`, `iconSourceKey`, `sortable`, `order` y `toggleAction`.
+
+### Pager compartido (`DataTablePaginatorComponent`)
+Componente propio en `../data-table-paginator/` (selector `app-data-table-paginator`; ver `data-table-paginator.component.md`). Es el único patrón de pager: lo usa la tabla y el modo cards de `zh-collection-view`. La tabla le pasa `page` (`currentPage` interno en cliente, `page` input en server), `pageSize`, `totalCount`, `visibleCount` (filas renderizadas) y escucha `pageChange` vía `goToPage`. Los estilos `data-table__pagination*` viven en `data-table-paginator.component.scss`.
 
 ## Dependencias
 | Tipo | Dependencia |
@@ -41,35 +48,39 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 | Angular | `input`, `output`, `signal`, `computed`, `NgTemplateOutlet` |
 | Material | `MatIcon`, `MatSlideToggle` |
 | Pipes | `TranslatePipe`, `FormatDatePipe` |
-| Componentes hijos | `LoadingStateComponent`, `EmptyStateComponent`, `ErrorStateComponent` |
+| Componentes hijos | `LoadingStateComponent`, `EmptyStateComponent`, `ErrorStateComponent`, `DataTablePaginatorComponent`, `SportIconComponent` |
 
 ## Comportamiento de template / estructura UI
 - Renderiza wrapper scrollable con `<table role="grid">`.
 - Prioridad de estados: `loading` > `error` > `empty` > tabla.
 - Las columnas con key `actions` se omiten como columna de datos; las acciones salen de `rowActions`/`rowActionsFilter`.
-- `pill` usa `data-variant` desde la fila; `toggle` emite acción pero revierte visualmente el slide-toggle al valor original; `date` usa `formatDate`; `icon` muestra `mat-icon` y nombre.
-- La paginación es cliente, calculada sobre `data`, no server-side.
+- `pill` usa `data-variant` desde la fila (`pillVariantKey ?? key`). Si el valor de la celda es `null`, `undefined` o string vacío/en blanco, no se renderiza pill (celda vacía), lo que permite marcadores exclusivos como "principal" sin pills vacías en el resto de filas. `false` y `0` siguen renderizándose como pill. `toggle` emite acción pero revierte visualmente el slide-toggle al valor original; `date` usa `formatDate`; `icon` muestra `mat-icon` y nombre; `sportIcon` delega en `app-sport-icon` (24px) con el valor de la celda como `icon` y `row[iconSourceKey]` como origen (`'svg'` muestra el dibujo `uploads/sports-icons/{icon}.svg`, cualquier otro valor o clave ausente usa `'unicode'`), y muestra el mismo guion `data-table__icon-empty` cuando el valor está vacío.
+- Paginación cliente (default, `paginated`): calculada sobre `data` con `currentPage` interno; sin cambios para consumidores existentes.
+- Paginación server (`serverSide`): renderiza `data` completo, rango y páginas desde `page`/`totalCount`, y emite `pageChange`. Al cambiar `page` se limpia `selectedIds` y se emite `selectionChanged([])` si había selección; `selectionChanged` siempre contiene solo filas de la página visible. El padre puede limpiar explícitamente con `clearSelection()`.
+- Con `serverSide`, `data` vacío y `totalCount` 0 se muestra empty state sin pager; si `totalCount` > 0 (página fuera de rango) se mantiene el pager con rango `0–0 de total`, Siguiente deshabilitado y Anterior emitiendo `pageChange` con la última página válida.
 
 ## Estados y variantes
 - Loading: `app-loading-state`.
 - Error: `app-error-state` con `retried`.
-- Empty: `app-empty-state` sin mensaje personalizado efectivo actualmente.
+- Empty: `app-empty-state` con el mensaje de `emptyMessageKey` (default `table.noData`).
 - Selected: clase `data-table__row--selected`.
 - Active: clase `data-table__row--active`.
-- Disabled: solo en botones de paginación cuando están en límite; acciones no tienen disabled por API.
+- Disabled: solo en botones de paginación cuando están en límite (primera/última página, también con total 0); acciones no tienen disabled por API.
 - Variantes visuales: acciones `primary`, `warn`, `danger`; pills por valores como `active`, `inactive`, `warning`, `danger`, `completed`, etc.
 
 ## Accesibilidad
 - La tabla declara `role="grid"`.
 - Checkbox global tiene `aria-label="Select all rows"`; checkbox de fila tiene texto hardcodeado `Select row`.
-- Acciones usan `title` traducido, pero no `aria-label` explícito.
+- Los botones de acción por fila son icon-only: el texto del `mat-icon` (p. ej. `star`) no debe ser el nombre accesible, por eso exponen `[attr.aria-label]` con la etiqueta traducida (`labelKey | t`) y conservan `title` traducido como tooltip nativo.
 - Columnas ordenables se activan por click, sin soporte de teclado documentado en template.
+- El pager es un `<nav>` con `aria-label` traducido (`admin.pagination.label`); botones `type="button"` con texto visible; el indicador `x / y` tiene prefijo visualmente oculto (`admin.pagination.page`) y `aria-live="polite"`.
 - Drag/drop de columnas no expone instrucciones accesibles.
 
 ## i18n
 - Encabezados (`labelKey`), acciones, paginación y celdas con `translate` usan `TranslatePipe`.
+- Keys de paginación: `admin.pagination.showing`, `.of`, `.prev`, `.next`, `.label`, `.page` (es/en/pt).
 - Textos hardcodeados observados: `Select all rows`, `Select row`, símbolos de sort `▲/▼` y dash de icono vacío.
-- `emptyMessageKey` está declarado pero no se pasa al empty state.
+- `emptyMessageKey` se pasa al `app-empty-state`; los mensajes traducidos los provee el consumidor.
 
 ## Theming
 - Usa tokens `--zh-*` para superficies, borde, texto, estados, radios, espacios, transición y elevación.
@@ -77,8 +88,11 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 - Hardcoded styles observados: sombra mobile `rgba(0, 0, 0, 0.06)`; tamaños fijos de checkbox/iconos/botones; el resto se apoya mayormente en tokens.
 
 ## Testing
-- `data-table.component.spec.ts` solo cubre creación del componente.
-- Faltan pruebas de loading/error/empty, selección, sort, paginación, acciones, render types, retry y reorder.
+- `data-table.component.spec.ts` cubre creación y el render type `pill`: sin pill para valores vacíos/nulos/en blanco, pill solo en la fila con valor, `false`/`0` visibles y `data-variant` desde `pillVariantKey`.
+- También verifica que los botones de acción por fila exponen la etiqueta traducida como `aria-label` y `title`.
+- Paginación: cliente default (slice local, `currentPage`, sin `pageChange`) y server (25 items con `pageSize` 20 sin segundo slice, `pageChange`, página controlada, prev/next disabled, labels accesibles, limpieza de selección al cambiar página, total 0).
+- Prueba del empty state con `emptyMessageKey` personalizado (default `table.noData`).
+- Faltan pruebas de loading/error, sort, acciones, resto de render types, retry y reorder.
 
 ## Guía de reutilización
 - Usar para listados/tablas compartidas de administración antes de crear tablas específicas.
@@ -87,8 +101,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 - El consumidor debe ordenar datos ante `sorted`; el componente no modifica el orden de `data`.
 
 ## Compliance gaps
-- Cobertura de tests superficial para un primitivo canónico.
+- Cobertura de tests parcial para un primitivo canónico (solo `pill` cubierto en profundidad).
 - Algunos textos/labels accesibles están hardcodeados y no pasan por i18n.
-- `emptyMessageKey` no se aplica en el template actual.
-- Acciones no tienen disabled/aria-label completo.
+- Acciones no soportan estado disabled.
 - Reorder por drag/drop no es plenamente accesible.

@@ -1,11 +1,16 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
-import { TournamentService } from '../../../../core/services/tournament.service';
+import { PublicTournamentService } from '../../../../core/services/public-tournament.service';
+import { PUBLIC_TOURNAMENTS_ROUTE } from '../../../../core/services/public-tournament-link.service';
 import { TutorialModalComponent } from '../../../../shared/components/tutorial-modal/tutorial-modal.component';
 import { ChatbotBubbleComponent } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
 import { PlansPricingComponent } from '../../../../shared/components/plans-pricing/plans-pricing.component';
+import { SportIconComponent } from '../../../../shared/components/sport-icon/sport-icon.component';
+import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PublicTournamentCardComponent } from '../../../tournaments/components/public-tournament-card/public-tournament-card.component';
 
 interface FeatureCard {
   icon: string;
@@ -27,19 +32,25 @@ interface FaqItem {
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, FormatDatePipe, TutorialModalComponent, ChatbotBubbleComponent, PlansPricingComponent],
+  imports: [
+    RouterLink, TranslatePipe, TutorialModalComponent, ChatbotBubbleComponent, PlansPricingComponent, SportIconComponent,
+    LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PublicTournamentCardComponent
+  ],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent implements OnInit {
-  protected readonly tournamentService = inject(TournamentService);
+  private static readonly SHOWCASE_LIMIT = 6;
+
+  protected readonly publicTournaments = inject(PublicTournamentService);
+  readonly tournamentsPath = `/${PUBLIC_TOURNAMENTS_ROUTE}`;
   readonly showTutorial = signal(false);
 
   readonly sports = [
-    { id: '1c65fdf8-76fc-4a91-a2b5-1d70791bfde1', key: 'padel',  icon: '🎾' },
-    { id: 'f57e77a7-24ba-4fd3-a0d3-0b89df6222d2', key: 'tenis',  icon: '🎾' },
-    { id: '293aabec-31db-4f5a-9e22-8eb218f4d11a', key: 'futbol', icon: '⚽' },
-    { id: '725d42b7-2298-4f55-acf4-4ab99f910fd2', key: 'rugby',  icon: '🏉' },
+    { id: '1c65fdf8-76fc-4a91-a2b5-1d70791bfde1', key: 'padel',  icon: 'padel', iconSource: 'svg' },
+    { id: 'f57e77a7-24ba-4fd3-a0d3-0b89df6222d2', key: 'tenis',  icon: '🎾',    iconSource: 'unicode' },
+    { id: '293aabec-31db-4f5a-9e22-8eb218f4d11a', key: 'futbol', icon: '⚽',    iconSource: 'unicode' },
+    { id: '725d42b7-2298-4f55-acf4-4ab99f910fd2', key: 'rugby',  icon: '🏉',    iconSource: 'unicode' },
   ] as const;
   readonly expandedFaq = signal<number | null>(null);
   readonly billingCycle = signal<'monthly' | 'annual'>('monthly');
@@ -51,10 +62,11 @@ export class HomePageComponent implements OnInit {
   readonly starterAnnual = computed(() => Math.round(this.starterMonthly * 12 * 0.8));
   readonly proAnnual = computed(() => Math.round(this.proMonthly * 12 * 0.8));
 
-  /** Showcase tournaments for the public landing page come exclusively from
-   *  the API now that mock seed data is gone. The section gracefully renders
-   *  an empty state when there are no upcoming tournaments. */
-  readonly showcaseTournaments = computed(() => this.tournamentService.upcomingTournaments());
+  /** Upcoming tournaments that organizations made public, read anonymously from the public API.
+   *  The landing shows the first few; the full list lives at `/tournaments`. */
+  readonly showcaseTournaments = computed(() =>
+    this.publicTournaments.upcomingTournaments().slice(0, HomePageComponent.SHOWCASE_LIMIT)
+  );
 
   readonly features: FeatureCard[] = [
     { icon: '📝', titleKey: 'home.card.one.title', descriptionKey: 'home.card.one.description' },
@@ -88,7 +100,11 @@ export class HomePageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.tournamentService.loadTournaments();
+    this.loadShowcase();
+  }
+
+  loadShowcase(): void {
+    void this.publicTournaments.load();
   }
 
   toggleFaq(index: number): void {

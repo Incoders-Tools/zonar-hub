@@ -38,6 +38,7 @@ Componente standalone sin `@Input()` ni `@Output()` públicos: se consume por ro
 - Vista principal en `zh-collection-view` con `viewKey="admin-complexes"`, selección, reordenamiento, acciones por fila, loading, empty y error.
 - Card template custom para vista de tarjetas usando clases compartidas `.zh-list-card`.
 - Panel de canchas debajo de la colección cuando se invoca la acción `courts`.
+- Si la lectura de canchas falla, la sección de canchas reemplaza `app-complex-courts-panel` por una alerta compacta `.complexes-page__courts-alert` (`role="alert"`, key propia de la página `admin.complexes.courts.listLoadError`; no reutiliza `admin.complexes.courts.loadError`, cuyo texto "reintente antes de guardar" es exclusivo del formulario editable) con un `app-async-button` secundario `type="button"` (`common.retry`) que invoca `retryCourts()`. Así un fallo nunca se muestra como "sin canchas".
 - Grilla de disponibilidad debajo del panel de canchas cuando se selecciona una cancha.
 - Diálogos `app-confirm-dialog` para delete individual y bulk delete.
 
@@ -45,9 +46,10 @@ Componente standalone sin `@Input()` ni `@Output()` públicos: se consume por ro
 
 | Estado | Implementación actual |
 | --- | --- |
-| Loading | `facade.loading()` en `zh-collection-view`; `facade.loadingCourts()` en panel de canchas. |
-| Empty | `emptyMessageKey="admin.complexes.emptyState"` en la colección. |
+| Loading | `facade.loading()` en `zh-collection-view`; `facade.loadingCourts()` en panel de canchas y en el botón retry de la alerta de canchas. |
+| Empty | `emptyMessageKey="admin.complexes.emptyState"` en la colección; el empty de canchas solo aparece cuando la lectura de canchas fue exitosa y vacía. |
 | Error | `zh-collection-view` recibe `[error]="!!facade.error()"` y emite retry hacia `facade.load()`. |
+| Error de canchas | `facade.courtsError()` es un estado propio de las lecturas de canchas: no toca `facade.error()`, por lo que la colección de complejos sigue visible y sin error. Muestra la alerta acotada con retry y oculta el empty de canchas. Se limpia al reintentar, al cargar con éxito, al invalidar (cambio de organización) y al abrir otro complejo; las respuestas obsoletas (secuencia u organización activa distinta) se ignoran. |
 | Success | Cierre del panel tras `saved`; la fachada actualiza signals locales tras create/update/delete. No hay toast local en este componente. |
 | Disabled | Botón bulk delete solo aparece con selección; create se oculta mientras el form está abierto. |
 | Selected | `selectedComplexes` se actualiza desde `selectionChanged`; habilita bulk delete. |
@@ -62,10 +64,12 @@ Componente standalone sin `@Input()` ni `@Output()` públicos: se consume por ro
 - El componente delega semántica de tabla/tarjetas, selección y retry a `zh-collection-view`.
 - Acciones destructivas requieren confirmación antes de ejecutarse.
 - El template combina el nombre del complejo en el título de la sección de canchas; no define `aria-live` para cambios dinámicos.
+- La alerta de fallo de canchas usa `role="alert"` para anunciarse; el retry es un botón nativo `type="button"` (no envía formularios) y queda deshabilitado mientras la lectura está en curso.
 
 ## i18n considerations
 
 - Los textos principales usan translation keys vía `TranslatePipe` o inputs `*Key`.
+- La alerta de fallo de canchas usa `admin.complexes.courts.listLoadError` (es/en/pt), texto corto sin referencia a guardar porque la sección de canchas de la página es de solo lectura/disponibilidad.
 - Keys observadas: `admin.complexes.*`, `admin.bulkDelete`, `admin.confirmBulkDelete`, `common.*`.
 - Texto dinámico no traducido observado: el separador literal ` - ` entre título de canchas y nombre del complejo.
 - Los valores de estado se guardan como keys (`admin.complexes.status.active/inactive`) y se traducen al renderizar.
@@ -75,6 +79,7 @@ Componente standalone sin `@Input()` ni `@Output()` públicos: se consume por ro
 - SCSS usa tokens semánticos `--zh-*` para superficie, texto, borde, espaciado, radios y transiciones.
 - Se reutilizan clases compartidas `.zh-list-card` para cards.
 - No se observaron colores hardcodeados relevantes en el template; revisar SCSS si se cambia animación/estado visual.
+- La alerta de canchas usa `--zh-danger`, `--zh-danger-soft`, `--zh-space-*`, `--zh-radius-sm` y `--zh-font-size-sm`, igual que la alerta de carga de canchas del formulario.
 
 ## Testing notes
 
@@ -84,6 +89,9 @@ Componente standalone sin `@Input()` ni `@Output()` públicos: se consume por ro
 - carga inicial de complejos;
 - abrir/cerrar form;
 - alternar panel de canchas;
+- fallo de lectura de canchas: alerta acotada con retry secundario `type="button"`, sin empty de canchas ni error de colección, y recuperación tras retry;
+- empty genuino de canchas sin alerta;
+- un fallo de canchas no se hereda al abrir otro complejo;
 - aplicar/limpiar filtros;
 - confirm/cancel delete;
 - selección y sort.

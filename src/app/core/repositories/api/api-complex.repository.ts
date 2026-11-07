@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../config/api-base-url.token';
 import { Complex, Court, Availability } from '../../models';
-import { ComplexRepository } from '../complex.repository';
+import { ComplexRepository, SaveComplexWithCourtsRequest, SaveComplexWithCourtsResult } from '../complex.repository';
 import { ActiveOrganizationService } from '../../services/active-organization.service';
 import { ApiCourtRepository } from './api-court.repository';
 import { extractApiErrorCode } from './api-error.util';
@@ -24,6 +24,13 @@ interface ComplexApiDto {
   isActive: boolean;
   createdAtUtc: string;
   updatedAtUtc: string;
+  courtCount?: number | null;
+}
+
+interface SaveComplexWithCourtsApiDto {
+  complex_id: string;
+  court_count: number;
+  court_ids: string[];
 }
 
 interface CreateComplexRequest {
@@ -159,6 +166,21 @@ export class ApiComplexRepository implements ComplexRepository {
     }
   }
 
+  async saveWithCourts(request: SaveComplexWithCourtsRequest): Promise<SaveComplexWithCourtsResult> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<SaveComplexWithCourtsApiDto>(`${this.endpoint}/save`, request)
+      );
+      return {
+        complexId: response.complex_id,
+        courtCount: response.court_count,
+        courtIds: response.court_ids
+      };
+    } catch (error) {
+      throw new Error(extractApiErrorCode(error));
+    }
+  }
+
   async delete(id: string): Promise<void> {
     try {
       await firstValueFrom(this.http.delete<void>(`${this.endpoint}/${id}`));
@@ -223,7 +245,7 @@ export class ApiComplexRepository implements ComplexRepository {
       email: undefined,
       imageUrl: undefined,
       sportsSupported: [],
-      courtsCount: 0,
+      courtsCount: dto.courtCount ?? 0,
       isActive: dto.isActive,
       createdAt: dto.createdAtUtc,
       updatedAt: dto.updatedAtUtc

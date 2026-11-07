@@ -88,14 +88,54 @@
     }
   }
 
-  &__sport-icon {
-    font-size: var(--zh-font-size-lg);
-    line-height: 1;
-  }
-
   &__sport-label {
     font-size: var(--zh-font-size-md);
     font-weight: 600;
+  }
+
+  &__public-profile {
+    margin-bottom: var(--zh-space-md);
+    padding: var(--zh-space-md);
+    border: 1px solid var(--zh-border-default);
+    border-radius: var(--zh-radius-md);
+    background: var(--zh-surface-card);
+  }
+
+  &__section-title {
+    margin: 0 0 var(--zh-space-sm);
+    font-size: var(--zh-font-size-md);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+  }
+
+  &__consent {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zh-space-sm) var(--zh-space-md);
+  }
+
+  &__consent-text {
+    flex: 1 1 20rem;
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    color: var(--zh-text-primary);
+  }
+
+  &__public-profile-help {
+    margin: var(--zh-space-sm) 0 var(--zh-space-md);
+
+    p {
+      margin: 0 0 var(--zh-space-xs);
+    }
+  }
+
+  &__links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0 var(--zh-space-md);
   }
 }
 

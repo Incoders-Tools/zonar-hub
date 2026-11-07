@@ -16,9 +16,24 @@ describe('ConfirmDialogComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should emit cancelled on cancel click', () => {
+  it('cancels from the button and overlay when not loading', () => {
     const spy = spyOn(component.cancelled, 'emit');
+    const element: HTMLElement = fixture.nativeElement;
+    element.querySelector<HTMLButtonElement>('.confirm-dialog__cancel')!.click();
+    element.querySelector<HTMLElement>('.confirm-overlay')!.click();
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('blocks button, overlay, and direct cancellation while loading', () => {
+    fixture.componentRef.setInput('loading', true);
+    fixture.detectChanges();
+    const spy = spyOn(component.cancelled, 'emit');
+    const element: HTMLElement = fixture.nativeElement;
+    const cancel = element.querySelector<HTMLButtonElement>('.confirm-dialog__cancel')!;
+    expect(cancel.disabled).toBeTrue();
+    cancel.click();
+    element.querySelector<HTMLElement>('.confirm-overlay')!.click();
     component.onCancel();
-    expect(spy).toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
   });
 });

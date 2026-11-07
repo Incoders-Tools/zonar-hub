@@ -4,10 +4,14 @@
   } @else if (error()) {
     <app-error-state (retried)="retried.emit()"></app-error-state>
   } @else if (data().length === 0) {
-    <app-empty-state></app-empty-state>
+    <app-empty-state [message]="emptyMessageKey()"></app-empty-state>
+    @if (serverSide() && totalItems() > 0) {
+      <!-- Out-of-range server page: keep the pager so the user can navigate back -->
+      <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
+    }
   } @else {
     <!-- Top pagination -->
-    @if (paginated() && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
+    @if (showPagination() && (paginationPosition() === 'top' || paginationPosition() === 'both')) {
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
     }
 
@@ -62,9 +66,11 @@
               @if (col.key !== 'actions') {
                 <td class="data-table__td">
                   @if (col.renderType === 'pill') {
-                    <span class="data-table__pill" [attr.data-variant]="row[col.pillVariantKey ?? col.key]">
-                      {{ col.translate ? ($any(row[col.key]) | t) : row[col.key] }}
-                    </span>
+                    @if (hasPillValue(row[col.key])) {
+                      <span class="data-table__pill" [attr.data-variant]="row[col.pillVariantKey ?? col.key]">
+                        {{ col.translate ? ($any(row[col.key]) | t) : row[col.key] }}
+                      </span>
+                    }
                   } @else if (col.renderType === 'toggle') {
                     <mat-slide-toggle
                       [checked]="!!row[col.key]"
@@ -79,6 +85,12 @@
                         <mat-icon class="data-table__icon-preview">{{ row[col.key] }}</mat-icon>
                         <span class="data-table__icon-name">{{ row[col.key] }}</span>
                       </div>
+                    } @else {
+                      <span class="data-table__icon-empty">—</span>
+                    }
+                  } @else if (col.renderType === 'sportIcon') {
+                    @if (row[col.key]) {
+                      <app-sport-icon [icon]="$any(row[col.key])" [source]="getIconSource(row, col)" [size]="24"></app-sport-icon>
                     } @else {
                       <span class="data-table__icon-empty">—</span>
                     }
@@ -100,6 +112,7 @@
                       [class.data-table__action-btn--warn]="act.variant === 'warn'"
                       [class.data-table__action-btn--danger]="act.variant === 'danger'"
                       [title]="act.labelKey | t"
+                      [attr.aria-label]="act.labelKey | t"
                       (click)="onRowAction(act.action, row); $event.stopPropagation()">
                       <mat-icon class="data-table__action-icon">{{ act.icon }}</mat-icon>
                     </button>
@@ -113,35 +126,19 @@
     </table>
 
     <!-- Bottom pagination -->
-    @if (paginated() && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
+    @if (showPagination() && (paginationPosition() === 'bottom' || paginationPosition() === 'both')) {
       <ng-container *ngTemplateOutlet="paginationTpl"></ng-container>
     }
-
-    <!-- Pagination template -->
-    <ng-template #paginationTpl>
-      <div class="data-table__pagination">
-        <span class="data-table__pagination-info">
-          {{ 'admin.pagination.showing' | t }}
-          {{ (currentPage() - 1) * pageSize() + 1 }}–{{ currentPage() * pageSize() > data().length ? data().length : currentPage() * pageSize() }}
-          {{ 'admin.pagination.of' | t }}
-          {{ data().length }}
-        </span>
-        <div class="data-table__pagination-controls">
-          <button
-            class="data-table__pagination-btn"
-            [disabled]="currentPage() === 1"
-            (click)="goToPage(currentPage() - 1)">
-            {{ 'admin.pagination.prev' | t }}
-          </button>
-          <span class="data-table__pagination-page">{{ currentPage() }} / {{ totalPages() }}</span>
-          <button
-            class="data-table__pagination-btn"
-            [disabled]="currentPage() === totalPages()"
-            (click)="goToPage(currentPage() + 1)">
-            {{ 'admin.pagination.next' | t }}
-          </button>
-        </div>
-      </div>
-    </ng-template>
   }
+
+  <!-- Pagination template -->
+  <ng-template #paginationTpl>
+    <app-data-table-paginator
+      [page]="activePage()"
+      [pageSize]="pageSize()"
+      [totalCount]="totalItems()"
+      [visibleCount]="paginatedData().length"
+      (pageChange)="goToPage($event)">
+    </app-data-table-paginator>
+  </ng-template>
 </div>

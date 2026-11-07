@@ -17,6 +17,11 @@ import { TenantContextService } from '../../../../core/services/tenant-context.s
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PublicTournamentLinkService } from '../../../../core/services/public-tournament-link.service';
+import { PermissionService } from '../../../../core/auth/permission.service';
+
+/** Tool that guards the draw page (`/admin/tournaments/:tournamentId/draw`). */
+const DRAW_TOOL_KEY = 'draw-planner';
 
 interface TournamentRow extends Record<string, unknown> {
   id: string;
@@ -28,6 +33,8 @@ interface TournamentRow extends Record<string, unknown> {
   statusLabel: string;
   statusVariant: string;
   maxPairs: string;
+  /** Share-link slug, set only when the tournament is public and already has one. */
+  publicSlug: string | null;
 }
 
 @Component({
@@ -67,6 +74,8 @@ export class AdminTournamentsPageComponent implements OnInit {
   private readonly tenantContext = inject(TenantContextService);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly router = inject(Router);
+  private readonly publicLink = inject(PublicTournamentLinkService);
+  private readonly permissions = inject(PermissionService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -103,9 +112,32 @@ export class AdminTournamentsPageComponent implements OnInit {
 
   readonly tournamentRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'share', labelKey: 'common.share', action: 'share', variant: 'default' as const },
+    { icon: 'share', labelKey: 'share.label', action: 'share', variant: 'default' as const },
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
+
+  private readonly copyPublicLinkAction = {
+    icon: 'link', labelKey: 'admin.tournaments.share.copyPublicLink', action: 'copyPublicLink', variant: 'default' as const
+  };
+
+  private readonly drawAction = {
+    icon: 'account_tree', labelKey: 'admin.tournaments.actions.draw', action: 'draw', variant: 'default' as const
+  };
+
+  /**
+   * Users with the draw planner tool get "draw" after edit; public tournaments with a share link also get
+   * "copy public link", placed before delete.
+   */
+  readonly tournamentRowActionsFor = (row: TournamentRow) => {
+    const actions = [...this.tournamentRowActions];
+    if (row.publicSlug) {
+      actions.splice(actions.length - 1, 0, this.copyPublicLinkAction);
+    }
+    if (this.permissions.hasTool(DRAW_TOOL_KEY)) {
+      actions.splice(1, 0, this.drawAction);
+    }
+    return actions;
+  };
 
   readonly filterFields = computed<FilterField[]>(() => [
     { key: 'name', labelKey: 'admin.tournaments.filter.name', type: 'text' },
@@ -145,7 +177,8 @@ export class AdminTournamentsPageComponent implements OnInit {
         endDate: t.endDate,
         statusLabel: status.labelKey,
         statusVariant: status.key === 'upcoming' ? 'info' : status.key === 'in_progress' ? 'warning' : 'finished',
-        maxPairs: t.maxPairs != null ? String(t.maxPairs) : '∞'
+        maxPairs: t.maxPairs != null ? String(t.maxPairs) : '∞',
+        publicSlug: t.isPublic && t.publicSlug ? t.publicSlug : null
       };
     })
   );
@@ -159,7 +192,8 @@ export class AdminTournamentsPageComponent implements OnInit {
       'admin.tournaments.help.section3Item1',
       'admin.tournaments.help.section3Item2',
       'admin.tournaments.help.section3Item3'
-    ] }
+    ] },
+    { titleKey: 'admin.tournaments.help.publicTitle', contentKey: 'admin.tournaments.help.publicText' }
   ];
 
   ngOnInit(): void {
@@ -183,8 +217,12 @@ export class AdminTournamentsPageComponent implements OnInit {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
+    } else if (event.action === 'draw') {
+      void this.router.navigate(['/admin/tournaments', event.row.id, 'draw']);
     } else if (event.action === 'share') {
       this.openShare(event.row);
+    } else if (event.action === 'copyPublicLink' && event.row.publicSlug) {
+      void this.publicLink.copyShareUrl(event.row.publicSlug);
     }
   }
 

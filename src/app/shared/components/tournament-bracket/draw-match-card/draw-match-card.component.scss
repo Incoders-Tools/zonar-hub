@@ -1,0 +1,191 @@
+@use '../../../../../styles/mixins';
+
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.match-card {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-md);
+  background: var(--zh-surface-card);
+  box-shadow: var(--zh-elevation-sm);
+  color: var(--zh-text-primary);
+  font: inherit;
+  text-align: start;
+
+  &--button {
+    cursor: pointer;
+    transition: border-color var(--zh-transition-fast), box-shadow var(--zh-transition-fast);
+
+    &:hover {
+      border-color: var(--zh-border-strong);
+      box-shadow: var(--zh-elevation-md);
+    }
+
+    &:focus-visible {
+      @include mixins.focus-ring;
+    }
+  }
+
+  &--bye {
+    background: var(--zh-surface-subtle);
+    box-shadow: none;
+  }
+
+  &--highlighted {
+    border-color: var(--zh-primary);
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    min-block-size: calc(var(--zh-space-xl) + var(--zh-space-sm));
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+
+    & + & {
+      border-block-start: 1px solid var(--zh-border-subtle);
+    }
+
+    &--winner {
+      background: var(--zh-primary-soft);
+      font-weight: 700;
+    }
+
+    &--loser {
+      color: var(--zh-text-secondary);
+    }
+
+    &--highlighted {
+      box-shadow: inset var(--zh-space-xs) 0 0 var(--zh-primary);
+    }
+  }
+
+  &__seed {
+    min-inline-size: 1.5em;
+    color: var(--zh-text-muted);
+    font-size: var(--zh-font-size-2xs);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  &__names {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  &__name {
+    @include mixins.truncate;
+    font-size: var(--zh-font-size-sm);
+    font-weight: inherit;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+  }
+
+  &__bye,
+  &__placeholder {
+    @include mixins.truncate;
+    grid-column: 1 / 3;
+    color: var(--zh-text-muted);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 600;
+  }
+
+  &__bye {
+    letter-spacing: 0.08em;
+  }
+
+  &__placeholder {
+    font-style: italic;
+  }
+
+  &__sets {
+    display: flex;
+    gap: var(--zh-space-xs);
+    justify-content: flex-end;
+  }
+
+  &__set {
+    min-inline-size: 1.5em;
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-sm);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+
+    &--won {
+      color: var(--zh-text-primary);
+      font-weight: 800;
+    }
+  }
+
+  &__tiebreak {
+    font-size: var(--zh-font-size-2xs);
+    font-weight: 600;
+  }
+
+  &__check {
+    display: inline-flex;
+    inline-size: var(--zh-font-size-lg);
+  }
+
+  &__winner-icon {
+    inline-size: var(--zh-font-size-lg);
+    block-size: var(--zh-font-size-lg);
+    color: var(--zh-success);
+    font-size: var(--zh-font-size-lg);
+  }
+
+  &__sr-only {
+    @include mixins.visually-hidden;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    border-block-start: 1px solid var(--zh-border-subtle);
+    background: var(--zh-surface-muted);
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-2xs);
+  }
+
+  &__status {
+    padding: var(--zh-space-2xs) var(--zh-space-sm);
+    border-radius: var(--zh-radius-pill);
+    background: var(--zh-info-soft);
+    color: var(--zh-info);
+    font-weight: 700;
+
+    &[data-status='inProgress'] {
+      background: var(--zh-warning-soft);
+      color: var(--zh-warning);
+    }
+
+    &[data-status='completed'] {
+      background: var(--zh-secondary-soft);
+      color: var(--zh-secondary);
+    }
+
+    &[data-status='walkover'],
+    &[data-status='retired'] {
+      background: var(--zh-danger-soft);
+      color: var(--zh-danger);
+    }
+  }
+
+  &__court {
+    @include mixins.truncate;
+  }
+}

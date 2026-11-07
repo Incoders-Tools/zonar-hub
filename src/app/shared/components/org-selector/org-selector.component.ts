@@ -16,8 +16,13 @@ export class OrgSelectorComponent {
 
   readonly isOpen = signal(false);
   readonly searchQuery = signal('');
+  readonly hasMultiplePrimaryEligible = computed(() => this.activeOrg.primaryEligibleOrganizations().length > 1);
 
-  readonly organizations = this.activeOrg.manageableOrganizations;
+  readonly organizations = computed(() => {
+    const primaryId = this.activeOrg.primaryOrganizationId();
+    return [...this.activeOrg.manageableOrganizations()].sort((a, b) =>
+      Number(b.id === primaryId) - Number(a.id === primaryId));
+  });
   readonly activeOrganization = this.activeOrg.activeOrganization;
   readonly activeOrgId = this.activeOrg.activeOrganizationId;
   readonly primaryOrgId = this.activeOrg.primaryOrganizationId;

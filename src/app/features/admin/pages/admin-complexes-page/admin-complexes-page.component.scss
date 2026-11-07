@@ -95,6 +95,25 @@
     color: var(--zh-text-primary);
     margin: 0;
   }
+
+  &__courts-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zh-space-sm) var(--zh-space-md);
+    padding: var(--zh-space-sm) var(--zh-space-md);
+    border: 1px solid var(--zh-danger);
+    border-radius: var(--zh-radius-sm);
+    background: var(--zh-danger-soft);
+  }
+
+  &__courts-alert-message {
+    flex: 1 1 auto;
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-danger);
+  }
 }
 
 @media (max-width: 599px) {

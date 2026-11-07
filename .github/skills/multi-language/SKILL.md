@@ -17,7 +17,7 @@ Use `AppLocale` as the canonical source of truth for locale coverage.
 ## Translation source of truth
 
 Translations are stored in:
-- `src/app/core/i18n/i18n.translations.ts`
+- the per-locale files `src/app/core/i18n/i18n.{es,en,pt}.ts`
 
 ## Conventions
 
@@ -25,14 +25,14 @@ Translations are stored in:
 - keep the same key tree across all locales defined by `AppLocale`
 - avoid string duplication when one shared key should exist
 - store locale metadata centrally in `i18n.types.ts`
-- store translations centrally in `i18n.translations.ts`
+- store translations centrally in the per-locale files `i18n.{es,en,pt}.ts`
 - support future locales without folder restructuring
 
 ## Rules
 
 - never hardcode user-facing text in templates
 - always use translation keys
-- whenever a new key is introduced, update `i18n.translations.ts` in the same task
+- whenever a new key is introduced, update the per-locale files `i18n.{es,en,pt}.ts` in the same task
 - ensure every locale defined by `AppLocale` receives the same new key
 - ensure fallback behavior exists
 

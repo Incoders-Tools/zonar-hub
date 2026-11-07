@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Organization switcher dropdown that allows users to select the active organization (tenant) context. Reads and updates the current organization through `ActiveOrganizationService`.
+Organization switcher dropdown that selects the active context. It is read-only with respect to the server-persisted primary organization: the primary is listed first and marked with a badge, but it cannot be changed here. Admins change the primary from the organizations admin page (`AdminOrganizationsPageComponent`), which owns the confirmation and save flow. System admins may switch to other active organizations.
 
 ## Inputs
 
@@ -14,26 +14,29 @@ None. Selection changes are propagated through `ActiveOrganizationService`.
 
 ## Dependencies
 
-- `ActiveOrganizationService` (injected; provides available organizations and manages the active selection)
-- Angular Material select or menu component
+- `ActiveOrganizationService` (injected; provides available organizations, the primary organization and the eligible set, and manages the active selection)
+- `TranslatePipe` and `FormsModule` (search input)
 
 ## States
 
 | State | Description |
 |-------|-------------|
-| Single org | Selector may be hidden or displayed as read-only when only one organization is available. |
-| Multiple orgs | Dropdown is active and allows switching. |
-| Loading | Organizations are being fetched. |
+| Single org | Trigger is read-only, without chevron; the dropdown does not open. |
+| Multiple orgs | Dropdown opens and allows switching; the primary organization is listed first. |
+| Primary badge | Shown on the primary row only when more than one assigned active organization is primary-eligible. |
+| Search | Search input appears when more than five organizations are available; filters by name. |
+| Empty search | A translated no-results message is shown when no organization matches. |
 
 ## Accessibility
 
-- Dropdown is keyboard-navigable (arrow keys, Enter, Escape).
-- Active organization is announced to screen readers on change.
-- Label is associated with the control via `aria-labelledby` or `aria-label`.
+- Each organization is a single native `type="button"` element, so switching is keyboard accessible without nested interactive elements.
+- The trigger exposes `aria-expanded`; the active organization is marked with `aria-current`.
+- The search input has a translated accessible label.
 
 ## i18n
 
-- Dropdown label and placeholder use translation keys.
+- Dropdown labels, search placeholder, empty state and primary badge use translation keys in es/en/pt.
+- The shared `org.selector.*` primary-change keys (confirmation, success, error) are still used by the organizations admin page; do not remove them.
 - Organization names are data-driven (not translated).
 
 ## Theming
@@ -43,4 +46,4 @@ None. Selection changes are propagated through `ActiveOrganizationService`.
 
 ## Reuse guidance
 
-Place in the app shell (sidebar or top bar). The component is self-contained — it fetches and manages organization state internally via the injected service. Do not duplicate organization-switching logic elsewhere.
+Place in the app shell (sidebar or top bar). The component is self-contained — it reads and switches organization state via the injected service. Do not duplicate organization-switching logic elsewhere, and do not reintroduce primary-change actions here; use the organizations admin page.

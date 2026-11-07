@@ -21,7 +21,7 @@ Locales are defined in:
 - `src/app/core/i18n/i18n.types.ts`
 
 Translations are defined in:
-- `src/app/core/i18n/i18n.translations.ts`
+- the per-locale files `src/app/core/i18n/i18n.{es,en,pt}.ts`
 
 `AppLocale` is the source of truth for which locales must be covered.
 
@@ -31,7 +31,7 @@ Translations are defined in:
 - Missing translation keys must fail visibly during development.
 - Missing translation keys must be traceable and easy to audit.
 - Shared components must not silently swallow missing translations.
-- Any new translation key must be added to `i18n.translations.ts` in the same task.
+- Any new translation key must be added to the per-locale files `i18n.{es,en,pt}.ts` in the same task.
 - Every key used in UI must exist for every locale defined by `AppLocale`.
 
 ## Development-time enforcement
@@ -71,4 +71,4 @@ Admin CRUD modules must define translation keys for:
 
 ## Validation rule
 
-If a new screen or feature introduces user-facing strings and no translation entries are created in `src/app/core/i18n/i18n.translations.ts` for all locales defined by `AppLocale`, the work is incomplete.
+If a new screen or feature introduces user-facing strings and no translation entries are created in the per-locale files `src/app/core/i18n/i18n.{es,en,pt}.ts` for all locales defined by `AppLocale`, the work is incomplete.

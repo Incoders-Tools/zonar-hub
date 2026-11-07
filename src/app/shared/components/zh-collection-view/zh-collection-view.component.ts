@@ -13,6 +13,7 @@ import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { DataTableComponent, DataTableColumn } from '../data-table/data-table.component';
+import { DataTablePaginatorComponent } from '../data-table-paginator/data-table-paginator.component';
 import { LoadingStateComponent } from '../loading-state/loading-state.component';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { ErrorStateComponent } from '../error-state/error-state.component';
@@ -49,6 +50,7 @@ const STORAGE_PREFIX = 'zh.collection-view.mode';
     MatIcon,
     TranslatePipe,
     DataTableComponent,
+    DataTablePaginatorComponent,
     LoadingStateComponent,
     EmptyStateComponent,
     ErrorStateComponent
@@ -71,11 +73,17 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
   readonly trackByKey = input('id');
   readonly rowActions = input<ZhCollectionRowAction[]>([]);
   readonly rowActionsFilter = input<((row: T) => ZhCollectionRowAction[]) | null>(null);
+  /** Controlled server pagination: `items` is the current page and is rendered as-is in both modes. */
+  readonly serverSide = input(false);
+  readonly page = input(1);
+  readonly totalCount = input<number | null>(null);
 
   readonly rowAction = output<{ action: string; row: T }>();
   readonly selectionChanged = output<T[]>();
   readonly sorted = output<{ key: string; direction: 'asc' | 'desc' }>();
   readonly retried = output<void>();
+  /** Emits the requested page in `serverSide` mode (table and card pager). */
+  readonly pageChange = output<number>();
 
   /** Card layout template provided by the parent. */
   @ContentChild('cardTpl', { read: TemplateRef })
@@ -94,7 +102,7 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
       if (stored) {
         this.mode.set(stored);
       } else {
-        this.mode.set(this.paginated() ? 'table' : 'cards');
+        this.mode.set(this.paginated() || this.serverSide() ? 'table' : 'cards');
       }
     }, { allowSignalWrites: true });
   }
@@ -102,8 +110,10 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
   protected readonly hasItems = computed(() => this.items().length > 0);
   protected readonly showLoading = computed(() => this.loading() && !this.hasItems());
   protected readonly showError = computed(() => this.error() && !this.loading());
+  protected readonly serverTotal = computed(() => this.totalCount() ?? this.items().length);
 
   setMode(mode: ZhCollectionViewMode): void {
+    const previousMode = this.mode();
     this.mode.set(mode);
     const key = this.viewKey();
     if (key) {
@@ -113,13 +123,20 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
         // ignore (private mode / unsupported)
       }
     }
+    if (previousMode !== mode && this.selectable() && this.currentSelection.length > 0) {
+      this.currentSelection = [];
+      this.selectionChanged.emit([]);
+    }
   }
 
   protected onRowAction(event: { action: string; row: T }): void {
     this.rowAction.emit(event);
   }
 
+  private currentSelection: T[] = [];
+
   protected onSelectionChanged(rows: T[]): void {
+    this.currentSelection = rows;
     this.selectionChanged.emit(rows);
   }
 
@@ -127,8 +144,18 @@ export class ZhCollectionViewComponent<T extends Record<string, unknown>> {
     this.sorted.emit(event);
   }
 
+  protected onPageChange(page: number): void {
+    this.pageChange.emit(page);
+  }
+
   protected onRetried(): void {
     this.retried.emit();
+  }
+
+  /** Same per-row rule as `app-data-table`: the filter, when provided, replaces `rowActions`. */
+  protected actionsForRow(row: T): ZhCollectionRowAction[] {
+    const filter = this.rowActionsFilter();
+    return filter ? filter(row) : this.rowActions();
   }
 
   protected onCardAction(action: string, row: T): void {

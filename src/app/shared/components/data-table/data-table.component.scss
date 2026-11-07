@@ -257,50 +257,6 @@
       }
     }
   }
-
-  &__pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--zh-space-sm) var(--zh-space-md);
-    border-top: 1px solid var(--zh-border-subtle);
-  }
-
-  &__pagination-info {
-    font-size: var(--zh-font-size-sm);
-    color: var(--zh-text-secondary);
-  }
-
-  &__pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: var(--zh-space-sm);
-  }
-
-  &__pagination-btn {
-    padding: var(--zh-space-xs) var(--zh-space-md);
-    border: 1px solid var(--zh-border-subtle);
-    border-radius: var(--zh-radius-sm);
-    background: var(--zh-surface-elevated);
-    color: var(--zh-text-primary);
-    font-size: var(--zh-font-size-sm);
-    cursor: pointer;
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    &:hover:not(:disabled) {
-      background: var(--zh-surface-muted);
-    }
-  }
-
-  &__pagination-page {
-    font-size: var(--zh-font-size-sm);
-    font-weight: 600;
-    color: var(--zh-text-primary);
-  }
 }
 
 // Mobile: compact table cells, sticky actions
@@ -334,12 +290,6 @@
       font-size: 18px;
       width: 18px;
       height: 18px;
-    }
-
-    &__pagination {
-      flex-direction: column;
-      gap: var(--zh-space-xs);
-      text-align: center;
     }
   }
 }

@@ -38,6 +38,7 @@ npm -v
 
 ```bash
 npm install
+cp .env.example .env
 npm start
 ```
 
@@ -46,6 +47,21 @@ The application should be available at:
 ```
 http://localhost:4200
 ```
+
+---
+
+## API base URL
+
+The app reads the API base URL at runtime from `ZH_API_BASE_URL`; no API address is hardcoded in `src/`.
+
+- `npm start` and `npm run build` first run `scripts/write-runtime-config.mjs` (`prestart` / `prebuild`).
+- The script takes `ZH_API_BASE_URL` from the process environment, else from the gitignored `.env` at the repository root, and writes the gitignored `public/runtime-config.js` (`window.__ZH_API_BASE_URL__ = "...";`). `src/index.html` loads that file before the application bundle.
+- The value must be an absolute `http`/`https` URL including the `/api` prefix (for example `https://api.example.com/api`); any other value stops the script with an error.
+- When the value is empty or unset, the script prints a warning and the app calls the API on its own origin: `${location.origin}/api`.
+- Local development: copy `.env.example` to `.env`; it points to the local API (`http://localhost:5336/api`).
+- Deployed environments set `ZH_API_BASE_URL` as a build-time variable instead of using a `.env` file.
+
+Requests to anonymous public endpoints set the `PUBLIC_REQUEST` HTTP context flag (`src/app/core/http/public-request.context.ts`), so the auth and tenant interceptors attach no `Authorization`, `X-Tenant-Id` or `X-Organization-Id` header to them, even for logged-in visitors.
 
 ---
 
@@ -102,6 +118,7 @@ Check:
 - Framework: **Jasmine**
 - All components MUST have `.spec.ts`
 - Behavior-driven tests only (no implementation coupling)
+- CI: `.github/workflows/ci.yml` runs the `ci-gate` job (`npm ci`, `npm run test:ci`, `npm run build`) on every pull request and push to `dev` and `main`; merge only when `ci-gate` is green on the PR head commit
 
 ---
 

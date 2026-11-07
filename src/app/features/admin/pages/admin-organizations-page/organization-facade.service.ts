@@ -6,6 +6,18 @@ import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
+/** Consent and links editable from the organization form; all optional in the model. */
+export type OrganizationPublicProfileData = Pick<
+  Organization,
+  'publicProfileEnabled' | 'websiteUrl' | 'instagramUrl' | 'facebookUrl' | 'tiktokUrl' | 'youtubeUrl' | 'whatsappPhone' | 'contactEmail'
+>;
+
+/** API validation keys (`organizations.errors.*`) are translated, so they replace the generic toast. */
+function feedbackKey(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : '';
+  return message.startsWith('organizations.errors.') ? message : fallback;
+}
+
 export interface OrganizationFilters {
   name?: string;
   type?: string;
@@ -25,6 +37,7 @@ export class OrganizationFacadeService {
   private readonly errorState = signal(false);
   private readonly savingState = signal(false);
   private readonly deletingState = signal(false);
+  private readonly savingPrimaryState = signal(false);
   private readonly filtersState = signal<OrganizationFilters>({});
   private readonly sortState = signal<{ key: string; direction: 'asc' | 'desc' }>({ key: 'displayName', direction: 'asc' });
 
@@ -33,6 +46,7 @@ export class OrganizationFacadeService {
   readonly error = this.errorState.asReadonly();
   readonly saving = this.savingState.asReadonly();
   readonly deleting = this.deletingState.asReadonly();
+  readonly savingPrimary = this.savingPrimaryState.asReadonly();
 
   readonly filteredOrganizations = computed(() => {
     const all = this.organizationsState();
@@ -94,7 +108,7 @@ export class OrganizationFacadeService {
   }
 
   async createOrganization(
-    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'>,
+    data: Pick<Organization, 'displayName' | 'legalName' | 'description' | 'type' | 'isActive'> & OrganizationPublicProfileData,
     selectedSportIds: string[]
   ): Promise<boolean> {
     this.savingState.set(true);
@@ -118,16 +132,21 @@ export class OrganizationFacadeService {
         ]);
         existingIds.add(created.id);
         const updatedTenantIds = Array.from(existingIds);
-        this.auth.updateCurrentOrganizationAssignments(created.id, updatedTenantIds);
-        this.auth.updateCurrentOrganization(created.id, created.displayName);
-        this.activeOrg.setOnboardingOrganization(created.id);
+        this.auth.updateCurrentOrganizationAssignments(currentUser.organizationId ?? created.id, updatedTenantIds);
+        if (!currentUser.organizationId) {
+          // The backend assigns the first organization as primary.
+          this.auth.updatePrimaryOrganization(created.id);
+          this.activeOrg.setOnboardingOrganization(created.id);
+        } else {
+          this.activeOrg.refreshOrganizations();
+        }
       }
 
       this.notification.success('admin.organizations.toast.created');
       await this.load();
       return true;
-    } catch {
-      this.notification.error('admin.organizations.toast.createError');
+    } catch (error) {
+      this.notification.error(feedbackKey(error, 'admin.organizations.toast.createError'));
       return false;
     } finally {
       this.savingState.set(false);
@@ -146,12 +165,33 @@ export class OrganizationFacadeService {
       }
       this.notification.success('admin.organizations.toast.updated');
       await this.load();
+      this.activeOrg.refreshOrganizations();
       return true;
-    } catch {
-      this.notification.error('admin.organizations.toast.updateError');
+    } catch (error) {
+      this.notification.error(feedbackKey(error, 'admin.organizations.toast.updateError'));
       return false;
     } finally {
       this.savingState.set(false);
+    }
+  }
+
+  /**
+   * Sets the admin's primary organization without switching the active context.
+   * Authorization and eligibility are enforced by ActiveOrganizationService;
+   * a call while another change is pending is ignored and resolves to false.
+   */
+  async setPrimary(id: string): Promise<boolean> {
+    if (this.savingPrimaryState()) return false;
+    this.savingPrimaryState.set(true);
+    try {
+      await this.activeOrg.setPrimaryOrganization(id);
+      this.notification.success('org.selector.primarySuccess');
+      return true;
+    } catch {
+      this.notification.error('org.selector.primaryError');
+      return false;
+    } finally {
+      this.savingPrimaryState.set(false);
     }
   }
 

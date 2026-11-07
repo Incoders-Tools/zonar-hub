@@ -1,10 +1,10 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { ApiOrganizationRepository } from '../repositories/api/api-organization.repository';
+import { ApiUserPreferencesRepository } from '../repositories/api/api-user-preferences.repository';
 import { Organization, Tenant } from '../models';
 
 const STORAGE_KEY = 'zh_active_organization_id';
-const PRIMARY_ORG_KEY = 'zh_primary_organization_id';
 
 /**
  * Centralized service for managing the active organization context.
@@ -21,6 +21,7 @@ const PRIMARY_ORG_KEY = 'zh_primary_organization_id';
 export class ActiveOrganizationService {
   private readonly auth = inject(AuthService);
   private readonly organizationRepo = inject(ApiOrganizationRepository);
+  private readonly preferencesRepo = inject(ApiUserPreferencesRepository);
   private loadRequestId = 0;
   private readonly organizationTenantById = new Map<string, string>();
 
@@ -30,8 +31,6 @@ export class ActiveOrganizationService {
   /** The ID of the currently active organization */
   private readonly activeOrgIdState = signal<string | null>(null);
 
-  /** The user's primary organization ID (persisted) */
-  private readonly primaryOrgIdState = signal<string | null>(null);
 
   /** Organizations the current user can manage (active only) */
   readonly manageableOrganizations = computed<Tenant[]>(() => {
@@ -53,6 +52,15 @@ export class ActiveOrganizationService {
     }
 
     return all.filter(t => t.isActive && assigned.has(t.id));
+  });
+
+  /** Assigned active organizations eligible for the primary preference (even for system admins). */
+  readonly primaryEligibleOrganizations = computed<Tenant[]>(() => {
+    const user = this.auth.currentUser();
+    if (!user) return [];
+    const assigned = new Set(user.tenantIds ?? []);
+    if (user.organizationId) assigned.add(user.organizationId);
+    return this.allOrganizations().filter(org => org.isActive && assigned.has(org.id));
   });
 
   /** The currently active organization (full object) */
@@ -85,7 +93,7 @@ export class ActiveOrganizationService {
   private static readonly SWITCH_SETTLE_MS = 700;
 
   /** The user's primary organization ID */
-  readonly primaryOrganizationId = this.primaryOrgIdState.asReadonly();
+  readonly primaryOrganizationId = computed(() => this.auth.currentUser()?.organizationId ?? null);
 
   /** Whether there are multiple manageable organizations (show selector) */
   readonly hasMultipleOrganizations = computed<boolean>(() => this.manageableOrganizations().length > 1);
@@ -104,7 +112,6 @@ export class ActiveOrganizationService {
         this.organizationTenantById.clear();
         this.allOrganizations.set([]);
         this.activeOrgIdState.set(null);
-        this.primaryOrgIdState.set(null);
       }
     });
   }
@@ -143,24 +150,18 @@ export class ActiveOrganizationService {
     const currentUser = this.auth.currentUser();
     if (!currentUser) return;
 
-    // Restore primary org
-    const storedPrimary = this.getStoredPrimaryOrgId(currentUser.id);
-    this.primaryOrgIdState.set(storedPrimary);
-
-    // Determine active org: stored selection → primary → first manageable
+    // Determine active org: current selection → stored selection → primary → first manageable
     const currentActive = this.activeOrgIdState();
     const storedActive = this.getStoredActiveOrgId(currentUser.id);
     const all = this.allOrganizations();
     const manageable = new Set(this.manageableOrganizations().map(org => org.id));
 
-    if (currentUser.organizationId && manageable.has(currentUser.organizationId)) {
-      this.activeOrgIdState.set(currentUser.organizationId);
-    } else if (currentActive && manageable.has(currentActive)) {
+    if (currentActive && manageable.has(currentActive)) {
       this.activeOrgIdState.set(currentActive);
     } else if (storedActive && manageable.has(storedActive)) {
       this.activeOrgIdState.set(storedActive);
-    } else if (storedPrimary && manageable.has(storedPrimary)) {
-      this.activeOrgIdState.set(storedPrimary);
+    } else if (currentUser.organizationId && manageable.has(currentUser.organizationId)) {
+      this.activeOrgIdState.set(currentUser.organizationId);
     } else {
       // Fall back to first manageable active org
       const firstActive = all.find(t => t.isActive && manageable.has(t.id));
@@ -168,6 +169,10 @@ export class ActiveOrganizationService {
     }
 
     this.syncTenantContext(this.activeOrgIdState());
+    const activeId = this.activeOrgIdState();
+    if (activeId && this.auth.session()?.organizationId !== activeId) {
+      this.auth.updateCurrentOrganization(activeId, this.activeOrganization()?.name);
+    }
   }
 
   /** Switch the active organization */
@@ -203,12 +208,13 @@ export class ActiveOrganizationService {
   }
 
   /** Set the user's primary organization */
-  setPrimaryOrganization(orgId: string): void {
-    const user = this.auth.currentUser();
-    if (!user) return;
-
-    this.primaryOrgIdState.set(orgId);
-    this.persistPrimaryOrgId(user.id, orgId);
+  async setPrimaryOrganization(orgId: string): Promise<void> {
+    if (!this.auth.isAdmin() || !this.primaryEligibleOrganizations().some(org => org.id === orgId)) {
+      throw new Error('org.selector.primaryError');
+    }
+    if (this.primaryOrganizationId() === orgId) return;
+    await this.preferencesRepo.setPrimaryOrganization(orgId);
+    this.auth.updatePrimaryOrganization(orgId);
   }
 
   /** Refresh the list of organizations (after CRUD operations) */
@@ -218,14 +224,9 @@ export class ActiveOrganizationService {
 
   /** Set a new org as active and primary (used during onboarding) */
   setOnboardingOrganization(orgId: string): void {
-    const user = this.auth.currentUser();
     this.activeOrgIdState.set(orgId);
     this.syncTenantContext(orgId);
-    this.primaryOrgIdState.set(orgId);
-    if (user) {
-      this.persistActiveOrgId(orgId);
-      this.persistPrimaryOrgId(user.id, orgId);
-    }
+    this.persistActiveOrgId(orgId);
     this.refreshOrganizations();
   }
 
@@ -270,18 +271,6 @@ export class ActiveOrganizationService {
   private getStoredActiveOrgId(userId: string): string | null {
     try {
       return localStorage.getItem(`${STORAGE_KEY}_${userId}`);
-    } catch { return null; }
-  }
-
-  private persistPrimaryOrgId(userId: string, orgId: string): void {
-    try {
-      localStorage.setItem(`${PRIMARY_ORG_KEY}_${userId}`, orgId);
-    } catch { /* storage unavailable */ }
-  }
-
-  private getStoredPrimaryOrgId(userId: string): string | null {
-    try {
-      return localStorage.getItem(`${PRIMARY_ORG_KEY}_${userId}`);
     } catch { return null; }
   }
 

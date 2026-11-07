@@ -1,9 +1,14 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Complex, Court, Availability, Sport } from '../../../../core/models';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
+import { SaveComplexWithCourtsRequest } from '../../../../core/repositories/complex.repository';
 import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { AdminDashboardService } from '../../../../core/services/admin-dashboard.service';
+
+export type CourtDraft = Omit<Court, 'id'> & { id: string | null };
+
+type ComplexDraft = Omit<Complex, 'id' | 'createdAt' | 'updatedAt'> & { id?: null };
 
 export interface ComplexFilters {
   name?: string;
@@ -17,11 +22,14 @@ export class ComplexesFacadeService {
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly adminDashboard = inject(AdminDashboardService);
   private lastOrgId: string | null | undefined = undefined;
+  private loadRequestSequence = 0;
+  private requestedOrgId: string | null | undefined = undefined;
 
   constructor() {
     effect(() => {
       const currentOrgId = this.activeOrg.activeOrganizationId();
       if (this.lastOrgId !== undefined && currentOrgId !== this.lastOrgId) {
+        this.invalidateCourts();
         this.load();
       }
       this.lastOrgId = currentOrgId;
@@ -39,9 +47,10 @@ export class ComplexesFacadeService {
 
   // Courts state
   private readonly courtsState = signal<Court[]>([]);
-  private readonly selectedCourtState = signal<Court | null>(null);
   private readonly loadingCourtsState = signal(false);
-  private readonly savingCourtState = signal(false);
+  // Scoped to court reads so a failure never replaces the complexes collection with its error state.
+  private readonly courtsErrorState = signal<string | null>(null);
+  private courtsRequestSequence = 0;
 
   // Availability state
   private readonly availabilityState = signal<Availability[]>([]);
@@ -59,9 +68,8 @@ export class ComplexesFacadeService {
   readonly error = this.errorState;
 
   readonly courts = this.courtsState;
-  readonly selectedCourt = this.selectedCourtState;
   readonly loadingCourts = this.loadingCourtsState;
-  readonly savingCourt = this.savingCourtState;
+  readonly courtsError = this.courtsErrorState;
 
   readonly availability = this.availabilityState;
   readonly loadingAvailability = this.loadingAvailabilityState;
@@ -115,22 +123,33 @@ export class ComplexesFacadeService {
   // --- Complex CRUD ---
 
   async load(): Promise<void> {
+    const requestSequence = ++this.loadRequestSequence;
+    const activeOrgId = this.activeOrg.activeOrganizationId();
+    if (this.requestedOrgId !== undefined && activeOrgId !== this.requestedOrgId) {
+      this.entitiesState.set([]);
+      this.sportsState.set([]);
+      this.invalidateCourts();
+      this.availabilityState.set([]);
+    }
+    this.requestedOrgId = activeOrgId;
+    const isCurrent = () => requestSequence === this.loadRequestSequence
+      && activeOrgId === this.activeOrg.activeOrganizationId();
     try {
       this.loadingState.set(true);
       this.errorState.set(null);
-      const activeOrgId = this.activeOrg.activeOrganizationId();
       const [complexes, sports] = await Promise.all([
         this.repository.getAll(),
         activeOrgId
           ? this.sportRepository.getForOrganization(activeOrgId)
           : this.sportRepository.getAll()
       ]);
+      if (!isCurrent()) return;
       this.entitiesState.set(complexes);
       this.sportsState.set(sports.filter(s => s.isActive));
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      if (isCurrent()) this.errorState.set((error as Error).message);
     } finally {
-      this.loadingState.set(false);
+      if (isCurrent()) this.loadingState.set(false);
     }
   }
 
@@ -171,6 +190,80 @@ export class ComplexesFacadeService {
         }
       }
 
+      return true;
+    } catch (error) {
+      this.errorState.set((error as Error).message);
+      return false;
+    } finally {
+      this.savingState.set(false);
+    }
+  }
+
+  async saveComplexWithCourts(
+    complex: Complex | ComplexDraft,
+    courts: CourtDraft[],
+    deleteCourtIds: string[],
+    expectedOrganizationId: string | null = this.activeOrg.activeOrganizationId()
+  ): Promise<boolean> {
+    try {
+      this.savingState.set(true);
+      this.errorState.set(null);
+      const organizationId = expectedOrganizationId;
+      if (!organizationId || this.activeOrg.activeOrganizationId() !== organizationId) {
+        throw new Error('Active organization changed before save');
+      }
+      const complexId = complex.id ?? null;
+      const request: SaveComplexWithCourtsRequest = {
+        complexId,
+        organizationId,
+        name: complex.name,
+        address: complex.address,
+        key: complex.key || null,
+        location: complex.location || null,
+        description: complex.description || null,
+        sortOrder: complex.sortOrder,
+        preponderance: complex.preponderance,
+        logoImagePath: complex.logoImagePath || null,
+        coverImagePath: complex.coverImagePath || null,
+        layoutDiagramPath: complex.layoutDiagramPath || null,
+        isActive: complex.isActive,
+        courts: courts.map(court => ({
+          id: court.id,
+          name: court.name,
+          isActive: court.isActive,
+          surfaceType: court.surfaceType ?? null,
+          isIndoor: court.isIndoor ?? false,
+          sportIds: court.sportIds ?? null
+        })),
+        deleteCourtIds
+      };
+      if (this.activeOrg.activeOrganizationId() !== organizationId) return false;
+      const result = await this.repository.saveWithCourts(request);
+      if (this.activeOrg.activeOrganizationId() !== organizationId) return true;
+      const now = new Date().toISOString();
+      const saved: Complex = {
+        ...complex,
+        id: result.complexId,
+        organizationId,
+        courtsCount: result.courtCount,
+        createdAt: 'createdAt' in complex ? complex.createdAt : now,
+        updatedAt: now
+      };
+      this.entitiesState.update(list => {
+        const index = list.findIndex(item => item.id === result.complexId);
+        if (index === -1) return [...list, saved];
+        const updated = [...list];
+        updated[index] = saved;
+        return updated;
+      });
+      if (!complexId) {
+        // Dashboard refresh is independent of the committed aggregate save.
+        try {
+          await this.adminDashboard.loadSummary(organizationId);
+        } catch {
+          // A stale dashboard must not turn a committed create into a retryable failure.
+        }
+      }
       return true;
     } catch (error) {
       this.errorState.set((error as Error).message);
@@ -264,68 +357,34 @@ export class ComplexesFacadeService {
 
   // --- Courts ---
 
-  async loadCourts(complexId: string): Promise<void> {
+  invalidateCourts(): void {
+    ++this.courtsRequestSequence;
+    this.courtsState.set([]);
+    this.loadingCourtsState.set(false);
+    this.courtsErrorState.set(null);
+  }
+
+  async loadCourts(complexId: string): Promise<boolean> {
+    const requestSequence = ++this.courtsRequestSequence;
+    const organizationId = this.activeOrg.activeOrganizationId();
+    const isCurrent = () => requestSequence === this.courtsRequestSequence
+      && organizationId === this.activeOrg.activeOrganizationId();
     try {
       this.loadingCourtsState.set(true);
+      this.courtsErrorState.set(null);
       const courts = await this.repository.getCourtsByComplexId(complexId);
+      if (!isCurrent()) return false;
       this.courtsState.set(courts);
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-    } finally {
-      this.loadingCourtsState.set(false);
-    }
-  }
-
-  async saveCourt(court: Court | Omit<Court, 'id'>): Promise<boolean> {
-    try {
-      this.savingCourtState.set(true);
-      const isUpdate = 'id' in court && court.id;
-
-      if (isUpdate) {
-        const updated = await this.repository.updateCourt((court as Court).id, court);
-        const idx = this.courtsState().findIndex(ct => ct.id === (court as Court).id);
-        if (idx !== -1) {
-          const updatedList = [...this.courtsState()];
-          updatedList[idx] = updated;
-          this.courtsState.set(updatedList);
-        }
-      } else {
-        const created = await this.repository.createCourt(court as Omit<Court, 'id'>);
-        this.courtsState.set([...this.courtsState(), created]);
-        // Update courtsCount in local state
-        const complexId = (court as Omit<Court, 'id'>).complexId;
-        this.entitiesState.update(list =>
-          list.map(c => c.id === complexId ? { ...c, courtsCount: this.courtsState().length } : c)
-        );
-      }
-
       return true;
     } catch (error) {
-      this.errorState.set((error as Error).message);
-      return false;
-    } finally {
-      this.savingCourtState.set(false);
-    }
-  }
-
-  async deleteCourt(id: string): Promise<boolean> {
-    try {
-      this.savingCourtState.set(true);
-      const court = this.courtsState().find(ct => ct.id === id);
-      await this.repository.deleteCourt(id);
-      this.courtsState.set(this.courtsState().filter(ct => ct.id !== id));
-      // Update courtsCount in local state
-      if (court) {
-        this.entitiesState.update(list =>
-          list.map(c => c.id === court.complexId ? { ...c, courtsCount: this.courtsState().length } : c)
-        );
+      if (isCurrent()) {
+        this.courtsErrorState.set((error as Error).message);
       }
-      return true;
-    } catch (error) {
-      this.errorState.set((error as Error).message);
       return false;
     } finally {
-      this.savingCourtState.set(false);
+      if (requestSequence === this.courtsRequestSequence) {
+        this.loadingCourtsState.set(false);
+      }
     }
   }
 

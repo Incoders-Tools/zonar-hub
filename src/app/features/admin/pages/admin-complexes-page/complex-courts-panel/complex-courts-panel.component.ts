@@ -54,9 +54,12 @@ interface CourtRow extends Record<string, unknown> {
 export class ComplexCourtsPanelComponent {
   private readonly fb = inject(FormBuilder);
 
-  readonly complexId = input.required<string>();
+  readonly complexId = input<string>('');
+  readonly draftMode = input(false);
+  readonly availabilityOnly = input(false);
   readonly courts = input.required<Court[]>();
   readonly loading = input(false);
+  readonly mutationsBlocked = input(false);
   readonly saving = input(false);
   readonly activeCourtId = input<string | null>(null);
   readonly sports = input<Sport[]>([]);
@@ -64,6 +67,7 @@ export class ComplexCourtsPanelComponent {
   readonly courtSaved = output<Court | Omit<Court, 'id'>>();
   readonly courtDeleted = output<string>();
   readonly availabilityRequested = output<string>();
+  readonly editorOpen = output<boolean>();
 
   readonly showForm = signal(false);
   readonly editingCourt = signal<Court | null>(null);
@@ -85,6 +89,12 @@ export class ComplexCourtsPanelComponent {
     { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
   ];
 
+  readonly draftRowActions = this.courtRowActions.filter(action => action.action !== 'availability');
+  readonly availabilityRowActions = this.courtRowActions.filter(action => action.action === 'availability');
+
+  get rowActions() {
+    return this.availabilityOnly() ? this.availabilityRowActions : this.draftMode() ? this.draftRowActions : this.courtRowActions;
+  }
   readonly surfaceTypes = ['synthetic', 'cement', 'grass', 'clay'];
 
   get tableData(): CourtRow[] {
@@ -102,22 +112,27 @@ export class ComplexCourtsPanelComponent {
   }
 
   openCreate(): void {
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked()) return;
     this.editingCourt.set(null);
     this.initForm();
     this.showForm.set(true);
+    this.editorOpen.emit(true);
   }
 
   openEdit(row: CourtRow): void {
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked()) return;
     const court = this.courts().find(ct => ct.id === row.id);
     if (court) {
       this.editingCourt.set(court);
       this.initForm(court);
       this.showForm.set(true);
+      this.editorOpen.emit(true);
     }
   }
 
   closeForm(): void {
     this.showForm.set(false);
+    this.editorOpen.emit(false);
     this.editingCourt.set(null);
   }
 
@@ -145,7 +160,7 @@ export class ComplexCourtsPanelComponent {
   }
 
   saveCourt(): void {
-    if (!this.courtForm.valid) return;
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked() || !this.courtForm?.valid) return;
 
     const formValue = this.courtForm.getRawValue();
     const editing = this.editingCourt();
@@ -163,17 +178,20 @@ export class ComplexCourtsPanelComponent {
   }
 
   onRowAction(event: { action: string; row: CourtRow }): void {
+    if (this.availabilityOnly() && event.action !== 'availability') return;
+    if ((this.loading() || this.mutationsBlocked()) && event.action !== 'availability') return;
     if (event.action === 'edit') {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.deletingId.set(event.row.id);
       this.showDeleteDialog.set(true);
-    } else if (event.action === 'availability') {
+    } else if (event.action === 'availability' && !this.draftMode() && this.courts().some(court => court.id === event.row.id)) {
       this.availabilityRequested.emit(event.row.id);
     }
   }
 
   executeDelete(): void {
+    if (this.availabilityOnly() || this.loading() || this.mutationsBlocked()) return;
     const id = this.deletingId();
     if (id) {
       this.courtDeleted.emit(id);

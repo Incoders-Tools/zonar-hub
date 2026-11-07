@@ -34,6 +34,14 @@
     gap: var(--zh-space-sm);
   }
 
+  &__card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--zh-space-xs);
+    flex-shrink: 0;
+  }
+
   &__form-panel {
     background: var(--zh-surface-elevated);
     border: 1px solid var(--zh-border-subtle);

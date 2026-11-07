@@ -1,0 +1,142 @@
+@use '../../../../../styles/mixins';
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.public-tournament-card {
+  @include mixins.card;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  color: var(--zh-text-primary);
+  transition: box-shadow var(--zh-transition-fast), border-color var(--zh-transition-fast);
+
+  &:hover {
+    box-shadow: var(--zh-elevation-md);
+    border-color: var(--zh-border-strong);
+  }
+
+  &__image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--zh-surface-muted);
+  }
+
+  &__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--zh-space-sm);
+    padding: var(--zh-space-lg);
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zh-space-sm);
+    min-height: 28px;
+  }
+
+  &__status {
+    margin-left: auto;
+  }
+
+  &__name {
+    margin: 0;
+    font-size: var(--zh-font-size-lg);
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  &__title-link {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--zh-primary);
+    }
+
+    &:focus-visible {
+      @include mixins.focus-ring;
+    }
+  }
+
+  &__dates,
+  &__complex {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--zh-space-xs);
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+
+    mat-icon {
+      flex-shrink: 0;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__address {
+    color: var(--zh-text-muted);
+  }
+
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zh-space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__tag {
+    padding: var(--zh-space-2xs) var(--zh-space-sm);
+    font-size: var(--zh-font-size-xs);
+    background: var(--zh-surface-muted);
+    border-radius: var(--zh-radius-pill);
+    color: var(--zh-text-secondary);
+  }
+
+  &__organization {
+    margin-top: var(--zh-space-xs);
+  }
+
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zh-space-xs);
+    margin-top: auto;
+    padding-top: var(--zh-space-sm);
+    font-size: var(--zh-font-size-sm);
+    font-weight: 600;
+    color: var(--zh-primary);
+    text-decoration: none;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      color: var(--zh-primary-hover);
+    }
+
+    &:focus-visible {
+      @include mixins.focus-ring;
+    }
+  }
+
+  &__sr-only {
+    @include mixins.visually-hidden;
+  }
+}

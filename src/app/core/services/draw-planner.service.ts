@@ -1,95 +1,147 @@
-import { Injectable, signal } from '@angular/core';
-import { DrawPlannerInput, DrawPlannerResult } from '../models';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { DrawCourt, Tournament, TournamentDraw, TournamentDrawMatchResultRequest, TournamentDrawRequest, tournamentDrawHasResults } from '../models';
+import { ApiTournamentAdminRepository } from '../repositories/api/api-tournament-admin.repository';
+import { ApiTournamentDrawRepository } from '../repositories/api/api-tournament-draw.repository';
+
+/** Court list of the result dialog: not requested yet, loading, loaded (possibly empty) or failed. */
+export type DrawCourtsStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 /**
- * Draw planner service. Until the API persists draws server-side this
- * implementation keeps drafts in-memory for the active session only — once
- * the backend exposes /api/admin/draws this will swap to an Api repo.
+ * State of the admin draw page (D9) for one tournament: the tournament, its stored draw (D1: at most one, draft or
+ * published) and the last unsaved preview. Provided by the page, so each visit starts clean.
+ *
+ * The courts eligible for results (D13) load on first use and stay cached for the tournament (`loadCourts`).
+ *
+ * Write methods update the state and reject with an `Error` whose message is a translation key; the page turns it
+ * into a notification.
  */
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class DrawPlannerService {
-  private readonly resultState = signal<DrawPlannerResult | null>(null);
+  private readonly drawRepository = inject(ApiTournamentDrawRepository);
+  private readonly tournamentRepository = inject(ApiTournamentAdminRepository);
+
+  private readonly tournamentIdState = signal<string | null>(null);
+  private readonly tournamentState = signal<Tournament | null>(null);
+  private readonly drawState = signal<TournamentDraw | null>(null);
+  private readonly previewState = signal<TournamentDraw | null>(null);
   private readonly loadingState = signal(false);
-  private readonly savedDrawsState = signal<DrawPlannerResult[]>([]);
+  private readonly errorState = signal<string | null>(null);
+  private readonly courtsState = signal<DrawCourt[]>([]);
+  private readonly courtsStatusState = signal<DrawCourtsStatus>('idle');
+  /** Tournament the cached courts belong to. */
+  private courtsTournamentId: string | null = null;
 
-  readonly result = this.resultState.asReadonly();
+  readonly tournament = this.tournamentState.asReadonly();
+  /** The stored draw, or null when the tournament has none yet. */
+  readonly draw = this.drawState.asReadonly();
+  /** The last generated preview that is not saved yet. */
+  readonly preview = this.previewState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
-  readonly savedDraws = this.savedDrawsState.asReadonly();
+  /** Translation key of the last load failure, or null. */
+  readonly error = this.errorState.asReadonly();
+  readonly courts = this.courtsState.asReadonly();
+  readonly courtsStatus = this.courtsStatusState.asReadonly();
 
-  async generateDraw(input: DrawPlannerInput): Promise<DrawPlannerResult> {
-    this.loadingState.set(true);
-    const result: DrawPlannerResult = {
-      id: 'dp-' + Date.now(),
-      name: 'Draw ' + new Date().toISOString().slice(0, 10),
-      tournamentId: input.tournamentId,
-      tournamentName: '',
-      zones: [],
-      warnings: [],
-      totalPairs: input.confirmedPairsCount,
-      unassignedPairs: [],
-      generatedAt: new Date().toISOString(),
-      status: 'draft'
-    };
-    this.resultState.set(result);
-    this.loadingState.set(false);
-    return result;
-  }
+  readonly hasResults = computed(() => tournamentDrawHasResults(this.drawState()));
+  /** The draw shown in the page: the unsaved preview first, else the stored draw. */
+  readonly shownDraw = computed(() => this.previewState() ?? this.drawState());
 
-  async getSavedDraws(tournamentId?: string): Promise<DrawPlannerResult[]> {
-    const draws = this.savedDrawsState();
-    return tournamentId ? draws.filter(d => d.tournamentId === tournamentId) : draws;
-  }
-
-  async saveDraft(result: DrawPlannerResult): Promise<DrawPlannerResult> {
-    this.loadingState.set(true);
-    const saved: DrawPlannerResult = {
-      ...result,
-      id: result.id || 'dp-' + Date.now(),
-      status: 'draft'
-    };
-    this.savedDrawsState.update(draws => {
-      const idx = draws.findIndex(d => d.id === saved.id);
-      if (idx >= 0) {
-        return draws.map(d => d.id === saved.id ? saved : d);
-      }
-      return [...draws, saved];
-    });
-    this.resultState.set(saved);
-    this.loadingState.set(false);
-    return saved;
-  }
-
-  async publishDraw(planId: string): Promise<DrawPlannerResult> {
-    this.loadingState.set(true);
-    let published: DrawPlannerResult | null = null;
-    this.savedDrawsState.update(draws => draws.map(d => {
-      if (d.id === planId) {
-        published = { ...d, status: 'active' };
-        return published;
-      }
-      return d;
-    }));
-    if (published) {
-      this.resultState.set(published);
+  async load(tournamentId: string): Promise<void> {
+    this.tournamentIdState.set(tournamentId);
+    if (this.courtsTournamentId !== tournamentId) {
+      this.courtsTournamentId = null;
+      this.courtsState.set([]);
+      this.courtsStatusState.set('idle');
     }
-    this.loadingState.set(false);
-    if (!published) {
+    this.loadingState.set(true);
+    this.errorState.set(null);
+    this.previewState.set(null);
+    try {
+      const [tournament, draw] = await Promise.all([
+        this.tournamentRepository.getById(tournamentId),
+        this.drawRepository.get(tournamentId)
+      ]);
+      this.tournamentState.set(tournament ?? null);
+      this.drawState.set(draw);
+    } catch (error) {
+      this.errorState.set(error instanceof Error ? error.message : 'common.unexpectedError');
+      this.tournamentState.set(null);
+      this.drawState.set(null);
+    } finally {
+      this.loadingState.set(false);
+    }
+  }
+
+  /**
+   * Loads the tournament's eligible courts once: later calls reuse the cache (or the running request); only a
+   * failed load is retried. Never rejects: a failure sets `courtsStatus` to `error`.
+   */
+  async loadCourts(): Promise<void> {
+    const tournamentId = this.requireTournamentId();
+    const status = this.courtsStatusState();
+    if (this.courtsTournamentId === tournamentId && (status === 'loading' || status === 'ready')) return;
+
+    this.courtsTournamentId = tournamentId;
+    this.courtsStatusState.set('loading');
+    try {
+      const courts = await this.drawRepository.getCourts(tournamentId);
+      if (this.courtsTournamentId !== tournamentId) return;
+      this.courtsState.set(courts);
+      this.courtsStatusState.set('ready');
+    } catch {
+      if (this.courtsTournamentId !== tournamentId) return;
+      this.courtsState.set([]);
+      this.courtsStatusState.set('error');
+    }
+  }
+
+  async generatePreview(request: TournamentDrawRequest): Promise<TournamentDraw> {
+    const preview = await this.drawRepository.preview(this.requireTournamentId(), request);
+    this.previewState.set(preview);
+    return preview;
+  }
+
+  async saveDraft(request: TournamentDrawRequest): Promise<TournamentDraw> {
+    const draw = await this.drawRepository.saveDraft(this.requireTournamentId(), request);
+    this.drawState.set(draw);
+    this.previewState.set(null);
+    return draw;
+  }
+
+  async publish(): Promise<TournamentDraw> {
+    const draw = await this.drawRepository.publish(this.requireTournamentId());
+    this.drawState.set(draw);
+    return draw;
+  }
+
+  async unpublish(): Promise<TournamentDraw> {
+    const draw = await this.drawRepository.unpublish(this.requireTournamentId());
+    this.drawState.set(draw);
+    return draw;
+  }
+
+  async delete(): Promise<void> {
+    await this.drawRepository.delete(this.requireTournamentId());
+    this.drawState.set(null);
+    this.previewState.set(null);
+  }
+
+  /** Records, replaces or clears one match result (F3); the stored draw becomes the re-resolved draw of the API. */
+  async saveMatchResult(matchId: string, result: TournamentDrawMatchResultRequest): Promise<TournamentDraw> {
+    const draw = await this.drawRepository.saveMatchResult(this.requireTournamentId(), matchId, result);
+    this.drawState.set(draw);
+    return draw;
+  }
+
+  discardPreview(): void {
+    this.previewState.set(null);
+  }
+
+  private requireTournamentId(): string {
+    const id = this.tournamentIdState();
+    if (!id) {
       throw new Error('common.notFound');
     }
-    return published!;
-  }
-
-  async deleteDraft(planId: string): Promise<void> {
-    this.loadingState.set(true);
-    this.savedDrawsState.update(draws => draws.filter(d => d.id !== planId));
-    this.loadingState.set(false);
-  }
-
-  getPublicDraw(tournamentId: string): DrawPlannerResult | null {
-    const r = this.resultState();
-    if (r && r.tournamentId === tournamentId && r.status === 'active') {
-      return r;
-    }
-    return null;
+    return id;
   }
 }
