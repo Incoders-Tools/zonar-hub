@@ -160,4 +160,12 @@ describe('authTokenInterceptor (impersonation variants)', () => {
     req.flush({ code: 'common.forbidden' }, { status: 403, statusText: 'Forbidden' });
     expect(impStub.forceStop).not.toHaveBeenCalled();
   });
+
+  it('does NOT call forceStop() on 401 from a public request under impersonation', () => {
+    setup(true);
+    http.get('/api/public/tournaments', { context: publicRequestContext() }).subscribe({ error: () => {} });
+    const req = controller.expectOne('/api/public/tournaments');
+    req.flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(impStub.forceStop).not.toHaveBeenCalled();
+  });
 });
