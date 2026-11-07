@@ -102,6 +102,7 @@ Check:
 - Framework: **Jasmine**
 - All components MUST have `.spec.ts`
 - Behavior-driven tests only (no implementation coupling)
+- CI: `.github/workflows/ci.yml` runs the `ci-gate` job (`npm ci`, `npm run test:ci`, `npm run build`) on every pull request and push to `dev` and `main`; merge only when `ci-gate` is green on the PR head commit
 
 ---
 
