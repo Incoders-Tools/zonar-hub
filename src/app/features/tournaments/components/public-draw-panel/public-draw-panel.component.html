@@ -1,0 +1,41 @@
+@switch (live.state()) {
+  @case ('error') {
+    <app-error-state
+      title="publicTournaments.draw.errorTitle"
+      [message]="live.errorKey() ?? 'common.unexpectedError'"
+      (retried)="retry()"></app-error-state>
+  }
+  @case ('loaded') {
+    @if (live.draw(); as draw) {
+      <div class="public-draw-panel">
+        <div class="public-draw-panel__status">
+          @if (updatedAtLabel(); as label) {
+            <span class="public-draw-panel__meta">
+              <mat-icon aria-hidden="true">schedule</mat-icon>
+              <span class="public-draw-panel__updated">{{ label }}</span>
+            </span>
+          }
+          @if (live.refreshErrorKey()) {
+            <div class="public-draw-panel__refresh-error" role="status">
+              <mat-icon aria-hidden="true">sync_problem</mat-icon>
+              <span>{{ 'publicTournaments.draw.refreshError' | t }}</span>
+              <button
+                type="button"
+                class="public-draw-panel__retry"
+                [disabled]="live.refreshing()"
+                (click)="retry()">
+                {{ 'common.retry' | t }}
+              </button>
+            </div>
+          }
+        </div>
+        <app-tournament-bracket [draw]="draw"></app-tournament-bracket>
+      </div>
+    } @else {
+      <ng-content></ng-content>
+    }
+  }
+  @default {
+    <app-loading-state messageKey="publicTournaments.draw.loading"></app-loading-state>
+  }
+}

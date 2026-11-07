@@ -40,6 +40,7 @@ No expone outputs propios. El valor se comunica por CVA (`formControlName`, `ngM
 
 ## Comportamiento de template / estructura UI
 - Renderiza label opcional, `<select>`, placeholder opcional, opciones, descripción de opción seleccionada, error o hint.
+- Cada `<option>` enlaza `[selected]` contra el valor actual (y el placeholder cuando no hay valor), así un valor escrito antes del primer render o antes de que lleguen/cambien las opciones queda seleccionado; `[value]` sobre el `<select>` sola no alcanza porque se aplica antes de crear las opciones.
 - `selectedDescription` se calcula desde la opción cuyo `value` coincide con el valor actual.
 - `hasError` es true si `error` es true o si existe `errorMessage`, el control fue tocado y el valor está vacío. Para errores distintos de required con valor seleccionado, el consumidor debe pasar `error=true`.
 - `autoId` se calcula con `Math.random()` cuando no se provee `inputId`.
@@ -69,7 +70,7 @@ No expone outputs propios. El valor se comunica por CVA (`formControlName`, `ngM
 - Hardcoded/fallbacks observados: color embebido en SVG `fill='%234a6349'`, fallbacks `#d32f2f`, `rgba(59, 130, 246, 0.15)` y `rgba(211, 47, 47, 0.15)`.
 
 ## Testing
-- `zh-select.component.spec.ts` cubre required vacío/tocado, selección válida y error explícito con valor seleccionado.
+- `zh-select.component.spec.ts` cubre required vacío/tocado, selección válida, error explícito con valor seleccionado, valor preseleccionado en el primer render y con opciones tardías o cambiadas, placeholder seleccionado sin valor (primera opción sin placeholder) y emisión del cambio.
 - Queda pendiente cobertura de CVA disabled, descripción seleccionada, ids/labels y opciones disabled.
 
 ## Guía de reutilización

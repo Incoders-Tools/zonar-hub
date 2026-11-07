@@ -1,84 +1,179 @@
-<div class="bracket">
-  <div class="bracket__rounds">
-    @for (round of bracket().rounds; track round.name; let ri = $index) {
-      <div class="bracket__round">
-        <h3 class="bracket__round-title">{{ round.name | t }}</h3>
-        <div class="bracket__matches" [style.gap.px]="ri === 0 ? 16 : 16 + ri * 48">
-          @for (match of round.matches; track match.id) {
-            <div class="bracket__match" [class.bracket__match--final]="ri === bracket().rounds.length - 1">
-              <!-- Pair 1 -->
-              <div class="bracket__pair"
-                   [class.bracket__pair--winner]="isWinner(match, match.pair1?.id)"
-                   [class.bracket__pair--loser]="isLoser(match, match.pair1?.id)">
-                @if (match.pair1) {
-                  @if (match.pair1.seed) {
-                    <span class="bracket__seed">{{ match.pair1.seed }}</span>
+@let drawView = view();
+
+<div class="draw-view">
+  @if (drawView.isEmpty) {
+    <app-empty-state class="draw-view__empty" message="bracket.empty" />
+  } @else {
+    @if (drawView.hasKnockout) {
+      <div class="draw-view__toolbar">
+        <div class="draw-view__mode-toggle" role="group" [attr.aria-label]="'bracket.view.label' | t">
+          <button
+            type="button"
+            class="draw-view__mode-btn"
+            [class.draw-view__mode-btn--active]="mode() === 'bracket'"
+            [attr.aria-pressed]="mode() === 'bracket'"
+            (click)="setMode('bracket')">
+            <mat-icon aria-hidden="true">account_tree</mat-icon>
+            <span>{{ 'bracket.view.bracket' | t }}</span>
+          </button>
+          <button
+            type="button"
+            class="draw-view__mode-btn"
+            [class.draw-view__mode-btn--active]="mode() === 'list'"
+            [attr.aria-pressed]="mode() === 'list'"
+            (click)="setMode('list')">
+            <mat-icon aria-hidden="true">view_agenda</mat-icon>
+            <span>{{ 'bracket.view.list' | t }}</span>
+          </button>
+        </div>
+      </div>
+    }
+
+    @for (phase of drawView.phases; track phase.id) {
+      <section class="draw-view__phase" [attr.aria-labelledby]="idPrefix + '-' + phase.id">
+        <h2 class="draw-view__phase-title" [id]="idPrefix + '-' + phase.id">{{ phase.title }}</h2>
+
+        @switch (phase.kind) {
+          @case ('knockout') {
+            @if (mode() === 'bracket') {
+              @let koPage = page(phase);
+              <div class="draw-ko">
+                <div
+                  class="draw-ko__viewport"
+                  tabindex="-1"
+                  [style.--draw-columns]="koPage.columnCount"
+                  (keydown.arrowleft)="onViewportKeydown($event, phase, -1)"
+                  (keydown.arrowright)="onViewportKeydown($event, phase, 1)">
+                  <div class="draw-ko__bar" aria-hidden="true"></div>
+                  <button
+                    type="button"
+                    class="draw-ko__nav draw-ko__prev"
+                    [disabled]="!koPage.canPrevious"
+                    [attr.aria-label]="'bracket.paging.previous' | t"
+                    (click)="previous(phase)">
+                    <mat-icon aria-hidden="true">chevron_left</mat-icon>
+                  </button>
+
+                  @for (column of koPage.columns; track column.round.key) {
+                    <h3 class="draw-ko__round-title" [id]="column.headingId" [style.grid-column]="column.gridColumn">
+                      <span class="draw-ko__round-label" [attr.aria-hidden]="column.round.spokenLabel ? 'true' : null">{{ column.round.label }}</span>
+                      @if (column.round.spokenLabel) {
+                        <span class="draw-view__sr-only">{{ column.round.spokenLabel }}</span>
+                      }
+                    </h3>
                   }
-                  <span class="bracket__names">{{ match.pair1.player1 }} / {{ match.pair1.player2 }}</span>
-                  <span class="bracket__scores">
-                    @for (s of match.score1; track $index) {
-                      <span class="bracket__set">{{ s }}</span>
-                    }
-                  </span>
-                  @if (isWinner(match, match.pair1.id)) {
-                    <mat-icon class="bracket__winner-icon">check_circle</mat-icon>
+
+                  <button
+                    type="button"
+                    class="draw-ko__nav draw-ko__next"
+                    [style.grid-column]="koPage.columnCount + 2"
+                    [disabled]="!koPage.canNext"
+                    [attr.aria-label]="'bracket.paging.next' | t"
+                    (click)="next(phase)">
+                    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                  </button>
+
+                  @for (column of koPage.columns; track column.round.key) {
+                    <ol class="draw-ko__column" [style.grid-column]="column.gridColumn" [attr.aria-labelledby]="column.headingId">
+                      @for (match of column.round.matches; track match.id) {
+                        <li class="draw-ko__slot" [class.draw-ko__slot--feeds]="column.feeds" [class.draw-ko__slot--fed]="column.fed">
+                          @if (column.fed) {
+                            <span class="draw-ko__connector-in" aria-hidden="true"></span>
+                          }
+                          <app-draw-match-card [match]="match" (activated)="onMatchActivated(match, $event)" />
+                        </li>
+                      }
+                    </ol>
                   }
-                } @else {
-                  <span class="bracket__names bracket__names--tbd">{{ 'bracket.tbd' | t }}</span>
+
+                  @if (phase.thirdPlace && koPage.thirdPlaceColumn) {
+                    <div class="draw-ko__third-place" [style.grid-column]="koPage.thirdPlaceColumn">
+                      <h4 class="draw-ko__third-place-title">{{ phase.thirdPlace.roundLabel }}</h4>
+                      <app-draw-match-card [match]="phase.thirdPlace" (activated)="onMatchActivated(phase.thirdPlace, $event)" />
+                    </div>
+                  }
+                </div>
+                <p class="draw-ko__live draw-view__sr-only" aria-live="polite">{{ announcement() }}</p>
+              </div>
+            } @else {
+              <div class="draw-list">
+                @for (round of phase.rounds; track round.key) {
+                  <section class="draw-list__round" [attr.aria-labelledby]="idPrefix + '-list-' + round.key">
+                    <h3 class="draw-list__title" [id]="idPrefix + '-list-' + round.key">
+                      <span [attr.aria-hidden]="round.spokenLabel ? 'true' : null">{{ round.label }}</span>
+                      @if (round.spokenLabel) {
+                        <span class="draw-view__sr-only">{{ round.spokenLabel }}</span>
+                      }
+                    </h3>
+                    <ul class="draw-view__cards">
+                      @for (match of round.matches; track match.id) {
+                        <li><app-draw-match-card [match]="match" (activated)="onMatchActivated(match, $event)" /></li>
+                      }
+                    </ul>
+                  </section>
+                }
+                @if (phase.thirdPlace) {
+                  <section class="draw-list__round" [attr.aria-labelledby]="idPrefix + '-list-third-' + phase.id">
+                    <h3 class="draw-list__title" [id]="idPrefix + '-list-third-' + phase.id">{{ phase.thirdPlace.roundLabel }}</h3>
+                    <ul class="draw-view__cards">
+                      <li><app-draw-match-card [match]="phase.thirdPlace" (activated)="onMatchActivated(phase.thirdPlace, $event)" /></li>
+                    </ul>
+                  </section>
                 }
               </div>
-              <!-- Pair 2 -->
-              <div class="bracket__pair"
-                   [class.bracket__pair--winner]="isWinner(match, match.pair2?.id)"
-                   [class.bracket__pair--loser]="isLoser(match, match.pair2?.id)">
-                @if (match.pair2) {
-                  @if (match.pair2.seed) {
-                    <span class="bracket__seed">{{ match.pair2.seed }}</span>
-                  }
-                  <span class="bracket__names">{{ match.pair2.player1 }} / {{ match.pair2.player2 }}</span>
-                  <span class="bracket__scores">
-                    @for (s of match.score2; track $index) {
-                      <span class="bracket__set">{{ s }}</span>
+            }
+          }
+
+          @case ('groupStage') {
+            <div class="draw-groups">
+              @for (group of phase.groups; track group.id) {
+                <article class="draw-group" [attr.aria-labelledby]="idPrefix + '-group-' + group.id">
+                  <h3 class="draw-group__title" [id]="idPrefix + '-group-' + group.id">{{ group.label }}</h3>
+                  <app-draw-standings-table [rows]="group.standings" [caption]="standingsCaption(group.label)" />
+                  <div class="draw-matchdays" role="group" [attr.aria-label]="'bracket.matchdays.title' | t">
+                    @for (round of group.matchdays; track round.key) {
+                      <ng-container *ngTemplateOutlet="matchday; context: { $implicit: round }" />
                     }
-                  </span>
-                  @if (isWinner(match, match.pair2.id)) {
-                    <mat-icon class="bracket__winner-icon">check_circle</mat-icon>
-                  }
-                } @else {
-                  <span class="bracket__names bracket__names--tbd">{{ 'bracket.tbd' | t }}</span>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+
+          @case ('roundRobin') {
+            <div class="draw-rr">
+              @if (phase.standings.length > 0) {
+                <div class="draw-rr__standings">
+                  <app-draw-standings-table [rows]="phase.standings" [caption]="'bracket.standings.title' | t" />
+                </div>
+              }
+              <div class="draw-matchdays draw-matchdays--wide" role="group" [attr.aria-label]="'bracket.matchdays.title' | t">
+                @for (round of phase.matchdays; track round.key) {
+                  <ng-container *ngTemplateOutlet="matchday; context: { $implicit: round }" />
                 }
               </div>
             </div>
           }
-        </div>
-      </div>
-
-      <!-- Connectors between rounds -->
-      @if (ri < bracket().rounds.length - 1) {
-        <div class="bracket__connectors" aria-hidden="true">
-          @for (match of round.matches; track match.id; let mi = $index) {
-            @if (mi % 2 === 0) {
-              <div class="bracket__connector" [style.flex-grow]="ri + 1"></div>
-            }
-          }
-        </div>
-      }
-    }
-  </div>
-
-  <!-- Champion highlight -->
-  @if (bracket().rounds.length > 0) {
-    @let finalRound = bracket().rounds[bracket().rounds.length - 1];
-    @if (finalRound.matches[0]?.winnerId; as winnerId) {
-      @let finalMatch = finalRound.matches[0];
-      @let champion = finalMatch.pair1?.id === winnerId ? finalMatch.pair1 : finalMatch.pair2;
-      @if (champion) {
-        <div class="bracket__champion">
-          <mat-icon class="bracket__champion-icon">emoji_events</mat-icon>
-          <span class="bracket__champion-label">{{ 'bracket.champion' | t }}</span>
-          <span class="bracket__champion-names">{{ champion.player1 }} / {{ champion.player2 }}</span>
-        </div>
-      }
+        }
+      </section>
     }
   }
 </div>
+
+<ng-template #matchday let-round>
+  <section class="draw-matchday">
+    <h4 class="draw-matchday__title">{{ round.label }}</h4>
+    <ul class="draw-view__cards">
+      @for (match of round.matches; track match.id) {
+        <li><app-draw-match-card [match]="match" (activated)="onMatchActivated(match, $event)" /></li>
+      }
+    </ul>
+    @if (round.restingNames.length > 0) {
+      <p class="draw-matchday__resting">{{ restingText(round.restingNames) }}</p>
+    }
+  </section>
+</ng-template>
+
+@if (selectedMatch(); as detail) {
+  <app-draw-match-detail [match]="detail" (closed)="closeDetail()" />
+}

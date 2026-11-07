@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { PublicTournament } from '../models';
+import { PublicTournament, TournamentDraw } from '../models';
 import { ApiPublicTournamentRepository } from '../repositories/api/api-public-tournament.repository';
 
 /**
@@ -42,5 +42,10 @@ export class PublicTournamentService {
   /** Returns null when the tournament does not exist or is not public; rejects on other failures. */
   async getBySlug(slug: string): Promise<PublicTournament | null> {
     return (await this.repository.getBySlug(slug)) ?? null;
+  }
+
+  /** Published draw of a public tournament; null when there is none (or the tournament is not public). Rejects on other failures. */
+  getDraw(slug: string): Promise<TournamentDraw | null> {
+    return this.repository.getDraw(slug);
   }
 }

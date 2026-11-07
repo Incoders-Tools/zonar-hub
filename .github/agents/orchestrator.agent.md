@@ -44,7 +44,7 @@ This includes:
 Before considering a UI task complete, verify that:
 
 - any new user-facing text uses translation keys
-- any new key was added to `src/app/core/i18n/i18n.translations.ts`
+- any new key was added to the per-locale files `src/app/core/i18n/i18n.{es,en,pt}.ts`
 - all locales defined by `src/app/core/i18n/i18n.types.ts` are covered
 - locale trees remain aligned
 - unresolved keys cannot reach the final UI

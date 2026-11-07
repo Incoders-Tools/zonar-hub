@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, effect, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
@@ -20,6 +20,13 @@ export class AppComponent implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly title = inject(Title);
 
+  constructor() {
+    // A non-es locale renders es until its dictionary loads; `lang` follows the rendered locale.
+    effect(() => {
+      document.documentElement.lang = this.i18n.locale();
+    });
+  }
+
   ngOnInit(): void {
     this.theme.setTheme(this.theme.theme());
     this.detectAndApplyLocale();
@@ -31,8 +38,7 @@ export class AppComponent implements OnInit {
     const browserLang = (navigator.language || '').split('-')[0].toLowerCase();
     const match = supported.find(l => l === browserLang);
     if (match) {
-      this.i18n.setLocale(match);
+      void this.i18n.setLocale(match);
     }
-    document.documentElement.lang = this.i18n.locale();
   }
 }

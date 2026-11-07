@@ -1,0 +1,62 @@
+@use '../../../../../styles/mixins';
+
+:host {
+  display: block;
+}
+
+.standings {
+  overflow-x: auto;
+
+  &__table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--zh-font-size-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__caption {
+    @include mixins.visually-hidden;
+  }
+
+  th,
+  td {
+    padding: var(--zh-space-xs) var(--zh-space-sm);
+    border-block-end: 1px solid var(--zh-border-subtle);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  thead th {
+    color: var(--zh-text-secondary);
+    font-size: var(--zh-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  abbr {
+    text-decoration: none;
+  }
+
+  &__num {
+    text-align: end;
+  }
+
+  thead &__num {
+    text-align: end;
+  }
+
+  &__position {
+    color: var(--zh-text-muted);
+    font-weight: 700;
+  }
+
+  &__pair {
+    inline-size: 100%;
+    font-weight: 600;
+  }
+
+  &__row--highlighted {
+    background: var(--zh-surface-selected);
+  }
+}

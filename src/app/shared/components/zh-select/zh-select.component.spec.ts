@@ -57,3 +57,62 @@ describe('ZhSelectComponent required state', () => {
     expectError(true);
   });
 });
+
+@Component({
+  standalone: true,
+  imports: [ReactiveFormsModule, ZhSelectComponent],
+  template: `<zh-select [formControl]="court" [options]="options" [placeholder]="placeholder" />`
+})
+class PreselectHostComponent {
+  readonly court = new FormControl('court-2', { nonNullable: true });
+  options = [{ value: 'court-1', label: 'Central' }, { value: 'court-2', label: 'Lateral' }];
+  placeholder = 'No court';
+}
+
+describe('ZhSelectComponent selected option', () => {
+  function render(initial: string, placeholder = 'No court'): ComponentFixture<PreselectHostComponent> {
+    const fixture = TestBed.createComponent(PreselectHostComponent);
+    fixture.componentInstance.court.setValue(initial);
+    fixture.componentInstance.placeholder = placeholder;
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function select(fixture: ComponentFixture<PreselectHostComponent>): HTMLSelectElement {
+    return fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [PreselectHostComponent] }).compileComponents();
+  });
+
+  it('renders a value written before the first render as the selected option', () => {
+    const fixture = render('court-2');
+    expect(select(fixture).value).toBe('court-2');
+    expect(select(fixture).selectedOptions[0].textContent?.trim()).toBe('Lateral');
+  });
+
+  it('keeps the selected option when the options arrive or change after the value', () => {
+    const fixture = render('court-2');
+    fixture.componentInstance.options = [{ value: 'court-0', label: 'Anexo' }, ...fixture.componentInstance.options];
+    fixture.detectChanges();
+    expect(select(fixture).value).toBe('court-2');
+
+    fixture.componentInstance.court.setValue('court-1');
+    fixture.detectChanges();
+    expect(select(fixture).value).toBe('court-1');
+  });
+
+  it('selects the placeholder when there is no value, and the first option without a placeholder', () => {
+    expect(select(render('')).value).toBe('');
+    expect(select(render('')).selectedOptions[0].textContent?.trim()).toBe('No court');
+    expect(select(render('', '')).value).toBe('court-1');
+  });
+
+  it('emits the chosen value to the form control', () => {
+    const fixture = render('');
+    select(fixture).value = 'court-1';
+    select(fixture).dispatchEvent(new Event('change'));
+    expect(fixture.componentInstance.court.value).toBe('court-1');
+  });
+});

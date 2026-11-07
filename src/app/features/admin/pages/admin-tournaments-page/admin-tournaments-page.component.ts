@@ -18,6 +18,10 @@ import { ActiveOrganizationService } from '../../../../core/services/active-orga
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PublicTournamentLinkService } from '../../../../core/services/public-tournament-link.service';
+import { PermissionService } from '../../../../core/auth/permission.service';
+
+/** Tool that guards the draw page (`/admin/tournaments/:tournamentId/draw`). */
+const DRAW_TOOL_KEY = 'draw-planner';
 
 interface TournamentRow extends Record<string, unknown> {
   id: string;
@@ -71,6 +75,7 @@ export class AdminTournamentsPageComponent implements OnInit {
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly router = inject(Router);
   private readonly publicLink = inject(PublicTournamentLinkService);
+  private readonly permissions = inject(PermissionService);
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -115,11 +120,22 @@ export class AdminTournamentsPageComponent implements OnInit {
     icon: 'link', labelKey: 'admin.tournaments.share.copyPublicLink', action: 'copyPublicLink', variant: 'default' as const
   };
 
-  /** Public tournaments with a share link also get "copy public link", placed before delete. */
+  private readonly drawAction = {
+    icon: 'account_tree', labelKey: 'admin.tournaments.actions.draw', action: 'draw', variant: 'default' as const
+  };
+
+  /**
+   * Users with the draw planner tool get "draw" after edit; public tournaments with a share link also get
+   * "copy public link", placed before delete.
+   */
   readonly tournamentRowActionsFor = (row: TournamentRow) => {
-    if (!row.publicSlug) return this.tournamentRowActions;
     const actions = [...this.tournamentRowActions];
-    actions.splice(actions.length - 1, 0, this.copyPublicLinkAction);
+    if (row.publicSlug) {
+      actions.splice(actions.length - 1, 0, this.copyPublicLinkAction);
+    }
+    if (this.permissions.hasTool(DRAW_TOOL_KEY)) {
+      actions.splice(1, 0, this.drawAction);
+    }
     return actions;
   };
 
@@ -201,6 +217,8 @@ export class AdminTournamentsPageComponent implements OnInit {
       this.openEdit(event.row);
     } else if (event.action === 'delete') {
       this.confirmDelete(event.row);
+    } else if (event.action === 'draw') {
+      void this.router.navigate(['/admin/tournaments', event.row.id, 'draw']);
     } else if (event.action === 'share') {
       this.openShare(event.row);
     } else if (event.action === 'copyPublicLink' && event.row.publicSlug) {

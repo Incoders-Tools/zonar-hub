@@ -1,0 +1,80 @@
+<div class="match-detail-overlay" (click)="close()" (keydown.escape)="close()">
+  <section
+    class="match-detail"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+    (click)="$event.stopPropagation()">
+    <header class="match-detail__header">
+      <div class="match-detail__heading">
+        <h2 class="match-detail__title" [id]="titleId">{{ 'bracket.detail.title' | t }}</h2>
+        <app-status-badge class="match-detail__status" [status]="match().statusBadge" [label]="'bracket.status.' + match().status" />
+      </div>
+      <button type="button" class="match-detail__close" [attr.aria-label]="'common.close' | t" (click)="close()">
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
+    </header>
+
+    <dl class="match-detail__facts">
+      <div class="match-detail__fact">
+        <dt>{{ 'bracket.detail.round' | t }}</dt>
+        <dd class="match-detail__round">{{ match().roundLabel }}</dd>
+      </div>
+      <div class="match-detail__fact">
+        <dt>{{ 'bracket.detail.court' | t }}</dt>
+        <dd class="match-detail__court">{{ match().courtName ?? ('bracket.detail.notAvailable' | t) }}</dd>
+      </div>
+      <div class="match-detail__fact">
+        <dt>{{ 'bracket.detail.schedule' | t }}</dt>
+        <dd class="match-detail__schedule">
+          @if (match().scheduledAt) {
+            {{ match().scheduledAt | formatDate }} {{ scheduledTime() }}
+          } @else {
+            {{ 'bracket.detail.notAvailable' | t }}
+          }
+        </dd>
+      </div>
+      @if (duration(); as durationLabel) {
+        <div class="match-detail__fact">
+          <dt>{{ 'bracket.detail.duration' | t }}</dt>
+          <dd class="match-detail__duration">{{ durationLabel }}</dd>
+        </div>
+      }
+    </dl>
+
+    <h3 class="match-detail__subtitle">{{ 'bracket.detail.score' | t }}</h3>
+    @if (setNumbers().length > 0) {
+      <table class="match-detail__score">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'bracket.detail.pair' | t }}</th>
+            @for (number of setNumbers(); track number) {
+              <th scope="col" class="match-detail__num">{{ setLabel(number) }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (side of [match().home, match().away]; track $index) {
+            <tr [class.match-detail__row--winner]="side.isWinner">
+              <th scope="row" class="match-detail__pair">
+                {{ side.name }}
+                @if (side.isWinner) {
+                  <mat-icon class="match-detail__winner-icon" aria-hidden="true">check</mat-icon>
+                  <span class="match-detail__sr-only">{{ 'bracket.match.winner' | t }}</span>
+                }
+              </th>
+              @for (set of side.sets; track $index) {
+                <td class="match-detail__num match-detail__set" [class.match-detail__set--won]="set.won">{{ set.games }}@if (set.tiebreak != null) {<sup>{{ set.tiebreak }}</sup>}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="match-detail__pairs">{{ match().home.name }} — {{ match().away.name }}</p>
+      <p class="match-detail__empty">{{ 'bracket.detail.noScore' | t }}</p>
+    }
+  </section>
+</div>

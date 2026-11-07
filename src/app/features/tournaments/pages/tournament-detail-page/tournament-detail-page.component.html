@@ -140,12 +140,22 @@
            id="tournament-tabpanel"
            role="tabpanel"
            [attr.aria-labelledby]="'tournament-tab-' + activeTab()">
+        @if (showsDraw()) {
+          <app-public-draw-panel [mode]="activeTab() === 'results' ? 'list' : 'bracket'">
+            <ng-container *ngTemplateOutlet="comingSoon"></ng-container>
+          </app-public-draw-panel>
+        } @else {
+          <ng-container *ngTemplateOutlet="comingSoon"></ng-container>
+        }
+      </div>
+
+      <ng-template #comingSoon>
         <div class="tournament-detail__coming-soon" role="status">
           <mat-icon class="tournament-detail__coming-soon-icon" aria-hidden="true">{{ activeTabDefinition().icon }}</mat-icon>
           <h2>{{ 'publicTournaments.comingSoon.title' | t }}</h2>
           <p>{{ activeTabDefinition().comingSoonKey | t }}</p>
         </div>
-      </div>
+      </ng-template>
     }
   }
 </div>
