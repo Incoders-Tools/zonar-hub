@@ -1,26 +1,30 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
-import { TournamentService } from '../../../../core/services/tournament.service';
+import { PublicTournamentService } from '../../../../core/services/public-tournament.service';
+import { LoadingStateComponent } from '../../../../shared/components/loading-state/loading-state.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PublicTournamentCardComponent } from '../../components/public-tournament-card/public-tournament-card.component';
 
+/** Public `/tournaments` showcase: every tournament an organization made public, read anonymously. */
 @Component({
   selector: 'app-tournament-list-page',
   standalone: true,
-  imports: [RouterLink, TranslatePipe, FormatDatePipe],
+  imports: [TranslatePipe, LoadingStateComponent, EmptyStateComponent, ErrorStateComponent, PublicTournamentCardComponent],
   templateUrl: './tournament-list-page.component.html',
   styleUrl: './tournament-list-page.component.scss'
 })
 export class TournamentListPageComponent implements OnInit {
-  private readonly tournamentService = inject(TournamentService);
-  readonly tournaments = this.tournamentService.publicDisplayTournaments;
-  readonly loading = this.tournamentService.loading;
+  protected readonly publicTournaments = inject(PublicTournamentService);
+  readonly tournaments = this.publicTournaments.tournaments;
+  readonly loading = this.publicTournaments.loading;
+  readonly error = this.publicTournaments.error;
 
   ngOnInit(): void {
-    this.tournamentService.loadTournaments();
+    this.load();
   }
 
-  getStatusClass(statusId: string): string {
-    return `status--${statusId}`;
+  load(): void {
+    void this.publicTournaments.load();
   }
 }

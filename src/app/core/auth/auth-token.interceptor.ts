@@ -3,9 +3,14 @@ import { inject } from '@angular/core';
 import { tap } from 'rxjs';
 import { ImpersonationService } from '../impersonation/impersonation.service';
 import { resolveActiveToken, resolveActiveTenantId } from '../impersonation/impersonation-token.interceptor';
+import { PUBLIC_REQUEST } from '../http/public-request.context';
 import { AuthService } from './auth.service';
 
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
+  if (req.context.get(PUBLIC_REQUEST)) {
+    return next(req);
+  }
+
   const auth = inject(AuthService);
   const imp = inject(ImpersonationService);
 

@@ -36,4 +36,28 @@ describe('AdminOnboardingPageComponent', () => {
     component.prevStep();
     expect(component.currentStep()).toBe(1);
   });
+
+  describe('sport icons', () => {
+    beforeEach(() => {
+      component.availableSports.set([
+        { id: 'sp1', name: 'Pádel', key: 'padel', icon: 'padel', iconSource: 'svg', modalityIds: [], sortOrder: 1, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+        { id: 'sp2', name: 'Fútbol', key: 'futbol', icon: '⚽', iconSource: 'unicode', modalityIds: [], sortOrder: 2, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' }
+      ]);
+      component.currentStep.set(3);
+      fixture.detectChanges();
+    });
+
+    it('renders the svg drawing for an svg-source sport option', () => {
+      const options = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.onboarding__sport-option'));
+
+      expect(options[0].querySelector('img.sport-icon--svg')?.getAttribute('src')).toBe('uploads/sports-icons/padel.svg');
+      expect(options[0].textContent).not.toContain('padel');
+    });
+
+    it('renders the emoji for a unicode-source sport option', () => {
+      const options = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.onboarding__sport-option'));
+
+      expect(options[1].querySelector('.sport-icon--unicode')?.textContent?.trim()).toBe('⚽');
+    });
+  });
 });

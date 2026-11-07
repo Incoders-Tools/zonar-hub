@@ -1,10 +1,14 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { DrawPlannerService } from '../../../../core/services/draw-planner.service';
-import { TournamentService } from '../../../../core/services/tournament.service';
-import { Tournament, DrawPlannerResult } from '../../../../core/models';
+import { PublicTournamentService } from '../../../../core/services/public-tournament.service';
+import { publicTournamentPath } from '../../../../core/services/public-tournament-link.service';
+import { PublicTournament, DrawPlannerResult } from '../../../../core/models';
 
+/**
+ * Public draw of a tournament, resolved by its share slug (`/tournaments/:slug/draw`).
+ * Draws are not published through the public API yet (phase 2), so the not-published state is shown.
+ */
 @Component({
   selector: 'app-public-draw-page',
   standalone: true,
@@ -14,20 +18,21 @@ import { Tournament, DrawPlannerResult } from '../../../../core/models';
 })
 export class PublicDrawPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly tournamentService = inject(TournamentService);
-  private readonly drawService = inject(DrawPlannerService);
+  private readonly publicTournaments = inject(PublicTournamentService);
 
-  readonly tournament = signal<Tournament | null>(null);
+  readonly tournament = signal<PublicTournament | null>(null);
   readonly drawResult = signal<DrawPlannerResult | null>(null);
   readonly loading = signal(true);
+  readonly detailPath = computed(() => {
+    const tournament = this.tournament();
+    return tournament ? publicTournamentPath(tournament.slug) : null;
+  });
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.tournamentService.loadTournaments().then(() => {
-      this.tournament.set(this.tournamentService.getTournamentById(id) ?? null);
-    });
-    const result = this.drawService.getPublicDraw(id);
-    this.drawResult.set(result);
-    this.loading.set(false);
+    const slug = this.route.snapshot.paramMap.get('slug') ?? '';
+    this.publicTournaments.getBySlug(slug)
+      .then(tournament => this.tournament.set(tournament))
+      .catch(() => this.tournament.set(null))
+      .finally(() => this.loading.set(false));
   }
 }

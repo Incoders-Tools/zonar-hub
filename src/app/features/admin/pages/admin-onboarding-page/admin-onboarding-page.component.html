@@ -251,7 +251,7 @@
                 [class.onboarding__sport-option--active]="isSportSelected(sport.id)"
                 [class.onboarding__sport-option--primary]="primarySportId() === sport.id"
                 (click)="toggleSport(sport.id)">
-                <span class="onboarding__sport-icon">{{ sport.icon }}</span>
+                <app-sport-icon [icon]="sport.icon" [source]="sport.iconSource" [size]="24"></app-sport-icon>
                 <span class="onboarding__sport-label">{{ sport.name }}</span>
                 @if (primarySportId() === sport.id) {
                   <span class="onboarding__sport-primary-badge">{{ 'onboarding.sport.primaryBadge' | t }}</span>
@@ -282,7 +282,7 @@
         <form [formGroup]="tournamentForm">
           @if (hasMultipleSports() && primarySport()) {
             <div class="onboarding__primary-sport-banner">
-              <span class="onboarding__primary-sport-icon">{{ primarySport()?.icon }}</span>
+              <app-sport-icon [icon]="primarySport()!.icon" [source]="primarySport()!.iconSource" [size]="24"></app-sport-icon>
               <span>
                 {{ 'onboarding.tournament.primarySportNotice' | t }}
                 <strong>{{ primarySport()?.name }}</strong>.

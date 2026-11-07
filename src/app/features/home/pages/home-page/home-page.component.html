@@ -27,7 +27,7 @@
     <div class="sports-grid">
       @for (sport of sports; track sport.id) {
         <div class="sport-card">
-          <span class="sport-card__icon">{{ sport.icon }}</span>
+          <app-sport-icon [icon]="sport.icon" [source]="sport.iconSource" [size]="40"></app-sport-icon>
           <span class="sport-card__label">{{ 'home.sport.' + sport.key | t }}</span>
         </div>
       }
@@ -63,22 +63,31 @@
     </div>
   </section>
 
-  <!-- Upcoming Tournaments -->
-  @if (showcaseTournaments().length > 0) {
-    <section class="section tournaments-section">
-      <h2 class="section__title">{{ 'home.upcomingTournaments' | t }}</h2>
-      <div class="card-grid">
-        @for (t of showcaseTournaments(); track t.id) {
-          <a class="tournament-card" [routerLink]="['/tournaments', t.id]">
-            <span class="tournament-card__status" [attr.data-status]="t.statusId">{{ t.statusLabel }}</span>
-            <h3 class="tournament-card__name">{{ t.name }}</h3>
-            <p class="tournament-card__meta">📍 {{ t.complexName }} · 📅 {{ t.startDate | formatDate }}</p>
-            <p class="tournament-card__category">{{ t.categoryName }} — {{ t.genderLabel }}</p>
-          </a>
+  <!-- Upcoming Tournaments (public showcase) -->
+  <section class="section tournaments-section" aria-labelledby="home-upcoming-tournaments">
+    <h2 class="section__title" id="home-upcoming-tournaments">{{ 'home.upcomingTournaments' | t }}</h2>
+    <p class="section__subtitle">{{ 'home.upcomingTournaments.subtitle' | t }}</p>
+    @if (publicTournaments.loading()) {
+      <app-loading-state messageKey="publicTournaments.list.loading"></app-loading-state>
+    } @else if (publicTournaments.error(); as errorKey) {
+      <app-error-state title="publicTournaments.list.errorTitle" [message]="errorKey" (retried)="loadShowcase()"></app-error-state>
+    } @else if (showcaseTournaments().length === 0) {
+      <app-empty-state message="publicTournaments.list.empty"></app-empty-state>
+    } @else {
+      <ul class="tournaments-section__grid">
+        @for (t of showcaseTournaments(); track t.slug) {
+          <li>
+            <app-public-tournament-card [tournament]="t"></app-public-tournament-card>
+          </li>
         }
+      </ul>
+      <div class="tournaments-section__actions">
+        <a class="btn btn--outline tournaments-section__view-all" [routerLink]="tournamentsPath">
+          {{ 'home.upcomingTournaments.viewAll' | t }}
+        </a>
       </div>
-    </section>
-  }
+    }
+  </section>
 
   <!-- How It Works -->
   <section class="section workflow-section">

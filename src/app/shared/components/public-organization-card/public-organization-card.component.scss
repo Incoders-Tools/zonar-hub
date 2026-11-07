@@ -1,0 +1,123 @@
+:host {
+  display: block;
+}
+
+.public-organization {
+  --public-organization-logo-size: 56px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--zh-space-sm);
+  padding: var(--zh-space-md);
+  background: var(--zh-surface-muted);
+  border: 1px solid var(--zh-border-subtle);
+  border-radius: var(--zh-radius-md);
+  color: var(--zh-text-primary);
+
+  &--compact {
+    --public-organization-logo-size: 36px;
+
+    padding: var(--zh-space-sm);
+    gap: var(--zh-space-xs);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: var(--zh-space-sm);
+    min-width: 0;
+  }
+
+  &__logo,
+  &__logo-fallback {
+    flex-shrink: 0;
+    width: var(--public-organization-logo-size);
+    height: var(--public-organization-logo-size);
+    border-radius: var(--zh-radius-sm);
+  }
+
+  &__logo {
+    object-fit: contain;
+    background: var(--zh-surface-card);
+  }
+
+  &__logo-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--zh-surface-card);
+    color: var(--zh-text-secondary);
+  }
+
+  &__identity {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__eyebrow {
+    font-size: var(--zh-font-size-2xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--zh-text-muted);
+  }
+
+  &__name {
+    font-size: var(--zh-font-size-sm);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  &__type {
+    font-size: var(--zh-font-size-xs);
+    color: var(--zh-text-secondary);
+  }
+
+  &__description {
+    margin: 0;
+    font-size: var(--zh-font-size-sm);
+    color: var(--zh-text-secondary);
+    white-space: pre-line;
+  }
+
+  &__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zh-space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--zh-radius-full);
+    background: var(--zh-surface-card);
+    border: 1px solid var(--zh-border-subtle);
+    color: var(--zh-text-secondary);
+    text-decoration: none;
+    transition: color var(--zh-transition-fast), border-color var(--zh-transition-fast), background var(--zh-transition-fast);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      color: var(--zh-primary);
+      border-color: var(--zh-primary);
+      background: var(--zh-primary-soft);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--zh-border-focus);
+      outline-offset: 2px;
+    }
+  }
+}

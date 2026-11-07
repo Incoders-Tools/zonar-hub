@@ -17,7 +17,7 @@ None.
 - `FilterPanelComponent` — shared filter panel
 - `ConfirmDialogComponent` — shared confirmation for delete, bulk delete, and primary replacement
 - `AsyncButtonComponent` — header actions
-- `OrganizationFormPanelComponent` — create/edit form panel
+- `OrganizationFormPanelComponent` — create/edit form panel, including the public-profile consent and links (see `organization-form-panel/organization-form-panel.component.md`)
 - `TranslatePipe` — i18n key resolution
 
 ## Primary organization action
@@ -33,6 +33,11 @@ None.
 - The active organization never changes as part of this flow.
 - The global organization selector keeps its own primary action until it is removed in a later work unit.
 
+## Public profile
+- The form panel emits `publicProfileEnabled` and the seven link fields on create and edit; the page forwards all of them to the facade.
+- `ApiOrganizationRepository` always sends the eight fields on create and update (blank links as `null`), because the API PUT replaces them. Updates that do not carry a field (for example `deactivate`) resend the stored value instead of clearing it.
+- API validation keys (`organizations.errors.*`, from a validation problem or a problem `detail`) are shown as the error toast instead of the generic create/update error; other failures keep `admin.organizations.toast.createError` / `updateError`.
+
 ## Variants and States
 - **Loading / Empty / Error** — delegated to `ZhCollectionViewComponent` (retry reloads through the facade)
 - **Data** — table or cards with filters, header actions, and row actions
@@ -47,7 +52,7 @@ None.
 - The primary marker is text, not color-only
 
 ## i18n
-Uses `admin.organizations.*`, `organization.type.*`, `common.*`, and the existing `org.selector.primary`, `org.selector.setPrimary`, and `org.selector.confirm*` keys. No new keys. Locales: es, en, pt.
+Uses `admin.organizations.*` (including `admin.organizations.publicProfile.*`), `organizations.errors.*`, `organization.type.*`, `common.*`, and the existing `org.selector.primary`, `org.selector.setPrimary`, and `org.selector.confirm*` keys. Locales: es, en, pt.
 
 ## Theming
 Pills reuse shared variants: table `data-variant="info"` and card `zh-list-card__status--info`. Card badge spacing uses `--zh-space-xs`. No hardcoded colors.

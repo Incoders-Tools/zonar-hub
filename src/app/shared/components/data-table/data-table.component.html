@@ -88,6 +88,12 @@
                     } @else {
                       <span class="data-table__icon-empty">—</span>
                     }
+                  } @else if (col.renderType === 'sportIcon') {
+                    @if (row[col.key]) {
+                      <app-sport-icon [icon]="$any(row[col.key])" [source]="getIconSource(row, col)" [size]="24"></app-sport-icon>
+                    } @else {
+                      <span class="data-table__icon-empty">—</span>
+                    }
                   } @else if (col.translate) {
                     {{ $any(row[col.key]) | t }}
                   } @else {

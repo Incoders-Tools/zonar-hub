@@ -1,10 +1,14 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { RegistrationService } from '../../../../core/services/registration.service';
-import { TournamentService } from '../../../../core/services/tournament.service';
-import { Registration, Tournament } from '../../../../core/models';
+import { PublicTournamentService } from '../../../../core/services/public-tournament.service';
+import { publicTournamentPath } from '../../../../core/services/public-tournament-link.service';
+import { PublicTournament, Registration } from '../../../../core/models';
 
+/**
+ * Public confirmed pairs of a tournament, resolved by its share slug (`/tournaments/:slug/confirmed-pairs`).
+ * Registrations have no public endpoint yet, so the list stays empty and the empty state is shown.
+ */
 @Component({
   selector: 'app-confirmed-pairs-page',
   standalone: true,
@@ -14,17 +18,19 @@ import { Registration, Tournament } from '../../../../core/models';
 })
 export class ConfirmedPairsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly tournamentService = inject(TournamentService);
-  private readonly registrationService = inject(RegistrationService);
+  private readonly publicTournaments = inject(PublicTournamentService);
 
-  readonly tournament = signal<Tournament | null>(null);
+  readonly tournament = signal<PublicTournament | null>(null);
   readonly pairs = signal<Registration[]>([]);
+  readonly detailPath = computed(() => {
+    const tournament = this.tournament();
+    return tournament ? publicTournamentPath(tournament.slug) : null;
+  });
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
-    this.tournamentService.loadTournaments().then(() => {
-      this.tournament.set(this.tournamentService.getTournamentById(id) ?? null);
-    });
-    this.pairs.set(this.registrationService.getConfirmedByTournament(id));
+    const slug = this.route.snapshot.paramMap.get('slug') ?? '';
+    this.publicTournaments.getBySlug(slug)
+      .then(tournament => this.tournament.set(tournament))
+      .catch(() => this.tournament.set(null));
   }
 }

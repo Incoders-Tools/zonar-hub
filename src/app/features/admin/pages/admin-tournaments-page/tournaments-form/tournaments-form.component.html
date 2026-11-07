@@ -175,6 +175,52 @@
       </div>
     </div>
 
+    <!-- Public visibility and share link -->
+    <div class="tournaments-form__section-title">
+      {{ 'admin.tournaments.form.visibility.title' | t }}
+    </div>
+    <div class="tournaments-form__visibility">
+      <label class="tournaments-form__label" id="tournament-visibility-label">
+        {{ 'admin.tournaments.form.visibility.label' | t }}
+      </label>
+      <app-active-toggle
+        [value]="isPublic()"
+        mode="toggle"
+        activeLabelKey="admin.tournaments.form.visibility.public"
+        inactiveLabelKey="admin.tournaments.form.visibility.private"
+        (toggled)="onPublicToggled($event)">
+      </app-active-toggle>
+      <p class="tournaments-form__hint tournaments-form__visibility-help" id="tournament-visibility-help">
+        {{ 'admin.tournaments.form.visibility.help' | t }}
+      </p>
+
+      @if (publicShareUrl(); as shareUrl) {
+        <div class="tournaments-form__share" role="group" [attr.aria-label]="'admin.tournaments.share.linkLabel' | t">
+          <span class="tournaments-form__label">{{ 'admin.tournaments.share.linkLabel' | t }}</span>
+          <div class="tournaments-form__share-row">
+            <a
+              class="tournaments-form__share-link"
+              [href]="shareUrl"
+              target="_blank"
+              rel="noopener noreferrer">{{ shareUrl }}</a>
+            <button
+              type="button"
+              class="tournaments-form__share-copy"
+              [attr.aria-label]="'admin.tournaments.share.copy' | t"
+              (click)="copyPublicLink()">
+              <mat-icon aria-hidden="true">content_copy</mat-icon>
+              <span>{{ 'admin.tournaments.share.copy' | t }}</span>
+            </button>
+          </div>
+          <span class="tournaments-form__hint">{{ 'admin.tournaments.share.linkHint' | t }}</span>
+        </div>
+      } @else if (publicLinkPending()) {
+        <p class="tournaments-form__hint tournaments-form__share-pending" role="status">
+          {{ 'admin.tournaments.share.generatedOnSave' | t }}
+        </p>
+      }
+    </div>
+
     <!-- Registration Window -->
     <div class="tournaments-form__section-title">
       {{ 'admin.tournaments.form.registrationWindow' | t }}

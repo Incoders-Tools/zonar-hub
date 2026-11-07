@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, adminGuard, adminOrUserGuard, toolGuard, playerGuard, guestGuard, systemAdminGuard } from './core/auth/auth.guards';
 import { complexesPendingSaveGuard } from './features/admin/pages/admin-complexes-page/complexes-pending-save.guard';
+import { PUBLIC_TOURNAMENTS_ROUTE } from './core/services/public-tournament-link.service';
 
 export const routes: Routes = [
   // ─── Public routes (with public layout) ───
@@ -12,24 +13,27 @@ export const routes: Routes = [
         path: '',
         loadComponent: () => import('./features/home/pages/home-page/home-page.component').then(m => m.HomePageComponent)
       },
+      // Public showcase: the detail and its public sub-pages resolve by the share slug
+      // (`publicTournamentPath`), never by the internal tournament id.
       {
-        path: 'tournaments',
+        path: PUBLIC_TOURNAMENTS_ROUTE,
         loadComponent: () => import('./features/tournaments/pages/tournament-list-page/tournament-list-page.component').then(m => m.TournamentListPageComponent)
       },
       {
-        path: 'tournaments/:id',
+        path: `${PUBLIC_TOURNAMENTS_ROUTE}/:slug`,
         loadComponent: () => import('./features/tournaments/pages/tournament-detail-page/tournament-detail-page.component').then(m => m.TournamentDetailPageComponent)
       },
       {
-        path: 'tournaments/:id/register',
+        // The registration wizard still resolves the tournament by its internal id through the admin API.
+        path: `${PUBLIC_TOURNAMENTS_ROUTE}/:id/register`,
         loadComponent: () => import('./features/registration/pages/registration-wizard-page/registration-wizard-page.component').then(m => m.RegistrationWizardPageComponent)
       },
       {
-        path: 'tournaments/:id/confirmed-pairs',
+        path: `${PUBLIC_TOURNAMENTS_ROUTE}/:slug/confirmed-pairs`,
         loadComponent: () => import('./features/tournaments/pages/confirmed-pairs-page/confirmed-pairs-page.component').then(m => m.ConfirmedPairsPageComponent)
       },
       {
-        path: 'tournaments/:id/draw',
+        path: `${PUBLIC_TOURNAMENTS_ROUTE}/:slug/draw`,
         loadComponent: () => import('./features/tournaments/pages/public-draw-page/public-draw-page.component').then(m => m.PublicDrawPageComponent)
       },
       {

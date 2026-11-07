@@ -15,7 +15,8 @@ import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
 import { signal } from '@angular/core';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
-import { Sport, TournamentModality } from '../../../../core/models';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { Sport, Tournament, TournamentModality } from '../../../../core/models';
 
 const mockSport: Sport = {
   id: 'sport-1',
@@ -38,9 +39,12 @@ const mockModalities: TournamentModality[] = [
 
 describe('TournamentsFacadeService.getModalitiesForSport', () => {
   let service: TournamentsFacadeService;
+  let tournamentRepoSpy: jasmine.SpyObj<ApiTournamentAdminRepository>;
+  let notification: jasmine.SpyObj<NotificationService>;
 
   beforeEach(async () => {
-    const tournamentRepoSpy = jasmine.createSpyObj('ApiTournamentAdminRepository', ['getAll', 'getById', 'create', 'update', 'delete', 'getExistingKeys']);
+    notification = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error']);
+    tournamentRepoSpy = jasmine.createSpyObj('ApiTournamentAdminRepository', ['getAll', 'getById', 'create', 'update', 'delete', 'getExistingKeys']);
     tournamentRepoSpy.getAll.and.resolveTo([]);
 
     const complexRepoSpy = jasmine.createSpyObj('ApiComplexRepository', ['getAll', 'getById', 'create', 'update', 'delete', 'getExistingKeys']);
@@ -93,6 +97,7 @@ describe('TournamentsFacadeService.getModalitiesForSport', () => {
         { provide: ApiCourtRepository, useValue: courtRepoSpy },
         { provide: AuthService, useValue: authSpy },
         { provide: ActiveOrganizationService, useValue: activeOrgSpy },
+        { provide: NotificationService, useValue: notification },
         { provide: API_BASE_URL, useValue: 'http://localhost/api' },
         provideHttpClient(),
         provideHttpClientTesting()
@@ -134,5 +139,24 @@ describe('TournamentsFacadeService.getModalitiesForSport', () => {
     // This validates the branch guard: if sport.modalityIds is empty, return [].
     const result = service.getModalitiesForSport('sport-empty');
     expect(result).toEqual([]);
+  });
+  describe('saveTournament errors', () => {
+    const tournament = { id: 't-1', name: 'Copa', startDate: '2030-12-01', endDate: '2030-12-03' } as Tournament;
+
+    it('shows the translated forbidden message when the API refuses the tenant', async () => {
+      tournamentRepoSpy.update.and.rejectWith(new Error('tournaments.errors.forbidden'));
+
+      expect(await service.saveTournament(tournament)).toBeFalse();
+
+      expect(notification.error).toHaveBeenCalledOnceWith('tournaments.errors.forbidden');
+    });
+
+    it('shows the generic error toast for other failures', async () => {
+      tournamentRepoSpy.update.and.rejectWith(new Error('common.networkUnavailable'));
+
+      expect(await service.saveTournament(tournament)).toBeFalse();
+
+      expect(notification.error).toHaveBeenCalledOnceWith('toast.error');
+    });
   });
 });
