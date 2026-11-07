@@ -12,7 +12,8 @@ import { Sport } from '../../../../core/models';
 import { signal } from '@angular/core';
 
 const seededSports: Sport[] = [
-  { id: 'sp1', name: 'Pádel', key: 'padel', icon: '🎾', iconSource: 'unicode', modalityIds: [], sortOrder: 1, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' }
+  { id: 'sp1', name: 'Pádel', key: 'padel', icon: 'padel', iconSource: 'svg', modalityIds: [], sortOrder: 1, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+  { id: 'sp2', name: 'Fútbol', key: 'futbol', icon: '⚽', iconSource: 'unicode', modalityIds: [], sortOrder: 2, isActive: true, createdAt: '2024-01-01', updatedAt: '2024-01-01' }
 ];
 
 describe('AdminSportsPageComponent', () => {
@@ -95,5 +96,14 @@ describe('AdminSportsPageComponent', () => {
     await component.onRowActionClicked({ action: 'toggleActive', row });
 
     expect(componentFacade.toggleSportEnabled).toHaveBeenCalledWith(row.id, !row.isActive);
+  });
+
+  it('renders the padel paddle drawing instead of the svg key once sports load', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('img.sport-icon--svg')?.getAttribute('src')).toBe('uploads/sports-icons/padel.svg');
+    expect(Array.from(host.querySelectorAll('.sport-icon--unicode')).map(icon => icon.textContent?.trim())).toContain('⚽');
   });
 });

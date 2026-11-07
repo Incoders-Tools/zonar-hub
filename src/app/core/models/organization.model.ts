@@ -17,6 +17,15 @@ export interface Organization {
   createdAt: string;
   createdByUserId: string;
   updatedAt?: string;
+  /** Consent to appear, for free, in ZonarHub public sections (tournament showcase, promotions). */
+  publicProfileEnabled?: boolean;
+  websiteUrl?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  tiktokUrl?: string;
+  youtubeUrl?: string;
+  whatsappPhone?: string;
+  contactEmail?: string;
 }
 
 export interface UserOrganization {

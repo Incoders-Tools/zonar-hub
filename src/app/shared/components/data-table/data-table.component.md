@@ -37,7 +37,7 @@ Tabla compartida para listados administrativos y colecciones reutilizables. Rend
 | `pageChange` | `number` | Solo en `serverSide`: página solicitada por prev/next. No cambia la página internamente; el padre debe actualizar `page` y `data`. En modo cliente no emite. |
 
 ### Modelo auxiliar
-`DataTableColumn` soporta `renderType: 'text' | 'pill' | 'date' | 'toggle' | 'icon'`, `translate`, `pillVariantKey`, `sortable`, `order` y `toggleAction`.
+`DataTableColumn` soporta `renderType: 'text' | 'pill' | 'date' | 'toggle' | 'icon' | 'sportIcon'`, `translate`, `pillVariantKey`, `iconSourceKey`, `sortable`, `order` y `toggleAction`.
 
 ### Pager compartido (`DataTablePaginatorComponent`)
 Componente propio en `../data-table-paginator/` (selector `app-data-table-paginator`; ver `data-table-paginator.component.md`). Es el único patrón de pager: lo usa la tabla y el modo cards de `zh-collection-view`. La tabla le pasa `page` (`currentPage` interno en cliente, `page` input en server), `pageSize`, `totalCount`, `visibleCount` (filas renderizadas) y escucha `pageChange` vía `goToPage`. Los estilos `data-table__pagination*` viven en `data-table-paginator.component.scss`.
@@ -48,13 +48,13 @@ Componente propio en `../data-table-paginator/` (selector `app-data-table-pagina
 | Angular | `input`, `output`, `signal`, `computed`, `NgTemplateOutlet` |
 | Material | `MatIcon`, `MatSlideToggle` |
 | Pipes | `TranslatePipe`, `FormatDatePipe` |
-| Componentes hijos | `LoadingStateComponent`, `EmptyStateComponent`, `ErrorStateComponent`, `DataTablePaginatorComponent` |
+| Componentes hijos | `LoadingStateComponent`, `EmptyStateComponent`, `ErrorStateComponent`, `DataTablePaginatorComponent`, `SportIconComponent` |
 
 ## Comportamiento de template / estructura UI
 - Renderiza wrapper scrollable con `<table role="grid">`.
 - Prioridad de estados: `loading` > `error` > `empty` > tabla.
 - Las columnas con key `actions` se omiten como columna de datos; las acciones salen de `rowActions`/`rowActionsFilter`.
-- `pill` usa `data-variant` desde la fila (`pillVariantKey ?? key`). Si el valor de la celda es `null`, `undefined` o string vacío/en blanco, no se renderiza pill (celda vacía), lo que permite marcadores exclusivos como "principal" sin pills vacías en el resto de filas. `false` y `0` siguen renderizándose como pill. `toggle` emite acción pero revierte visualmente el slide-toggle al valor original; `date` usa `formatDate`; `icon` muestra `mat-icon` y nombre.
+- `pill` usa `data-variant` desde la fila (`pillVariantKey ?? key`). Si el valor de la celda es `null`, `undefined` o string vacío/en blanco, no se renderiza pill (celda vacía), lo que permite marcadores exclusivos como "principal" sin pills vacías en el resto de filas. `false` y `0` siguen renderizándose como pill. `toggle` emite acción pero revierte visualmente el slide-toggle al valor original; `date` usa `formatDate`; `icon` muestra `mat-icon` y nombre; `sportIcon` delega en `app-sport-icon` (24px) con el valor de la celda como `icon` y `row[iconSourceKey]` como origen (`'svg'` muestra el dibujo `uploads/sports-icons/{icon}.svg`, cualquier otro valor o clave ausente usa `'unicode'`), y muestra el mismo guion `data-table__icon-empty` cuando el valor está vacío.
 - Paginación cliente (default, `paginated`): calculada sobre `data` con `currentPage` interno; sin cambios para consumidores existentes.
 - Paginación server (`serverSide`): renderiza `data` completo, rango y páginas desde `page`/`totalCount`, y emite `pageChange`. Al cambiar `page` se limpia `selectedIds` y se emite `selectionChanged([])` si había selección; `selectionChanged` siempre contiene solo filas de la página visible. El padre puede limpiar explícitamente con `clearSelection()`.
 - Con `serverSide`, `data` vacío y `totalCount` 0 se muestra empty state sin pager; si `totalCount` > 0 (página fuera de rango) se mantiene el pager con rango `0–0 de total`, Siguiente deshabilitado y Anterior emitiendo `pageChange` con la última página válida.

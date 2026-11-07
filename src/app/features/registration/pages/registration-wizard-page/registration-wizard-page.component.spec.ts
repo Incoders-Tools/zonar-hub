@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { RegistrationWizardPageComponent } from './registration-wizard-page.component';
 import { WizardFacadeService, WizardSlot } from './wizard-facade.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -179,12 +179,21 @@ describe('RegistrationWizardPageComponent', () => {
     expect(notificationSpy.error).toHaveBeenCalledWith('registration.codeInvalid');
   });
 
-  it('should submit registration and navigate on success', async () => {
+  it('should submit registration and navigate to the public confirmed pairs of a public tournament', async () => {
+    (facadeSpy.tournament as WritableSignal<Tournament | null>).set({ ...mockTournament, isPublic: true, publicSlug: 'open-x' });
     const mockReg = { id: 'r1', tournamentId: 't1' };
     facadeSpy.submitRegistration.and.returnValue(Promise.resolve(mockReg as any));
     await component.submitRegistration();
     expect(notificationSpy.success).toHaveBeenCalledWith('registration.success');
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/tournaments', 't1', 'confirmed-pairs']);
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/tournaments', 'open-x', 'confirmed-pairs']);
+  });
+
+  it('should navigate to the public tournaments list when the tournament has no public link', async () => {
+    const mockReg = { id: 'r1', tournamentId: 't1' };
+    facadeSpy.submitRegistration.and.returnValue(Promise.resolve(mockReg as any));
+    await component.submitRegistration();
+    expect(notificationSpy.success).toHaveBeenCalledWith('registration.success');
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/tournaments']);
   });
 
   it('should show duplicate pair error on submission failure', async () => {

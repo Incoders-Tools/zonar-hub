@@ -25,13 +25,24 @@ This component currently does not emit external `@Output()` events.
 - Angular standalone component
 - Angular Router
 - shared translation pipe
+- `PublicTournamentService` for the upcoming-tournaments section (anonymous `GET /api/public/tournaments`; no session or active organization needed)
+- `PublicTournamentCardComponent` for each upcoming tournament (shared with `/tournaments`; shows the organization block only when the API sends it)
+- shared `app-loading-state`, `app-empty-state` and `app-error-state` for the upcoming-tournaments states
+- shared `app-sport-icon` for the sport cards (padel uses the `svg` source and renders `uploads/sports-icons/padel.svg`; the other sports render their emoji at 40px)
 - global theme tokens from `src/styles.scss`
 
 ## States
 
-The current page is static and informational.
+The page is informational except for the upcoming-tournaments section, which shows the first six public tournaments that have not ended:
 
-Expected states:
+| Section state | Rendering |
+| --- | --- |
+| Loading | `app-loading-state` |
+| Error | `app-error-state` with Retry, which calls the public endpoint again |
+| Empty | `app-empty-state` with `publicTournaments.list.empty` |
+| Loaded | Tournament cards and a "View all tournaments" link to `/tournaments` |
+
+Other expected states:
 - default content state
 - responsive layout adaptation
 - translated rendering according to active locale

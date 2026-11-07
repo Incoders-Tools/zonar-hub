@@ -76,7 +76,10 @@
       <div class="zh-list-card">
         <div class="zh-list-card__header">
           <div class="zh-list-card__title">
-            <span class="zh-list-card__eyebrow">{{ row.icon }} · {{ row.key }}</span>
+            <span class="zh-list-card__eyebrow">
+              <app-sport-icon [icon]="row.icon" [source]="row.iconSource" [size]="16"></app-sport-icon>
+              · {{ row.key }}
+            </span>
             <h3 class="zh-list-card__name">{{ row.name }}</h3>
           </div>
           <app-active-toggle

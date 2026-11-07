@@ -1,6 +1,6 @@
 <div class="confirmed-pairs">
-  @if (tournament()) {
-    <a [routerLink]="['/tournaments', tournament()!.id]" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
+  @if (tournament() && detailPath()) {
+    <a [routerLink]="detailPath()" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
     <h1>{{ 'confirmedPairs.title' | t }}</h1>
     <p class="subtitle">{{ tournament()!.name }}</p>
   }

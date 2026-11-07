@@ -14,12 +14,15 @@ import { SportsFacadeService, SportFilters } from './sports-facade.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { SportsFormPanelComponent } from './sports-form-panel/sports-form-panel.component';
 import { ActiveToggleComponent } from '../../../../shared/components/active-toggle/active-toggle.component';
+import { SportIconComponent } from '../../../../shared/components/sport-icon/sport-icon.component';
+import { SportIconSource } from '../../../../core/models/sport.model';
 
 interface SportRow extends Record<string, unknown> {
   id: string;
   name: string;
   key: string;
   icon: string;
+  iconSource: SportIconSource;
   sortOrder: number;
   isActive: boolean;
   statusLabel: string;
@@ -39,7 +42,8 @@ interface SportRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     SportsFormPanelComponent,
-    ActiveToggleComponent
+    ActiveToggleComponent,
+    SportIconComponent
   ],
   providers: [SportsFacadeService],
   templateUrl: './admin-sports-page.component.html',
@@ -70,7 +74,7 @@ export class AdminSportsPageComponent implements OnInit {
     const base: DataTableColumn[] = [
       { key: 'name', labelKey: 'admin.sports.column.name', sortable: true },
       { key: 'key', labelKey: 'admin.sports.column.key', sortable: true },
-      { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false },
+      { key: 'icon', labelKey: 'admin.sports.column.icon', sortable: false, renderType: 'sportIcon', iconSourceKey: 'iconSource' },
       { key: 'sortOrder', labelKey: 'admin.sports.column.sortOrder', sortable: true },
       { key: 'isActive', labelKey: 'admin.sports.column.status', sortable: true, renderType: 'toggle', toggleAction: 'toggleActive' }
     ];
@@ -105,6 +109,7 @@ export class AdminSportsPageComponent implements OnInit {
       name: s.name,
       key: s.key,
       icon: s.icon,
+      iconSource: s.iconSource,
       sortOrder: s.sortOrder,
       isActive: s.isActive,
       statusLabel: s.isActive ? 'admin.sports.status.active' : 'admin.sports.status.inactive',

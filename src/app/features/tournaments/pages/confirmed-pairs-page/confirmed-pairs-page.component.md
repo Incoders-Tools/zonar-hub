@@ -2,29 +2,28 @@
 
 ## Purpose
 
-Displays the list of confirmed player pairs for a specific tournament.
+Displays the list of confirmed player pairs for a public tournament.
 
 ## Business context
 
-- Accessible from tournament detail via `/tournaments/:id/pairs`
-- Shows all confirmed registrations as pair cards with player names, category, and gender
-- Read-only public view
+- Route: `/tournaments/:slug/confirmed-pairs`. The tournament is resolved by its public slug through `PublicTournamentService`; the back link uses `publicTournamentPath`.
+- Registrations have no public endpoint yet, so the list stays empty and the empty state is shown.
+- Read-only public view.
 
 ## Inputs / Outputs
 
-Routed page. Reads tournament `id` from route params.
+Routed page. Reads `slug` from route params.
 
 ## Dependencies
 
-- `TournamentService` — loads tournament metadata
-- `RegistrationService` — retrieves confirmed registrations
+- `PublicTournamentService` — loads the tournament name for the header
 
 ## States
 
 | State | Description |
 |-------|-------------|
 | Empty | No confirmed pairs message |
-| Loaded | Grid of pair cards |
+| Loaded | Grid of pair cards (once a public registrations source exists) |
 
 ## i18n keys
 
@@ -36,6 +35,5 @@ All colors via `--zh-*` design tokens.
 
 ## Test expectations
 
-- Creates successfully
-- Starts with empty pairs
-- Shows empty state when no pairs
+- Starts with empty pairs and shows the empty state
+- Loads the tournament by slug and links back to the public detail
