@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Tournament, Player, Registration, Category } from '../../../../core/models';
+import { Tournament, Player, Registration, Category, Gender } from '../../../../core/models';
 import { TournamentEligibilityProfile, TournamentEligibilitySlot } from '../../../../core/models/tournament-admin.model';
 import { SportParticipantConfig } from '../../../../core/models/sport-config.model';
 import { TournamentService } from '../../../../core/services/tournament.service';
@@ -8,6 +8,7 @@ import { RegistrationStrategyService } from '../../../../core/services/registrat
 import { EligibilityValidationService } from '../../../../core/services/eligibility-validation.service';
 import { ApiEligibilityProfileRepository } from '../../../../core/repositories/api/api-eligibility-profile.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
+import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
 import { ApiPlayerRepository } from '../../../../core/repositories/api/api-player.repository';
 
 export interface WizardSlot {
@@ -28,6 +29,7 @@ export class WizardFacadeService {
   private readonly eligibilityService = inject(EligibilityValidationService);
   private readonly eligibilityProfileRepo = inject(ApiEligibilityProfileRepository);
   private readonly categoryRepo = inject(ApiCategoryRepository);
+  private readonly genderRepo = inject(ApiGenderRepository);
   private readonly playerRepo = inject(ApiPlayerRepository);
 
   readonly tournament = signal<Tournament | null>(null);
@@ -36,6 +38,8 @@ export class WizardFacadeService {
   readonly participants = signal<Map<number, Player>>(new Map());
   readonly existingRegistrations = signal<Registration[]>([]);
   readonly categories = signal<Category[]>([]);
+  /** Gender catalog: a `mixed` rule admits any player. */
+  readonly genders = signal<Gender[]>([]);
   readonly habitualPartnerSuggestion = signal<Player | null>(null);
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -107,8 +111,9 @@ export class WizardFacadeService {
           this.eligibilityProfile.set(profile ?? null);
         }
 
-        const cats = await this.categoryRepo.getAll();
+        const [cats, genders] = await Promise.all([this.categoryRepo.getAll(), this.genderRepo.getAll()]);
         this.categories.set(cats);
+        this.genders.set(genders);
       }
     } finally {
       this.loading.set(false);
@@ -191,7 +196,7 @@ export class WizardFacadeService {
       }
     }
 
-    // Validate eligibility for all participants
+    // Validate eligibility for all participants: the profile, else the tournament's own rules (D3, L8)
     const validationInputs = participantsArray.map(p => ({
       slotNumber: p.slotNumber,
       player: participantsMap.get(p.slotNumber)!
@@ -201,7 +206,8 @@ export class WizardFacadeService {
       validationInputs,
       this.eligibilityProfile(),
       this.config()!,
-      this.categories()
+      this.categories(),
+      { tournament: { modalityKey: t.modalityKey, genderId: t.genderId, categoryId: t.categoryId }, genders: this.genders() }
     );
 
     const invalidResults = validationResults.filter(r => !r.valid);
