@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { signal, WritableSignal } from '@angular/core';
 import { RegistrationWizardPageComponent } from './registration-wizard-page.component';
@@ -73,6 +75,8 @@ describe('RegistrationWizardPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [RegistrationWizardPageComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         I18nService,
         { provide: Router, useValue: routerSpy },
         { provide: NotificationService, useValue: notificationSpy },

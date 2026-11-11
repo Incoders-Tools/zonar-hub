@@ -1,7 +1,12 @@
 # AdminPlayersPageComponent
 
 ## Purpose
-Full admin CRUD management screen for circuit players. Supports create, edit, delete (single and bulk), filtering by multiple fields, sorting, pagination, and contextual help.
+Admin management screen for the players of the active organization (S3), backed by
+`/api/admin/organizations/{organizationId}/players`. Supports server-paged search, create, edit, deactivate and
+reactivate (single and bulk deactivate), plus the importer and AI agent tabs.
+
+Players are never deleted: their registrations keep referencing them. Retiring a player sets `isActive: false`;
+new registrations then refuse it, and it can be reactivated at any time.
 
 ## Inputs
 None (route-level container component).
@@ -10,35 +15,37 @@ None (route-level container component).
 None.
 
 ## Dependencies
-- `PlayerFacadeService` — orchestration layer for state management and repository access
-- `DataTableComponent` — shared paginated, selectable, sortable table
-- `FilterPanelComponent` — shared filter panel with text and select fields
-- `ConfirmDialogComponent` — shared destructive action confirmation
-- `AsyncButtonComponent` — shared submit button with loading state
-- `PlayerFormPanelComponent` — create/edit form panel
-- `HelpButtonComponent` — contextual help dialog trigger
-- `TranslatePipe` — i18n key resolution
+- `PlayerFacadeService` — server-paged state, catalogs (genders, categories) and translated feedback
+- `ZhCollectionViewComponent` — shared list in server-side mode (`serverSide`, `page`, `pageSize`, `totalCount`)
+- `FilterPanelComponent` — search (name, email or document) and status, the only filters the API supports
+- `ConfirmDialogComponent` — confirmation before deactivating one or several players
+- `AsyncButtonComponent`, `PlayerFormPanelComponent`, `HelpButtonComponent`, `TranslatePipe`
 
 ## Variants and States
-- **Loading** — delegated to `DataTableComponent` loading state
-- **Empty** — delegated to `DataTableComponent` empty state
-- **Error** — delegated to `DataTableComponent` error state
-- **Data** — table with players, filter panel, page header, row actions
-- **Form panel** — create or edit mode (inline above filters)
-- **Delete dialog** — single or bulk delete confirmation
-- **Help dialog** — contextual business help
+- **Loading** — `zh-collection-view` loading state while a page is requested
+- **Empty** — `admin.players.emptyState`
+- **Error** — `zh-collection-view` error state with retry, plus the translated reason (`facade.error()` key, for
+  example `common.forbidden`) above the list
+- **Success** — translated toasts for save, deactivate and reactivate; API error codes become `players.errors.*`
+- **Row actions** — edit, plus deactivate (active rows) or reactivate (inactive rows) through `rowActionsFilter`
+- **Bulk** — "Deactivate selected" appears only when the selection contains an active player
+
+## Behaviour notes
+- The page owns list loads: one on init and one per active organization change (`goToPage(1)`).
+- Filters and page changes clear the selection; the API order (last name, first name) is kept, so columns are not
+  sortable client-side.
+- Reactivation runs without confirmation; deactivation always asks first.
 
 ## Accessibility
-- Help button has `aria-label`
-- All dialogs use `role="dialog"` with `aria-label`
-- Table supports keyboard navigation via shared `DataTableComponent`
-- Filter fields have associated labels
+- Load error rendered with `role="alert"`
+- Dialogs and table keyboard support come from the shared components
 
 ## i18n
-All user-facing text uses `admin.players.*` translation keys. Supported locales: es, en, pt.
+`admin.players.*`, `players.errors.*` (every player error code of `docs/api/admin-registrations.md`). Locales: es, en, pt.
 
 ## Theming
-All colors use semantic design tokens (`--zh-*`). No hardcoded colors.
+Semantic tokens only (`--zh-*`).
 
 ## Reuse Guidance
-This component is specific to the Players entity. The pattern (facade + repository + form panel + help dialog + shared table) can be replicated for other entities by following the same structure.
+Same server-paged pattern as the users page (`UsersFacadeService`): facade owns paging and filters, the page renders the
+returned page as-is.

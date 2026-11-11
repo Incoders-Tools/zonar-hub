@@ -11,12 +11,12 @@
         [sections]="helpSections">
       </app-help-button>
       @if (activeTab() === 'list') {
-        @if (hasSelection()) {
+        @if (hasActiveSelection()) {
           <app-async-button
             variant="danger"
-            [loading]="facade.deleting()"
-            (clicked)="openBulkDelete()">
-            {{ 'admin.bulkDelete' | t }}
+            [loading]="facade.updatingStatus()"
+            (clicked)="openBulkDeactivate()">
+            {{ 'admin.players.action.bulkDeactivate' | t }}
           </app-async-button>
         }
         <app-async-button variant="primary" (clicked)="openCreate()">
@@ -82,7 +82,6 @@
               [saving]="facade.saving()"
               [categories]="facade.categories()"
               [genders]="facade.genders()"
-              [sports]="facade.sports()"
               (saved)="closeFormPanel()"
               (cancelled)="closeFormPanel()">
             </app-player-form-panel>
@@ -91,15 +90,16 @@
       }
 
       <app-filter-panel
-        [fields]="filterFields()"
-        [sortFields]="sortFields"
-        [defaultSortRules]="defaultSortRules"
+        [fields]="filterFields"
         [collapsible]="true"
         [defaultCollapsed]="true"
         (filtersApplied)="onFiltersApplied($event)"
-        (filtersCleared)="onFiltersCleared()"
-        (sortRulesChanged)="onSortRulesChanged($event)">
+        (filtersCleared)="onFiltersCleared()">
       </app-filter-panel>
+
+      @if (facade.error(); as errorKey) {
+        <p class="players-page__load-error" role="alert">{{ errorKey | t }}</p>
+      }
 
       <zh-collection-view
         viewKey="admin-players"
@@ -108,20 +108,23 @@
         [loading]="facade.loading()"
         [error]="!!facade.error()"
         [selectable]="true"
-        [paginated]="true"
-        [pageSize]="25"
+        [serverSide]="true"
+        [page]="facade.page()"
+        [pageSize]="facade.pageSize"
+        [totalCount]="facade.totalCount()"
         [rowActions]="playerRowActions"
+        [rowActionsFilter]="playerRowActionsFilter"
         emptyMessageKey="admin.players.emptyState"
+        (pageChange)="onPageChange($event)"
         (selectionChanged)="onSelectionChanged($event)"
-        (sorted)="onSorted($event)"
         (rowAction)="onRowActionClicked($event)"
         (retried)="facade.load()">
         <ng-template #cardTpl let-row>
           <div class="zh-list-card">
             <div class="zh-list-card__header">
               <div class="zh-list-card__title">
-                @if (row.sportName) {
-                  <span class="zh-list-card__eyebrow">{{ row.sportName }}</span>
+                @if (row.club) {
+                  <span class="zh-list-card__eyebrow">{{ row.club }}</span>
                 }
                 <h3 class="zh-list-card__name">{{ row.name }}</h3>
                 @if (row.email) {
@@ -139,8 +142,8 @@
               @if (row.genderLabel) {
                 <span><strong>{{ 'admin.players.column.gender' | t }}:</strong> {{ row.genderLabel }}</span>
               }
-              @if (row.ranking) {
-                <span><strong>{{ 'admin.players.column.ranking' | t }}:</strong> {{ row.ranking }}</span>
+              @if (row.documentId) {
+                <span><strong>{{ 'admin.players.column.documentId' | t }}:</strong> {{ row.documentId }}</span>
               }
             </div>
           </div>
@@ -324,30 +327,30 @@
   </div>
 </div>
 
-<!-- Delete Confirmation Dialog -->
-@if (showDeleteDialog()) {
+<!-- Deactivate Confirmation Dialog (players are never deleted) -->
+@if (showDeactivateDialog()) {
   <app-confirm-dialog
-    titleKey="admin.players.confirm.deleteTitle"
-    messageKey="admin.players.confirm.deleteMessage"
-    warningKey="admin.players.confirm.deleteWarning"
-    confirmLabelKey="common.delete"
+    titleKey="admin.players.confirm.deactivateTitle"
+    messageKey="admin.players.confirm.deactivateMessage"
+    warningKey="admin.players.confirm.deactivateWarning"
+    confirmLabelKey="admin.players.action.deactivate"
     confirmVariant="danger"
-    [loading]="facade.deleting()"
-    (confirmed)="executeDelete()"
-    (cancelled)="cancelDelete()">
+    [loading]="facade.updatingStatus()"
+    (confirmed)="executeDeactivate()"
+    (cancelled)="cancelDeactivate()">
   </app-confirm-dialog>
 }
 
-<!-- Bulk Delete Confirmation Dialog -->
-@if (showBulkDeleteDialog()) {
+<!-- Bulk Deactivate Confirmation Dialog -->
+@if (showBulkDeactivateDialog()) {
   <app-confirm-dialog
-    titleKey="admin.players.confirm.bulkDeleteTitle"
-    messageKey="admin.players.confirm.bulkDeleteMessage"
-    warningKey="admin.players.confirm.deleteWarning"
-    confirmLabelKey="admin.bulkDelete"
+    titleKey="admin.players.confirm.bulkDeactivateTitle"
+    messageKey="admin.players.confirm.bulkDeactivateMessage"
+    warningKey="admin.players.confirm.deactivateWarning"
+    confirmLabelKey="admin.players.action.bulkDeactivate"
     confirmVariant="danger"
-    [loading]="facade.deleting()"
-    (confirmed)="executeBulkDelete()"
-    (cancelled)="cancelBulkDelete()">
+    [loading]="facade.updatingStatus()"
+    (confirmed)="executeBulkDeactivate()"
+    (cancelled)="cancelBulkDeactivate()">
   </app-confirm-dialog>
 }

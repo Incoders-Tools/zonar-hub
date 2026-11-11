@@ -1,17 +1,16 @@
-import { Component, inject, signal, OnInit, OnDestroy, computed, ElementRef, viewChild, effect } from '@angular/core';
+import { Component, inject, signal, OnDestroy, computed, ElementRef, viewChild, effect, untracked } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
-import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
-import { FilterPanelComponent, FilterField, SortOption, SortRule } from '../../../../shared/components/filter-panel/filter-panel.component';
+import { ZhCollectionRowAction, ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
+import { FilterPanelComponent, FilterField } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { ChatbotBubbleComponent, ChatbotMode } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
-import { PlayerFacadeService, PlayerFilters } from './player-facade.service';
+import { PlayerFacadeService } from './player-facade.service';
 import { PlayerFormPanelComponent } from './player-form-panel/player-form-panel.component';
-import { AuthService } from '../../../../core/auth/auth.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
@@ -20,14 +19,15 @@ import { Player } from '../../../../core/models';
 
 export type AdminPlayersTab = 'list' | 'agent' | 'importer';
 
-interface PlayerRow extends Record<string, unknown> {
+export interface PlayerRow extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
+  documentId: string;
   categoryName: string;
   genderLabel: string;
-  sportName: string;
-  ranking: number | undefined;
+  club: string;
+  birthDate: string;
   isActive: boolean;
   statusLabel: string;
   statusVariant: string;
@@ -63,23 +63,25 @@ interface PlayerRow extends Record<string, unknown> {
     ])
   ]
 })
-export class AdminPlayersPageComponent implements OnInit, OnDestroy {
+export class AdminPlayersPageComponent implements OnDestroy {
   readonly facade = inject(PlayerFacadeService);
-  private readonly auth = inject(AuthService);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   private readonly tournamentService = inject(TournamentService);
-  readonly isSystemAdmin = this.auth.isSystemAdmin;
 
   constructor() {
-    // Reload data and reset transient UI whenever the active organization changes
+    // Single owner of list loads: once on init and once per active organization change
     effect(() => {
       this.activeOrg.organizationChanged();
-      this.showFormPanel.set(false);
-      this.showDeleteDialog.set(false);
-      this.editingPlayer.set(null);
-      void this.facade.load();
+      untracked(() => {
+        this.showFormPanel.set(false);
+        this.showDeactivateDialog.set(false);
+        this.showBulkDeactivateDialog.set(false);
+        this.editingPlayer.set(null);
+        this.selectedPlayers.set([]);
+        this.facade.goToPage(1);
+      });
     });
   }
 
@@ -105,101 +107,70 @@ export class AdminPlayersPageComponent implements OnInit, OnDestroy {
   );
 
   readonly showFormPanel = signal(false);
-  readonly showDeleteDialog = signal(false);
-  readonly showBulkDeleteDialog = signal(false);
+  readonly showDeactivateDialog = signal(false);
+  readonly showBulkDeactivateDialog = signal(false);
   readonly editingPlayer = signal<Player | null>(null);
-  readonly deletingId = signal<string | null>(null);
+  readonly deactivatingId = signal<string | null>(null);
   readonly selectedPlayers = signal<PlayerRow[]>([]);
   readonly formPanelRef = viewChild<ElementRef>('formPanel');
 
+  /** The API orders players by last name and first name; columns are not sortable client-side. */
   readonly columns: DataTableColumn[] = [
-    { key: 'name', labelKey: 'admin.players.column.name', sortable: true },
-    { key: 'email', labelKey: 'admin.players.column.email', sortable: true },
-    { key: 'categoryName', labelKey: 'admin.players.column.category', sortable: true },
-    { key: 'genderLabel', labelKey: 'admin.players.column.gender', sortable: true },
-    { key: 'sportName', labelKey: 'admin.players.column.sport', sortable: true },
-    { key: 'birthDate', labelKey: 'admin.players.column.birthDate', sortable: true, renderType: 'date' },
-    { key: 'ranking', labelKey: 'admin.players.column.ranking', sortable: true },
-    { key: 'statusLabel', labelKey: 'admin.players.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
+    { key: 'name', labelKey: 'admin.players.column.name' },
+    { key: 'email', labelKey: 'admin.players.column.email' },
+    { key: 'documentId', labelKey: 'admin.players.column.documentId' },
+    { key: 'categoryName', labelKey: 'admin.players.column.category' },
+    { key: 'genderLabel', labelKey: 'admin.players.column.gender' },
+    { key: 'club', labelKey: 'admin.players.column.club' },
+    { key: 'birthDate', labelKey: 'admin.players.column.birthDate', renderType: 'date' },
+    { key: 'statusLabel', labelKey: 'admin.players.column.status', renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
   ];
 
-  readonly playerRowActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
+  private readonly editAction: ZhCollectionRowAction = { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' };
+  private readonly deactivateAction: ZhCollectionRowAction = { icon: 'person_off', labelKey: 'admin.players.action.deactivate', action: 'deactivate', variant: 'danger' };
+  private readonly reactivateAction: ZhCollectionRowAction = { icon: 'person_add', labelKey: 'admin.players.action.reactivate', action: 'reactivate', variant: 'default' };
+
+  /** Every action a row may show; `playerRowActionsFilter` narrows them to the row's status. */
+  readonly playerRowActions = [this.editAction, this.deactivateAction, this.reactivateAction];
+
+  readonly playerRowActionsFilter = (row: PlayerRow): ZhCollectionRowAction[] =>
+    [this.editAction, row.isActive ? this.deactivateAction : this.reactivateAction];
+
+  readonly filterFields: FilterField[] = [
+    { key: 'search', labelKey: 'admin.players.filter.search', type: 'text' },
+    {
+      key: 'isActive', labelKey: 'admin.players.filter.status', type: 'select',
+      options: [
+        { value: 'true', labelKey: 'admin.players.status.active' },
+        { value: 'false', labelKey: 'admin.players.status.inactive' }
+      ]
+    }
   ];
-
-  readonly filterFields = computed<FilterField[]>(() => {
-    const genderOptions = this.facade.genders()
-      .filter(g => g.isActive)
-      .map(g => ({ value: g.id, labelKey: g.name }));
-    const categoryOptions = this.facade.categories()
-      .filter(c => c.isActive)
-      .map(c => ({ value: c.id, labelKey: c.name }));
-    const sportOptions = this.facade.sports()
-      .filter(s => s.isActive)
-      .map(s => ({ value: s.id, labelKey: s.name }));
-
-    return [
-      { key: 'search', labelKey: 'admin.players.filter.search', type: 'text' as const },
-      {
-        key: 'genderId', labelKey: 'admin.players.filter.gender', type: 'select' as const,
-        options: genderOptions
-      },
-      {
-        key: 'categoryId', labelKey: 'admin.players.filter.category', type: 'select' as const,
-        options: categoryOptions
-      },
-      {
-        key: 'sportId', labelKey: 'admin.players.filter.sport', type: 'select' as const,
-        options: sportOptions
-      },
-      {
-        key: 'isActive', labelKey: 'admin.players.filter.status', type: 'select' as const,
-        options: [
-          { value: 'true', labelKey: 'admin.players.status.active' },
-          { value: 'false', labelKey: 'admin.players.status.inactive' }
-        ]
-      }
-    ];
-  });
 
   readonly tableData = computed<PlayerRow[]>(() =>
-    this.facade.filteredPlayers().map(p => ({
+    this.facade.players().map(p => ({
       id: p.id,
       name: `${p.firstName} ${p.lastName}`,
       email: p.email,
+      documentId: p.documentId ?? '',
       categoryName: p.categoryName,
       genderLabel: p.genderLabel,
-      sportName: p.sportName ?? '',
-      ranking: p.ranking,
+      club: p.club ?? '',
+      birthDate: p.birthDate ?? '',
       isActive: p.isActive,
       statusLabel: p.isActive ? 'admin.players.status.active' : 'admin.players.status.inactive',
       statusVariant: p.isActive ? 'active' : 'inactive'
     }))
   );
 
-  readonly hasSelection = computed(() => this.selectedPlayers().length > 0);
+  readonly hasActiveSelection = computed(() => this.selectedPlayers().some(r => r.isActive));
 
   readonly helpSections: HelpSection[] = [
     { titleKey: 'admin.players.help.whatTitle', contentKey: 'admin.players.help.whatDescription' },
     { titleKey: 'admin.players.help.fieldsTitle', contentKey: 'admin.players.help.fieldsDescription' },
+    { titleKey: 'admin.players.help.eligibilityTitle', contentKey: 'admin.players.help.eligibilityDescription' },
     { titleKey: 'admin.players.help.managementTitle', contentKey: 'admin.players.help.managementDescription' }
   ];
-
-  readonly sortFields: SortOption[] = [
-    { key: 'lastName', labelKey: 'admin.players.column.name' },
-    { key: 'email', labelKey: 'admin.players.column.email' },
-    { key: 'categoryName', labelKey: 'admin.players.column.category' },
-    { key: 'ranking', labelKey: 'admin.players.column.ranking' }
-  ];
-
-  readonly defaultSortRules: SortRule[] = [
-    { field: 'lastName', dir: 'asc' }
-  ];
-
-  ngOnInit(): void {
-    this.facade.load();
-  }
 
   ngOnDestroy(): void {
     if (this.chatbotMode() === 'embedded') {
@@ -208,25 +179,30 @@ export class AdminPlayersPageComponent implements OnInit, OnDestroy {
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
-    const mapped: PlayerFilters = {
-      search: filters['search'] || undefined,
-      genderId: filters['genderId'] || undefined,
-      categoryId: filters['categoryId'] || undefined,
-      sportId: filters['sportId'] || undefined,
+    this.selectedPlayers.set([]);
+    this.facade.applyFilters({
+      search: filters['search']?.trim() || undefined,
       isActive: filters['isActive'] || undefined
-    };
-    this.facade.applyFilters(mapped);
+    });
   }
 
   onFiltersCleared(): void {
+    this.selectedPlayers.set([]);
     this.facade.clearFilters();
+  }
+
+  onPageChange(page: number): void {
+    this.selectedPlayers.set([]);
+    this.facade.goToPage(page);
   }
 
   onRowActionClicked(event: { action: string; row: PlayerRow }): void {
     if (event.action === 'edit') {
       this.openEdit(event.row);
-    } else if (event.action === 'delete') {
-      this.confirmDelete(event.row);
+    } else if (event.action === 'deactivate') {
+      this.confirmDeactivate(event.row);
+    } else if (event.action === 'reactivate') {
+      void this.facade.setActive([event.row.id], true);
     }
   }
 
@@ -237,7 +213,7 @@ export class AdminPlayersPageComponent implements OnInit, OnDestroy {
   }
 
   openEdit(row: PlayerRow): void {
-    const player = this.facade.filteredPlayers().find(p => p.id === row.id);
+    const player = this.facade.players().find(p => p.id === row.id);
     if (player) {
       this.editingPlayer.set(player);
       this.showFormPanel.set(true);
@@ -256,60 +232,44 @@ export class AdminPlayersPageComponent implements OnInit, OnDestroy {
     this.editingPlayer.set(null);
   }
 
-  confirmDelete(row: PlayerRow): void {
-    this.deletingId.set(row.id);
-    this.showDeleteDialog.set(true);
+  confirmDeactivate(row: PlayerRow): void {
+    this.deactivatingId.set(row.id);
+    this.showDeactivateDialog.set(true);
   }
 
-  async executeDelete(): Promise<void> {
-    const id = this.deletingId();
-    if (id) {
-      const success = await this.facade.deletePlayer(id);
-      if (success) {
-        this.showDeleteDialog.set(false);
-        this.deletingId.set(null);
-      }
+  async executeDeactivate(): Promise<void> {
+    const id = this.deactivatingId();
+    if (id && await this.facade.setActive([id], false)) {
+      this.showDeactivateDialog.set(false);
+      this.deactivatingId.set(null);
     }
   }
 
-  cancelDelete(): void {
-    this.showDeleteDialog.set(false);
-    this.deletingId.set(null);
+  cancelDeactivate(): void {
+    this.showDeactivateDialog.set(false);
+    this.deactivatingId.set(null);
   }
 
   onSelectionChanged(rows: PlayerRow[]): void {
     this.selectedPlayers.set(rows);
   }
 
-  openBulkDelete(): void {
-    if (this.hasSelection()) {
-      this.showBulkDeleteDialog.set(true);
+  openBulkDeactivate(): void {
+    if (this.hasActiveSelection()) {
+      this.showBulkDeactivateDialog.set(true);
     }
   }
 
-  async executeBulkDelete(): Promise<void> {
-    const ids = this.selectedPlayers().map(r => r.id);
-    const success = await this.facade.bulkDelete(ids);
-    if (success) {
-      this.showBulkDeleteDialog.set(false);
+  async executeBulkDeactivate(): Promise<void> {
+    const ids = this.selectedPlayers().filter(r => r.isActive).map(r => r.id);
+    if (await this.facade.setActive(ids, false)) {
+      this.showBulkDeactivateDialog.set(false);
       this.selectedPlayers.set([]);
     }
   }
 
-  cancelBulkDelete(): void {
-    this.showBulkDeleteDialog.set(false);
-  }
-
-  onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {
-    this.facade.applySortOption(`${event.key}_${event.direction}`);
-  }
-
-  onSortRulesChanged(rules: SortRule[]): void {
-    this.facade.applySortRules(rules);
-  }
-
-  getStatusForRow(row: PlayerRow): string {
-    return row.isActive ? 'active' : 'inactive';
+  cancelBulkDeactivate(): void {
+    this.showBulkDeactivateDialog.set(false);
   }
 
   setTab(tab: AdminPlayersTab): void {

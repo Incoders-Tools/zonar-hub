@@ -1,235 +1,158 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Player, Category, Gender, Sport } from '../../../../core/models';
+import { Injectable, inject, signal } from '@angular/core';
+import { Player, Category, Gender } from '../../../../core/models';
 import { ApiPlayerRepository } from '../../../../core/repositories/api/api-player.repository';
+import { PlayerWrite } from '../../../../core/repositories/player.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
 import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
-import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.repository';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { I18nService } from '../../../../core/i18n/i18n.service';
-import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 
 export interface PlayerFilters {
   search?: string;
-  genderId?: string;
-  categoryId?: string;
-  sportId?: string;
+  /** `'true'` or `'false'`; unset lists every player. */
   isActive?: string;
 }
 
+const PLAYERS_PAGE_SIZE = 25;
+
+/**
+ * Server-paged players of the active organization (S3). The API owns search, the active filter, the order (last
+ * name, first name) and the total count; pages are rendered as returned. Players are never deleted: they are
+ * deactivated and reactivated through the update contract.
+ */
 @Injectable()
 export class PlayerFacadeService {
   private readonly repo = inject(ApiPlayerRepository);
   private readonly categoryRepo = inject(ApiCategoryRepository);
   private readonly genderRepo = inject(ApiGenderRepository);
-  private readonly sportRepo = inject(ApiSportRepository);
   private readonly notification = inject(NotificationService);
   private readonly i18n = inject(I18nService);
-  private readonly activeOrg = inject(ActiveOrganizationService);
-  private lastOrgId: string | null | undefined = undefined;
 
-  constructor() {
-    effect(() => {
-      const currentOrgId = this.activeOrg.activeOrganizationId();
-      if (this.lastOrgId !== undefined && currentOrgId !== this.lastOrgId) {
-        this.load();
-      }
-      this.lastOrgId = currentOrgId;
-    });
-  }
+  readonly pageSize = PLAYERS_PAGE_SIZE;
 
   private readonly playersState = signal<Player[]>([]);
+  private readonly pageState = signal(1);
+  private readonly totalCountState = signal(0);
   private readonly loadingState = signal(false);
-  private readonly errorState = signal(false);
+  /** Translation key of the last load failure. */
+  private readonly errorState = signal<string | null>(null);
   private readonly savingState = signal(false);
-  private readonly deletingState = signal(false);
+  private readonly updatingStatusState = signal(false);
   private readonly filtersState = signal<PlayerFilters>({});
-  private readonly sortOptionState = signal('lastName_asc');
-  private readonly sortRulesState = signal<{ field: string; dir: 'asc' | 'desc' }[]>([]);
-
   private readonly categoriesState = signal<Category[]>([]);
   private readonly gendersState = signal<Gender[]>([]);
-  private readonly sportsState = signal<Sport[]>([]);
 
   readonly players = this.playersState.asReadonly();
+  readonly page = this.pageState.asReadonly();
+  readonly totalCount = this.totalCountState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
   readonly saving = this.savingState.asReadonly();
-  readonly deleting = this.deletingState.asReadonly();
+  readonly updatingStatus = this.updatingStatusState.asReadonly();
   readonly filters = this.filtersState.asReadonly();
-
   readonly categories = this.categoriesState.asReadonly();
   readonly genders = this.gendersState.asReadonly();
-  readonly sports = this.sportsState.asReadonly();
 
-  readonly filteredPlayers = computed(() => {
-    const all = this.playersState();
-    const f = this.filtersState();
-    const sort = this.sortOptionState();
-    const activeOrgId = this.activeOrg.activeOrganizationId();
-    let result = [...all];
-
-    // Filter by active organization
-    if (activeOrgId) {
-      result = result.filter(p => !p.organizationId || p.organizationId === activeOrgId);
-    }
-
-    if (f.search) {
-      const term = f.search.toLowerCase();
-      result = result.filter(p =>
-        p.firstName.toLowerCase().includes(term) ||
-        p.lastName.toLowerCase().includes(term) ||
-        p.email.toLowerCase().includes(term) ||
-        (p.documentId && p.documentId.toLowerCase().includes(term))
-      );
-    }
-
-    if (f.genderId) {
-      result = result.filter(p => p.genderId === f.genderId);
-    }
-
-    if (f.categoryId) {
-      result = result.filter(p => p.categoryId === f.categoryId);
-    }
-
-    if (f.sportId) {
-      result = result.filter(p => p.sportId === f.sportId);
-    }
-
-    if (f.isActive === 'true') {
-      result = result.filter(p => p.isActive);
-    } else if (f.isActive === 'false') {
-      result = result.filter(p => !p.isActive);
-    }
-
-    const [field, dir] = sort.split('_');
-    const sortRules = this.sortRulesState();
-
-    if (sortRules.length > 0) {
-      result.sort((a, b) => {
-        for (const rule of sortRules) {
-          const cmp = this.comparePlayerField(a, b, rule.field, rule.dir);
-          if (cmp !== 0) return cmp;
-        }
-        return 0;
-      });
-    } else {
-      const multiplier = dir === 'desc' ? -1 : 1;
-      result.sort((a, b) => {
-        const aVal = (a as unknown as Record<string, unknown>)[field];
-        const bVal = (b as unknown as Record<string, unknown>)[field];
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return (aVal - bVal) * multiplier;
-        }
-        return String(aVal ?? '').localeCompare(String(bVal ?? '')) * multiplier;
-      });
-    }
-
-    return result;
-  });
+  // Monotonic id of the latest load; older responses are ignored when superseded
+  private loadRequestId = 0;
 
   async load(): Promise<void> {
+    const requestId = ++this.loadRequestId;
+    const filters = this.filtersState();
     this.loadingState.set(true);
-    this.errorState.set(false);
+    this.errorState.set(null);
     try {
-      const [players, categories, genders, sports] = await Promise.all([
-        this.repo.getAll(),
-        this.categoryRepo.getAll(),
-        this.genderRepo.getAll(),
-        this.sportRepo.getAll()
+      const [result, categories, genders] = await Promise.all([
+        this.repo.getPage({
+          page: this.pageState(),
+          pageSize: this.pageSize,
+          search: filters.search,
+          isActive: filters.isActive === undefined ? undefined : filters.isActive === 'true'
+        }),
+        this.categoriesState().length ? Promise.resolve(this.categoriesState()) : this.categoryRepo.getAll(),
+        this.gendersState().length ? Promise.resolve(this.gendersState()) : this.genderRepo.getAll()
       ]);
-      this.playersState.set(players);
+      if (requestId !== this.loadRequestId) return;
       this.categoriesState.set(categories);
       this.gendersState.set(genders);
-      this.sportsState.set(sports);
-    } catch {
-      this.errorState.set(true);
+      this.playersState.set(result.items.map(p => this.hydrateNames(p)));
+      this.totalCountState.set(result.totalCount);
+    } catch (error) {
+      if (requestId !== this.loadRequestId) return;
+      this.playersState.set([]);
+      this.totalCountState.set(0);
+      this.errorState.set(errorKey(error));
     } finally {
-      this.loadingState.set(false);
+      if (requestId === this.loadRequestId) this.loadingState.set(false);
     }
+  }
+
+  goToPage(page: number): void {
+    if (!Number.isInteger(page) || page < 1) return;
+    this.pageState.set(page);
+    void this.load();
   }
 
   applyFilters(filters: PlayerFilters): void {
     this.filtersState.set(filters);
+    this.pageState.set(1);
+    void this.load();
   }
 
   clearFilters(): void {
-    this.filtersState.set({});
+    this.applyFilters({});
   }
 
-  applySortOption(sortKey: string): void {
-    this.sortOptionState.set(sortKey);
-    this.sortRulesState.set([]);
-  }
-
-  applySortRules(rules: { field: string; dir: 'asc' | 'desc' }[]): void {
-    this.sortRulesState.set(rules);
-  }
-
-  private comparePlayerField(a: Player, b: Player, field: string, dir: 'asc' | 'desc'): number {
-    const mul = dir === 'asc' ? 1 : -1;
-    switch (field) {
-      case 'lastName': return a.lastName.localeCompare(b.lastName) * mul;
-      case 'firstName': return a.firstName.localeCompare(b.firstName) * mul;
-      case 'email': return a.email.localeCompare(b.email) * mul;
-      case 'ranking': return ((a.ranking ?? 9999) - (b.ranking ?? 9999)) * mul;
-      case 'categoryName': return (a.categoryName ?? '').localeCompare(b.categoryName ?? '') * mul;
-      default: {
-        const aVal = (a as unknown as Record<string, unknown>)[field];
-        const bVal = (b as unknown as Record<string, unknown>)[field];
-        return String(aVal ?? '').localeCompare(String(bVal ?? '')) * mul;
-      }
-    }
-  }
-
-  async save(player: Omit<Player, 'id' | 'createdAt'>, editId?: string): Promise<boolean> {
+  /** Creates or updates; a translated toast reports the outcome, including every API error code. */
+  async save(player: PlayerWrite, editId?: string): Promise<boolean> {
     this.savingState.set(true);
     try {
       if (editId) {
         await this.repo.update(editId, player);
-        this.notification.success(this.i18n.translate('toast.saveSuccess'));
       } else {
         await this.repo.create(player);
-        this.notification.success(this.i18n.translate('toast.saveSuccess'));
       }
-      await this.load();
-      return true;
-    } catch {
-      this.notification.error(this.i18n.translate('toast.error'));
+      this.notification.success(this.i18n.translate('toast.saveSuccess'));
+    } catch (error) {
+      this.notification.error(this.i18n.translate(errorKey(error)));
       return false;
     } finally {
       this.savingState.set(false);
     }
+    await this.load();
+    return true;
   }
 
-  async deletePlayer(id: string): Promise<boolean> {
-    this.deletingState.set(true);
-    try {
-      await this.repo.delete(id);
-      this.notification.success(this.i18n.translate('toast.deleteSuccess'));
-      await this.load();
-      return true;
-    } catch {
-      this.notification.error(this.i18n.translate('toast.error'));
-      return false;
-    } finally {
-      this.deletingState.set(false);
-    }
-  }
-
-  async bulkDelete(ids: string[]): Promise<boolean> {
-    this.deletingState.set(true);
+  /** Deactivates (new registrations refuse the player) or reactivates the given players, one request each. */
+  async setActive(ids: string[], isActive: boolean): Promise<boolean> {
+    if (ids.length === 0) return false;
+    this.updatingStatusState.set(true);
     try {
       for (const id of ids) {
-        await this.repo.delete(id);
+        await this.repo.setActive(id, isActive);
       }
-      this.notification.success(this.i18n.translate('toast.deleteSuccess'));
-      await this.load();
+      this.notification.success(this.i18n.translate(
+        isActive ? 'admin.players.feedback.reactivated' : 'admin.players.feedback.deactivated'));
       return true;
-    } catch {
-      this.notification.error(this.i18n.translate('toast.error'));
+    } catch (error) {
+      this.notification.error(this.i18n.translate(errorKey(error)));
       return false;
     } finally {
-      this.deletingState.set(false);
+      this.updatingStatusState.set(false);
+      // Partial bulk changes are real changes: always show the stored state
+      await this.load();
     }
   }
+
+  private hydrateNames(player: Player): Player {
+    return {
+      ...player,
+      categoryName: this.categoriesState().find(c => c.id === player.categoryId)?.name ?? '',
+      genderLabel: this.gendersState().find(g => g.id === player.genderId)?.name ?? ''
+    };
+  }
+}
+
+function errorKey(error: unknown): string {
+  return error instanceof Error && error.message ? error.message : 'toast.error';
 }
