@@ -171,6 +171,16 @@ describe('RegistrationWizardPageComponent', () => {
     expect(notificationSpy.success).toHaveBeenCalledWith('registration.codeVerified');
   });
 
+  it('should validate the former master code through the facade like any other code', async () => {
+    facadeSpy.verifyCode.and.returnValue(Promise.resolve(false));
+    component.otpValue.set('451499');
+    await component.verifyCode();
+    expect(facadeSpy.verifyCode).toHaveBeenCalledWith(jasmine.any(String), '451499');
+    expect(component.codeVerified()).toBe(false);
+    expect(notificationSpy.success).not.toHaveBeenCalled();
+    expect(notificationSpy.error).toHaveBeenCalledWith('registration.codeInvalid');
+  });
+
   it('should show error on invalid code', async () => {
     facadeSpy.verifyCode.and.returnValue(Promise.resolve(false));
     component.verificationCode.setValue('000000');

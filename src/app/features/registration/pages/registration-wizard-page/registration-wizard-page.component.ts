@@ -41,9 +41,6 @@ export class RegistrationWizardPageComponent implements OnInit {
   readonly codeVerified = signal(false);
   readonly availabilitySelection = signal<AvailabilitySelection | null>(null);
 
-  /** Master verification code (temporary) */
-  private readonly MASTER_CODE = '451499';
-
   /** OTP digit controls (6 digits) */
   readonly otpDigits = Array.from({ length: 6 }, () => new FormControl(''));
 
@@ -153,12 +150,6 @@ export class RegistrationWizardPageComponent implements OnInit {
   async verifyCode(): Promise<void> {
     const code = this.otpValue();
     try {
-      // Master code bypass (temporary)
-      if (code === this.MASTER_CODE) {
-        this.codeVerified.set(true);
-        this.notifications.success('registration.codeVerified');
-        return;
-      }
       const valid = await this.facade.verifyCode(this.registrationId || 'mock-registration', code);
       if (valid) {
         this.codeVerified.set(true);
