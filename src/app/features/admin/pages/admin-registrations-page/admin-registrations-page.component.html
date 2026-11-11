@@ -13,7 +13,9 @@
       </app-help-button>
       @if (activeTab() === 'list') {
         <app-async-button
+          data-action="create"
           [loading]="false"
+          [disabled]="!selectedTournament()"
           (clicked)="openCreate()">
           {{ 'registrations.newRegistration' | t }}
         </app-async-button>
@@ -21,6 +23,7 @@
       @if (activeTab() === 'tokens') {
         <app-async-button
           [loading]="false"
+          [disabled]="!selectedTournament()"
           (clicked)="generateToken()">
           {{ 'registrations.tokens.generate' | t }}
         </app-async-button>
@@ -68,17 +71,69 @@
     </button>
   </nav>
 
+  <!-- Tournament picker: every tab works on the selected tournament -->
+  <section class="admin-registrations__picker" aria-labelledby="admin-registrations-picker-title">
+    <h2 class="admin-registrations__sr-only" id="admin-registrations-picker-title">{{ 'registrations.picker.label' | t }}</h2>
+    @if (tournamentOptions().length === 0) {
+      <app-empty-state message="registrations.picker.noTournaments" />
+    } @else {
+      <zh-select
+        data-field="tournament"
+        [label]="'registrations.picker.label' | t"
+        [placeholder]="'registrations.picker.placeholder' | t"
+        [hint]="'registrations.picker.hint' | t"
+        [options]="tournamentOptions()"
+        [formControl]="tournamentControl" />
+    }
+  </section>
+
   <!-- Tab content -->
   <div class="admin-registrations__content">
 
     <!-- LIST TAB -->
     @if (activeTab() === 'list') {
+      @if (!selectedTournament()) {
+        @if (tournamentOptions().length > 0) {
+          <app-empty-state data-state="no-tournament" message="registrations.picker.empty" />
+        }
+      } @else {
+      <!-- Places: confirmed over maxPairs, pending, waiting list -->
+      @if (facade.capacity(); as capacity) {
+        <section class="admin-registrations__capacity" aria-labelledby="admin-registrations-capacity-title">
+          <h3 class="admin-registrations__capacity-title" id="admin-registrations-capacity-title">{{ 'registrations.capacity.title' | t }}</h3>
+          <dl class="admin-registrations__capacity-stats">
+            <div class="admin-registrations__capacity-stat" data-stat="confirmed">
+              <dt>{{ 'registrations.capacity.confirmed' | t }}</dt>
+              <dd>{{ confirmedText() }}</dd>
+            </div>
+            <div class="admin-registrations__capacity-stat" data-stat="pending">
+              <dt>{{ 'registrations.capacity.pending' | t }}</dt>
+              <dd>{{ capacity.pending }}</dd>
+            </div>
+            <div class="admin-registrations__capacity-stat" data-stat="waitlisted">
+              <dt>{{ 'registrations.capacity.waitlisted' | t }}</dt>
+              <dd>{{ capacity.waitlisted }}</dd>
+            </div>
+            <div class="admin-registrations__capacity-stat" data-stat="placesLeft">
+              <dt>{{ 'registrations.capacity.placesLeft' | t }}</dt>
+              <dd>{{ placesLeftText() }}</dd>
+            </div>
+          </dl>
+          @if (facade.capacityFull()) {
+            <p class="admin-registrations__capacity-full" role="status" data-hint="capacity-full">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              {{ 'registrations.capacity.fullExplanation' | t }}
+            </p>
+          }
+        </section>
+      }
+
       <!-- Inline form panel -->
       @if (showFormPanel()) {
         <div class="admin-registrations__form-panel" @slideDown>
           <div class="admin-registrations__form-panel-header">
             <h3 class="admin-registrations__form-panel-title">
-              {{ (editingRegistration() ? 'registrations.editRegistration' : 'registrations.newRegistration') | t }}
+              {{ 'registrations.newRegistration' | t }}
             </h3>
             <button
               class="admin-registrations__form-panel-close"
@@ -89,7 +144,9 @@
           </div>
           <div class="admin-registrations__form-panel-body">
             <app-registration-form-panel
-              [registration]="editingRegistration()"
+              [tournament]="selectedTournament()!"
+              [capacity]="facade.capacity()"
+              [registrations]="facade.registrations()"
               [saving]="facade.saving()"
               (saved)="onFormSaved()"
               (cancelled)="closeForm()">
@@ -99,12 +156,16 @@
       }
 
       <app-filter-panel
-        [fields]="filterFields()"
+        [fields]="filterFields"
         [collapsible]="true"
         [sortFields]="listSortOptions"
         (filtersApplied)="onFiltersApplied($event)"
         (filtersCleared)="onFiltersCleared()">
       </app-filter-panel>
+
+      @if (facade.error(); as errorKey) {
+        <p class="admin-registrations__load-error" role="alert">{{ errorKey | t }}</p>
+      }
 
       <zh-collection-view
         viewKey="admin-registrations"
@@ -112,34 +173,41 @@
         [columns]="listColumns"
         [loading]="facade.loading()"
         [error]="!!facade.error()"
-        [selectable]="true"
         [paginated]="true"
         [pageSize]="50"
         [rowActions]="listRowActions"
+        [rowActionsFilter]="listRowActionsFilter"
         emptyMessageKey="registrations.emptyState"
         (rowAction)="onRowActionClicked($event)"
-        (selectionChanged)="onSelectionChanged($event)"
         (retried)="facade.load()">
         <ng-template #cardTpl let-row>
           <div class="zh-list-card">
             <div class="zh-list-card__header">
               <div class="zh-list-card__title">
-                @if (row.tournamentName) {
-                  <span class="zh-list-card__eyebrow">{{ row.tournamentName }}</span>
+                @if (row.clubs) {
+                  <span class="zh-list-card__eyebrow">{{ row.clubs }}</span>
                 }
                 <h3 class="zh-list-card__name">{{ row.participantsDisplay }}</h3>
+                @if (row.contactEmail) {
+                  <p class="zh-list-card__subtitle">{{ row.contactEmail }}</p>
+                }
               </div>
-              <span class="zh-list-card__status zh-list-card__status--{{ row.statusId === 'confirmed' ? 'active' : 'info' }}">
+              <span class="zh-list-card__status zh-list-card__status--{{ row.statusVariant }}">
                 {{ row.statusLabel | t }}
               </span>
             </div>
             <div class="zh-list-card__meta">
-              <span><strong>{{ 'registrations.column.source' | t }}:</strong> {{ row.source | t }}</span>
-              <span><strong>{{ 'registrations.column.registeredAt' | t }}:</strong> {{ row.registeredAt }}</span>
+              <span><strong>{{ 'registrations.column.payment' | t }}:</strong> {{ row.paymentLabel | t }}</span>
+              <span><strong>{{ 'registrations.column.source' | t }}:</strong> {{ row.sourceLabel | t }}</span>
+              <span><strong>{{ 'registrations.column.registeredAt' | t }}:</strong> {{ row.createdAt }}</span>
             </div>
+            @if (row.notes) {
+              <p class="zh-list-card__description">{{ row.notes }}</p>
+            }
           </div>
         </ng-template>
       </zh-collection-view>
+      }
     }
 
     <!-- IMPORTER TAB -->
@@ -401,15 +469,17 @@
   </div>
 </div>
 
-<!-- Delete confirmation dialog -->
-@if (showDeleteDialog()) {
+<!-- Reject, cancel and refund run only after this confirmation -->
+@if (pendingActionKeys(); as keys) {
   <app-confirm-dialog
-    [titleKey]="'registrations.deleteConfirm.title'"
-    [messageKey]="'registrations.deleteConfirm.message'"
-    [confirmLabelKey]="'common.delete'"
-    [loading]="facade.deleting()"
-    (confirmed)="onDeleteConfirmed()"
-    (cancelled)="onDeleteCancelled()">
+    [titleKey]="keys.title"
+    [messageKey]="keys.message"
+    [warningKey]="keys.warning"
+    [confirmLabelKey]="keys.confirm"
+    confirmVariant="danger"
+    [loading]="!!facade.busyId()"
+    (confirmed)="onPendingActionConfirmed()"
+    (cancelled)="onPendingActionCancelled()">
   </app-confirm-dialog>
 }
 

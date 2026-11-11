@@ -1,63 +1,42 @@
 <app-form-shell>
   <form [formGroup]="form" class="registration-form">
-    <!-- Tournament selection -->
-    <div class="registration-form__field">
-      <label class="registration-form__label">
-        {{ 'registrations.form.tournament' | t }} *
-      </label>
-      <select
-        class="registration-form__select"
-        formControlName="tournamentId"
-        [class.registration-form__select--error]="submitted() && form.get('tournamentId')?.invalid">
-        <option value="">{{ 'registrations.form.selectTournament' | t }}</option>
-        @for (t of tournaments(); track t.id) {
-          <option [value]="t.id">{{ t.name }} — {{ t.categoryName }} · {{ t.genderLabel }}</option>
-        }
-      </select>
-      @if (submitted() && form.get('tournamentId')?.hasError('required')) {
-        <span class="registration-form__error">{{ 'registrations.form.tournamentRequired' | t }}</span>
-      }
-    </div>
-
-    <!-- Loading indicator for tournament data -->
-    @if (loadingTournament()) {
-      <div class="registration-form__loading">
-        <span class="registration-form__spinner"></span>
-        <span class="registration-form__loading-text">{{ 'common.loading' | t }}</span>
-      </div>
-    }
-
-    <!-- Dynamic participant slots -->
-    @if (selectedTournament() && !loadingTournament()) {
-      <!-- Tournament details card -->
-      <div class="registration-form__tournament-card">
-        <h4 class="registration-form__tournament-card-title">{{ 'registrations.form.tournamentDetails' | t }}</h4>
-        <div class="registration-form__tournament-card-body">
-          <div class="registration-form__tournament-card-row">
-            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentComplex' | t }}</span>
-            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.complexName }}</span>
-          </div>
-          <div class="registration-form__tournament-card-row">
-            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentDates' | t }}</span>
-            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.startDate | formatDate }} — {{ selectedTournament()!.endDate | formatDate }}</span>
-          </div>
-          <div class="registration-form__tournament-card-row">
-            <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentCategory' | t }}</span>
-            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.categoryName }} · {{ selectedTournament()!.genderLabel }}</span>
-          </div>
-          <div class="registration-form__tournament-card-row">
-            <span class="registration-form__tournament-card-label">{{ tournamentMaxLabelKey() | t }}</span>
-            <span class="registration-form__tournament-card-value">{{ selectedTournament()!.maxPairs }}</span>
-          </div>
-          @if (selectedTournament()!.registrationStartDate || selectedTournament()!.registrationEndDate) {
-            <div class="registration-form__tournament-card-row">
-              <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentRegistration' | t }}</span>
-              <span class="registration-form__tournament-card-value">{{ selectedTournament()!.registrationStartDate | formatDate }} — {{ selectedTournament()!.registrationEndDate | formatDate }}</span>
-            </div>
-          }
+    <!-- Tournament details card -->
+    <div class="registration-form__tournament-card">
+      <h4 class="registration-form__tournament-card-title">{{ 'registrations.form.tournamentDetails' | t }}</h4>
+      <div class="registration-form__tournament-card-body">
+        <div class="registration-form__tournament-card-row">
+          <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournament' | t }}</span>
+          <span class="registration-form__tournament-card-value">{{ tournament().name }}</span>
+        </div>
+        <div class="registration-form__tournament-card-row">
+          <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentComplex' | t }}</span>
+          <span class="registration-form__tournament-card-value">{{ tournament().complexName }}</span>
+        </div>
+        <div class="registration-form__tournament-card-row">
+          <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentDates' | t }}</span>
+          <span class="registration-form__tournament-card-value">{{ tournament().startDate | formatDate }} — {{ tournament().endDate | formatDate }}</span>
+        </div>
+        <div class="registration-form__tournament-card-row">
+          <span class="registration-form__tournament-card-label">{{ 'registrations.form.tournamentCategory' | t }}</span>
+          <span class="registration-form__tournament-card-value">{{ tournament().categoryName }} · {{ tournament().genderLabel }}</span>
+        </div>
+        <div class="registration-form__tournament-card-row">
+          <span class="registration-form__tournament-card-label">{{ tournamentMaxLabelKey() | t }}</span>
+          <span class="registration-form__tournament-card-value">{{ tournament().maxPairs ?? ('registrations.capacity.unlimited' | t) }}</span>
         </div>
       </div>
+    </div>
 
+    <p class="registration-form__hint">{{ 'registrations.form.rulesHint' | t }}</p>
+
+    @if (loadingTournament()) {
+      <div class="registration-form__loading" role="status">
+        <span class="registration-form__spinner" aria-hidden="true"></span>
+        <span class="registration-form__loading-text">{{ 'common.loading' | t }}</span>
+      </div>
+    } @else if (loadError(); as errorKey) {
+      <p class="registration-form__error" role="alert" data-state="rules-error">{{ errorKey | t }}</p>
+    } @else {
       <app-collapsible-section
         [titleKey]="'registrations.form.participantsSection'"
         [initialExpanded]="true">
@@ -67,12 +46,13 @@
               <app-participant-search
                 [slotNumber]="slot.slotNumber"
                 [slotLabel]="slot.label || ''"
-                [tournamentId]="selectedTournament()!.id"
-                [sportId]="selectedTournament()!.sportId"
+                [tournamentId]="tournament().id"
+                [sportId]="tournament().sportId"
                 [config]="config()!"
                 [eligibilitySlot]="slot"
-                [existingRegistrations]="existingRegistrations()"
-                [selectedPlayerIds]="selectedPlayerIds()"
+                [tournamentRules]="tournamentRules()"
+                [genders]="genders()"
+                [selectedPlayerIds]="unavailablePlayerIds(slot.slotNumber)"
                 [categories]="categories()"
                 (playerSelected)="onParticipantSelected($event)"
                 (playerCleared)="onParticipantCleared($event)">
@@ -88,46 +68,68 @@
             </div>
           }
         </div>
+        @if (submitted() && structureErrors().length > 0) {
+          <div class="registration-form__slot-errors" role="alert">
+            @for (err of structureErrors(); track err) {
+              <span class="registration-form__error">{{ err | t }}</span>
+            }
+          </div>
+        }
       </app-collapsible-section>
-
-      <!-- Availability Schedule -->
-      <app-collapsible-section
-        [titleKey]="'registrations.form.availabilitySection'"
-        [initialExpanded]="true">
-        <app-availability-selector
-          [days]="tournamentDays()"
-          [showNotes]="true"
-          [notesPlaceholderKey]="'registration.notesPlaceholder'"
-          (changed)="onAvailabilityChanged($event)">
-        </app-availability-selector>
-      </app-collapsible-section>
-
-      <!-- Observations -->
-      <div class="registration-form__field">
-        <label class="registration-form__label">
-          {{ 'registrations.form.observations' | t }}
-        </label>
-        <textarea
-          class="registration-form__textarea"
-          formControlName="observations"
-          [placeholder]="'registrations.form.observationsPlaceholder' | t"
-          rows="3">
-        </textarea>
-      </div>
-
-      <!-- Source (read-only for admin) -->
-      <div class="registration-form__field">
-        <label class="registration-form__label">
-          {{ 'registrations.form.source' | t }}
-        </label>
-        <input
-          type="text"
-          class="registration-form__input registration-form__input--readonly"
-          [value]="'registrations.source.admin' | t"
-          readonly
-        />
-      </div>
     }
+
+    <!-- Initial status: confirmed needs a free place -->
+    <fieldset class="registration-form__field registration-form__fieldset">
+      <legend class="registration-form__label">{{ 'registrations.form.status' | t }}</legend>
+      <label class="registration-form__choice">
+        <input type="radio" formControlName="status" value="pending" />
+        {{ 'registrations.form.statusPending' | t }}
+      </label>
+      <label class="registration-form__choice">
+        <input type="radio" formControlName="status" value="confirmed" data-field="status-confirmed" />
+        {{ 'registrations.form.statusConfirmed' | t }}
+      </label>
+      <span class="registration-form__hint">{{ 'registrations.form.statusHint' | t }}</span>
+      @if (status() === 'confirmed' && capacityFull()) {
+        <span class="registration-form__error" role="alert" data-hint="capacity-full">{{ 'registrations.capacity.fullExplanation' | t }}</span>
+      }
+    </fieldset>
+
+    <div class="registration-form__field">
+      <label class="registration-form__label" for="registration-contact-email">
+        {{ 'registrations.form.contactEmail' | t }}
+      </label>
+      <input
+        id="registration-contact-email"
+        type="email"
+        class="registration-form__input"
+        formControlName="contactEmail"
+        autocomplete="email"
+        [placeholder]="'registrations.form.contactEmailPlaceholder' | t" />
+      @if (form.controls.contactEmail.invalid && (form.controls.contactEmail.touched || submitted())) {
+        <span class="registration-form__error">{{ 'registrations.errors.invalid_contact_email' | t }}</span>
+      }
+    </div>
+
+    <div class="registration-form__field">
+      <label class="registration-form__label" for="registration-notes">
+        {{ 'registrations.form.observations' | t }}
+      </label>
+      <textarea
+        id="registration-notes"
+        class="registration-form__textarea"
+        formControlName="notes"
+        [attr.maxlength]="notesMaxLength"
+        [placeholder]="'registrations.form.observationsPlaceholder' | t"
+        rows="3">
+      </textarea>
+    </div>
+
+    <label class="registration-form__choice">
+      <input type="checkbox" formControlName="publicNameConsent" />
+      {{ 'registrations.form.publicNameConsent' | t }}
+    </label>
+    <span class="registration-form__hint">{{ 'registrations.form.publicNameConsentHint' | t }}</span>
 
     <!-- Form actions -->
     <div formActions class="registration-form__actions">
@@ -139,11 +141,15 @@
       </button>
       <app-async-button
         type="submit"
+        data-action="save"
         [loading]="saving()"
         [disabled]="!canSave()"
         (clicked)="onSave()">
-        {{ (isEditing() ? 'common.update' : 'common.create') | t }}
+        {{ 'common.create' | t }}
       </app-async-button>
     </div>
+    @if (!canSave() && !saving()) {
+      <p class="registration-form__hint" data-hint="save-disabled">{{ 'registrations.form.saveDisabledHint' | t }}</p>
+    }
   </form>
 </app-form-shell>

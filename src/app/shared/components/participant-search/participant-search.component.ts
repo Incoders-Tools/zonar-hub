@@ -7,10 +7,10 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 import { Player } from '../../../core/models/player.model';
 import { Registration, ParticipantAvailabilityState, ParticipantSearchResult } from '../../../core/models/registration.model';
 import { TournamentEligibilitySlot } from '../../../core/models/tournament-admin.model';
-import { Category } from '../../../core/models/catalog.model';
+import { Category, Gender } from '../../../core/models/catalog.model';
 import { SportParticipantConfig } from '../../../core/models/sport-config.model';
 import { ApiPlayerRepository } from '../../../core/repositories/api/api-player.repository';
-import { EligibilityValidationService } from '../../../core/services/eligibility-validation.service';
+import { EligibilityValidationService, TournamentEligibilityRules } from '../../../core/services/eligibility-validation.service';
 
 @Component({
   selector: 'app-participant-search',
@@ -35,6 +35,10 @@ export class ParticipantSearchComponent implements OnInit {
   readonly selectedPlayerIds = input<Set<string>>(new Set());
   readonly disabled = input(false);
   readonly categories = input<Category[]>([]);
+  /** Gender catalog: a slot of the `mixed` gender admits any player (D3). */
+  readonly genders = input<Gender[]>([]);
+  /** The tournament's own rules, applied to this slot when no profile slot is given (D3, L8). */
+  readonly tournamentRules = input<TournamentEligibilityRules | null>(null);
   readonly habitualPartnerSuggestion = input<Player | null>(null);
   readonly initialPlayer = input<Player | null>(null);
 
@@ -91,11 +95,20 @@ export class ParticipantSearchComponent implements OnInit {
     return this.eligibilityService.getPlayerAvailabilityState(
       player,
       this.tournamentId(),
-      this.eligibilitySlot(),
+      this.resolvedSlot(),
       this.config(),
       this.existingRegistrations(),
-      this.categories()
+      this.categories(),
+      this.genders()
     );
+  }
+
+  /** The given profile slot, else this slot number under the tournament's own rules, else no restriction. */
+  private resolvedSlot(): TournamentEligibilitySlot | null {
+    const slot = this.eligibilitySlot();
+    const rules = this.tournamentRules();
+    if (slot || !rules) return slot;
+    return this.eligibilityService.resolveSlots(null, rules).find(s => s.slotNumber === this.slotNumber()) ?? null;
   }
 
   selectPlayer(player: ParticipantSearchResult): void {
