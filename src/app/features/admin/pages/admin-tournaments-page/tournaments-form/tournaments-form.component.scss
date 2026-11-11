@@ -148,6 +148,12 @@
     margin-top: 0.25rem;
   }
 
+  &__eligibility-profile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zh-space-xs);
+  }
+
   &__tooltip {
     display: inline-flex;
     align-items: center;

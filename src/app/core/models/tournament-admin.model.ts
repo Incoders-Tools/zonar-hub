@@ -13,8 +13,13 @@ export interface TournamentType {
   updatedAt: string;
 }
 
+/**
+ * Organization eligibility profile (D1): one rule slot per participant. The API has no key or sort order; they stay
+ * `''` / `null` for the legacy consumers.
+ */
 export interface TournamentEligibilityProfile {
   id: string;
+  organizationId?: string;
   name: string;
   key: string;
   description: string | null;

@@ -9,6 +9,7 @@ import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.
 import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
 import { ApiTournamentRuleRepository } from '../../../../core/repositories/api/api-tournament-rule.repository';
 import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
+import { ApiEligibilityProfileRepository } from '../../../../core/repositories/api/api-eligibility-profile.repository';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
@@ -40,12 +41,17 @@ const mockModalities: TournamentModality[] = [
 describe('TournamentsFacadeService.getModalitiesForSport', () => {
   let service: TournamentsFacadeService;
   let tournamentRepoSpy: jasmine.SpyObj<ApiTournamentAdminRepository>;
+  let profileRepoSpy: jasmine.SpyObj<ApiEligibilityProfileRepository>;
   let notification: jasmine.SpyObj<NotificationService>;
 
   beforeEach(async () => {
     notification = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error']);
-    tournamentRepoSpy = jasmine.createSpyObj('ApiTournamentAdminRepository', ['getAll', 'getById', 'create', 'update', 'delete', 'getExistingKeys']);
+    tournamentRepoSpy = jasmine.createSpyObj('ApiTournamentAdminRepository', ['getAll', 'getById', 'create', 'update', 'delete', 'getExistingKeys', 'getEligibilityProfileId', 'setEligibilityProfile']);
     tournamentRepoSpy.getAll.and.resolveTo([]);
+    profileRepoSpy = jasmine.createSpyObj<ApiEligibilityProfileRepository>('ApiEligibilityProfileRepository', ['getAll']);
+    profileRepoSpy.getAll.and.resolveTo([
+      { id: 'ep-1', name: 'Damas', key: '', description: null, sortOrder: null, isActive: false, createdAt: '', updatedAt: '' }
+    ]);
 
     const complexRepoSpy = jasmine.createSpyObj('ApiComplexRepository', ['getAll', 'getById', 'create', 'update', 'delete', 'getExistingKeys']);
     complexRepoSpy.getAll.and.resolveTo([]);
@@ -95,6 +101,7 @@ describe('TournamentsFacadeService.getModalitiesForSport', () => {
         { provide: ApiTournamentModalityRepository, useValue: modalityRepoSpy },
         { provide: ApiTournamentRuleRepository, useValue: ruleRepoSpy },
         { provide: ApiCourtRepository, useValue: courtRepoSpy },
+        { provide: ApiEligibilityProfileRepository, useValue: profileRepoSpy },
         { provide: AuthService, useValue: authSpy },
         { provide: ActiveOrganizationService, useValue: activeOrgSpy },
         { provide: NotificationService, useValue: notification },
@@ -157,6 +164,57 @@ describe('TournamentsFacadeService.getModalitiesForSport', () => {
       expect(await service.saveTournament(tournament)).toBeFalse();
 
       expect(notification.error).toHaveBeenCalledOnceWith('toast.error');
+    });
+  });
+
+  describe('eligibility profile assignment (R2b)', () => {
+    const tournament = { id: 't-1', name: 'Copa', startDate: '2030-12-01', endDate: '2030-12-03' } as Tournament;
+
+    beforeEach(() => {
+      tournamentRepoSpy.update.and.resolveTo(tournament);
+      tournamentRepoSpy.create.and.resolveTo({ ...tournament, id: 't-9' });
+      tournamentRepoSpy.setEligibilityProfile.and.callFake(async (_id: string, profileId: string | null) => profileId);
+    });
+
+    it('loads the organization profiles, inactive ones included', () => {
+      expect(service.eligibilityProfiles().map(p => p.id)).toEqual(['ep-1']);
+    });
+
+    it('keeps the tournaments list when the profiles cannot be read', async () => {
+      profileRepoSpy.getAll.and.rejectWith(new Error('common.forbidden'));
+      await service.load();
+      await Promise.resolve();
+      expect(service.eligibilityProfiles()).toEqual([]);
+      expect(service.error()).toBeNull();
+    });
+
+    it('leaves the assignment untouched when no profile choice is given', async () => {
+      expect(await service.saveTournament(tournament)).toBeTrue();
+      expect(tournamentRepoSpy.setEligibilityProfile).not.toHaveBeenCalled();
+    });
+
+    it('assigns the chosen profile after updating the tournament', async () => {
+      expect(await service.saveTournament(tournament, 'ep-1')).toBeTrue();
+      expect(tournamentRepoSpy.setEligibilityProfile).toHaveBeenCalledOnceWith('t-1', 'ep-1');
+    });
+
+    it('uses the created tournament id and clears with null', async () => {
+      const { id: _id, ...draft } = tournament;
+      void _id;
+      expect(await service.saveTournament(draft, null)).toBeTrue();
+      expect(tournamentRepoSpy.setEligibilityProfile).toHaveBeenCalledOnceWith('t-9', null);
+    });
+
+    it('keeps the saved tournament and reports a failed assignment', async () => {
+      tournamentRepoSpy.setEligibilityProfile.and.rejectWith(new Error('eligibility_profiles.errors.not_found'));
+      expect(await service.saveTournament(tournament, 'ep-x')).toBeTrue();
+      expect(notification.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('never assigns a profile when the tournament save fails', async () => {
+      tournamentRepoSpy.update.and.rejectWith(new Error('common.networkUnavailable'));
+      expect(await service.saveTournament(tournament, 'ep-1')).toBeFalse();
+      expect(tournamentRepoSpy.setEligibilityProfile).not.toHaveBeenCalled();
     });
   });
 });

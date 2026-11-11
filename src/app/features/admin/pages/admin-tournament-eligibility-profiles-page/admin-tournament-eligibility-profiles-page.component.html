@@ -43,6 +43,8 @@
         <app-tournament-eligibility-profiles-form-panel
           [profile]="editingProfile()"
           [saving]="facade.saving()"
+          [genders]="facade.genders()"
+          [categories]="facade.categories()"
           (saved)="closeFormPanel()"
           (cancelled)="closeFormPanel()">
         </app-tournament-eligibility-profiles-form-panel>
@@ -59,17 +61,20 @@
     (filtersCleared)="onFiltersCleared()">
   </app-filter-panel>
 
+  @if (facade.error(); as errorKey) {
+    <p class="tournament-eligibility-profiles-page__load-error" role="alert">{{ errorKey | t }}</p>
+  }
+
   <!-- Collection (table + cards toggle) -->
   <zh-collection-view
     viewKey="admin-tournament-eligibility-profiles"
     [items]="tableData()"
-    [columns]="columns()"
+    [columns]="columns"
     [loading]="facade.loading()"
     [error]="!!facade.error()"
     [selectable]="true"
     [paginated]="true"
     [pageSize]="10"
-    [reorderable]="true"
     [rowActions]="profileRowActions"
     emptyMessageKey="admin.tournament-eligibility-profiles.emptyState"
     (selectionChanged)="onSelectionChanged($event)"
@@ -90,11 +95,7 @@
           </span>
         </div>
         <div class="zh-list-card__meta">
-          <span><strong>{{ 'admin.tournament-eligibility-profiles.column.key' | t }}:</strong> {{ row.key }}</span>
-          <span><strong>{{ 'admin.tournament-eligibility-profiles.column.slotCount' | t }}:</strong> {{ row.slotCount }}</span>
-          @if (row.sortOrder !== null) {
-            <span><strong>{{ 'admin.tournament-eligibility-profiles.column.sortOrder' | t }}:</strong> {{ row.sortOrder }}</span>
-          }
+          <span><strong>{{ 'admin.tournament-eligibility-profiles.column.slots' | t }}:</strong> {{ row.slotCount }}</span>
         </div>
       </div>
     </ng-template>

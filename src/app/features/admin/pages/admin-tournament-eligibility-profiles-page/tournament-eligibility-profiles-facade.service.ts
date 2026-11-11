@@ -1,82 +1,89 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { TournamentEligibilityProfile } from '../../../../core/models';
-import { ApiTournamentEligibilityProfileRepository } from '../../../../core/repositories/tournament-admin.repository';
+import { Category, Gender, TournamentEligibilityProfile } from '../../../../core/models';
+import { ApiEligibilityProfileRepository } from '../../../../core/repositories/api/api-eligibility-profile.repository';
+import { EligibilityProfileWrite } from '../../../../core/repositories/eligibility-profile.repository';
+import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
+import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 
 export interface TournamentEligibilityProfileFilters {
   name?: string;
   isActive?: string;
 }
 
+/**
+ * Eligibility profiles of the active organization (D1, D5). The API returns every profile ordered by name, so the
+ * name and status filters and the name sort run on the loaded list. Every API error code reaches the user as a
+ * translated toast; `eligibility_profiles.errors.in_use` explains why a referenced profile cannot be deleted.
+ */
 @Injectable()
 export class TournamentEligibilityProfilesFacadeService {
-  private readonly repository = inject(ApiTournamentEligibilityProfileRepository);
+  private readonly repository = inject(ApiEligibilityProfileRepository);
+  private readonly categoryRepo = inject(ApiCategoryRepository);
+  private readonly genderRepo = inject(ApiGenderRepository);
+  private readonly notification = inject(NotificationService);
+  private readonly i18n = inject(I18nService);
 
-  // State signals
   private readonly entitiesState = signal<TournamentEligibilityProfile[]>([]);
   private readonly loadingState = signal(false);
   private readonly savingState = signal(false);
   private readonly deletingState = signal(false);
+  /** Translation key of the last load failure. */
   private readonly errorState = signal<string | null>(null);
   private readonly filtersState = signal<TournamentEligibilityProfileFilters>({});
-  private readonly sortState = signal<string>('sort_order_asc');
+  private readonly sortState = signal<'name_asc' | 'name_desc'>('name_asc');
+  private readonly categoriesState = signal<Category[]>([]);
+  private readonly gendersState = signal<Gender[]>([]);
 
-  // Public computed properties
-  readonly entities = this.entitiesState;
-  readonly loading = this.loadingState;
-  readonly saving = this.savingState;
-  readonly deleting = this.deletingState;
-  readonly error = this.errorState;
+  readonly entities = this.entitiesState.asReadonly();
+  readonly loading = this.loadingState.asReadonly();
+  readonly saving = this.savingState.asReadonly();
+  readonly deleting = this.deletingState.asReadonly();
+  readonly error = this.errorState.asReadonly();
+  readonly categories = this.categoriesState.asReadonly();
+  readonly genders = this.gendersState.asReadonly();
 
   readonly filteredProfiles = computed(() => {
-    const profiles = this.entitiesState();
     const filters = this.filtersState();
+    let result = [...this.entitiesState()];
 
-    let result = [...profiles];
-
-    // Filter by name (case-insensitive substring match)
-    if (filters.name?.trim()) {
-      const searchTerm = filters.name.toLowerCase();
-      result = result.filter(p => p.name.toLowerCase().includes(searchTerm));
+    const term = filters.name?.trim().toLowerCase();
+    if (term) {
+      result = result.filter(p => p.name.toLowerCase().includes(term));
     }
-
-    // Filter by isActive
     if (filters.isActive !== undefined) {
       const isActive = filters.isActive === 'true';
       result = result.filter(p => p.isActive === isActive);
     }
 
-    // Apply sorting
-    const sortOption = this.sortState();
-    if (sortOption === 'sort_order_asc') {
-      result.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    } else if (sortOption === 'sort_order_desc') {
-      result.sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0));
-    } else if (sortOption === 'name_asc') {
-      result.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortOption === 'name_desc') {
-      result.sort((a, b) => b.name.localeCompare(a.name));
-    }
-
-    return result;
+    const direction = this.sortState() === 'name_desc' ? -1 : 1;
+    return result.sort((a, b) => a.name.localeCompare(b.name) * direction);
   });
 
+  // Monotonic id of the latest load; older responses are ignored when superseded
+  private loadRequestId = 0;
+
   async load(): Promise<void> {
+    const requestId = ++this.loadRequestId;
+    this.loadingState.set(true);
+    this.errorState.set(null);
     try {
-      this.loadingState.set(true);
-      this.errorState.set(null);
-
-      // Load profiles and supporting data (genders, categories)
-      const profiles = await this.repository.getAll();
+      const [profiles, categories, genders] = await Promise.all([
+        this.repository.getAll(),
+        this.categoryRepo.getAll(),
+        this.genderRepo.getAll()
+      ]);
+      if (requestId !== this.loadRequestId) return;
       this.entitiesState.set(profiles);
-
-      // TODO: Load genders and categories from their respective repositories
-      // This would be used by the form dialog to populate select fields
-      // const genders = await this.genderRepository.getAll();
-      // const categories = await this.categoryRepository.getAll();
+      this.categoriesState.set(categories);
+      this.gendersState.set(genders);
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      if (requestId !== this.loadRequestId) return;
+      this.entitiesState.set([]);
+      this.errorState.set(errorKey(error));
     } finally {
-      this.loadingState.set(false);
+      if (requestId === this.loadRequestId) this.loadingState.set(false);
     }
   }
 
@@ -89,116 +96,58 @@ export class TournamentEligibilityProfilesFacadeService {
   }
 
   applySortOption(sortOption: string): void {
-    this.sortState.set(sortOption);
+    this.sortState.set(sortOption === 'name_desc' ? 'name_desc' : 'name_asc');
   }
 
-  async saveProfile(profile: TournamentEligibilityProfile | Omit<TournamentEligibilityProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
+  async saveProfile(profile: EligibilityProfileWrite, editId?: string): Promise<boolean> {
+    this.savingState.set(true);
     try {
-      this.savingState.set(true);
-      this.errorState.set(null);
-
-      // Check if this is create or update based on presence of 'id'
-      const isUpdate = 'id' in profile && profile.id;
-
-      if (isUpdate) {
-        const updated = await this.repository.update((profile as TournamentEligibilityProfile).id, profile);
-        // Update in local state
-        const idx = this.entitiesState().findIndex(p => p.id === (profile as TournamentEligibilityProfile).id);
-        if (idx !== -1) {
-          const updated_profiles = [...this.entitiesState()];
-          updated_profiles[idx] = updated;
-          this.entitiesState.set(updated_profiles);
-        }
+      if (editId) {
+        await this.repository.update(editId, profile);
       } else {
-        const created = await this.repository.create(profile as Omit<TournamentEligibilityProfile, 'id' | 'createdAt' | 'updatedAt'>);
-        this.entitiesState.set([...this.entitiesState(), created]);
+        await this.repository.create(profile);
       }
-
-      return true;
+      this.notification.success(this.i18n.translate('toast.saveSuccess'));
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      this.notification.error(this.i18n.translate(errorKey(error)));
       return false;
     } finally {
       this.savingState.set(false);
     }
+    await this.load();
+    return true;
   }
 
   async deleteProfile(id: string): Promise<boolean> {
-    try {
-      this.deletingState.set(true);
-      this.errorState.set(null);
-      await this.repository.delete(id);
-      this.entitiesState.set(this.entitiesState().filter(p => p.id !== id));
-      return true;
-    } catch (error) {
-      this.errorState.set((error as Error).message);
-      return false;
-    } finally {
-      this.deletingState.set(false);
-    }
+    return this.bulkDelete([id]);
   }
 
+  /** Deletes one by one and stops at the first refusal (for example `in_use`); what was deleted stays deleted. */
   async bulkDelete(ids: string[]): Promise<boolean> {
+    if (ids.length === 0) return false;
+    this.deletingState.set(true);
     try {
-      this.deletingState.set(true);
-      this.errorState.set(null);
-      await Promise.all(ids.map(id => this.repository.delete(id)));
-      this.entitiesState.set(this.entitiesState().filter(p => !ids.includes(p.id)));
+      for (const id of ids) {
+        await this.repository.delete(id);
+      }
+      this.notification.success(this.i18n.translate('toast.deleteSuccess'));
       return true;
     } catch (error) {
-      this.errorState.set((error as Error).message);
+      this.notification.error(this.i18n.translate(errorKey(error)));
       return false;
     } finally {
       this.deletingState.set(false);
+      await this.load();
     }
   }
 
-  async checkKeyExists(key: string, currentId?: string): Promise<boolean> {
-    try {
-      const existingKeys = await this.repository.getExistingKeys();
-      if (currentId) {
-        // When editing, allow the current key if it belongs to this entity
-        const currentEntity = this.entitiesState().find(p => p.id === currentId);
-        return existingKeys.includes(key) && currentEntity?.key !== key;
-      }
-      return existingKeys.includes(key);
-    } catch {
-      return false;
-    }
+  /** Client hint for the API's 409 `name_taken` (any case); the API stays the authority. */
+  isNameTaken(name: string, currentId?: string): boolean {
+    const normalized = name.trim().toLowerCase();
+    return !!normalized && this.entitiesState().some(p => p.id !== currentId && p.name.toLowerCase() === normalized);
   }
+}
 
-  async checkNameExists(name: string, currentId?: string): Promise<boolean> {
-    try {
-      if (currentId) {
-        const currentEntity = this.entitiesState().find(p => p.id === currentId);
-        return this.entitiesState().some(
-          p => p.name.toLowerCase() === name.toLowerCase() && p.id !== currentId
-        );
-      }
-      return this.entitiesState().some(p => p.name.toLowerCase() === name.toLowerCase());
-    } catch {
-      return false;
-    }
-  }
-
-  async checkSortOrderExists(sortOrder: number | null, currentId?: string): Promise<boolean> {
-    try {
-      if (!sortOrder || sortOrder === 0) {
-        return false; // 0 and null are allowed to repeat
-      }
-      if (currentId) {
-        return this.entitiesState().some(
-          p => p.sortOrder === sortOrder && p.id !== currentId
-        );
-      }
-      return this.entitiesState().some(p => p.sortOrder === sortOrder);
-    } catch {
-      return false;
-    }
-  }
-
-  getNextSortOrder(): number {
-    const max = Math.max(0, ...this.entitiesState().map(p => p.sortOrder ?? 0));
-    return max + 1;
-  }
+function errorKey(error: unknown): string {
+  return error instanceof Error && error.message ? error.message : 'toast.error';
 }

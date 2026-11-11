@@ -1,5 +1,5 @@
 import { Component, inject, input, output, signal, computed, OnInit, OnChanges, SimpleChanges, DestroyRef, effect, untracked } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
@@ -59,6 +59,22 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   form!: FormGroup;
   isEditing = false;
   submitted = false;
+
+  /**
+   * Eligibility profile of the tournament (R2b). Kept out of `form` because the tournament contract does not carry
+   * it: it is saved through its own route, and only when the choice changed.
+   */
+  readonly eligibilityProfileControl = new FormControl<string>('', { nonNullable: true });
+  readonly loadingEligibilityProfile = signal(false);
+  readonly eligibilityProfileLoadError = signal<string | null>(null);
+  private initialEligibilityProfileId = '';
+
+  readonly eligibilityProfileOptions = computed(() =>
+    this.facade.eligibilityProfiles().map(p => ({
+      value: p.id,
+      label: p.isActive ? p.name : `${p.name} (${this.i18n.translate('admin.tournaments.form.eligibilityProfileInactive')})`
+    }))
+  );
 
   // Lookup options derived from facade
   readonly complexOptions = computed(() =>
@@ -334,6 +350,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
   private populateForm(): void {
     const tournament = this.tournament();
     this.submitted = false;
+    void this.loadEligibilityProfile(tournament?.id ?? null);
 
     if (tournament) {
       this.isEditing = true;
@@ -484,7 +501,7 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
       (payload as Tournament).createdAt = this.tournament()!.createdAt;
     }
 
-    const success = await this.facade.saveTournament(payload as Tournament);
+    const success = await this.facade.saveTournament(payload as Tournament, this.changedEligibilityProfile());
     if (success) {
       this.saved.emit(payload);
     }
@@ -492,6 +509,40 @@ export class TournamentsFormComponent implements OnInit, OnChanges {
 
   onCancel(): void {
     this.cancelled.emit();
+  }
+
+  /** Reads the assigned profile of an existing tournament; the picker stays disabled while unknown. */
+  private async loadEligibilityProfile(tournamentId: string | null): Promise<void> {
+    this.initialEligibilityProfileId = '';
+    this.eligibilityProfileControl.setValue('');
+    this.eligibilityProfileLoadError.set(null);
+    if (!tournamentId) {
+      this.eligibilityProfileControl.enable();
+      return;
+    }
+    this.loadingEligibilityProfile.set(true);
+    this.eligibilityProfileControl.disable();
+    try {
+      const assigned = await this.facade.loadEligibilityProfileId(tournamentId);
+      if (this.tournament()?.id !== tournamentId) return;
+      this.initialEligibilityProfileId = assigned ?? '';
+      this.eligibilityProfileControl.setValue(this.initialEligibilityProfileId);
+      this.eligibilityProfileControl.enable();
+    } catch (error) {
+      if (this.tournament()?.id !== tournamentId) return;
+      // Unknown assignment: keep the picker disabled so a save can never clear it by accident
+      this.eligibilityProfileLoadError.set((error as Error).message || 'toast.error');
+    } finally {
+      if (this.tournament()?.id === tournamentId) this.loadingEligibilityProfile.set(false);
+    }
+  }
+
+  /** The profile to assign (null clears it), or undefined when the choice did not change or is unknown. */
+  private changedEligibilityProfile(): string | null | undefined {
+    if (this.eligibilityProfileControl.disabled) return undefined;
+    const chosen = this.eligibilityProfileControl.value;
+    if (chosen === this.initialEligibilityProfileId) return undefined;
+    return chosen || null;
   }
 
   getCourtEmptyMessageKey(): string {

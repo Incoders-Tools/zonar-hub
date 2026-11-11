@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Tournament, TournamentType, TournamentEligibilityProfile } from '../models';
+import { Tournament, TournamentType } from '../models';
 
 export interface TournamentAdminRepository {
   getAll(): Promise<Tournament[]>;
@@ -8,6 +8,13 @@ export interface TournamentAdminRepository {
   update(id: string, tournament: Partial<Tournament>): Promise<Tournament>;
   delete(id: string): Promise<void>;
   getExistingKeys(): Promise<string[]>;
+  /** Eligibility profile assigned to the tournament (R2b), null when it has none. */
+  getEligibilityProfileId(tournamentId: string): Promise<string | null>;
+  /**
+   * Assigns an eligibility profile of the tournament's own organization, or clears it with null. An inactive profile
+   * may be assigned: while inactive it is ignored and the tournament's own rules apply (L8).
+   */
+  setEligibilityProfile(tournamentId: string, eligibilityProfileId: string | null): Promise<string | null>;
 }
 
 export interface TournamentTypeRepository {
@@ -29,37 +36,6 @@ export class ApiTournamentTypeRepository implements TournamentTypeRepository {
   }
 
   async update(_id: string, _changes: Partial<TournamentType>): Promise<TournamentType> {
-    throw new Error('common.featureNotAvailable');
-  }
-
-  async delete(_id: string): Promise<void> {
-    throw new Error('common.featureNotAvailable');
-  }
-
-  async getExistingKeys(): Promise<string[]> {
-    return [];
-  }
-}
-
-export interface TournamentEligibilityProfileRepository {
-  getAll(): Promise<TournamentEligibilityProfile[]>;
-  create(profile: Omit<TournamentEligibilityProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<TournamentEligibilityProfile>;
-  update(id: string, profile: Partial<TournamentEligibilityProfile>): Promise<TournamentEligibilityProfile>;
-  delete(id: string): Promise<void>;
-  getExistingKeys(): Promise<string[]>;
-}
-
-@Injectable({ providedIn: 'root' })
-export class ApiTournamentEligibilityProfileRepository implements TournamentEligibilityProfileRepository {
-  async getAll(): Promise<TournamentEligibilityProfile[]> {
-    return [];
-  }
-
-  async create(_profile: Omit<TournamentEligibilityProfile, 'id' | 'createdAt' | 'updatedAt'>): Promise<TournamentEligibilityProfile> {
-    throw new Error('common.featureNotAvailable');
-  }
-
-  async update(_id: string, _changes: Partial<TournamentEligibilityProfile>): Promise<TournamentEligibilityProfile> {
     throw new Error('common.featureNotAvailable');
   }
 

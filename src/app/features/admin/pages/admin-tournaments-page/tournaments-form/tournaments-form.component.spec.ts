@@ -36,7 +36,12 @@ function createFacadeStub() {
     getRuleSetDescription: () => '',
     getGenderLabel: () => 'Mixto',
     getCategoryName: () => '',
-    saveTournament: jasmine.createSpy('saveTournament').and.resolveTo(true)
+    saveTournament: jasmine.createSpy('saveTournament').and.resolveTo(true),
+    eligibilityProfiles: signal([
+      { id: 'ep-1', name: 'Damas', key: '', description: null, sortOrder: null, isActive: true, createdAt: '', updatedAt: '' },
+      { id: 'ep-2', name: 'Mixto', key: '', description: null, sortOrder: null, isActive: false, createdAt: '', updatedAt: '' }
+    ]),
+    loadEligibilityProfileId: jasmine.createSpy('loadEligibilityProfileId').and.resolveTo(null)
   };
 }
 
@@ -45,8 +50,9 @@ describe('TournamentsFormComponent public visibility', () => {
   let facade: ReturnType<typeof createFacadeStub>;
   let notification: jasmine.SpyObj<NotificationService>;
 
-  async function render(tournament: Tournament | null): Promise<void> {
+  async function render(tournament: Tournament | null, configure?: (stub: ReturnType<typeof createFacadeStub>) => void): Promise<void> {
     facade = createFacadeStub();
+    configure?.(facade);
     notification = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error']);
     await TestBed.configureTestingModule({
       imports: [TournamentsFormComponent],
@@ -172,5 +178,51 @@ describe('TournamentsFormComponent public visibility', () => {
 
     const payload = facade.saveTournament.calls.mostRecent().args[0];
     expect(payload.isPublic).toBeFalse();
+  });
+
+  describe('eligibility profile picker (R2b, L8)', () => {
+    it('lists the organization profiles, marks inactive ones and explains the inactive fallback', async () => {
+      await render(null);
+      const component = fixture.componentInstance;
+      expect(component.eligibilityProfileOptions().map(o => o.value)).toEqual(['ep-1', 'ep-2']);
+      expect(component.eligibilityProfileOptions()[0].label).toBe('Damas');
+      expect(component.eligibilityProfileOptions()[1].label).not.toBe('Mixto');
+      expect(host().querySelector('.tournaments-form__eligibility-profile zh-select')).toBeTruthy();
+      expect(facade.loadEligibilityProfileId).not.toHaveBeenCalled();
+    });
+
+    it('loads the assigned profile of an existing tournament', async () => {
+      await render({ ...baseTournament }, stub => stub.loadEligibilityProfileId.and.resolveTo('ep-1'));
+      expect(facade.loadEligibilityProfileId).toHaveBeenCalledOnceWith('t-1');
+      expect(fixture.componentInstance.eligibilityProfileControl.enabled).toBeTrue();
+      expect(fixture.componentInstance.eligibilityProfileControl.value).toBe('ep-1');
+    });
+
+    it('sends no profile change when the choice is untouched', async () => {
+      await render({ ...baseTournament }, stub => stub.loadEligibilityProfileId.and.resolveTo('ep-1'));
+      await submit();
+      expect(facade.saveTournament.calls.mostRecent().args[1]).toBeUndefined();
+    });
+
+    it('sends the new profile, or null to clear it, when the choice changed', async () => {
+      await render({ ...baseTournament }, stub => stub.loadEligibilityProfileId.and.resolveTo('ep-1'));
+      fixture.componentInstance.eligibilityProfileControl.setValue('ep-2');
+      await submit();
+      expect(facade.saveTournament.calls.mostRecent().args[1]).toBe('ep-2');
+
+      fixture.componentInstance.eligibilityProfileControl.setValue('');
+      await submit();
+      expect(facade.saveTournament.calls.mostRecent().args[1]).toBeNull();
+    });
+
+    it('keeps the picker disabled and never clears the assignment when it cannot be read', async () => {
+      await render({ ...baseTournament },
+        stub => stub.loadEligibilityProfileId.and.rejectWith(new Error('tournaments.errors.not_found')));
+      const component = fixture.componentInstance;
+      expect(component.eligibilityProfileControl.disabled).toBeTrue();
+      expect(component.eligibilityProfileLoadError()).toBe('tournaments.errors.not_found');
+      await submit();
+      expect(facade.saveTournament.calls.mostRecent().args[1]).toBeUndefined();
+    });
   });
 });

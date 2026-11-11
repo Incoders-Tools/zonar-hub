@@ -1,5 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, computed, effect, untracked } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -9,7 +8,7 @@ import { FilterPanelComponent, FilterField } from '../../../../shared/components
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { TournamentEligibilityProfile } from '../../../../core/models';
-import { AuthService } from '../../../../core/auth/auth.service';
+import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
 import { TournamentEligibilityProfilesFacadeService, TournamentEligibilityProfileFilters } from './tournament-eligibility-profiles-facade.service';
 import { TournamentEligibilityProfilesFormPanelComponent } from './tournament-eligibility-profiles-form-panel/tournament-eligibility-profiles-form-panel.component';
@@ -17,9 +16,7 @@ import { TournamentEligibilityProfilesFormPanelComponent } from './tournament-el
 interface TournamentEligibilityProfileRow extends Record<string, unknown> {
   id: string;
   name: string;
-  key: string;
   description: string | null;
-  sortOrder: number | null;
   isActive: boolean;
   slotCount: number;
   statusLabel: string;
@@ -30,7 +27,6 @@ interface TournamentEligibilityProfileRow extends Record<string, unknown> {
   selector: 'app-admin-tournament-eligibility-profiles-page',
   standalone: true,
   imports: [
-    CommonModule,
     MatIcon,
     TranslatePipe,
     ZhCollectionViewComponent,
@@ -56,10 +52,23 @@ interface TournamentEligibilityProfileRow extends Record<string, unknown> {
     ])
   ]
 })
-export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
+export class AdminTournamentEligibilityProfilesPageComponent {
   readonly facade = inject(TournamentEligibilityProfilesFacadeService);
-  private readonly auth = inject(AuthService);
-  readonly isSystemAdmin = this.auth.isSystemAdmin;
+  private readonly activeOrg = inject(ActiveOrganizationService);
+
+  constructor() {
+    // Single owner of loads: once on init and once per active organization change
+    effect(() => {
+      this.activeOrg.organizationChanged();
+      untracked(() => {
+        this.closeFormPanel();
+        this.showDeleteDialog.set(false);
+        this.showBulkDeleteDialog.set(false);
+        this.selectedProfiles.set([]);
+        void this.facade.load();
+      });
+    });
+  }
 
   readonly showFormPanel = signal(false);
   readonly showDeleteDialog = signal(false);
@@ -68,21 +77,12 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
   readonly deletingId = signal<string | null>(null);
   readonly selectedProfiles = signal<TournamentEligibilityProfileRow[]>([]);
 
-  readonly columns = computed<DataTableColumn[]>(() => {
-    const base: DataTableColumn[] = [
-      { key: 'name', labelKey: 'admin.tournament-eligibility-profiles.column.name', sortable: true },
-      { key: 'description', labelKey: 'admin.tournament-eligibility-profiles.column.description', sortable: false },
-      { key: 'slotCount', labelKey: 'admin.tournament-eligibility-profiles.column.slots', sortable: false },
-      { key: 'statusLabel', labelKey: 'admin.tournament-eligibility-profiles.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
-    ];
-    if (this.isSystemAdmin()) {
-      base.push(
-        { key: 'key', labelKey: 'admin.tournament-eligibility-profiles.column.key', sortable: true },
-        { key: 'sortOrder', labelKey: 'admin.tournament-eligibility-profiles.column.sortOrder', sortable: true }
-      );
-    }
-    return base;
-  });
+  readonly columns: DataTableColumn[] = [
+    { key: 'name', labelKey: 'admin.tournament-eligibility-profiles.column.name', sortable: true },
+    { key: 'description', labelKey: 'admin.tournament-eligibility-profiles.column.description' },
+    { key: 'slotCount', labelKey: 'admin.tournament-eligibility-profiles.column.slots' },
+    { key: 'statusLabel', labelKey: 'admin.tournament-eligibility-profiles.column.status', renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' }
+  ];
 
   readonly profileRowActions = [
     { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
@@ -104,9 +104,7 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
     this.facade.filteredProfiles().map(p => ({
       id: p.id,
       name: p.name,
-      key: p.key,
       description: p.description,
-      sortOrder: p.sortOrder,
       isActive: p.isActive,
       slotCount: p.slots?.length ?? 0,
       statusLabel: p.isActive ? 'admin.tournament-eligibility-profiles.status.active' : 'admin.tournament-eligibility-profiles.status.inactive',
@@ -115,10 +113,6 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
   );
 
   readonly hasSelection = computed(() => this.selectedProfiles().length > 0);
-
-  ngOnInit(): void {
-    this.facade.load();
-  }
 
   onFiltersApplied(filters: Record<string, string>): void {
     const mapped: TournamentEligibilityProfileFilters = {
@@ -203,9 +197,11 @@ export class AdminTournamentEligibilityProfilesPageComponent implements OnInit {
   }
 
   readonly helpSections: HelpSection[] = [
-    { titleKey: 'admin.tournament-eligibility-profiles.help.section1Title', contentKey: 'admin.tournament-eligibility-profiles.help.section1Description' },
-    { titleKey: 'admin.tournament-eligibility-profiles.help.section2Title', contentKey: 'admin.tournament-eligibility-profiles.help.section2Description' },
-    { titleKey: 'admin.tournament-eligibility-profiles.help.section3Title', contentKey: 'admin.tournament-eligibility-profiles.help.section3Description' }
+    { titleKey: 'admin.tournament-eligibility-profiles.help.section1Title', contentKey: 'admin.tournament-eligibility-profiles.help.section1Text' },
+    { titleKey: 'admin.tournament-eligibility-profiles.help.section2Title', contentKey: 'admin.tournament-eligibility-profiles.help.section2Text' },
+    { titleKey: 'admin.tournament-eligibility-profiles.help.section3Title', contentKey: 'admin.tournament-eligibility-profiles.help.section3Text' },
+    { titleKey: 'admin.tournament-eligibility-profiles.help.inactiveTitle', contentKey: 'admin.tournament-eligibility-profiles.help.inactiveText' },
+    { titleKey: 'admin.tournament-eligibility-profiles.help.deleteTitle', contentKey: 'admin.tournament-eligibility-profiles.help.deleteText' }
   ];
 
   onSorted(event: { key: string; direction: 'asc' | 'desc' }): void {

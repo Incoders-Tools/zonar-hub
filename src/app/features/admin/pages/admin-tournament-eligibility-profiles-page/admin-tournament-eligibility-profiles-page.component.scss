@@ -77,6 +77,12 @@
       color: var(--zh-text-primary);
     }
   }
+
+  &__load-error {
+    color: var(--zh-danger);
+    font-size: var(--zh-font-size-sm);
+    margin: 0 0 var(--zh-space-sm);
+  }
 }
 
 @media (max-width: 599px) {
