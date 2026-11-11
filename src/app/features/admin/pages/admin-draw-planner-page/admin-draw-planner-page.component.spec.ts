@@ -6,9 +6,11 @@ import { BehaviorSubject } from 'rxjs';
 import { AdminDrawPlannerPageComponent } from './admin-draw-planner-page.component';
 import { ApiTournamentDrawRepository } from '../../../../core/repositories/api/api-tournament-draw.repository';
 import { ApiTournamentAdminRepository } from '../../../../core/repositories/api/api-tournament-admin.repository';
+import { ApiRegistrationRepository } from '../../../../core/repositories/api/api-registration.repository';
+import { I18nService } from '../../../../core/i18n/i18n.service';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { Tournament, TournamentDraw, TournamentDrawRequest } from '../../../../core/models';
+import { DrawParticipant, Tournament, TournamentDraw, TournamentDrawRequest } from '../../../../core/models';
 import {
   buildDrawParticipants,
   buildEightPairKnockoutDraw,
@@ -57,6 +59,7 @@ describe('AdminDrawPlannerPageComponent', () => {
   let component: AdminDrawPlannerPageComponent;
   let element: HTMLElement;
   let drawRepo: jasmine.SpyObj<ApiTournamentDrawRepository>;
+  let registrationRepo: jasmine.SpyObj<ApiRegistrationRepository>;
   let notifications: jasmine.SpyObj<NotificationService>;
   let params: BehaviorSubject<ParamMap>;
   let tournamentService: { tournaments: ReturnType<typeof signal<Tournament[]>>; loading: ReturnType<typeof signal<boolean>>; loadTournaments: jasmine.Spy };
@@ -66,6 +69,8 @@ describe('AdminDrawPlannerPageComponent', () => {
       ['get', 'preview', 'saveDraft', 'publish', 'unpublish', 'delete', 'saveMatchResult', 'getCourts']);
     drawRepo.get.and.resolveTo(null);
     drawRepo.getCourts.and.resolveTo([{ id: 'court-1', name: 'Central' }, { id: 'court-2', name: 'Lateral' }]);
+    registrationRepo = jasmine.createSpyObj<ApiRegistrationRepository>('ApiRegistrationRepository', ['getDrawParticipants']);
+    registrationRepo.getDrawParticipants.and.resolveTo([]);
     notifications = jasmine.createSpyObj<NotificationService>('NotificationService', ['success', 'error', 'warning', 'info']);
     params = new BehaviorSubject(convertToParamMap({ tournamentId: 't-1' }));
     tournamentService = {
@@ -80,6 +85,7 @@ describe('AdminDrawPlannerPageComponent', () => {
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { paramMap: params.asObservable() } },
         { provide: ApiTournamentDrawRepository, useValue: drawRepo },
+        { provide: ApiRegistrationRepository, useValue: registrationRepo },
         { provide: ApiTournamentAdminRepository, useValue: { getById: jasmine.createSpy('getById').and.resolveTo(tournament) } },
         { provide: TournamentService, useValue: tournamentService },
         { provide: NotificationService, useValue: notifications }
@@ -409,6 +415,118 @@ describe('AdminDrawPlannerPageComponent', () => {
     await click('preview');
 
     expect(lastRequest(drawRepo.preview).participants.map(participant => participant.id)).toEqual(['x0', 'x1']);
+  });
+
+  describe('import confirmed registrations (S4)', () => {
+    const confirmed: DrawParticipant[] = [
+      { id: 'r-1', displayName: 'Ana Gil / Bea Paz', members: ['Ana Gil', 'Bea Paz'], seedRank: null, separationKey: 'Norte' },
+      { id: 'r-2', displayName: 'Caro Ruiz / Dani Sosa', members: ['Caro Ruiz', 'Dani Sosa'], seedRank: null, separationKey: null }
+    ];
+
+    function translated(key: string): string {
+      return TestBed.inject(I18nService).translate(key);
+    }
+
+    it('fills an empty list at once with the confirmed registrations, keeping their ids', async () => {
+      registrationRepo.getDrawParticipants.and.resolveTo(confirmed);
+      drawRepo.preview.and.resolveTo(draftDraw());
+      await render();
+
+      await click('import-confirmed');
+
+      expect(registrationRepo.getDrawParticipants).toHaveBeenCalledOnceWith('t-1');
+      expect(element.querySelector('app-confirm-dialog')).toBeNull();
+      expect(component.participants.length).toBe(2);
+      expect(component.participants.at(0).value).toEqual(jasmine.objectContaining({
+        member1: 'Ana Gil', member2: 'Bea Paz', displayName: '', separationKey: 'Norte', seedRank: null
+      }));
+      expect(notifications.success).toHaveBeenCalledWith(translated('adminDraw.import.done').replace('{count}', '2'));
+
+      await click('preview');
+      expect(lastRequest(drawRepo.preview).participants.map(p => [p.id, p.displayName])).toEqual([
+        ['r-1', 'Ana Gil / Bea Paz'], ['r-2', 'Caro Ruiz / Dani Sosa']
+      ]);
+    });
+
+    it('asks before replacing existing rows and keeps them when cancelled', async () => {
+      registrationRepo.getDrawParticipants.and.resolveTo(confirmed);
+      await render();
+      fillPairs([['Eva', 'Flor'], ['Gala', 'Hebe'], ['Iris', 'Juana']]);
+
+      await click('import-confirmed');
+      expect(element.querySelector('app-confirm-dialog')).not.toBeNull();
+      expect(component.participants.length).toBe(3);
+
+      (element.querySelector('app-confirm-dialog .confirm-dialog__cancel') as HTMLButtonElement).click();
+      await settle(fixture);
+      expect(element.querySelector('app-confirm-dialog')).toBeNull();
+      expect(component.participants.length).toBe(3);
+      expect(component.participants.at(0).value.member1).toBe('Eva');
+      expect(notifications.success).not.toHaveBeenCalled();
+    });
+
+    it('replaces the existing rows after confirmation', async () => {
+      registrationRepo.getDrawParticipants.and.resolveTo(confirmed);
+      await render();
+      fillPairs([['Eva', 'Flor'], ['Gala', 'Hebe'], ['Iris', 'Juana']]);
+
+      await click('import-confirmed');
+      (element.querySelector('app-confirm-dialog app-async-button button') as HTMLButtonElement).click();
+      await settle(fixture);
+
+      expect(element.querySelector('app-confirm-dialog')).toBeNull();
+      expect(component.participants.length).toBe(2);
+      expect(component.participants.at(1).value.member1).toBe('Caro Ruiz');
+      expect(notifications.success).toHaveBeenCalledWith(translated('adminDraw.import.done').replace('{count}', '2'));
+    });
+
+    it('explains that there are no confirmed registrations yet and keeps the rows', async () => {
+      await render();
+      fillPairs([['Eva', 'Flor'], ['Gala', 'Hebe']]);
+
+      await click('import-confirmed');
+
+      expect(text('[data-state="import-empty"]')).toBe(translated('adminDraw.import.empty'));
+      expect(element.querySelector('app-confirm-dialog')).toBeNull();
+      expect(component.participants.length).toBe(2);
+    });
+
+    it('shows the translated error and keeps the rows when the registrations cannot be read', async () => {
+      registrationRepo.getDrawParticipants.and.rejectWith(new Error('tournaments.errors.forbidden'));
+      await render();
+      fillPairs([['Eva', 'Flor'], ['Gala', 'Hebe']]);
+
+      await click('import-confirmed');
+
+      expect(text('[data-state="import-error"]')).toBe(translated('tournaments.errors.forbidden'));
+      expect(component.participants.length).toBe(2);
+      expect(element.querySelector('app-confirm-dialog')).toBeNull();
+    });
+
+    it('shows the loading state while the registrations are read', async () => {
+      let resolve!: (participants: DrawParticipant[]) => void;
+      registrationRepo.getDrawParticipants.and.returnValue(new Promise(r => (resolve = r)));
+      await render();
+
+      await click('import-confirmed');
+      expect(element.querySelector('[data-state="import-loading"]')).not.toBeNull();
+      expect(action('import-confirmed')?.disabled).toBeTrue();
+
+      resolve(confirmed);
+      await settle(fixture);
+      expect(element.querySelector('[data-state="import-loading"]')).toBeNull();
+      expect(component.participants.length).toBe(2);
+    });
+
+    it('is locked when the draw has results', async () => {
+      drawRepo.get.and.resolveTo(draftWithResults());
+      await render();
+
+      expect(action('import-confirmed')?.disabled).toBeTrue();
+      component.importConfirmed();
+      await settle(fixture);
+      expect(registrationRepo.getDrawParticipants).not.toHaveBeenCalled();
+    });
   });
 
   describe('result entry (F3)', () => {

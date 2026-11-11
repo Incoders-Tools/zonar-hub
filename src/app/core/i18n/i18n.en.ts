@@ -3011,6 +3011,7 @@ export const EN_TRANSLATIONS: TranslationDictionary = {
   'adminDraw.import.title': 'Confirmed registrations',
   'adminDraw.import.hint': 'Brings the tournament\'s confirmed registrations in as participants. It replaces the current list: only confirmed registrations go into the draw.',
   'adminDraw.import.action': 'Import confirmed registrations',
+  'adminDraw.import.loading': 'Loading the confirmed registrations...',
   'adminDraw.import.empty': 'The tournament has no confirmed registrations to import.',
   'adminDraw.import.done': '{count} confirmed participants imported',
   'adminDraw.import.confirm.title': 'Replace the participants',

@@ -3012,6 +3012,7 @@ export const PT_TRANSLATIONS: TranslationDictionary = {
   'adminDraw.import.title': 'Inscrições confirmadas',
   'adminDraw.import.hint': 'Traz as inscrições confirmadas do torneio como participantes. Substitui a lista atual: só as confirmadas vão para a chave.',
   'adminDraw.import.action': 'Importar inscrições confirmadas',
+  'adminDraw.import.loading': 'Carregando as inscrições confirmadas...',
   'adminDraw.import.empty': 'O torneio não tem inscrições confirmadas para importar.',
   'adminDraw.import.done': '{count} participantes confirmados importados',
   'adminDraw.import.confirm.title': 'Substituir os participantes',

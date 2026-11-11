@@ -185,6 +185,29 @@
           </section>
         </form>
 
+        <!-- Confirmed registrations (S4): only confirmed ones reach the draw -->
+        <section class="draw-admin__section draw-admin__import" aria-labelledby="draw-admin-import-title">
+          <h3 class="draw-admin__section-title" id="draw-admin-import-title">{{ 'adminDraw.import.title' | t }}</h3>
+          <p class="draw-admin__field-hint">{{ 'adminDraw.import.hint' | t }}</p>
+          <div class="draw-admin__paste-actions">
+            <app-async-button data-action="import-confirmed" variant="secondary" [loading]="importStatus() === 'loading'"
+              [disabled]="hasResults() || importStatus() === 'loading'" (clicked)="importConfirmed()">
+              {{ 'adminDraw.import.action' | t }}
+            </app-async-button>
+          </div>
+          @switch (importStatus()) {
+            @case ('loading') {
+              <p class="draw-admin__field-hint" role="status" data-state="import-loading">{{ 'adminDraw.import.loading' | t }}</p>
+            }
+            @case ('empty') {
+              <p class="draw-admin__hint" role="status" data-state="import-empty">{{ 'adminDraw.import.empty' | t }}</p>
+            }
+            @case ('error') {
+              <p class="draw-admin__error" role="alert" data-state="import-error">{{ (importErrorKey() ?? 'common.unexpectedError') | t }}</p>
+            }
+          }
+        </section>
+
         <!-- Paste a list -->
         <section class="draw-admin__section draw-admin__paste" aria-labelledby="draw-admin-paste-title">
           <h3 class="draw-admin__section-title" id="draw-admin-paste-title">{{ 'adminDraw.paste.title' | t }}</h3>
@@ -367,6 +390,17 @@
         (cleared)="clearResult($event)"
         (cancelled)="closeResult()" />
     }
+  }
+
+  @if (pendingImport()) {
+    <app-confirm-dialog
+      titleKey="adminDraw.import.confirm.title"
+      messageKey="adminDraw.import.confirm.message"
+      warningKey="adminDraw.import.confirm.warning"
+      confirmLabelKey="adminDraw.import.confirm.action"
+      confirmVariant="danger"
+      (confirmed)="confirmImport()"
+      (cancelled)="cancelImport()" />
   }
 
   @if (showDeleteConfirm()) {

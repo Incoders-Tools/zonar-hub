@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Admin draw page (D9) of one tournament: the organizer enters the participants (table rows or a pasted list), chooses the format, options and randomization, previews the draw, saves it as a draft, publishes or unpublishes it, deletes it and enters match results (F3). It replaces the former in-memory zone planner; the API is the source of truth.
+Admin draw page (D9) of one tournament: the organizer enters the participants (table rows, a pasted list or the confirmed registrations), chooses the format, options and randomization, previews the draw, saves it as a draft, publishes or unpublishes it, deletes it and enters match results (F3). It replaces the former in-memory zone planner; the API is the source of truth.
 
 ## Feature context and business intent
 
 - One draw per tournament (D1): `draft` (private, editable) → `published` (shown on the public tournament page when the tournament is public).
 - A draw whose matches have started or been decided can no longer be regenerated, replaced (save draft) or deleted. Result entry per match: see "Result entry" below.
-- Participants are entered manually (S4); registrations will feed them later.
+- Only confirmed registrations reach the draw (S4): "Import confirmed registrations" fills the participants from them (see "Import confirmed registrations" below). Rows can still be typed or pasted by hand.
 
 ## Routes
 
@@ -25,8 +25,8 @@ None (route-level container). The tournament id comes from the `tournamentId` ro
 
 ## Dependencies
 
-- `DrawPlannerService` (provided by the page): tournament + stored draw + unsaved preview state; calls `ApiTournamentDrawRepository` (D5 endpoints) and `ApiTournamentAdminRepository.getById`.
-- `draw-participant-entries.ts` (pure): paste parser, participant validation, request mapping, seed validation.
+- `DrawPlannerService` (provided by the page): tournament + stored draw + unsaved preview state; calls `ApiTournamentDrawRepository` (D5 endpoints), `ApiTournamentAdminRepository.getById` and `ApiRegistrationRepository.getDrawParticipants` (confirmed registrations).
+- `draw-participant-entries.ts` (pure): paste parser, participant validation, draw participants to entries (`drawEntriesFromParticipants`, used for a loaded draw and the import), request mapping, seed validation.
 - `match-result-rules.ts` (pure): result availability (bye / pending participants), lock rule and score rules used by result entry.
 - `MatchResultDialogComponent` (`./match-result-dialog/`): the result dialog.
 - `TournamentService` (picker list), `NotificationService` (toasts), `I18nService`.
@@ -61,6 +61,16 @@ One participant per line; empty lines are ignored.
 
 "Check list" shows the parsed entries or the issues by line ("Line 3: …"); "Replace participants" / "Add to the list" stay disabled until the list is valid. The syntax is also in the page help.
 
+## Import confirmed registrations
+
+`GET /api/admin/tournaments/{tournamentId}/registrations/draw-participants` returns the confirmed registrations in creation order as `DrawParticipant` (D5): `id` = registration id, `members` in slot order, `displayName` joined with " / ", `separationKey` = club, `seedRank` empty.
+
+- **Replace, not merge.** The import replaces the participant list. S4 says only confirmed registrations go into the draw, so the list must match them exactly: a merge would duplicate a pair already typed by hand (different id, flagged as a duplicate name) and would keep a pair whose registration was cancelled since the last import. Rows can still be added or edited afterwards.
+- With an empty list the import applies at once. With rows already in the list, the shared `app-confirm-dialog` asks first (`adminDraw.import.confirm.*`); cancelling keeps the list untouched.
+- The registration ids become the draw participant ids, so a saved draw keeps them and a later import of the same registrations keeps the same ids.
+- States: loading (`data-state="import-loading"`, async-button spinner), empty (`data-state="import-empty"`: no confirmed registrations yet), error (`data-state="import-error"`, translated `registrations.errors.*` / `common.*` key). Success toast `adminDraw.import.done` with the count.
+- Locked like the paste when the draw has results. Nothing is saved until the organizer saves the draft.
+
 ## Actions and disabled rules
 
 | Action | Enabled when | Effect |
@@ -71,6 +81,7 @@ One participant per line; empty lines are ignored.
 | Publish | draw saved as `draft` and no unsaved preview | `POST publish`. |
 | Unpublish | draw `published` | `POST unpublish`; results are kept. |
 | Delete | draw `draft` without results | Confirm dialog, then `DELETE`; the participant list stays in the form. |
+| Import confirmed registrations | no results, no running import | Reads the confirmed registrations; replaces the list (confirm dialog when it has rows). |
 
 Every action uses `app-async-button` (loading + duplicate-click guard). API failures show the translated key from `drawErrorKey` as an error toast.
 
@@ -93,7 +104,7 @@ Concurrent modification (D12): when save draft, publish, unpublish, delete or a 
 
 ## Business help
 
-Inline hints (`data-hint`): result entry (or save first on a preview), results lock, fix participants, saving a published draw returns it to draft, preview vs save vs regenerate, save before publish, unpublish before delete, a draw with results cannot be deleted, and public visibility (public tournament → shown on its public page; private tournament → not public until the tournament is public). The help button explains the steps, the paste syntax, states, results, result entry (opening a match, set rules, super tie-break, statuses, the lock rule, clearing, the court picker, concurrent changes) and visibility (clubs are never shown publicly).
+Inline hints (`data-hint`): result entry (or save first on a preview), results lock, fix participants, saving a published draw returns it to draft, preview vs save vs regenerate, save before publish, unpublish before delete, a draw with results cannot be deleted, and public visibility (public tournament → shown on its public page; private tournament → not public until the tournament is public). The help button explains the steps, the paste syntax, the import of confirmed registrations, states, results, result entry (opening a match, set rules, super tie-break, statuses, the lock rule, clearing, the court picker, concurrent changes) and visibility (clubs are never shown publicly).
 
 ## Accessibility notes
 
@@ -103,7 +114,7 @@ Inline hints (`data-hint`): result entry (or save first on a preview), results l
 
 ## i18n notes
 
-Keys under `adminDraw.*` (page, including `adminDraw.resultDialog.*` and `adminDraw.help.resultEntry.*`) and `draws.errors.*` (API problem codes: engine, `invalid_seed`, `not_draft`, `concurrent_modification`, and `draws.errors.results.*` including `invalid_court`), plus `admin.tournaments.actions.draw`, in es, en and pt. Messages with counts use `{count}`, `{min}`, `{max}` and `{n}` placeholders interpolated in the component.
+Keys under `adminDraw.*` (page, including `adminDraw.import.*` and `adminDraw.help.import.*`, `adminDraw.resultDialog.*` and `adminDraw.help.resultEntry.*`) and `draws.errors.*` (API problem codes: engine, `invalid_seed`, `not_draft`, `concurrent_modification`, and `draws.errors.results.*` including `invalid_court`), plus `admin.tournaments.actions.draw`, in es, en and pt. Messages with counts use `{count}`, `{min}`, `{max}` and `{n}` placeholders interpolated in the component.
 
 ## Theming notes
 

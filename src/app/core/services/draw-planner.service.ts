@@ -1,7 +1,16 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { DrawCourt, Tournament, TournamentDraw, TournamentDrawMatchResultRequest, TournamentDrawRequest, tournamentDrawHasResults } from '../models';
+import {
+  DrawCourt,
+  DrawParticipant,
+  Tournament,
+  TournamentDraw,
+  TournamentDrawMatchResultRequest,
+  TournamentDrawRequest,
+  tournamentDrawHasResults
+} from '../models';
 import { ApiTournamentAdminRepository } from '../repositories/api/api-tournament-admin.repository';
 import { ApiTournamentDrawRepository } from '../repositories/api/api-tournament-draw.repository';
+import { ApiRegistrationRepository } from '../repositories/api/api-registration.repository';
 
 /** Court list of the result dialog: not requested yet, loading, loaded (possibly empty) or failed. */
 export type DrawCourtsStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -11,6 +20,7 @@ export type DrawCourtsStatus = 'idle' | 'loading' | 'ready' | 'error';
  * published) and the last unsaved preview. Provided by the page, so each visit starts clean.
  *
  * The courts eligible for results (D13) load on first use and stay cached for the tournament (`loadCourts`).
+ * The confirmed registrations are read as draw participants on demand (`loadConfirmedParticipants`, S4).
  *
  * Write methods update the state and reject with an `Error` whose message is a translation key; the page turns it
  * into a notification.
@@ -19,6 +29,7 @@ export type DrawCourtsStatus = 'idle' | 'loading' | 'ready' | 'error';
 export class DrawPlannerService {
   private readonly drawRepository = inject(ApiTournamentDrawRepository);
   private readonly tournamentRepository = inject(ApiTournamentAdminRepository);
+  private readonly registrationRepository = inject(ApiRegistrationRepository);
 
   private readonly tournamentIdState = signal<string | null>(null);
   private readonly tournamentState = signal<Tournament | null>(null);
@@ -93,6 +104,11 @@ export class DrawPlannerService {
       this.courtsState.set([]);
       this.courtsStatusState.set('error');
     }
+  }
+
+  /** Confirmed registrations of the tournament in creation order (D5: id = registration id, members in slot order). */
+  async loadConfirmedParticipants(): Promise<DrawParticipant[]> {
+    return this.registrationRepository.getDrawParticipants(this.requireTournamentId());
   }
 
   async generatePreview(request: TournamentDrawRequest): Promise<TournamentDraw> {

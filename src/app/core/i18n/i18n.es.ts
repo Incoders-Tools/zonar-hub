@@ -3033,6 +3033,7 @@ export const ES_TRANSLATIONS: TranslationDictionary = {
   'adminDraw.import.title': 'Inscripciones confirmadas',
   'adminDraw.import.hint': 'Trae las inscripciones confirmadas del torneo como participantes. Reemplaza la lista actual: solo las confirmadas pasan a la grilla.',
   'adminDraw.import.action': 'Importar inscripciones confirmadas',
+  'adminDraw.import.loading': 'Cargando las inscripciones confirmadas...',
   'adminDraw.import.empty': 'El torneo no tiene inscripciones confirmadas para importar.',
   'adminDraw.import.done': 'Se importaron {count} participantes confirmados',
   'adminDraw.import.confirm.title': 'Reemplazar los participantes',
