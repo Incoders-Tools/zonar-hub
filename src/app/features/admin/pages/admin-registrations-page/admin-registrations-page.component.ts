@@ -1,33 +1,69 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, effect, viewChild } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy, effect, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MatIcon } from '@angular/material/icon';
 import { DataTableColumn } from '../../../../shared/components/data-table/data-table.component';
-import { ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
+import { ZhCollectionRowAction, ZhCollectionViewComponent } from '../../../../shared/components/zh-collection-view/zh-collection-view.component';
 import { FilterPanelComponent, FilterField, SortOption } from '../../../../shared/components/filter-panel/filter-panel.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AsyncButtonComponent } from '../../../../shared/components/async-button/async-button.component';
 import { HelpButtonComponent, HelpSection } from '../../../../shared/components/help-button/help-button.component';
+import { ZhSelectComponent, ZhSelectOption } from '../../../../shared/components/zh-select/zh-select.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
-import { RegistrationFacadeService, RegistrationFilters } from './registration-facade.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { RegistrationFacadeService } from './registration-facade.service';
 import { RegistrationFormPanelComponent } from './registration-form-panel/registration-form-panel.component';
-import { Registration, RegistrationToken } from '../../../../core/models';
+import {
+  RegistrationPaymentStatus,
+  TournamentRegistration,
+  TournamentRegistrationStatus,
+  allowedManualPayments,
+  allowedRegistrationTransitions
+} from '../../../../core/models';
 import { TournamentService } from '../../../../core/services/tournament.service';
 import { SocialSharePreviewComponent, SocialSharePayload } from '../../../../shared/components/social-share-preview/social-share-preview.component';
 import { ChatbotBubbleComponent, ChatbotMode } from '../../../../shared/components/chatbot-bubble/chatbot-bubble.component';
 
 export type AdminRegistrationsTab = 'list' | 'agent' | 'importer' | 'tokens';
 
+/** Row actions of the list: the D2 transitions, the manual payment marks, the explanation of a full tournament and share. */
+export type RegistrationRowAction =
+  'confirm' | 'confirmBlocked' | 'waitlist' | 'reject' | 'cancel' | 'markPaid' | 'markRefunded' | 'share';
+
+/** Actions that cannot be undone from this screen; they run only after the confirm-dialog. */
+export type DestructiveRegistrationAction = 'reject' | 'cancel' | 'markRefunded';
+
+const DESTRUCTIVE_ACTIONS: ReadonlySet<string> = new Set<DestructiveRegistrationAction>(['reject', 'cancel', 'markRefunded']);
+
+const STATUSES: TournamentRegistrationStatus[] = ['pending', 'confirmed', 'waitlisted', 'rejected', 'cancelled'];
+const PAYMENT_STATUSES: RegistrationPaymentStatus[] = ['notRequired', 'pending', 'paid', 'refunded', 'failed'];
+
+/** Shared pill variants (`data-table` pills and `.zh-list-card__status--*`). */
+const STATUS_VARIANTS: Record<TournamentRegistrationStatus, string> = {
+  pending: 'warning', confirmed: 'active', waitlisted: 'info', rejected: 'danger', cancelled: 'inactive'
+};
+const PAYMENT_VARIANTS: Record<RegistrationPaymentStatus, string> = {
+  notRequired: 'inactive', pending: 'warning', paid: 'active', refunded: 'info', failed: 'danger'
+};
+
 interface RegistrationRow extends Record<string, unknown> {
   id: string;
-  tournamentName: string;
   participantsDisplay: string;
-  participantCount: number;
-  statusId: string;
+  clubs: string;
+  status: TournamentRegistrationStatus;
   statusLabel: string;
-  source: string;
-  registeredAt: string;
+  statusVariant: string;
+  paymentStatus: RegistrationPaymentStatus;
+  paymentLabel: string;
+  paymentVariant: string;
+  sourceLabel: string;
+  contactEmail: string;
+  notes: string;
+  createdAt: string;
 }
 
 interface TokenRow extends Record<string, unknown> {
@@ -42,10 +78,21 @@ interface TokenRow extends Record<string, unknown> {
   createdAt: string;
 }
 
+function interpolate(template: string, params: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => (name in params ? String(params[name]) : match));
+}
+
+/**
+ * Registrations of one tournament (S4): pick the tournament, read its places (confirmed over `maxPairs`, pending,
+ * waiting list), filter by status and payment, and move each registration through the transitions D2 allows for its
+ * status. Reject, cancel and refund go through the confirm-dialog; confirm is replaced by an explanation while the
+ * places are taken. New registrations are created from organization players in the inline form panel.
+ */
 @Component({
   selector: 'app-admin-registrations-page',
   standalone: true,
   imports: [
+    ReactiveFormsModule,
     TranslatePipe,
     MatIcon,
     ZhCollectionViewComponent,
@@ -53,6 +100,8 @@ interface TokenRow extends Record<string, unknown> {
     ConfirmDialogComponent,
     AsyncButtonComponent,
     HelpButtonComponent,
+    ZhSelectComponent,
+    EmptyStateComponent,
     RegistrationFormPanelComponent,
     SocialSharePreviewComponent,
     ChatbotBubbleComponent
@@ -73,38 +122,62 @@ interface TokenRow extends Record<string, unknown> {
     ])
   ]
 })
-export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
+export class AdminRegistrationsPageComponent implements OnDestroy {
   readonly facade = inject(RegistrationFacadeService);
   private readonly tournamentService = inject(TournamentService);
   private readonly activeOrg = inject(ActiveOrganizationService);
+  private readonly notifications = inject(NotificationService);
   private readonly i18n = inject(I18nService);
 
+  /** Tournament whose registrations are shown. */
+  readonly tournamentControl = new FormControl('', { nonNullable: true });
+
   constructor() {
-    // Reload data and reset transient UI whenever the active organization changes
+    this.tournamentControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(id => {
+      this.closeForm();
+      this.pendingAction.set(null);
+      void this.facade.selectTournament(id || null);
+    });
+
+    // The tournament belongs to the organization: a new organization starts without a selection
     effect(() => {
       this.activeOrg.organizationChanged();
-      this.showFormPanel.set(false);
-      this.showDeleteDialog.set(false);
-      this.editingRegistration.set(null);
-      void this.facade.load();
+      untracked(() => {
+        this.closeForm();
+        this.pendingAction.set(null);
+        if (this.tournamentService.tournaments().length === 0) void this.tournamentService.loadTournaments();
+        if (this.tournamentControl.value) {
+          this.tournamentControl.setValue('');
+        } else {
+          void this.facade.selectTournament(null);
+        }
+      });
     });
   }
 
-  /** Dynamic tournament options for the filter panel */
+  /** Tournaments of the active organization (every loaded tournament without one). */
+  readonly tournaments = computed(() => {
+    const activeOrgId = this.activeOrg.activeOrganizationId();
+    const all = this.tournamentService.tournaments();
+    return activeOrgId ? all.filter(t => t.organizationId === activeOrgId) : all;
+  });
+
+  readonly tournamentOptions = computed<ZhSelectOption[]>(() =>
+    this.tournaments().map(t => ({ value: t.id, label: t.name })));
+
+  /** Options of the importer tab's tournament selector. */
   readonly tournamentFilterOptions = computed(() =>
-    this.tournamentService.tournaments().map(t => ({
-      value: t.id,
-      labelKey: t.name
-    }))
-  );
+    this.tournaments().map(t => ({ value: t.id, labelKey: t.name })));
+
+  readonly selectedTournament = computed(() => {
+    const id = this.facade.tournamentId();
+    return id ? this.tournaments().find(t => t.id === id) ?? null : null;
+  });
 
   readonly activeTab = signal<AdminRegistrationsTab>('list');
-  readonly showDeleteDialog = signal(false);
-  readonly deletingId = signal<string | null>(null);
-  readonly selectedRegistrations = signal<RegistrationRow[]>([]);
   readonly showFormPanel = signal(false);
-  readonly editingRegistration = signal<Registration | null>(null);
-  readonly highlightedRowId = signal<string | null>(null);
+  /** Destructive action waiting for the confirm-dialog. */
+  readonly pendingAction = signal<{ action: DestructiveRegistrationAction; registrationId: string } | null>(null);
   readonly sharePayload = signal<SocialSharePayload | null>(null);
 
   // Importer state
@@ -123,6 +196,10 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
 
   readonly helpSections: HelpSection[] = [
     { titleKey: 'registrations.help.section1Title', contentKey: 'registrations.help.section1Text' },
+    { titleKey: 'registrations.help.statusesTitle', contentKey: 'registrations.help.statusesText' },
+    { titleKey: 'registrations.help.capacityTitle', contentKey: 'registrations.help.capacityText' },
+    { titleKey: 'registrations.help.paymentTitle', contentKey: 'registrations.help.paymentText' },
+    { titleKey: 'registrations.help.concurrencyTitle', contentKey: 'registrations.help.concurrencyText' },
     { titleKey: 'registrations.help.section2Title', contentKey: 'registrations.help.section2Text' },
     { titleKey: 'registrations.help.section3Title', items: [
       'registrations.help.section3Item1',
@@ -133,77 +210,99 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
 
   // List tab
   readonly listColumns: DataTableColumn[] = [
-    { key: 'tournamentName', labelKey: 'registrations.column.tournament', sortable: true },
-    { key: 'participantsDisplay', labelKey: 'registrations.column.participants', sortable: false },
-    { key: 'statusLabel', labelKey: 'registrations.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusId' },
-    { key: 'source', labelKey: 'registrations.column.source', sortable: true, translate: true },
-    { key: 'registeredAt', labelKey: 'registrations.column.registeredAt', sortable: true, renderType: 'date' }
+    { key: 'participantsDisplay', labelKey: 'registrations.column.participants', sortable: true },
+    { key: 'statusLabel', labelKey: 'registrations.column.status', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'statusVariant' },
+    { key: 'paymentLabel', labelKey: 'registrations.column.payment', sortable: true, renderType: 'pill', translate: true, pillVariantKey: 'paymentVariant' },
+    { key: 'sourceLabel', labelKey: 'registrations.column.source', sortable: true, translate: true },
+    { key: 'createdAt', labelKey: 'registrations.column.registeredAt', sortable: true, renderType: 'date' }
   ];
 
-  readonly listRowActions = [
-    { icon: 'edit', labelKey: 'common.edit', action: 'edit', variant: 'primary' as const },
-    { icon: 'share', labelKey: 'share.label', action: 'share', variant: 'default' as const },
-    { icon: 'delete', labelKey: 'common.delete', action: 'delete', variant: 'danger' as const }
-  ];
+  private readonly actions: Record<RegistrationRowAction, ZhCollectionRowAction> = {
+    confirm: { icon: 'check_circle', labelKey: 'registrations.action.confirm', action: 'confirm', variant: 'primary' },
+    confirmBlocked: { icon: 'block', labelKey: 'registrations.action.confirmFull', action: 'confirmBlocked', variant: 'default' },
+    waitlist: { icon: 'hourglass_top', labelKey: 'registrations.action.waitlist', action: 'waitlist', variant: 'default' },
+    reject: { icon: 'thumb_down', labelKey: 'registrations.action.reject', action: 'reject', variant: 'danger' },
+    cancel: { icon: 'cancel', labelKey: 'registrations.action.cancel', action: 'cancel', variant: 'danger' },
+    markPaid: { icon: 'payments', labelKey: 'registrations.action.markPaid', action: 'markPaid', variant: 'default' },
+    markRefunded: { icon: 'undo', labelKey: 'registrations.action.markRefunded', action: 'markRefunded', variant: 'warn' },
+    share: { icon: 'share', labelKey: 'share.label', action: 'share', variant: 'default' }
+  };
 
-  readonly filterFields = computed<FilterField[]>(() => [
+  /** Every action a row may show; `listRowActionsFilter` narrows them to the row's status and payment. */
+  readonly listRowActions = Object.values(this.actions);
+
+  /** D2 transitions of the status (confirm becomes its explanation while full), then the D5 payment marks. */
+  readonly listRowActionsFilter = (row: RegistrationRow): ZhCollectionRowAction[] => {
+    const transitions = allowedRegistrationTransitions(row.status).map(t =>
+      t === 'confirm' && this.facade.capacityFull() ? this.actions.confirmBlocked : this.actions[t]);
+    const payments = allowedManualPayments(row.paymentStatus).map(p =>
+      p === 'paid' ? this.actions.markPaid : this.actions.markRefunded);
+    return [...transitions, ...payments, this.actions.share];
+  };
+
+  readonly filterFields: FilterField[] = [
     { key: 'search', labelKey: 'registrations.filter.search', type: 'text' },
     {
-      key: 'tournamentId', labelKey: 'registrations.filter.tournament', type: 'select',
-      options: [
-        { value: '', labelKey: 'registrations.filter.allTournaments' },
-        ...this.tournamentFilterOptions()
-      ]
+      key: 'status', labelKey: 'registrations.filter.status', type: 'select',
+      options: STATUSES.map(value => ({ value, labelKey: `registrations.status.${value}` }))
     },
     {
-      key: 'statusId', labelKey: 'registrations.filter.status', type: 'select',
-      options: [
-        { value: 'rs1', labelKey: 'registrations.status.confirmed' },
-        { value: 'rs2', labelKey: 'registrations.status.pending' },
-        { value: 'rs3', labelKey: 'registrations.status.rejected' }
-      ]
-    },
-    {
-      key: 'source', labelKey: 'registrations.filter.source', type: 'select',
-      options: [
-        { value: 'wizard', labelKey: 'registrations.source.wizard' },
-        { value: 'admin', labelKey: 'registrations.source.admin' },
-        { value: 'excel', labelKey: 'registrations.source.excel' }
-      ]
+      key: 'paymentStatus', labelKey: 'registrations.filter.payment', type: 'select',
+      options: PAYMENT_STATUSES.map(value => ({ value, labelKey: `registrations.payment.${value}` }))
     }
-  ]);
+  ];
 
   readonly listSortOptions: SortOption[] = [
-    { key: 'player1Name', labelKey: 'registrations.column.player1' },
-    { key: 'registeredAt', labelKey: 'registrations.column.registeredAt' },
+    { key: 'participantsDisplay', labelKey: 'registrations.column.participants' },
+    { key: 'createdAt', labelKey: 'registrations.column.registeredAt' },
     { key: 'statusLabel', labelKey: 'registrations.column.status' },
-    { key: 'source', labelKey: 'registrations.column.source' }
+    { key: 'paymentLabel', labelKey: 'registrations.column.payment' }
   ];
 
   readonly tableData = computed<RegistrationRow[]>(() =>
     this.facade.filteredRegistrations().map(r => ({
       id: r.id,
-      tournamentName: r.tournamentName ?? '—',
-      participantsDisplay: this.buildParticipantsDisplay(r),
-      participantCount: (r.participants ?? []).length,
-      statusId: r.statusId,
-      statusLabel: this.getStatusLabelKey(r.statusId),
-      source: this.getSourceLabelKey(r.source),
-      registeredAt: r.registeredAt
+      participantsDisplay: r.participants.map(p => p.displayName).join(' / '),
+      clubs: [...new Set(r.participants.map(p => p.club).filter((club): club is string => !!club))].join(', '),
+      status: r.status,
+      statusLabel: `registrations.status.${r.status}`,
+      statusVariant: STATUS_VARIANTS[r.status] ?? 'neutral',
+      paymentStatus: r.paymentStatus,
+      paymentLabel: `registrations.payment.${r.paymentStatus}`,
+      paymentVariant: PAYMENT_VARIANTS[r.paymentStatus] ?? 'neutral',
+      sourceLabel: `registrations.source.${r.source}`,
+      contactEmail: r.contactEmail ?? '',
+      notes: r.notes ?? '',
+      createdAt: r.createdAt
     }))
   );
 
-  private buildParticipantsDisplay(r: Registration): string {
-    const parts = r.participants ?? [];
-    if (parts.length === 0) {
-      // Fallback to deprecated fields
-      return [r.player1Name, r.player2Name].filter(Boolean).join(' / ');
-    }
-    if (parts.length === 1) {
-      return parts[0].playerName;
-    }
-    return parts.map(p => p.playerName).join(' / ');
-  }
+  /** "3 / 8" or "3" without a limit. */
+  readonly confirmedText = computed(() => {
+    const capacity = this.facade.capacity();
+    if (!capacity) return '';
+    return capacity.maxPairs == null ? String(capacity.confirmed) : `${capacity.confirmed} / ${capacity.maxPairs}`;
+  });
+
+  readonly placesLeftText = computed(() => {
+    const capacity = this.facade.capacity();
+    if (!capacity) return '';
+    return capacity.placesLeft == null
+      ? this.i18n.translate('registrations.capacity.unlimited')
+      : String(capacity.placesLeft);
+  });
+
+  readonly pendingActionKeys = computed(() => {
+    const pending = this.pendingAction();
+    if (!pending) return null;
+    const base = `registrations.confirmAction.${pending.action}`;
+    return {
+      title: `${base}.title`,
+      message: `${base}.message`,
+      warning: `${base}.warning`,
+      confirm: `registrations.action.${pending.action}`
+    };
+  });
 
   // Tokens tab
   readonly tokenColumns: DataTableColumn[] = [
@@ -251,12 +350,6 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
     }))
   );
 
-  readonly hasSelection = computed(() => this.selectedRegistrations().length > 0);
-
-  ngOnInit(): void {
-    this.facade.load();
-  }
-
   ngOnDestroy(): void {
     if (this.chatbotMode() === 'embedded') {
       window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
@@ -279,17 +372,15 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
   }
 
   onFiltersApplied(filters: Record<string, string>): void {
-    const mapped: RegistrationFilters = {
-      search: filters['search'] || undefined,
-      tournamentId: filters['tournamentId'] || undefined,
-      statusId: filters['statusId'] || undefined,
-      source: filters['source'] || undefined
-    };
-    this.facade.applyFilters(mapped);
+    void this.facade.applyFilters({
+      search: filters['search']?.trim() || undefined,
+      status: (filters['status'] || undefined) as TournamentRegistrationStatus | undefined,
+      paymentStatus: (filters['paymentStatus'] || undefined) as RegistrationPaymentStatus | undefined
+    });
   }
 
   onFiltersCleared(): void {
-    this.facade.clearFilters();
+    void this.facade.clearFilters();
   }
 
   onTokenFiltersApplied(filters: Record<string, string>): void {
@@ -301,64 +392,58 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
   }
 
   onRowActionClicked(event: { action: string; row: RegistrationRow }): void {
-    if (event.action === 'edit') {
-      this.openEdit(event.row);
-    } else if (event.action === 'share') {
+    const registration = this.findRegistration(event.row.id);
+    if (!registration) return;
+    const action = event.action as RegistrationRowAction;
+    if (DESTRUCTIVE_ACTIONS.has(action)) {
+      this.pendingAction.set({ action: action as DestructiveRegistrationAction, registrationId: registration.id });
+    } else if (action === 'confirm' || action === 'waitlist') {
+      void this.facade.transition(registration, action);
+    } else if (action === 'markPaid') {
+      void this.facade.setPayment(registration, 'paid');
+    } else if (action === 'confirmBlocked') {
+      this.notifications.warning(this.i18n.translate('registrations.capacity.fullExplanation'));
+    } else if (action === 'share') {
       this.openShare(event.row);
-    } else if (event.action === 'delete') {
-      this.confirmDelete(event.row);
     }
+  }
+
+  async onPendingActionConfirmed(): Promise<void> {
+    const pending = this.pendingAction();
+    const registration = pending ? this.findRegistration(pending.registrationId) : undefined;
+    if (!pending || !registration) {
+      this.pendingAction.set(null);
+      return;
+    }
+    if (pending.action === 'markRefunded') {
+      await this.facade.setPayment(registration, 'refunded');
+    } else {
+      await this.facade.transition(registration, pending.action);
+    }
+    this.pendingAction.set(null);
+  }
+
+  onPendingActionCancelled(): void {
+    this.pendingAction.set(null);
   }
 
   openCreate(): void {
-    this.editingRegistration.set(null);
+    if (!this.selectedTournament()) return;
     this.showFormPanel.set(true);
-  }
-
-  openEdit(row: RegistrationRow): void {
-    const reg = this.facade.filteredRegistrations().find(r => r.id === row.id);
-    if (reg) {
-      this.editingRegistration.set(reg);
-      this.showFormPanel.set(true);
-    }
   }
 
   closeForm(): void {
     this.showFormPanel.set(false);
-    this.editingRegistration.set(null);
   }
 
   onFormSaved(): void {
     this.closeForm();
   }
 
-  confirmDelete(row: RegistrationRow): void {
-    this.deletingId.set(row.id);
-    this.showDeleteDialog.set(true);
-  }
-
-  async onDeleteConfirmed(): Promise<void> {
-    const id = this.deletingId();
-    if (!id) return;
-    const success = await this.facade.deleteRegistration(id);
-    if (success) {
-      this.showDeleteDialog.set(false);
-      this.deletingId.set(null);
-    }
-  }
-
-  onDeleteCancelled(): void {
-    this.showDeleteDialog.set(false);
-    this.deletingId.set(null);
-  }
-
-  onSelectionChanged(rows: RegistrationRow[]): void {
-    this.selectedRegistrations.set(rows);
-  }
-
   // Token actions
   async generateToken(): Promise<void> {
-    await this.facade.generateToken('t1');
+    const tournamentId = this.facade.tournamentId();
+    if (tournamentId) await this.facade.generateToken(tournamentId);
   }
 
   onTokenAction(event: { action: string; row: TokenRow }): void {
@@ -369,23 +454,14 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getStatusLabelKey(statusId: string): string {
-    const map: Record<string, string> = {
-      rs1: 'registrations.status.confirmed',
-      rs2: 'registrations.status.pending',
-      rs3: 'registrations.status.rejected'
-    };
-    return map[statusId] ?? statusId;
-  }
-
   openShare(row: RegistrationRow): void {
     this.sharePayload.set({
       type: 'registration',
-      title: row.participantsDisplay as string,
-      subtitle: row.tournamentName as string,
+      title: row.participantsDisplay,
+      subtitle: this.selectedTournament()?.name ?? '',
       lines: [
-        `📋 ${this.i18n.translate(row.source as string)}`,
-        `📅 ${row.registeredAt}`
+        `📋 ${this.i18n.translate(row.statusLabel)}`,
+        `📅 ${row.createdAt}`
       ]
     });
   }
@@ -394,11 +470,19 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
     this.sharePayload.set(null);
   }
 
+  capacitySummary(key: string, value: string | number): string {
+    return interpolate(this.i18n.translate(key), { value });
+  }
+
+  private findRegistration(id: string): TournamentRegistration | undefined {
+    return this.facade.registrations().find(r => r.id === id);
+  }
+
   // Agent tab methods
   openEmbeddedChat(): void {
     this.showEmbeddedChat.set(true);
     this.chatbotMode.set('embedded');
-    
+
     // Get reference to the main chatbot instance (if visible) and hide it
     window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
       detail: { mode: 'embedded', source: 'registrations' }
@@ -410,21 +494,12 @@ export class AdminRegistrationsPageComponent implements OnInit, OnDestroy {
       // User closed the embedded chat
       this.showEmbeddedChat.set(false);
       this.chatbotMode.set('floating');
-      
+
       // Notify main chatbot to restore
       window.dispatchEvent(new CustomEvent('zh-switch-chatbot-mode', {
         detail: { mode: 'floating', source: 'registrations' }
       }));
     }
-  }
-
-  private getSourceLabelKey(source: string): string {
-    const map: Record<string, string> = {
-      wizard: 'registrations.source.wizard',
-      admin: 'registrations.source.admin',
-      excel: 'registrations.source.excel'
-    };
-    return map[source] ?? source;
   }
 
   // ---- Importer ----

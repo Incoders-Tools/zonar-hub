@@ -66,6 +66,16 @@
   }
 }
 
+.player-form__eligibility-hint {
+  margin: 0 0 var(--zh-space-md);
+}
+
+.player-form__status {
+  margin-top: var(--zh-space-lg);
+  padding-top: var(--zh-space-md);
+  border-top: 1px solid var(--zh-border-subtle);
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

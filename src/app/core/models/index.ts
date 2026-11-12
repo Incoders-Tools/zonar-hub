@@ -22,3 +22,5 @@ export * from './admin-dashboard-summary.model';
 export * from './permission.model';
 export * from './public-tournament.model';
 export * from './tournament-draw.model';
+export * from './tournament-registration.model';
+export * from './public-registration.model';

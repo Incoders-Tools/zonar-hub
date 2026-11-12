@@ -1,257 +1,276 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { Tournament, Player, Registration, Category } from '../../../../core/models';
-import { TournamentEligibilityProfile, TournamentEligibilitySlot } from '../../../../core/models/tournament-admin.model';
-import { SportParticipantConfig } from '../../../../core/models/sport-config.model';
-import { TournamentService } from '../../../../core/services/tournament.service';
-import { RegistrationService } from '../../../../core/services/registration.service';
-import { RegistrationStrategyService } from '../../../../core/services/registration-strategy.service';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import {
+  Category,
+  Gender,
+  Player,
+  PublicRegistrationInfo,
+  PublicRegistrationParticipant,
+  PublicRegistrationResult,
+  PublicRegistrationSlot,
+  PublicTournament,
+  SportParticipantConfig
+} from '../../../../core/models';
+import { PublicTournamentService } from '../../../../core/services/public-tournament.service';
 import { EligibilityValidationService } from '../../../../core/services/eligibility-validation.service';
-import { ApiEligibilityProfileRepository } from '../../../../core/repositories/api/api-eligibility-profile.repository';
+import {
+  ApiPublicRegistrationRepository,
+  PUBLIC_REGISTRATION_ERRORS
+} from '../../../../core/repositories/api/api-public-registration.repository';
 import { ApiCategoryRepository } from '../../../../core/repositories/api/api-category.repository';
-import { ApiPlayerRepository } from '../../../../core/repositories/api/api-player.repository';
+import { ApiGenderRepository } from '../../../../core/repositories/api/api-gender.repository';
 
-export interface WizardSlot {
+export type WizardState = 'loading' | 'ready' | 'closed' | 'notFound' | 'error';
+
+/** One slot of the form as typed; empty fields are `''`. */
+export interface ParticipantDraft {
   slotNumber: number;
-  label: string | null;
-  genderId: string | null;
-  categoryId: string | null;
-  minAge: number | null;
-  maxAge: number | null;
-  required: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  documentId: string;
+  birthDate: string;
+  genderId: string;
+  categoryId: string;
+  club: string;
 }
 
+/** Client pre-check of the typed participants; the server decides (D3). */
+export interface PrecheckResult {
+  valid: boolean;
+  /** Translation keys per slot number. */
+  slotErrors: Record<number, string[]>;
+  /** Translation keys about the slots as a whole (a required slot left empty). */
+  structureErrors: string[];
+}
+
+/**
+ * Resend wait when the API refuses a code without telling how long to wait (429 `code_cooldown` or the rate limit):
+ * the API cooldown per address and tournament (`docs/api/public-registrations.md`).
+ */
+export const CODE_RESEND_FALLBACK_SECONDS = 60;
+
+/**
+ * Orchestrates the anonymous public registration of one tournament by its share slug (S2, D4): form data, typed
+ * participants checked against the slot rules as a pre-check only (D3, L8), the emailed code with its resend wait,
+ * and the single submission. It reads only the public API and the anonymous catalogs.
+ */
 @Injectable()
 export class WizardFacadeService {
-  private readonly tournamentService = inject(TournamentService);
-  private readonly registrationService = inject(RegistrationService);
-  private readonly strategyService = inject(RegistrationStrategyService);
-  private readonly eligibilityService = inject(EligibilityValidationService);
-  private readonly eligibilityProfileRepo = inject(ApiEligibilityProfileRepository);
+  private readonly publicTournaments = inject(PublicTournamentService);
+  private readonly repository = inject(ApiPublicRegistrationRepository);
+  private readonly eligibility = inject(EligibilityValidationService);
   private readonly categoryRepo = inject(ApiCategoryRepository);
-  private readonly playerRepo = inject(ApiPlayerRepository);
+  private readonly genderRepo = inject(ApiGenderRepository);
+  private slug = '';
+  private countdown: ReturnType<typeof setInterval> | null = null;
 
-  readonly tournament = signal<Tournament | null>(null);
-  readonly config = signal<SportParticipantConfig | null>(null);
-  readonly eligibilityProfile = signal<TournamentEligibilityProfile | null>(null);
-  readonly participants = signal<Map<number, Player>>(new Map());
-  readonly existingRegistrations = signal<Registration[]>([]);
+  readonly state = signal<WizardState>('loading');
+  readonly loadErrorKey = signal('common.unexpectedError');
+  /** Why the registration is closed: the window state, or the API refusal that closed it meanwhile. */
+  readonly closedMessageKey = signal('registration.public.closed.ended');
+  readonly tournament = signal<PublicTournament | null>(null);
+  readonly info = signal<PublicRegistrationInfo | null>(null);
   readonly categories = signal<Category[]>([]);
-  readonly habitualPartnerSuggestion = signal<Player | null>(null);
-  readonly loading = signal(true);
+  readonly genders = signal<Gender[]>([]);
+
+  readonly codeSending = signal(false);
+  /** Address the last code went to; a code only works for that address. */
+  readonly codeSentTo = signal<string | null>(null);
+  /** Seconds before another code can be requested. */
+  readonly resendIn = signal(0);
+  readonly codeErrorKey = signal<string | null>(null);
+
   readonly submitting = signal(false);
+  readonly submitErrorKey = signal<string | null>(null);
+  readonly result = signal<PublicRegistrationResult | null>(null);
 
-  readonly slotCount = computed(() => {
-    const cfg = this.config();
-    return cfg ? cfg.maxPlayers : 0;
+  readonly slots = computed<PublicRegistrationSlot[]>(() =>
+    [...(this.info()?.slots ?? [])].sort((a, b) => a.slotNumber - b.slotNumber));
+
+  /** Participant shape the eligibility service expects, derived from the slots. */
+  private readonly config = computed<SportParticipantConfig>(() => {
+    const slots = this.slots();
+    return {
+      sportKey: '',
+      participantType: slots.length === 1 ? 'individual' : slots.length === 2 ? 'pair' : 'team',
+      minPlayers: slots.filter(s => s.required).length,
+      maxPlayers: slots.length,
+      requiresGender: slots.some(s => !!s.genderId),
+      requiresCategory: slots.some(s => !!s.categoryId),
+      categoryToleranceLevels: this.info()?.categoryTolerance ?? 0,
+      allowsHabitualPartner: false
+    };
   });
 
-  readonly allSlotsValid = computed(() => {
-    const slotsArr = this.slots();
-    const participantsMap = this.participants();
-    const requiredSlots = slotsArr.filter(s => s.required);
-    if (requiredSlots.length === 0) return false;
-    return requiredSlots.every(s => participantsMap.has(s.slotNumber));
-  });
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.stopCountdown());
+  }
 
-  readonly slots = computed<WizardSlot[]>(() => {
-    const profile = this.eligibilityProfile();
-    const cfg = this.config();
-
-    if (profile?.slots && profile.slots.length > 0) {
-      return profile.slots
-        .slice()
-        .sort((a, b) => a.slotNumber - b.slotNumber)
-        .map(s => ({
-          slotNumber: s.slotNumber,
-          label: s.label,
-          genderId: s.genderId,
-          categoryId: s.categoryId,
-          minAge: s.minAge,
-          maxAge: s.maxAge,
-          required: s.required
-        }));
-    }
-
-    if (cfg) {
-      const count = cfg.maxPlayers;
-      return Array.from({ length: count }, (_, i) => ({
-        slotNumber: i + 1,
-        label: null,
-        genderId: null,
-        categoryId: null,
-        minAge: null,
-        maxAge: null,
-        required: true
-      }));
-    }
-
-    return [];
-  });
-
-  async loadTournament(id: string): Promise<void> {
-    this.loading.set(true);
+  async load(slug: string): Promise<void> {
+    this.slug = slug;
+    this.state.set('loading');
     try {
-      await this.tournamentService.loadTournaments();
-      const found = this.tournamentService.getTournamentById(id);
-      this.tournament.set(found ?? null);
+      const [tournament, info, categories, genders] = await Promise.all([
+        this.publicTournaments.getBySlug(slug),
+        this.repository.getInfo(slug),
+        this.categoryRepo.getAll(),
+        this.genderRepo.getAll()
+      ]);
+      this.tournament.set(tournament);
+      this.info.set(info);
+      this.categories.set(categories);
+      this.genders.set(genders);
+      if (!tournament || !info) {
+        this.state.set('notFound');
+      } else if (!info.isOpen) {
+        this.closedMessageKey.set(info.state === 'notStarted' ? 'registration.public.closed.notStarted' : 'registration.public.closed.ended');
+        this.state.set('closed');
+      } else {
+        this.state.set('ready');
+      }
+    } catch (error) {
+      this.loadErrorKey.set(errorKey(error));
+      this.state.set('error');
+    }
+  }
 
-      if (found) {
-        const regs = this.registrationService.getByTournament(found.id);
-        this.existingRegistrations.set(regs);
+  validate(drafts: ParticipantDraft[]): PrecheckResult {
+    const slots = this.slots();
+    const filled = drafts.filter(isFilled);
+    const slotErrors: Record<number, string[]> = {};
+    const seen = new Set<string>();
 
-        const cfg = this.strategyService.getConfig(found.sportId, found.tournamentTypeId);
-        this.config.set(cfg);
+    for (const draft of filled) {
+      const slot = slots.find(s => s.slotNumber === draft.slotNumber) ?? null;
+      const errors = [...this.eligibility.validateParticipantForSlot(
+        toPlayer(draft), slot, this.config(), this.categories(), this.genders()).errors];
+      // Mirror of `registrations.duplicate_player`: an email or document repeated across the participants.
+      const keys = [draft.email, draft.documentId].map(v => v.trim().toLowerCase()).filter(v => v !== '');
+      if (keys.some(k => seen.has(k))) errors.push('registrations.errors.duplicate_player');
+      keys.forEach(k => seen.add(k));
+      if (errors.length > 0) slotErrors[draft.slotNumber] = errors;
+    }
 
-        if (found.eligibilityProfileId) {
-          const profile = await this.eligibilityProfileRepo.getById(found.eligibilityProfileId);
-          this.eligibilityProfile.set(profile ?? null);
+    const structureErrors = this.eligibility.validateSlotStructure(filled.map(d => d.slotNumber), slots);
+    return { valid: Object.keys(slotErrors).length === 0 && structureErrors.length === 0, slotErrors, structureErrors };
+  }
+
+  /** Sends a code unless one is on its way or the resend wait still runs. */
+  async requestCode(contactEmail: string): Promise<void> {
+    if (this.codeSending() || this.resendIn() > 0) return;
+    this.codeSending.set(true);
+    this.codeErrorKey.set(null);
+    try {
+      const sent = await this.repository.requestCode(this.slug, contactEmail);
+      this.codeSentTo.set(contactEmail);
+      this.startCountdown(sent.resendAfterSeconds);
+    } catch (error) {
+      const key = errorKey(error);
+      if (!this.handleClosing(key)) {
+        this.codeErrorKey.set(key);
+        if (key === PUBLIC_REGISTRATION_ERRORS.codeCooldown || key === PUBLIC_REGISTRATION_ERRORS.tooManyRequests) {
+          this.startCountdown(CODE_RESEND_FALLBACK_SECONDS);
         }
-
-        const cats = await this.categoryRepo.getAll();
-        this.categories.set(cats);
       }
     } finally {
-      this.loading.set(false);
+      this.codeSending.set(false);
     }
   }
 
-  selectParticipant(slotNumber: number, player: Player): void {
-    this.participants.update(map => {
-      const updated = new Map(map);
-      updated.set(slotNumber, player);
-      return updated;
-    });
-
-    if (slotNumber === 1 && this.config()?.allowsHabitualPartner) {
-      this.loadHabitualPartnerSuggestion(player.id);
-    }
-  }
-
-  clearParticipant(slotNumber: number): void {
-    this.participants.update(map => {
-      const updated = new Map(map);
-      updated.delete(slotNumber);
-      return updated;
-    });
-
-    if (slotNumber === 1) {
-      this.habitualPartnerSuggestion.set(null);
-    }
-  }
-
-  getOtherSelectedPlayerIds(slotNumber: number): Set<string> {
-    const result = new Set<string>();
-    const map = this.participants();
-    for (const [slot, player] of map.entries()) {
-      if (slot !== slotNumber) {
-        result.add(player.id);
-      }
-    }
-    return result;
-  }
-
-  getEligibilitySlotForSlotNumber(slotNumber: number): TournamentEligibilitySlot | null {
-    const profile = this.eligibilityProfile();
-    if (!profile?.slots) return null;
-    return profile.slots.find(s => s.slotNumber === slotNumber) ?? null;
-  }
-
-  async submitRegistration(availability: {
-    friday: boolean;
-    saturday: boolean;
-    sunday: boolean;
-    preferredTime: string;
-    notes: string;
-  }): Promise<Registration> {
-    const t = this.tournament();
-    if (!t) throw new Error('No tournament loaded');
-
-    const participantsMap = this.participants();
-    if (participantsMap.size < 1) throw new Error('No participants selected');
-
-    const participantsArray = Array.from(participantsMap.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([slotNumber, player]) => ({
-        slotNumber,
-        playerId: player.id,
-        playerName: `${player.firstName} ${player.lastName}`,
-        categoryId: player.categoryId,
-        genderId: player.genderId
-      }));
-
-    // Check for duplicate pair
-    if (participantsArray.length >= 2) {
-      const isDuplicate = this.registrationService.isDuplicatePair(
-        t.id,
-        participantsArray[0].playerId,
-        participantsArray[1].playerId
-      );
-      if (isDuplicate) {
-        throw new Error('registration.duplicatePair');
-      }
-    }
-
-    // Validate eligibility for all participants
-    const validationInputs = participantsArray.map(p => ({
-      slotNumber: p.slotNumber,
-      player: participantsMap.get(p.slotNumber)!
-    }));
-
-    const validationResults = this.eligibilityService.validateAllParticipants(
-      validationInputs,
-      this.eligibilityProfile(),
-      this.config()!,
-      this.categories()
-    );
-
-    const invalidResults = validationResults.filter(r => !r.valid);
-    if (invalidResults.length > 0) {
-      const allErrors = invalidResults.flatMap(r => r.errors);
-      throw new Error(allErrors.join(', '));
-    }
-
+  /** Submits once: a second call while one is in flight, or with a failing pre-check, sends nothing. */
+  async submit(contactEmail: string, code: string, drafts: ParticipantDraft[], publicNameConsent: boolean): Promise<void> {
+    if (this.submitting() || !this.validate(drafts).valid) return;
     this.submitting.set(true);
+    this.submitErrorKey.set(null);
     try {
-      // Build backward-compat fields
-      const p1 = participantsArray[0];
-      const p2 = participantsArray.length >= 2 ? participantsArray[1] : null;
-
-      const reg = await this.registrationService.submitRegistration({
-        tournamentId: t.id,
-        participants: participantsArray,
-        player1Id: p1.playerId,
-        player1Name: p1.playerName,
-        player2Id: p2?.playerId ?? '',
-        player2Name: p2?.playerName ?? '',
-        categoryId: t.categoryId,
-        categoryName: t.categoryName,
-        genderId: t.genderId,
-        genderLabel: t.genderLabel,
-        statusId: 'rs2',
-        statusLabel: 'Pendiente',
-        source: 'wizard'
+      const result = await this.repository.submit(this.slug, {
+        contactEmail,
+        code,
+        participants: drafts.filter(isFilled).map(toParticipant),
+        publicNameConsent
       });
-
-      return reg;
+      this.stopCountdown();
+      this.result.set(result);
+    } catch (error) {
+      const key = errorKey(error);
+      if (!this.handleClosing(key)) this.submitErrorKey.set(key);
     } finally {
       this.submitting.set(false);
     }
   }
 
-  async sendVerificationCode(registrationId: string): Promise<void> {
-    await this.registrationService.sendVerificationCode(registrationId);
-  }
-
-  async verifyCode(registrationId: string, code: string): Promise<boolean> {
-    return this.registrationService.verifyCode(registrationId, code);
-  }
-
-  private async loadHabitualPartnerSuggestion(playerId: string): Promise<void> {
-    try {
-      const partner = await this.playerRepo.getByHabitualPartner(playerId);
-      this.habitualPartnerSuggestion.set(partner ?? null);
-    } catch {
-      this.habitualPartnerSuggestion.set(null);
+  /** The window closed or the tournament stopped being public meanwhile: leave the form for that state. */
+  private handleClosing(key: string): boolean {
+    if (key === PUBLIC_REGISTRATION_ERRORS.closed) {
+      this.closedMessageKey.set(key);
+      this.state.set('closed');
+      return true;
     }
+    if (key === PUBLIC_REGISTRATION_ERRORS.notFound) {
+      this.state.set('notFound');
+      return true;
+    }
+    return false;
   }
+
+  private startCountdown(seconds: number): void {
+    this.stopCountdown();
+    this.resendIn.set(Math.max(0, Math.ceil(seconds)));
+    if (this.resendIn() === 0) return;
+    this.countdown = setInterval(() => {
+      this.resendIn.update(s => s - 1);
+      if (this.resendIn() <= 0) this.stopCountdown();
+    }, 1000);
+  }
+
+  private stopCountdown(): void {
+    if (this.countdown !== null) {
+      clearInterval(this.countdown);
+      this.countdown = null;
+    }
+    this.resendIn.set(0);
+  }
+}
+
+function errorKey(error: unknown): string {
+  return error instanceof Error ? error.message : 'common.unexpectedError';
+}
+
+/** A slot counts as filled once a name is typed; required names are enforced by the form. */
+function isFilled(draft: ParticipantDraft): boolean {
+  return draft.firstName.trim() !== '' || draft.lastName.trim() !== '';
+}
+
+function toParticipant(draft: ParticipantDraft): PublicRegistrationParticipant {
+  const optional = (value: string) => value.trim() === '' ? null : value.trim();
+  return {
+    slotNumber: draft.slotNumber,
+    firstName: draft.firstName.trim(),
+    lastName: draft.lastName.trim(),
+    email: optional(draft.email),
+    phone: optional(draft.phone),
+    documentId: optional(draft.documentId),
+    birthDate: optional(draft.birthDate),
+    genderId: optional(draft.genderId),
+    categoryId: optional(draft.categoryId),
+    club: optional(draft.club)
+  };
+}
+
+/** The typed data in the shape of the eligibility rules; empty values are missing data (L8). */
+function toPlayer(draft: ParticipantDraft): Player {
+  return {
+    id: `slot-${draft.slotNumber}`,
+    firstName: draft.firstName,
+    lastName: draft.lastName,
+    email: draft.email,
+    birthDate: draft.birthDate,
+    genderId: draft.genderId,
+    genderLabel: '',
+    categoryId: draft.categoryId,
+    categoryName: '',
+    isActive: true,
+    createdAt: ''
+  };
 }

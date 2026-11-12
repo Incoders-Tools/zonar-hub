@@ -140,6 +140,23 @@
         formControlName="categoryId">
       </zh-select>
 
+      <!-- Eligibility profile (R2b): overrides gender, category and modality while active (L8) -->
+      <div class="tournaments-form__eligibility-profile">
+        <zh-select
+          [label]="('admin.tournaments.form.eligibilityProfile' | t)"
+          [placeholder]="('admin.tournaments.form.eligibilityProfileNone' | t)"
+          [options]="eligibilityProfileOptions()"
+          [hint]="('admin.tournaments.form.eligibilityProfileHint' | t)"
+          [formControl]="eligibilityProfileControl">
+        </zh-select>
+        @if (loadingEligibilityProfile()) {
+          <span class="tournaments-form__hint" role="status">{{ 'admin.tournaments.form.eligibilityProfileLoading' | t }}</span>
+        }
+        @if (eligibilityProfileLoadError(); as loadError) {
+          <span class="tournaments-form__error" role="alert">{{ loadError | t }}</span>
+        }
+      </div>
+
       <!-- Rule Set -->
       <zh-select
         [label]="('admin.tournaments.form.ruleSetId' | t)"

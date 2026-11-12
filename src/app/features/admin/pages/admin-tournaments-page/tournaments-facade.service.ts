@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed, effect } from '@angular/core';
-import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality } from '../../../../core/models';
+import { Tournament, Court, Category, Gender, TournamentType, Complex, Sport, TournamentModality, TournamentEligibilityProfile } from '../../../../core/models';
 import { TournamentRule } from '../../../../core/models/tournament-rule.model';
 import { ApiTournamentAdminRepository } from '../../../../core/repositories/api/api-tournament-admin.repository';
 import { ApiComplexRepository } from '../../../../core/repositories/api/api-complex.repository';
@@ -10,6 +10,7 @@ import { ApiSportRepository } from '../../../../core/repositories/api/api-sport.
 import { ApiTournamentModalityRepository } from '../../../../core/repositories/api/api-tournament-modality.repository';
 import { ApiTournamentRuleRepository } from '../../../../core/repositories/api/api-tournament-rule.repository';
 import { ApiCourtRepository } from '../../../../core/repositories/api/api-court.repository';
+import { ApiEligibilityProfileRepository } from '../../../../core/repositories/api/api-eligibility-profile.repository';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { ActiveOrganizationService } from '../../../../core/services/active-organization.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -31,6 +32,7 @@ export class TournamentsFacadeService {
   private readonly modalityRepo = inject(ApiTournamentModalityRepository);
   private readonly ruleRepo = inject(ApiTournamentRuleRepository);
   private readonly courtRepo = inject(ApiCourtRepository);
+  private readonly eligibilityProfileRepo = inject(ApiEligibilityProfileRepository);
   private readonly activeOrg = inject(ActiveOrganizationService);
   private readonly i18n = inject(I18nService);
   private readonly notification = inject(NotificationService);
@@ -68,6 +70,7 @@ export class TournamentsFacadeService {
   private readonly ruleSetsState = signal<TournamentRule[]>([]);
   private readonly courtsForComplexState = signal<Court[]>([]);
   private readonly loadingCourtsState = signal(false);
+  private readonly eligibilityProfilesState = signal<TournamentEligibilityProfile[]>([]);
 
   // Public computed properties
   readonly entities = this.entitiesState;
@@ -86,6 +89,8 @@ export class TournamentsFacadeService {
   readonly ruleSets = this.ruleSetsState.asReadonly();
   readonly courtsForComplex = this.courtsForComplexState.asReadonly();
   readonly loadingCourts = this.loadingCourtsState.asReadonly();
+  /** Eligibility profiles of the active organization (R2b); empty when they cannot be read. */
+  readonly eligibilityProfiles = this.eligibilityProfilesState.asReadonly();
 
   readonly filteredTournaments = computed(() => {
     const tournaments = this.entitiesState();
@@ -243,7 +248,12 @@ export class TournamentsFacadeService {
       this.errorState.set(null);
       
       const activeOrgId = this.activeOrg.activeOrganizationId();
-      
+
+      // Optional lookup: a profile read failure never blocks the tournaments list
+      void this.eligibilityProfileRepo.getAll()
+        .then(profiles => this.eligibilityProfilesState.set(profiles))
+        .catch(() => this.eligibilityProfilesState.set([]));
+
       const [tournaments, complexes, categories, genders, tournamentTypes, allSports, orgSports, modalities, ruleSets] = await Promise.all([
         this.repository.getAll(),
         this.complexRepo.getAll(),
@@ -392,7 +402,20 @@ export class TournamentsFacadeService {
     }
   }
 
-  async saveTournament(tournament: Tournament | Omit<Tournament, 'id' | 'createdAt'>): Promise<boolean> {
+  /** Profile assigned to the tournament (R2b), null when it has none; rejects with a translation key. */
+  async loadEligibilityProfileId(tournamentId: string): Promise<string | null> {
+    return this.repository.getEligibilityProfileId(tournamentId);
+  }
+
+  /**
+   * Saves the tournament, then, when `eligibilityProfileId` is not undefined, assigns that profile (null clears it)
+   * through its own route: the tournament contract does not carry it. A failed assignment keeps the saved tournament
+   * and reports the translated reason, so a retry never creates the tournament twice.
+   */
+  async saveTournament(
+    tournament: Tournament | Omit<Tournament, 'id' | 'createdAt'>,
+    eligibilityProfileId?: string | null
+  ): Promise<boolean> {
     try {
       this.savingState.set(true);
       this.errorState.set(null);
@@ -406,8 +429,10 @@ export class TournamentsFacadeService {
 
       const isUpdate = 'id' in withOrg && withOrg.id;
 
+      let savedId: string;
       if (isUpdate) {
         const updated = await this.repository.update((withOrg as Tournament).id, withOrg);
+        savedId = updated.id;
         const hydrated = this.hydrateNames(updated);
         const idx = this.entitiesState().findIndex(t => t.id === (withOrg as Tournament).id);
         if (idx !== -1) {
@@ -417,7 +442,17 @@ export class TournamentsFacadeService {
         }
       } else {
         const created = await this.repository.create(withOrg as Omit<Tournament, 'id' | 'createdAt'>);
+        savedId = created.id;
         this.entitiesState.set([...this.entitiesState(), this.hydrateNames(created)]);
+      }
+
+      if (eligibilityProfileId !== undefined) {
+        try {
+          await this.repository.setEligibilityProfile(savedId, eligibilityProfileId);
+        } catch (assignError) {
+          this.notification.error(this.i18n.translate('admin.tournaments.eligibilityProfile.assignFailed')
+            + ' ' + this.i18n.translate((assignError as Error).message));
+        }
       }
 
       return true;

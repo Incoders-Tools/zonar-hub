@@ -1,5 +1,6 @@
 import {
   DrawFormat,
+  DrawParticipant,
   DrawParticipationFormat,
   TournamentDrawRequestOptions,
   TournamentDrawRequestParticipant
@@ -178,6 +179,17 @@ export function parseDrawParticipantPaste(text: string, format: DrawParticipatio
   });
 
   return { entries, issues: entryIssues(entries, format, positions, preset) };
+}
+
+/** Entries of stored or imported draw participants (a loaded draw, the confirmed registrations); ids are kept. */
+export function drawEntriesFromParticipants(participants: DrawParticipant[]): DrawParticipantEntry[] {
+  return participants.map(participant => ({
+    id: participant.id,
+    displayName: participant.displayName,
+    members: [...participant.members],
+    seedRank: participant.seedRank,
+    separationKey: participant.separationKey ?? null
+  }));
 }
 
 /** Request participants: kept ids stay, new entries get the lowest free `p{n}` id. */

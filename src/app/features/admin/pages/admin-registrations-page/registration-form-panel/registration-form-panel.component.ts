@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal, computed, OnInit, DestroyRef, effect } from '@angular/core';
+import { Component, inject, input, output, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
@@ -7,23 +7,36 @@ import { FormShellComponent } from '../../../../../shared/components/form-shell/
 import { AsyncButtonComponent } from '../../../../../shared/components/async-button/async-button.component';
 import { CollapsibleSectionComponent } from '../../../../../shared/components/collapsible-section/collapsible-section.component';
 import { ParticipantSearchComponent } from '../../../../../shared/components/participant-search/participant-search.component';
-import { AvailabilitySelectorComponent, AvailabilitySelection } from '../../../../../shared/components/availability-selector/availability-selector.component';
 import { FormatDatePipe } from '../../../../../shared/pipes/format-date.pipe';
 import { RegistrationStrategyService } from '../../../../../core/services/registration-strategy.service';
-import { EligibilityValidationService } from '../../../../../core/services/eligibility-validation.service';
+import { EligibilityValidationService, TournamentEligibilityRules } from '../../../../../core/services/eligibility-validation.service';
 import { ApiEligibilityProfileRepository } from '../../../../../core/repositories/api/api-eligibility-profile.repository';
-import { TournamentService } from '../../../../../core/services/tournament.service';
-import { ActiveOrganizationService } from '../../../../../core/services/active-organization.service';
+import { ApiTournamentAdminRepository } from '../../../../../core/repositories/api/api-tournament-admin.repository';
 import { ApiCategoryRepository } from '../../../../../core/repositories/api/api-category.repository';
-import { RegistrationService } from '../../../../../core/services/registration.service';
+import { ApiGenderRepository } from '../../../../../core/repositories/api/api-gender.repository';
 import { RegistrationFacadeService } from '../registration-facade.service';
-import { Registration, RegistrationParticipant, RegistrationSource } from '../../../../../core/models/registration.model';
+import {
+  RegistrationCapacity,
+  TournamentRegistration,
+  TournamentRegistrationCreate,
+  isRegistrationCapacityFull
+} from '../../../../../core/models/tournament-registration.model';
 import { Tournament } from '../../../../../core/models/tournament.model';
 import { TournamentEligibilityProfile, TournamentEligibilitySlot } from '../../../../../core/models/tournament-admin.model';
-import { Category } from '../../../../../core/models/catalog.model';
+import { Category, Gender } from '../../../../../core/models/catalog.model';
 import { Player } from '../../../../../core/models/player.model';
 import { SportParticipantConfig, ParticipantValidationResult } from '../../../../../core/models/sport-config.model';
 
+/** Registrations that still hold their players: a player may be in one of them per tournament (D1). */
+const ACTIVE_STATUSES = new Set(['pending', 'confirmed', 'waitlisted']);
+
+const NOTES_MAX_LENGTH = 2000;
+
+/**
+ * Admin create of a tournament registration from organization players (S3, S4). The slots and their rules are the
+ * client mirror of D3: the tournament's active eligibility profile, else its own modality, gender and category (L8),
+ * with the `mixed` gender admitting anyone. The API checks the same rules again and decides `pending` or `waitlisted`.
+ */
 @Component({
   selector: 'app-registration-form-panel',
   standalone: true,
@@ -34,7 +47,6 @@ import { SportParticipantConfig, ParticipantValidationResult } from '../../../..
     AsyncButtonComponent,
     CollapsibleSectionComponent,
     ParticipantSearchComponent,
-    AvailabilitySelectorComponent,
     FormatDatePipe
   ],
   templateUrl: './registration-form-panel.component.html',
@@ -45,52 +57,61 @@ export class RegistrationFormPanelComponent implements OnInit {
   private readonly strategyService = inject(RegistrationStrategyService);
   private readonly eligibilityService = inject(EligibilityValidationService);
   private readonly eligibilityRepo = inject(ApiEligibilityProfileRepository);
-  private readonly tournamentService = inject(TournamentService);
+  private readonly tournamentRepo = inject(ApiTournamentAdminRepository);
   private readonly categoryRepo = inject(ApiCategoryRepository);
-  private readonly registrationService = inject(RegistrationService);
+  private readonly genderRepo = inject(ApiGenderRepository);
   private readonly facade = inject(RegistrationFacadeService);
-  private readonly activeOrg = inject(ActiveOrganizationService);
 
   // Inputs
-  readonly registration = input<Registration | null>(null);
+  readonly tournament = input.required<Tournament>();
+  readonly capacity = input<RegistrationCapacity | null>(null);
+  /** Registrations of the tournament, to mark players that already hold a place. */
+  readonly registrations = input<TournamentRegistration[]>([]);
   readonly saving = input(false);
 
   // Outputs
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
-  // Form
+  readonly notesMaxLength = NOTES_MAX_LENGTH;
+
   readonly form = new FormGroup({
-    tournamentId: new FormControl('', Validators.required),
-    source: new FormControl('admin'),
-    observations: new FormControl('')
+    status: new FormControl<'pending' | 'confirmed'>('pending', { nonNullable: true }),
+    contactEmail: new FormControl('', { nonNullable: true, validators: [Validators.email] }),
+    notes: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(NOTES_MAX_LENGTH)] }),
+    publicNameConsent: new FormControl(false, { nonNullable: true })
   });
 
   // State
-  readonly tournaments = signal<Tournament[]>([]);
-  readonly selectedTournament = signal<Tournament | null>(null);
   readonly config = signal<SportParticipantConfig | null>(null);
   readonly eligibilityProfile = signal<TournamentEligibilityProfile | null>(null);
   readonly slots = signal<TournamentEligibilitySlot[]>([]);
   readonly participants = signal<Map<number, Player>>(new Map());
   readonly categories = signal<Category[]>([]);
-  readonly existingRegistrations = signal<Registration[]>([]);
+  readonly genders = signal<Gender[]>([]);
   readonly validationErrors = signal<ParticipantValidationResult[]>([]);
   readonly submitted = signal(false);
-  readonly loadingTournament = signal(false);
-  readonly formValid = signal(false);
-  readonly availabilitySelection = signal<AvailabilitySelection | null>(null);
+  readonly loadingTournament = signal(true);
+  /** Translation key when the rules of the tournament could not be read. */
+  readonly loadError = signal<string | null>(null);
+  readonly formValid = signal(true);
+  readonly status = signal<'pending' | 'confirmed'>('pending');
 
-  private static readonly DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  /** The tournament's own rules, used without an active eligibility profile (D3, L8). */
+  readonly tournamentRules = computed<TournamentEligibilityRules>(() => {
+    const t = this.tournament();
+    return { modalityKey: t.modalityKey, genderId: t.genderId, categoryId: t.categoryId };
+  });
+
+  readonly capacityFull = computed(() => isRegistrationCapacityFull(this.capacity()));
 
   /**
-   * Translation key for the "max participants" line on the tournament detail
-   * card. Resolves dynamically based on the tournament's modality so single
-   * sports show "Max players", doubles "Max pairs" and team sports "Max teams".
+   * Translation key for the "max participants" line on the tournament detail card: single sports show
+   * "Max players", doubles "Max pairs" and team sports "Max teams".
    */
   readonly tournamentMaxLabelKey = computed<string>(() => {
-    const tournament = this.selectedTournament();
-    const modality = (tournament?.modalityKey ?? tournament?.modalityName ?? '').toLowerCase();
+    const tournament = this.tournament();
+    const modality = (tournament.modalityKey ?? tournament.modalityName ?? '').toLowerCase();
     if (modality.includes('single') || modality.includes('individual')) {
       return 'registrations.form.tournamentMaxPlayers';
     }
@@ -100,182 +121,74 @@ export class RegistrationFormPanelComponent implements OnInit {
     return 'registrations.form.tournamentMaxPairs';
   });
 
-  readonly tournamentDays = computed<string[]>(() => {
-    const tournament = this.selectedTournament();
-    if (!tournament?.startDate || !tournament?.endDate) return ['friday', 'saturday', 'sunday'];
+  /** Players already holding a place in this tournament. */
+  readonly registeredPlayerIds = computed(() => new Set(
+    this.registrations()
+      .filter(r => ACTIVE_STATUSES.has(r.status))
+      .flatMap(r => r.participants.map(p => p.playerId))));
 
-    const start = new Date(tournament.startDate);
-    const end = new Date(tournament.endDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) return ['friday', 'saturday', 'sunday'];
+  readonly structureErrors = computed(() =>
+    this.eligibilityService.validateSlotStructure([...this.participants().keys()], this.slots()));
 
-    const days: string[] = [];
-    const current = new Date(start);
-    // Cap at 14 days to prevent runaway loops
-    const maxDays = 14;
-    let count = 0;
-    while (current <= end && count < maxDays) {
-      days.push(RegistrationFormPanelComponent.DAY_NAMES[current.getDay()]);
-      current.setDate(current.getDate() + 1);
-      count++;
-    }
+  readonly allSlotsFilledAndValid = computed(() =>
+    this.slots().length > 0
+    && this.structureErrors().length === 0
+    && this.validationErrors().every(e => e.valid));
 
-    return days.length > 0 ? days : ['friday', 'saturday', 'sunday'];
-  });
-
-  readonly isEditing = computed(() => !!this.registration());
-
-  readonly selectedPlayerIds = computed(() => {
-    const map = this.participants();
-    return new Set(Array.from(map.values()).map(p => p.id));
-  });
-
-  readonly allSlotsFilledAndValid = computed(() => {
-    const currentSlots = this.slots();
-    const currentParticipants = this.participants();
-    if (currentSlots.length === 0) return false;
-
-    const requiredSlots = currentSlots.filter(s => s.required);
-    for (const slot of requiredSlots) {
-      if (!currentParticipants.has(slot.slotNumber)) return false;
-    }
-
-    return this.validationErrors().length === 0 || this.validationErrors().every(e => e.valid);
-  });
-
-  readonly canSave = computed(() => {
-    return this.formValid() && this.allSlotsFilledAndValid() && !this.saving();
-  });
-
-  constructor() {
-    effect(() => {
-      const reg = this.registration();
-      if (reg) {
-        this.populateFromRegistration(reg);
-      }
-    });
-  }
+  /** Submit needs valid fields, every required slot with an eligible player, and a free place to confirm. */
+  readonly canSave = computed(() =>
+    this.formValid()
+    && this.allSlotsFilledAndValid()
+    && !(this.status() === 'confirmed' && this.capacityFull())
+    && !this.loadingTournament()
+    && !this.saving());
 
   ngOnInit(): void {
-    this.loadTournaments();
-    this.loadCategories();
-
     merge(this.form.statusChanges, this.form.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.formValid.set(this.form.valid);
+        this.status.set(this.form.controls.status.value);
       });
 
-    this.form.get('tournamentId')!.valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(value => {
-      if (value) {
-        this.onTournamentChanged(value);
-      } else {
-        this.resetTournamentState();
-      }
-    });
+    void this.loadTournamentRules();
   }
 
-  private async loadTournaments(): Promise<void> {
-    const activeOrgId = this.activeOrg.activeOrganizationId();
-    const allTournaments = this.tournamentService.tournaments();
-    // Restrict the selector to tournaments that belong to the active org.
-    // Records without an organizationId (legacy/seed) only pass through when
-    // no org is selected, so demo data never bleeds across tenants.
-    const scoped = activeOrgId
-      ? allTournaments.filter(t => t.organizationId === activeOrgId)
-      : allTournaments.filter(t => !t.organizationId);
-    this.tournaments.set(scoped);
+  /** Players of other slots and players already registered appear as unavailable in a slot's search. */
+  unavailablePlayerIds(slotNumber: number): Set<string> {
+    const ids = new Set(this.registeredPlayerIds());
+    for (const [slot, player] of this.participants()) {
+      if (slot !== slotNumber) ids.add(player.id);
+    }
+    return ids;
   }
 
-  private async loadCategories(): Promise<void> {
-    const cats = await this.categoryRepo.getAll();
-    this.categories.set(cats);
-  }
-
-  private populateFromRegistration(reg: Registration): void {
-    this.form.patchValue({
-      tournamentId: reg.tournamentId,
-      source: reg.source,
-      observations: ''
-    });
-
-    // Disable tournament selection when editing
-    this.form.get('tournamentId')!.disable();
-  }
-
-  async onTournamentChanged(tournamentId: string): Promise<void> {
+  private async loadTournamentRules(): Promise<void> {
+    const tournament = this.tournament();
     this.loadingTournament.set(true);
-    this.resetTournamentState();
-
-    const tournament = this.tournamentService.getTournamentById(tournamentId);
-    if (!tournament) {
+    this.loadError.set(null);
+    this.config.set(this.strategyService.getConfig(tournament.sportId, tournament.tournamentTypeId));
+    try {
+      const [profileId, categories, genders] = await Promise.all([
+        this.tournamentRepo.getEligibilityProfileId(tournament.id),
+        this.categoryRepo.getAll(),
+        this.genderRepo.getAll()
+      ]);
+      const profile = profileId ? await this.eligibilityRepo.getById(profileId) ?? null : null;
+      this.categories.set(categories);
+      this.genders.set(genders);
+      this.eligibilityProfile.set(profile);
+      this.slots.set(this.eligibilityService.resolveSlots(profile, this.tournamentRules()));
+    } catch (error) {
+      this.loadError.set(error instanceof Error && error.message ? error.message : 'common.unexpectedError');
+      this.slots.set([]);
+    } finally {
       this.loadingTournament.set(false);
-      return;
     }
-
-    this.selectedTournament.set(tournament);
-
-    // Get strategy config based on sport + tournament type
-    const strategyConfig = this.strategyService.getConfig(tournament.sportId, tournament.tournamentTypeId);
-    this.config.set(strategyConfig);
-
-    // Load eligibility profile if configured
-    if (tournament.eligibilityProfileId) {
-      const profile = await this.eligibilityRepo.getById(tournament.eligibilityProfileId);
-      if (profile) {
-        this.eligibilityProfile.set(profile);
-        this.slots.set(profile.slots ?? []);
-      } else {
-        this.buildDefaultSlots(strategyConfig);
-      }
-    } else {
-      this.buildDefaultSlots(strategyConfig);
-    }
-
-    // Load existing registrations for this tournament
-    const existing = this.registrationService.getByTournament(tournamentId);
-    this.existingRegistrations.set(existing);
-
-    this.loadingTournament.set(false);
-  }
-
-  private buildDefaultSlots(config: SportParticipantConfig): void {
-    const strategy = this.strategyService.getStrategy(config.sportKey, '');
-    const slotCount = config.maxPlayers;
-    const defaultSlots: TournamentEligibilitySlot[] = [];
-
-    for (let i = 1; i <= slotCount; i++) {
-      defaultSlots.push({
-        slotNumber: i,
-        genderId: null,
-        categoryId: null,
-        minAge: null,
-        maxAge: null,
-        label: null,
-        required: i <= config.minPlayers
-      });
-    }
-
-    this.slots.set(defaultSlots);
-  }
-
-  private resetTournamentState(): void {
-    this.selectedTournament.set(null);
-    this.config.set(null);
-    this.eligibilityProfile.set(null);
-    this.slots.set([]);
-    this.participants.set(new Map());
-    this.existingRegistrations.set([]);
-    this.validationErrors.set([]);
   }
 
   onParticipantSelected(event: { slotNumber: number; player: Player }): void {
-    this.participants.update(map => {
-      const next = new Map(map);
-      next.set(event.slotNumber, event.player);
-      return next;
-    });
+    this.participants.update(map => new Map(map).set(event.slotNumber, event.player));
     this.validateAllParticipants();
   }
 
@@ -289,80 +202,37 @@ export class RegistrationFormPanelComponent implements OnInit {
   }
 
   private validateAllParticipants(): void {
-    const currentConfig = this.config();
-    const currentProfile = this.eligibilityProfile();
-    const currentParticipants = this.participants();
-    const cats = this.categories();
-
-    if (!currentConfig || currentParticipants.size === 0) {
+    const config = this.config();
+    const participants = this.participants();
+    if (!config || participants.size === 0) {
       this.validationErrors.set([]);
       return;
     }
-
-    const participantList = Array.from(currentParticipants.entries()).map(([slotNumber, player]) => ({
-      slotNumber,
-      player
-    }));
-
-    const results = this.eligibilityService.validateAllParticipants(
-      participantList,
-      currentProfile,
-      currentConfig,
-      cats
-    );
-
-    this.validationErrors.set(results);
+    this.validationErrors.set(this.eligibilityService.validateAllParticipants(
+      [...participants.entries()].map(([slotNumber, player]) => ({ slotNumber, player })),
+      this.eligibilityProfile(),
+      config,
+      this.categories(),
+      { tournament: this.tournamentRules(), genders: this.genders() }
+    ));
   }
 
   async onSave(): Promise<void> {
     this.submitted.set(true);
-
     if (!this.canSave()) return;
 
-    const formValue = this.form.getRawValue();
-    const currentParticipants = this.participants();
-    const tournament = this.selectedTournament();
-
-    if (!tournament) return;
-
-    const participantsArray: RegistrationParticipant[] = Array.from(currentParticipants.entries()).map(
-      ([slotNumber, player]) => ({
-        slotNumber,
-        playerId: player.id,
-        playerName: `${player.firstName} ${player.lastName}`,
-        categoryId: player.categoryId,
-        categoryName: player.categoryName,
-        genderId: player.genderId,
-        genderLabel: player.genderLabel
-      })
-    );
-
-    // Build backward-compat fields from first two participants
-    const p1 = participantsArray[0];
-    const p2 = participantsArray[1] ?? p1;
-
-    const payload: Omit<Registration, 'id' | 'registeredAt'> = {
-      tournamentId: formValue.tournamentId!,
-      tournamentName: tournament.name,
-      eligibilityProfileId: tournament.eligibilityProfileId,
-      participants: participantsArray,
-      player1Id: p1?.playerId ?? '',
-      player1Name: p1?.playerName ?? '',
-      player2Id: p2?.playerId ?? '',
-      player2Name: p2?.playerName ?? '',
-      categoryId: p1?.categoryId ?? '',
-      categoryName: p1?.categoryName ?? '',
-      genderId: p1?.genderId ?? '',
-      genderLabel: p1?.genderLabel ?? '',
-      statusId: 'rs2',
-      statusLabel: 'Pendiente',
-      source: (formValue.source ?? 'admin') as RegistrationSource
+    const value = this.form.getRawValue();
+    const registration: TournamentRegistrationCreate = {
+      participants: [...this.participants().entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([slotNumber, player]) => ({ slotNumber, playerId: player.id })),
+      status: value.status,
+      contactEmail: value.contactEmail,
+      notes: value.notes,
+      publicNameConsent: value.publicNameConsent
     };
 
-    const editReg = this.registration();
-    const success = await this.facade.save(payload, editReg?.id);
-
-    if (success) {
+    if (await this.facade.create(registration)) {
       this.saved.emit();
     }
   }
@@ -371,16 +241,11 @@ export class RegistrationFormPanelComponent implements OnInit {
     this.cancelled.emit();
   }
 
-  onAvailabilityChanged(selection: AvailabilitySelection): void {
-    this.availabilitySelection.set(selection);
-  }
-
   hasValidationError(slotNumber: number): boolean {
     return this.validationErrors().some(e => e.slotNumber === slotNumber && !e.valid);
   }
 
   getValidationErrors(slotNumber: number): string[] {
-    const result = this.validationErrors().find(e => e.slotNumber === slotNumber);
-    return result?.errors ?? [];
+    return this.validationErrors().find(e => e.slotNumber === slotNumber)?.errors ?? [];
   }
 }

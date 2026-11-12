@@ -1,5 +1,6 @@
 import {
   DrawParticipantEntry,
+  drawEntriesFromParticipants,
   drawOptionsForRequest,
   isValidDrawSeed,
   parseDrawParticipantPaste,
@@ -113,6 +114,25 @@ describe('draw participant validation', () => {
       { position: 3, key: 'memberRequired' },
       { position: 4, key: 'duplicateSeed' }
     ]);
+  });
+});
+
+describe('draw participants to entries', () => {
+  it('keeps id, name, members in order, seed and club, with a missing club as null', () => {
+    expect(drawEntriesFromParticipants([
+      { id: 'r-1', displayName: 'Ana Gil / Bea Paz', members: ['Ana Gil', 'Bea Paz'], seedRank: null, separationKey: 'Norte' },
+      { id: 'r-2', displayName: 'Caro Ruiz / Dani Sosa', members: ['Caro Ruiz', 'Dani Sosa'], seedRank: 2 }
+    ])).toEqual([
+      entry('Ana Gil / Bea Paz', ['Ana Gil', 'Bea Paz'], { id: 'r-1', separationKey: 'Norte' }),
+      entry('Caro Ruiz / Dani Sosa', ['Caro Ruiz', 'Dani Sosa'], { id: 'r-2', seedRank: 2 })
+    ]);
+  });
+
+  it('copies the members so editing an entry never changes the source', () => {
+    const members = ['Ana Gil'];
+    const [mapped] = drawEntriesFromParticipants([{ id: 'r-1', displayName: 'Ana Gil', members, seedRank: null }]);
+    mapped.members.push('Otra');
+    expect(members).toEqual(['Ana Gil']);
   });
 });
 

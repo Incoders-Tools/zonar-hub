@@ -1,262 +1,308 @@
 <div class="rw">
-  @if (facade.loading()) {
-    <div class="rw__loading">
-      <span class="rw__spinner"></span> {{ 'common.loading' | t }}
-    </div>
-  } @else if (!facade.tournament()) {
-    <div class="rw__error">
-      <h2>{{ 'common.noResults' | t }}</h2>
-    </div>
-  } @else {
-    @let t = facade.tournament()!;
-
-    <!-- Header -->
-    <div class="rw__header">
-      <span class="rw__badge">{{ t.categoryName }} · {{ t.genderLabel }}</span>
-      <h1 class="rw__title">{{ 'registration.title' | t }}</h1>
-      <p class="rw__tournament-name">{{ t.name }}</p>
-      <p class="rw__tournament-meta">{{ t.complexName }} · {{ t.startDate | formatDate }} — {{ t.endDate | formatDate }}</p>
-      <button
-        class="rw__tutorial-btn"
-        type="button"
-        (click)="showTutorial.set(true)"
-        [attr.aria-label]="'registration.tutorial.open' | t">
-        {{ 'registration.tutorial.open' | t }}
-      </button>
-    </div>
-
-    @if (showTutorial()) {
-      <app-tutorial-modal
-        [titleKey]="'registration.tutorial.title'"
-        [youtubeUrl]="'https://www.youtube.com/embed/PLACEHOLDER_VIDEO_ID'"
-        (closed)="showTutorial.set(false)">
-      </app-tutorial-modal>
+  @switch (facade.state()) {
+    @case ('loading') {
+      <app-loading-state messageKey="common.loading"></app-loading-state>
     }
+    @case ('error') {
+      <app-error-state title="registration.public.loadErrorTitle" [message]="facade.loadErrorKey()" (retried)="load()"></app-error-state>
+    }
+    @case ('notFound') {
+      <div class="rw__state" role="status">
+        <h1 class="rw__state-title">{{ 'publicTournaments.detail.notFound.title' | t }}</h1>
+        <p>{{ 'publicTournaments.detail.notFound.message' | t }}</p>
+        <a class="rw__state-link" [routerLink]="tournamentPath()">{{ 'registration.public.backToTournament' | t }}</a>
+      </div>
+    }
+    @case ('closed') {
+      <div class="rw__state" role="status">
+        <h1 class="rw__state-title">{{ 'registration.public.closed.title' | t }}</h1>
+        <p>{{ facade.closedMessageKey() | t }}</p>
+        @if (facade.info(); as info) {
+          @if (info.opensOn || info.closesOn) {
+            <p class="rw__state-window">
+              {{ 'registration.public.window' | t }}: {{ info.opensOn | formatDate }} — {{ info.closesOn | formatDate }}
+            </p>
+          }
+        }
+        <a class="rw__state-link" [routerLink]="tournamentPath()">{{ 'registration.public.backToTournament' | t }}</a>
+      </div>
+    }
+    @case ('ready') {
+      @let t = facade.tournament()!;
+      @let info = facade.info()!;
 
-    <!-- Shared Stepper -->
-    <app-stepper
-      [steps]="steps()"
-      [activeIndex]="currentStep()"
-      (stepChanged)="onStepChanged($event)">
-    </app-stepper>
-
-    <!-- Step 0: Participants (dynamic slots) -->
-    @if (currentStep() === 0) {
-      <div class="rw-card">
-        <div class="rw-card__header">
-          <h2>{{ 'registration.selectPlayers' | t }}</h2>
-          <p class="rw-card__desc">{{ 'registration.selectPlayersDesc' | t }}</p>
+      <header class="rw__header">
+        @if (t.category || t.gender) {
+          <span class="rw__badge">{{ t.category?.name }}@if (t.category && t.gender) { · }{{ t.gender?.name }}</span>
+        }
+        <h1 class="rw__title">{{ 'registration.title' | t }}</h1>
+        <p class="rw__tournament-name">{{ t.name }}</p>
+        <p class="rw__tournament-meta">
+          @if (t.complex) { {{ t.complex.name }} · }{{ t.startDate | formatDate }}@if (t.endDate && t.endDate !== t.startDate) { — {{ t.endDate | formatDate }}}
+        </p>
+        <div class="rw__capacity" role="status">
+          @if (info.capacity.waitlistOnly) {
+            <span class="rw__capacity-item rw__capacity-item--warning">{{ 'registration.public.waitlistOnly' | t }}</span>
+          } @else if (placesLeftText(); as placesLeft) {
+            <span class="rw__capacity-item">{{ placesLeft }}</span>
+          }
+          @if (feeText(); as fee) {
+            <span class="rw__capacity-item">{{ 'publicTournaments.field.registrationFee' | t }}: {{ fee }}</span>
+          }
         </div>
+        <button class="rw__tutorial-btn" type="button" (click)="showTutorial.set(true)">
+          {{ 'registration.tutorial.open' | t }}
+        </button>
+      </header>
 
-        <div class="rw-card__body">
-          <div class="rw__participants">
-            @for (slot of facade.slots(); track slot.slotNumber) {
-              <app-participant-search
-                [slotNumber]="slot.slotNumber"
-                [slotLabel]="slot.label || ''"
-                [tournamentId]="t.id"
-                [sportId]="t.sportId"
-                [config]="facade.config()!"
-                [eligibilitySlot]="facade.getEligibilitySlotForSlotNumber(slot.slotNumber)"
-                [existingRegistrations]="facade.existingRegistrations()"
-                [selectedPlayerIds]="facade.getOtherSelectedPlayerIds(slot.slotNumber)"
-                [categories]="facade.categories()"
-                [habitualPartnerSuggestion]="slot.slotNumber > 1 ? facade.habitualPartnerSuggestion() : null"
-                [initialPlayer]="facade.participants().get(slot.slotNumber) ?? null"
-                (playerSelected)="facade.selectParticipant($event.slotNumber, $event.player)"
-                (playerCleared)="facade.clearParticipant($event)">
-              </app-participant-search>
-            }
+      @if (showTutorial()) {
+        <app-tutorial-modal
+          [titleKey]="'registration.tutorial.title'"
+          [youtubeUrl]="'https://www.youtube.com/embed/PLACEHOLDER_VIDEO_ID'"
+          (closed)="showTutorial.set(false)">
+        </app-tutorial-modal>
+      }
+
+      <app-stepper [steps]="steps()" [activeIndex]="currentStep()" (stepChanged)="onStepChanged($event)"></app-stepper>
+
+      <!-- Step 1: typed participants; the public form never searches stored players (L9) -->
+      @if (currentStep() === 0) {
+        <section class="rw-card rw-step--participants" aria-labelledby="rw-participants-title">
+          <div class="rw-card__header">
+            <h2 id="rw-participants-title">{{ 'registration.public.participants.title' | t }}</h2>
+            <p class="rw-card__desc">{{ 'registration.public.participants.description' | t }}</p>
+            <p class="rw-card__hint">{{ 'registration.public.participants.dataHint' | t }}</p>
           </div>
-        </div>
 
-        <div class="rw-card__footer">
-          <span></span>
-          <app-async-button
-            [disabled]="!facade.allSlotsValid()"
-            (clicked)="nextStep()">
-            {{ 'common.next' | t }}
-          </app-async-button>
-        </div>
-      </div>
-    }
+          <div class="rw-card__body rw__participants">
+            @for (slot of facade.slots(); track slot.slotNumber; let i = $index) {
+              @let prefix = 'slot-' + slot.slotNumber;
+              <fieldset class="rw-slot" [formGroup]="slotForm(i)">
+                <legend class="rw-slot__title">
+                  {{ slot.label || (('registration.public.slot' | t) + ' ' + slot.slotNumber) }}
+                  @if (!slot.required) { <span class="rw-slot__optional">{{ 'registration.public.slotOptional' | t }}</span> }
+                </legend>
 
-    <!-- Step 1: Availability (shared component) -->
-    @if (currentStep() === 1) {
-      <div class="rw-card">
-        <div class="rw-card__header">
-          <h2>{{ 'registration.availability' | t }}</h2>
-          <p class="rw-card__desc">{{ 'registration.availabilityDesc' | t }}</p>
-        </div>
-
-        <div class="rw-card__body">
-          <app-availability-selector
-            [value]="availabilitySelection()"
-            (changed)="onAvailabilityChanged($event)">
-          </app-availability-selector>
-        </div>
-
-        <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--ghost" type="button" (click)="prevStep()">
-            {{ 'common.back' | t }}
-          </button>
-          <app-async-button (clicked)="nextStep()">
-            {{ 'common.next' | t }}
-          </app-async-button>
-        </div>
-      </div>
-    }
-
-    <!-- Step 2: Verification -->
-    @if (currentStep() === 2) {
-      <div class="rw-card">
-        <div class="rw-card__header">
-          <h2>{{ 'registration.verification' | t }}</h2>
-          <p class="rw-card__desc">{{ 'registration.verificationDesc' | t }}</p>
-        </div>
-
-        <div class="rw-card__body">
-          <div class="rw-verification">
-            @if (!codeSent()) {
-              <div class="rw-verification__prompt">
-                <p>{{ 'registration.verificationPrompt' | t }}</p>
-                <app-async-button (clicked)="sendCode()">
-                  {{ 'registration.sendCode' | t }}
-                </app-async-button>
-              </div>
-            } @else if (!codeVerified()) {
-              <div class="rw-verification__code-entry">
-                <label class="rw-field__label">{{ 'registration.enterCode' | t }}</label>
-                <div class="rw-otp">
-                  @for (ctrl of otpDigits; track $index; let i = $index) {
-                    <input
-                      #otpInput
-                      type="text"
-                      inputmode="numeric"
-                      class="rw-otp__digit"
-                      maxlength="1"
-                      [attr.aria-label]="'Digit ' + (i + 1)"
-                      [formControl]="ctrl"
-                      (input)="onOtpInput($event, i)"
-                      (keydown)="onOtpKeydown($event, i)"
-                      (paste)="onOtpPaste($event, i)"
-                    />
-                    @if (i === 2) {
-                      <span class="rw-otp__separator">—</span>
-                    }
+                <div class="rw-slot__rules" [attr.aria-label]="'registration.public.rules.title' | t">
+                  @for (rule of slotRules(slot); track rule) {
+                    <span class="rw-slot__rule">{{ rule }}</span>
                   }
                 </div>
-                <app-async-button
-                  [disabled]="otpValue().length !== 6"
-                  (clicked)="verifyCode()">
-                  {{ 'registration.verifyCode' | t }}
-                </app-async-button>
-              </div>
-            } @else {
-              <div class="rw-verification__success">
-                <span class="rw-verification__success-icon" aria-hidden="true">&#10003;</span>
-                <p>{{ 'registration.codeVerified' | t }}</p>
+
+                <div class="rw-slot__grid">
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-firstName'">
+                      {{ 'admin.players.form.firstName' | t }}@if (slot.required) { * }
+                    </label>
+                    <input class="rw-field__input" type="text" formControlName="firstName" appNormalizeName
+                           autocomplete="given-name" [id]="prefix + '-firstName'"
+                           [placeholder]="'admin.players.form.firstNamePlaceholder' | t" />
+                    @if (slotForm(i).controls.firstName.hasError('required') && slotForm(i).controls.firstName.touched) {
+                      <span class="rw-field__error">{{ 'common.required' | t }}</span>
+                    }
+                    @if (slotForm(i).controls.firstName.hasError('maxlength')) {
+                      <span class="rw-field__error">{{ 'players.errors.name_too_long' | t }}</span>
+                    }
+                  </div>
+
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-lastName'">
+                      {{ 'admin.players.form.lastName' | t }}@if (slot.required) { * }
+                    </label>
+                    <input class="rw-field__input" type="text" formControlName="lastName" appNormalizeName
+                           autocomplete="family-name" [id]="prefix + '-lastName'"
+                           [placeholder]="'admin.players.form.lastNamePlaceholder' | t" />
+                    @if (slotForm(i).controls.lastName.hasError('required') && slotForm(i).controls.lastName.touched) {
+                      <span class="rw-field__error">{{ 'common.required' | t }}</span>
+                    }
+                    @if (slotForm(i).controls.lastName.hasError('maxlength')) {
+                      <span class="rw-field__error">{{ 'players.errors.name_too_long' | t }}</span>
+                    }
+                  </div>
+
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-genderId'">{{ 'admin.players.form.gender' | t }}</label>
+                    <select class="rw-field__input" formControlName="genderId" [id]="prefix + '-genderId'">
+                      <option value="">{{ 'admin.players.form.genderPlaceholder' | t }}</option>
+                      @for (gender of facade.genders(); track gender.id) {
+                        <option [value]="gender.id">{{ gender.name }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-categoryId'">{{ 'admin.players.form.category' | t }}</label>
+                    <select class="rw-field__input" formControlName="categoryId" [id]="prefix + '-categoryId'">
+                      <option value="">{{ 'admin.players.form.categoryPlaceholder' | t }}</option>
+                      @for (category of facade.categories(); track category.id) {
+                        <option [value]="category.id">{{ category.name }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="rw-field" [attr.data-field]="prefix + '-birthDate'">
+                    <span class="rw-field__label">{{ 'admin.players.form.birthDate' | t }}</span>
+                    <app-date-input formControlName="birthDate" [max]="today"></app-date-input>
+                  </div>
+
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-email'">{{ 'admin.players.form.email' | t }}</label>
+                    <input class="rw-field__input" type="email" formControlName="email" appNormalizeLowercase
+                           autocomplete="email" [id]="prefix + '-email'"
+                           [placeholder]="'admin.players.form.emailPlaceholder' | t" />
+                    @if (slotForm(i).controls.email.invalid && slotForm(i).controls.email.touched) {
+                      <span class="rw-field__error">{{ 'common.invalidEmail' | t }}</span>
+                    }
+                  </div>
+
+                  <div class="rw-field">
+                    <span class="rw-field__label">{{ 'admin.players.form.phone' | t }}</span>
+                    <app-phone-input formControlName="phone"></app-phone-input>
+                  </div>
+
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-documentId'">{{ 'admin.players.form.documentId' | t }}</label>
+                    <input class="rw-field__input" type="text" formControlName="documentId" [id]="prefix + '-documentId'"
+                           [placeholder]="'admin.players.form.documentIdPlaceholder' | t" />
+                    @if (slotForm(i).controls.documentId.hasError('maxlength')) {
+                      <span class="rw-field__error">{{ 'players.errors.field_too_long' | t }}</span>
+                    }
+                  </div>
+
+                  <div class="rw-field">
+                    <label class="rw-field__label" [for]="prefix + '-club'">{{ 'admin.players.form.club' | t }}</label>
+                    <input class="rw-field__input" type="text" formControlName="club" [id]="prefix + '-club'"
+                           [placeholder]="'admin.players.form.clubPlaceholder' | t" />
+                    @if (slotForm(i).controls.club.hasError('maxlength')) {
+                      <span class="rw-field__error">{{ 'players.errors.field_too_long' | t }}</span>
+                    }
+                  </div>
+                </div>
+
+                @if (slotErrors(slot.slotNumber).length > 0) {
+                  <ul class="rw-slot__errors" role="alert" [attr.data-slot-errors]="slot.slotNumber">
+                    @for (error of slotErrors(slot.slotNumber); track error) {
+                      <li class="rw-field__error">{{ error | t }}</li>
+                    }
+                  </ul>
+                }
+              </fieldset>
+            }
+            <p class="rw-card__hint">{{ 'registration.public.participants.precheckHint' | t }}</p>
+          </div>
+
+          <div class="rw-card__footer">
+            <a class="rw-btn rw-btn--ghost" [routerLink]="tournamentPath()">{{ 'registration.public.backToTournament' | t }}</a>
+            <div class="rw-card__action">
+              @if (!canContinue()) {
+                <p class="rw-card__hint" id="rw-next-hint">{{ 'registration.public.participants.nextHint' | t }}</p>
+              }
+              <app-async-button [disabled]="!canContinue()" (clicked)="next()">{{ 'common.next' | t }}</app-async-button>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- Step 2: emailed code, public name consent and the single submission -->
+      @if (currentStep() === 1) {
+        <section class="rw-card rw-step--verification" aria-labelledby="rw-verification-title">
+          <div class="rw-card__header">
+            <h2 id="rw-verification-title">{{ 'registration.public.verification.title' | t }}</h2>
+            <p class="rw-card__desc">{{ 'registration.public.verification.description' | t }}</p>
+          </div>
+
+          <div class="rw-card__body rw-verification">
+            <div class="rw-field">
+              <label class="rw-field__label" for="contact-email">{{ 'registration.public.contactEmail' | t }} *</label>
+              <input id="contact-email" class="rw-field__input" type="email" autocomplete="email" appNormalizeLowercase
+                     [formControl]="contactEmail" [placeholder]="'admin.players.form.emailPlaceholder' | t"
+                     aria-describedby="contact-email-hint" />
+              <span id="contact-email-hint" class="rw-field__hint">{{ 'registration.public.contactEmailHint' | t }}</span>
+              @if (contactEmail.invalid && contactEmail.touched) {
+                <span class="rw-field__error">{{ 'common.invalidEmail' | t }}</span>
+              }
+            </div>
+
+            <div class="rw-verification__send">
+              <app-async-button variant="secondary" [disabled]="!canSendCode()" [loading]="facade.codeSending()" (clicked)="sendCode()">
+                {{ (facade.codeSentTo() ? 'registration.resendCode' : 'registration.sendCode') | t }}
+              </app-async-button>
+            </div>
+            @if (facade.resendIn() > 0) {
+              <p class="rw-verification__countdown">{{ resendInText() }}</p>
+            }
+            @if (facade.codeErrorKey(); as codeError) {
+              <p class="rw-verification__code-error rw-field__error" role="alert">{{ codeError | t }}</p>
+            }
+
+            @if (facade.codeSentTo()) {
+              @if (codeMatchesEmail()) {
+                <p class="rw-verification__sent" role="status">{{ codeSentText() }}</p>
+              } @else {
+                <p class="rw-verification__email-changed rw-field__error" role="status">{{ 'registration.public.emailChanged' | t }}</p>
+              }
+              <div class="rw-verification__code" role="group" [attr.aria-label]="'registration.verificationCode' | t">
+                <span class="rw-field__label">{{ 'registration.enterCode' | t }}</span>
+                <app-otp-input [disabled]="facade.submitting()" (codeChanged)="code.set($event)"></app-otp-input>
               </div>
             }
+
+            <label class="rw-verification__consent-row">
+              <input type="checkbox" class="rw-verification__checkbox" [formControl]="consent" />
+              <span class="rw-verification__consent">{{ facade.info()!.consentTextKey | t }}</span>
+            </label>
+
+            @if (facade.submitErrorKey(); as submitError) {
+              <p class="rw-verification__submit-error rw-field__error" role="alert">{{ submitError | t }}</p>
+            }
           </div>
-        </div>
 
-        <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--ghost" type="button" (click)="prevStep()">
-            {{ 'common.back' | t }}
-          </button>
-          <app-async-button
-            [disabled]="!codeVerified()"
-            (clicked)="nextStep()">
-            {{ 'common.next' | t }}
-          </app-async-button>
-        </div>
-      </div>
-    }
-
-    <!-- Step 3: Confirmation -->
-    @if (currentStep() === 3) {
-      <div class="rw-card">
-        <div class="rw-card__header">
-          <h2>{{ 'registration.confirmation' | t }}</h2>
-          <p class="rw-card__desc">{{ 'registration.confirmationDesc' | t }}</p>
-        </div>
-
-        <div class="rw-card__body">
-          <div class="rw-summary">
-            <!-- Tournament info -->
-            <div class="rw-summary__section">
-              <h3 class="rw-summary__section-title">{{ 'registration.tournament' | t }}</h3>
-              <div class="rw-summary__row">
-                <span class="rw-summary__label">{{ 'tournaments.name' | t }}</span>
-                <span class="rw-summary__value">{{ t.name }}</span>
-              </div>
-              <div class="rw-summary__row">
-                <span class="rw-summary__label">{{ 'tournaments.category' | t }}</span>
-                <span class="rw-summary__value rw-summary__badge">{{ t.categoryName }}</span>
-              </div>
-              <div class="rw-summary__row">
-                <span class="rw-summary__label">{{ 'tournaments.gender' | t }}</span>
-                <span class="rw-summary__value">{{ t.genderLabel }}</span>
-              </div>
-              <div class="rw-summary__row">
-                <span class="rw-summary__label">{{ 'tournaments.dates' | t }}</span>
-                <span class="rw-summary__value">{{ t.startDate | formatDate }} — {{ t.endDate | formatDate }}</span>
-              </div>
-            </div>
-
-            <!-- Participants -->
-            <div class="rw-summary__section">
-              <h3 class="rw-summary__section-title">{{ 'registration.pairTitle' | t }}</h3>
-              <div class="rw-summary__players">
-                @for (entry of facade.slots(); track entry.slotNumber; let i = $index) {
-                  @if (facade.participants().get(entry.slotNumber); as player) {
-                    @if (i > 0) {
-                      <span class="rw-summary__pair-divider">&amp;</span>
-                    }
-                    <div class="rw-summary__player-card">
-                      <div class="rw-summary__player-avatar">{{ player.firstName.charAt(0) }}{{ player.lastName.charAt(0) }}</div>
-                      <div>
-                        <div class="rw-summary__player-name">{{ player.firstName }} {{ player.lastName }}</div>
-                        <div class="rw-summary__player-meta">{{ player.categoryName }} · #{{ player.ranking }}</div>
-                      </div>
-                    </div>
-                  }
-                }
-              </div>
-            </div>
-
-            <!-- Availability -->
-            <div class="rw-summary__section">
-              <h3 class="rw-summary__section-title">{{ 'registration.availability' | t }}</h3>
-              <div class="rw-summary__row">
-                <span class="rw-summary__label">{{ 'registration.availableDays' | t }}</span>
-                <span class="rw-summary__value">
-                  @if (availabilityForm.value.friday) { {{ 'registration.friday' | t }} }
-                  @if (availabilityForm.value.saturday) { {{ 'registration.saturday' | t }} }
-                  @if (availabilityForm.value.sunday) { {{ 'registration.sunday' | t }} }
-                </span>
-              </div>
-              <div class="rw-summary__row">
-                <span class="rw-summary__label">{{ 'registration.preferredTime' | t }}</span>
-                <span class="rw-summary__value">{{ 'registration.' + availabilityForm.value.preferredTime | t }}</span>
+          <div class="rw-card__footer">
+            <button class="rw-btn rw-btn--ghost" type="button" [disabled]="facade.submitting()" (click)="back()">
+              {{ 'common.back' | t }}
+            </button>
+            <div class="rw-card__action">
+              @if (!canSubmit() && !facade.submitting()) {
+                <p class="rw-card__hint">{{ 'registration.public.submitHint' | t }}</p>
+              }
+              <div class="rw-verification__submit">
+                <app-async-button [disabled]="!canSubmit()" [loading]="facade.submitting()" (clicked)="submit()">
+                  {{ 'registration.submit' | t }}
+                </app-async-button>
               </div>
             </div>
           </div>
-        </div>
+        </section>
+      }
 
-        <div class="rw-card__footer">
-          <button class="rw-btn rw-btn--ghost" type="button" (click)="prevStep()">
-            {{ 'common.back' | t }}
-          </button>
-          <app-async-button
-            [loading]="facade.submitting()"
-            [disabled]="facade.submitting()"
-            (clicked)="submitRegistration()">
-            {{ 'registration.submit' | t }}
-          </app-async-button>
-        </div>
-      </div>
+      <!-- Step 3: result -->
+      @if (currentStep() === 2) {
+        @if (facade.result(); as result) {
+          <section class="rw-card rw-result" aria-labelledby="rw-result-title">
+            <div class="rw-card__header">
+              <h2 id="rw-result-title">{{ 'registration.public.result.title' | t }}</h2>
+            </div>
+            <div class="rw-card__body">
+              <p class="rw-result__reference">
+                <span class="rw-result__label">{{ 'registration.public.result.reference' | t }}</span>
+                <code class="rw-result__code">{{ result.reference }}</code>
+              </p>
+              <p class="rw-card__hint">{{ 'registration.public.result.referenceHint' | t }}</p>
+              <p class="rw-result__status" role="status">
+                {{ (result.status === 'waitlisted' ? 'registration.public.result.waitlisted' : 'registration.public.result.pending') | t }}
+              </p>
+              <p class="rw-result__payment">
+                <span class="rw-result__label">{{ 'registration.public.result.payment' | t }}</span>
+                {{ paymentText() }}
+              </p>
+            </div>
+            <div class="rw-card__footer">
+              <a class="rw-btn rw-btn--ghost" [routerLink]="tournamentPath()">{{ 'registration.public.backToTournament' | t }}</a>
+              <a class="rw-btn rw-btn--primary" [routerLink]="confirmedPairsPath()">{{ 'registration.public.result.confirmedPairs' | t }}</a>
+            </div>
+          </section>
+        }
+      }
     }
   }
 </div>

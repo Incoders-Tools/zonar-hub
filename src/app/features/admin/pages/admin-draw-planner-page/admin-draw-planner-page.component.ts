@@ -39,6 +39,7 @@ import {
   DrawParticipantEntry,
   DrawParticipantIssue,
   DrawParticipantPasteResult,
+  drawEntriesFromParticipants,
   drawFormatSettingsFromOptions,
   drawOptionsForRequest,
   isValidDrawSeed,
@@ -55,6 +56,9 @@ function errorKeyOf(error: unknown): string {
 }
 
 type DrawAction = 'preview' | 'regenerate' | 'save' | 'publish' | 'unpublish' | 'delete';
+
+/** Import of the confirmed registrations: idle, reading them, none confirmed yet, or failed. */
+type ConfirmedImportStatus = 'idle' | 'loading' | 'empty' | 'error';
 
 type ParticipantRow = FormGroup<{
   /** Draw-local id of a loaded participant; null for new rows. */
@@ -100,8 +104,9 @@ function participationFormatFor(tournament: Tournament | null): DrawParticipatio
 }
 
 /**
- * Admin draw page (D9) at `/admin/tournaments/:tournamentId/draw`: participants (rows or paste), format and
- * options, randomization, preview, save draft, publish/unpublish and delete for the tournament's single draw (D1).
+ * Admin draw page (D9) at `/admin/tournaments/:tournamentId/draw`: participants (rows, paste or the confirmed
+ * registrations, S4), format and options, randomization, preview, save draft, publish/unpublish and delete for the
+ * tournament's single draw (D1).
  * Without a tournament id (`/admin/draw-planner`) it is a tournament picker that opens the draw page.
  */
 @Component({
@@ -166,6 +171,11 @@ export class AdminDrawPlannerPageComponent {
   readonly busyAction = signal<DrawAction | null>(null);
   readonly showDeleteConfirm = signal(false);
   readonly pasteResult = signal<DrawParticipantPasteResult | null>(null);
+  readonly importStatus = signal<ConfirmedImportStatus>('idle');
+  /** Translation key of the last failed import. */
+  readonly importErrorKey = signal<string | null>(null);
+  /** Confirmed registrations waiting for the replace confirmation (the list already had rows). */
+  readonly pendingImport = signal<DrawParticipantEntry[] | null>(null);
   readonly progress = signal(0);
   /** Match whose result dialog is open (F3). */
   readonly resultMatch = signal<DrawMatch | null>(null);
@@ -272,6 +282,7 @@ export class AdminDrawPlannerPageComponent {
       titleKey: 'adminDraw.help.paste.title',
       items: ['adminDraw.help.paste.pair', 'adminDraw.help.paste.individual', 'adminDraw.help.paste.team', 'adminDraw.help.paste.markers']
     },
+    { titleKey: 'adminDraw.help.import.title', contentKey: 'adminDraw.help.import.content' },
     { titleKey: 'adminDraw.help.states.title', contentKey: 'adminDraw.help.states.content' },
     { titleKey: 'adminDraw.help.results.title', contentKey: 'adminDraw.help.results.content' },
     {
@@ -355,6 +366,43 @@ export class AdminDrawPlannerPageComponent {
     this.replaceParticipants(mode === 'replace' ? result.entries : [...this.entries(), ...result.entries]);
     this.pasteControl.setValue('');
     this.notifications.success('adminDraw.messages.pasteImported');
+  }
+
+  /**
+   * Reads the confirmed registrations (S4: only confirmed ones reach the draw) and replaces the list with them, so a
+   * repeated import never duplicates a pair or keeps one that is no longer confirmed. Existing rows are replaced only
+   * after the confirm-dialog; rows can still be added or edited by hand afterwards.
+   */
+  async importConfirmed(): Promise<void> {
+    if (this.hasResults() || this.importStatus() === 'loading') return;
+    this.importStatus.set('loading');
+    this.importErrorKey.set(null);
+    try {
+      const entries = drawEntriesFromParticipants(await this.planner.loadConfirmedParticipants());
+      if (entries.length === 0) {
+        this.importStatus.set('empty');
+        return;
+      }
+      this.importStatus.set('idle');
+      if (this.participants.length > 0) {
+        this.pendingImport.set(entries);
+      } else {
+        this.applyImport(entries);
+      }
+    } catch (error) {
+      this.importErrorKey.set(errorKeyOf(error));
+      this.importStatus.set('error');
+    }
+  }
+
+  confirmImport(): void {
+    const entries = this.pendingImport();
+    this.pendingImport.set(null);
+    if (entries) this.applyImport(entries);
+  }
+
+  cancelImport(): void {
+    this.pendingImport.set(null);
   }
 
   async preview(): Promise<void> {
@@ -480,7 +528,15 @@ export class AdminDrawPlannerPageComponent {
     return control.invalid && (control.dirty || control.touched);
   }
 
+  private applyImport(entries: DrawParticipantEntry[]): void {
+    this.replaceParticipants(entries);
+    this.notifications.success(interpolate(this.t('adminDraw.import.done'), { count: entries.length }));
+  }
+
   private async loadTournament(id: string): Promise<void> {
+    this.importStatus.set('idle');
+    this.importErrorKey.set(null);
+    this.pendingImport.set(null);
     await this.planner.load(id);
     this.applyDraw(this.planner.draw(), this.planner.tournament());
   }
@@ -508,13 +564,7 @@ export class AdminDrawPlannerPageComponent {
       randomizationMode: draw.randomizationMode ?? (hasSeeds ? 'seeded' : 'random'),
       seed: draw.seed ?? ''
     }, { emitEvent: false });
-    this.replaceParticipants(draw.participants.map(participant => ({
-      id: participant.id,
-      displayName: participant.displayName,
-      members: participant.members,
-      seedRank: participant.seedRank,
-      separationKey: participant.separationKey ?? null
-    })));
+    this.replaceParticipants(drawEntriesFromParticipants(draw.participants));
   }
 
   private buildRow(entry?: DrawParticipantEntry): ParticipantRow {

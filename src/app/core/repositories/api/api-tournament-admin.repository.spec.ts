@@ -109,3 +109,68 @@ describe('ApiTournamentAdminRepository public visibility contract', () => {
     await expectAsync(result).toBeRejectedWithError('tournaments.errors.forbidden');
   });
 });
+
+describe('ApiTournamentAdminRepository eligibility profile assignment', () => {
+  let repository: ApiTournamentAdminRepository;
+  let http: HttpTestingController;
+  const url = '/api/admin/tournaments/t-1/eligibility-profile';
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/api' },
+        { provide: ActiveOrganizationService, useValue: { activeOrganizationId: () => 'org-1' } }
+      ]
+    });
+    repository = TestBed.inject(ApiTournamentAdminRepository);
+    http = TestBed.inject(HttpTestingController);
+  });
+  afterEach(() => http.verify());
+
+  it('reads the assigned profile id, null when the tournament has none', async () => {
+    const assigned = repository.getEligibilityProfileId('t-1');
+    const request = http.expectOne(url);
+    expect(request.request.method).toBe('GET');
+    request.flush({ eligibilityProfileId: 'ep-1' });
+    expect(await assigned).toBe('ep-1');
+
+    const none = repository.getEligibilityProfileId('t-1');
+    http.expectOne(url).flush({ eligibilityProfileId: null });
+    expect(await none).toBeNull();
+  });
+
+  it('puts the chosen profile and returns the stored assignment', async () => {
+    const result = repository.setEligibilityProfile('t-1', 'ep-2');
+    const request = http.expectOne(url);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ eligibilityProfileId: 'ep-2' });
+    request.flush({ eligibilityProfileId: 'ep-2' });
+    expect(await result).toBe('ep-2');
+  });
+
+  it('clears the assignment with null', async () => {
+    const result = repository.setEligibilityProfile('t-1', null);
+    const request = http.expectOne(url);
+    expect(request.request.body).toEqual({ eligibilityProfileId: null });
+    request.flush({ eligibilityProfileId: null });
+    expect(await result).toBeNull();
+  });
+
+  it('maps 404 eligibility_profiles.not_found and tournaments.not_found to their translation keys', async () => {
+    const unknownProfile = repository.setEligibilityProfile('t-1', 'ep-x');
+    http.expectOne(url).flush({ code: 'eligibility_profiles.not_found' }, { status: 404, statusText: 'Not Found' });
+    await expectAsync(unknownProfile).toBeRejectedWithError('eligibility_profiles.errors.not_found');
+
+    const unknownTournament = repository.getEligibilityProfileId('t-1');
+    http.expectOne(url).flush({ code: 'tournaments.not_found' }, { status: 404, statusText: 'Not Found' });
+    await expectAsync(unknownTournament).toBeRejectedWithError('tournaments.errors.not_found');
+  });
+
+  it('maps the tenant refusal to the translated forbidden key', async () => {
+    const result = repository.setEligibilityProfile('t-1', 'ep-1');
+    http.expectOne(url).flush({ code: 'tournaments.forbidden' }, { status: 403, statusText: 'Forbidden' });
+    await expectAsync(result).toBeRejectedWithError('tournaments.errors.forbidden');
+  });
+});

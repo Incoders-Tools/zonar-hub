@@ -1,85 +1,43 @@
-# Admin Tournament Eligibility Profiles Page
+# AdminTournamentEligibilityProfilesPageComponent
 
 ## Purpose
-Manage tournament eligibility profiles with complex slot-based configuration. Allow administrators to define eligibility criteria with support for multiple slots per profile, each specifying gender, category, and age constraints.
+Manage the eligibility profiles of the active organization (D1, D5) through
+`/api/admin/organizations/{organizationId}/eligibility-profiles`. A profile holds one rule slot per participant
+(gender, category with one level of tolerance, minimum and maximum age, label, required). A tournament references a
+profile from its own form (`TournamentsFormComponent`, R2b).
 
 ## Architecture
+- **Page** — orchestration: filters, dialogs, row actions; reloads on init and per organization change
+- **Facade** (`TournamentEligibilityProfilesFacadeService`) — state, genders and categories for the slot options,
+  translated toasts for every API error code
+- **Form panel** (`TournamentEligibilityProfilesFormPanelComponent`) — profile fields and the slot grid
+- **Repository** — `ApiEligibilityProfileRepository`
 
-### Layer Separation
-- **Page Component** (`admin-tournament-eligibility-profiles-page.component.ts`): UI orchestration, dialog management, table interactions
-- **Facade Service** (`tournament-eligibility-profiles-facade.service.ts`): Business logic, state management, data fetching (including genders/categories)
-- **Form Dialog Component** (`tournament-eligibility-profiles-form-panel.component.ts`): Main form with slot management (collapsible section)
-- **Slot Editor Component** (`slot-editor/slot-editor.component.ts`): Dedicated component for rendering slot table with add/remove buttons
-- **Help Dialog Component** (`tournament-eligibility-profiles-help-dialog.component.ts`): Help content display
-- **Repository** (`MockTournamentEligibilityProfileRepository`): Data access layer
+`slot-editor/slot-editor.component.ts` is no longer used: slots are edited with the shared
+`ChildCollectionGridComponent`.
 
-### Complex Features
-- **1:Many Relationship**: Main profile has multiple slots
-- **Collapsible Slots Section**: Slots are managed in a collapsible UI section
-- **Slot Management**: Add/remove slots dynamically with form array
-- **Supporting Data**: Facade loads genders and categories for slot configuration
+## Inputs / Outputs
+None (route-level container).
 
-## Data Model
+## States
+- **Loading / Empty / Error** — `zh-collection-view`; the translated load error (`facade.error()`) renders above the list
+- **Success** — save and delete toasts
+- **Delete refused** — `eligibility_profiles.errors.in_use` (409) explains that a tournament still references the
+  profile; the profile stays and the dialog remains open. Bulk delete stops at the first refusal and reloads.
 
-### TournamentEligibilityProfile
-```typescript
-interface TournamentEligibilityProfile {
-  id: string;
-  name: string;              // e.g., "U18 Standard Profile"
-  key: string;               // e.g., "u18_standard" (unique, lowercase)
-  description: string | null; // e.g., "Profile for U18 tournaments"
-  sortOrder: number | null;
-  slots: EligibilitySlot[];   // 1:many relationship
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+## Business rules (help)
+- An inactive profile is ignored: the tournaments that reference it apply their own category, gender and modality
+  rules until it is reactivated (L8).
+- A profile referenced by a tournament cannot be deleted.
 
-interface EligibilitySlot {
-  slotNumber: number;        // Display order
-  genderId: string;          // M, F, Mixed
-  categoryId: string;        // e.g., U18, U21, Open
-  minAge: number | null;
-  maxAge: number | null;
-  label: string | null;      // e.g., "Slot A"
-}
-```
+## Table columns
+Name (sortable), description, participants (slot count), status.
 
-## Features
+## Accessibility
+Load error with `role="alert"`; dialogs and list from shared components.
 
-- Full CRUD operations with nested slot management
-- Collapsible slots section in form dialog
-- Dynamic slot add/remove with table editor
-- Support for gender, category, and age constraints per slot
-- Filtering by name and status
-- Sorting support
-- Bulk delete operations
-- Form validation with uniqueness checks
-- Responsive design
-- i18n support for all strings
+## i18n
+`admin.tournament-eligibility-profiles.*`, `eligibility_profiles.errors.*`. Locales: es, en, pt.
 
-## Complex Form Structure
-
-1. **Main Fields** (standard grid):
-   - name, key, description, sortOrder, isActive
-
-2. **Slots Section** (collapsible):
-   - Table with columns: slotNumber, genderId, categoryId, minAge, maxAge, label
-   - Add Slot button to append new rows
-   - Remove button per slot (inline)
-   - Empty state message when no slots
-
-## Table Columns
-
-- Name (sortable)
-- Key (sortable)
-- Description
-- Slots Count (displays count of slots)
-- Sort Order (sortable)
-- Status (Active/Inactive badge, sortable)
-
-## Facade Load Method
-
-The `load()` method fetches:
-- All tournament eligibility profiles
-- Supporting data: Genders, Categories (for form dropdowns - TODO)
+## Theming
+Semantic tokens only.

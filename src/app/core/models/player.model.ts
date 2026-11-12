@@ -4,6 +4,10 @@ export interface PlayerSportAssignment {
   sortOrder: number;
 }
 
+/**
+ * Organization player (S3). The API stores email, gender and category as optional; they are mapped to `''` when
+ * missing, and the eligibility rules treat an empty value as missing data (D3, L8).
+ */
 export interface Player {
   id: string;
   organizationId?: string;
@@ -27,6 +31,8 @@ export interface Player {
   ranking?: number;
   photoUrl?: string;
   city?: string;
+  /** Club of the player; the draw separation key of its pairs (D5). */
+  club?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;

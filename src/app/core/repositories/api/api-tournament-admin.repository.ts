@@ -95,6 +95,22 @@ function tournamentErrorKey(error: unknown): string {
   return code === TOURNAMENT_FORBIDDEN_CODE ? TOURNAMENT_FORBIDDEN_KEY : code;
 }
 
+/** Body of `GET`/`PUT /api/admin/tournaments/{tournamentId}/eligibility-profile` (R2b). */
+interface TournamentEligibilityProfileBody {
+  eligibilityProfileId: string | null;
+}
+
+/** Translation key of a failed profile assignment; every code the R2b routes return has one. */
+function eligibilityAssignmentErrorKey(error: unknown): string {
+  const code = extractApiErrorCode(error);
+  switch (code) {
+    case TOURNAMENT_FORBIDDEN_CODE: return TOURNAMENT_FORBIDDEN_KEY;
+    case 'tournaments.not_found': return 'tournaments.errors.not_found';
+    case 'eligibility_profiles.not_found': return 'eligibility_profiles.errors.not_found';
+    default: return code.startsWith('common.') ? code : 'common.unexpectedError';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiTournamentAdminRepository implements TournamentAdminRepository {
   private readonly http = inject(HttpClient);
@@ -182,6 +198,29 @@ export class ApiTournamentAdminRepository implements TournamentAdminRepository {
     return tournaments
       .map(t => t.key)
       .filter((key): key is string => typeof key === 'string' && key.length > 0);
+  }
+
+  async getEligibilityProfileId(tournamentId: string): Promise<string | null> {
+    try {
+      const body = await firstValueFrom(
+        this.http.get<TournamentEligibilityProfileBody>(`${this.endpoint}/${tournamentId}/eligibility-profile`)
+      );
+      return body.eligibilityProfileId ?? null;
+    } catch (error) {
+      throw new Error(eligibilityAssignmentErrorKey(error));
+    }
+  }
+
+  async setEligibilityProfile(tournamentId: string, eligibilityProfileId: string | null): Promise<string | null> {
+    try {
+      const request: TournamentEligibilityProfileBody = { eligibilityProfileId };
+      const body = await firstValueFrom(
+        this.http.put<TournamentEligibilityProfileBody>(`${this.endpoint}/${tournamentId}/eligibility-profile`, request)
+      );
+      return body.eligibilityProfileId ?? null;
+    } catch (error) {
+      throw new Error(eligibilityAssignmentErrorKey(error));
+    }
   }
 
   private toWriteRequest(tournament: Partial<Tournament>): TournamentWriteRequest {

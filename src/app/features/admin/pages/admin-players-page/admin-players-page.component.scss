@@ -322,6 +322,12 @@
     margin: 0;
   }
 
+  &__load-error {
+    color: var(--zh-danger);
+    font-size: var(--zh-font-size-sm);
+    margin: 0 0 var(--zh-space-sm);
+  }
+
   &__importer-actions {
     display: flex;
     gap: var(--zh-space-md);
