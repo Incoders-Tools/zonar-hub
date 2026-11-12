@@ -6,6 +6,10 @@ import { BehaviorSubject } from 'rxjs';
 import { API_BASE_URL } from '../../../../core/config/api-base-url.token';
 import { I18nService } from '../../../../core/i18n/i18n.service';
 import { buildPublicTournament } from '../../../../core/models/public-tournament.testing';
+import { buildPublicRegistrationInfo } from '../../../../core/models/public-registration.testing';
+import { PublicRegistrationInfo } from '../../../../core/models';
+import { ES_TRANSLATIONS } from '../../../../core/i18n/i18n.es';
+import { PUBLIC_REQUEST } from '../../../../core/http/public-request.context';
 import { buildEightPairKnockoutDraw } from '../../../../core/models/tournament-draw.testing';
 import { TournamentDraw } from '../../../../core/models/tournament-draw.model';
 import { TournamentDetailPageComponent } from './tournament-detail-page.component';
@@ -92,6 +96,8 @@ describe('TournamentDetailPageComponent', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => {
+    // The registration info feeds only the register CTA, covered in its own describe.
+    http.match(request => request.url.endsWith('/registration'));
     http.verify();
     delete (document as unknown as Record<string, unknown>)['visibilityState'];
   });
@@ -137,13 +143,6 @@ describe('TournamentDetailPageComponent', () => {
       expect(element.querySelector('app-public-organization-card')).toBeNull();
     });
 
-    it('does not offer the registration wizard, which needs internal ids the public API does not expose', async () => {
-      http.expectOne(detailUrl).flush(buildPublicTournament());
-      await settle();
-      http.expectOne(drawUrl).flush(...notFound('public_draws.not_found'));
-
-      expect(element.querySelector('a[href$="/register"]')).toBeNull();
-    });
 
     it('shows the translated not-found state when the API answers 404 and never requests a draw', async () => {
       http.expectOne(detailUrl).flush(...notFound('public_tournaments.not_found'));
@@ -167,6 +166,59 @@ describe('TournamentDetailPageComponent', () => {
       http.expectOne(detailUrl).flush(buildPublicTournament());
       await settle();
       http.expectOne(drawUrl).flush(...notFound('public_draws.not_found'));
+      expect(text('h1')).toBe('Open Norte');
+    });
+  });
+
+  describe('register CTA (S2)', () => {
+    const registrationUrl = `${detailUrl}/registration`;
+    const cta = () => element.querySelector<HTMLAnchorElement>('a.tournament-detail__register');
+
+    const loadWith = async (respond: (request: ReturnType<HttpTestingController['expectOne']>) => void) => {
+      create();
+      http.expectOne(detailUrl).flush(buildPublicTournament());
+      await settle();
+      http.expectOne(drawUrl).flush(...notFound('public_draws.not_found'));
+      const request = http.expectOne(registrationUrl);
+      expect(request.request.context.get(PUBLIC_REQUEST)).toBeTrue();
+      respond(request);
+      await settle();
+    };
+    const withInfo = (info: PublicRegistrationInfo) => loadWith(request => request.flush(info));
+
+    it('links to the wizard by slug with the places left when registration is open', async () => {
+      await withInfo(buildPublicRegistrationInfo());
+
+      expect(cta()?.getAttribute('href')).toBe('/tournaments/open-norte-abc123/register');
+      expect(text('.tournament-detail__registration')).toContain(
+        ES_TRANSLATIONS['registration.public.placesLeft'].replace('{count}', '3'));
+    });
+
+    it('keeps the link with the waitlist hint when the places are taken', async () => {
+      await withInfo(buildPublicRegistrationInfo({ capacity: { maxPairs: 8, placesLeft: 0, waitlistOnly: true } }));
+
+      expect(cta()).not.toBeNull();
+      expect(text('.tournament-detail__registration')).toContain(ES_TRANSLATIONS['registration.public.waitlistOnly']);
+    });
+
+    it('shows the reason instead of the link before the window opens and after it ends', async () => {
+      await withInfo(buildPublicRegistrationInfo({ state: 'notStarted', isOpen: false }));
+
+      expect(cta()).toBeNull();
+      expect(text('.tournament-detail__registration')).toContain(ES_TRANSLATIONS['registration.public.closed.notStarted']);
+    });
+
+    it('shows the ended reason when registration has closed', async () => {
+      await withInfo(buildPublicRegistrationInfo({ state: 'ended', isOpen: false }));
+
+      expect(cta()).toBeNull();
+      expect(text('.tournament-detail__registration')).toContain(ES_TRANSLATIONS['registration.public.closed.ended']);
+    });
+
+    it('hides the registration block when the registration info cannot be read', async () => {
+      await loadWith(request => request.flush(null, { status: 500, statusText: 'Server Error' }));
+
+      expect(element.querySelector('.tournament-detail__registration')).toBeNull();
       expect(text('h1')).toBe('Open Norte');
     });
   });

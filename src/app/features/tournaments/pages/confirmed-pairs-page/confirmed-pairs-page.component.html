@@ -1,27 +1,42 @@
 <div class="confirmed-pairs">
-  @if (tournament() && detailPath()) {
-    <a [routerLink]="detailPath()" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
-    <h1>{{ 'confirmedPairs.title' | t }}</h1>
-    <p class="subtitle">{{ tournament()!.name }}</p>
-  }
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-state messageKey="confirmedPairs.loading"></app-loading-state>
+    }
+    @case ('error') {
+      <app-error-state title="confirmedPairs.errorTitle" [message]="errorKey()" (retried)="load()"></app-error-state>
+    }
+    @case ('notFound') {
+      <div class="confirmed-pairs__not-found" role="status">
+        <h1>{{ 'publicTournaments.detail.notFound.title' | t }}</h1>
+        <p>{{ 'publicTournaments.detail.notFound.message' | t }}</p>
+        <a [routerLink]="listPath">{{ 'tournaments.backToList' | t }}</a>
+      </div>
+    }
+    @case ('loaded') {
+      <a [routerLink]="detailPath()" class="back-link">← {{ 'tournaments.backToDetail' | t }}</a>
+      <h1>{{ 'confirmedPairs.title' | t }}</h1>
+      <p class="subtitle">{{ tournament()!.name }}</p>
 
-  @if (pairs().length === 0) {
-    <div class="empty">{{ 'confirmedPairs.empty' | t }}</div>
-  } @else {
-    <div class="pairs-grid">
-      @for (pair of pairs(); track pair.id) {
-        <div class="pair-card">
-          <div class="pair-card__players">
-            <span class="pair-card__player">{{ pair.player1Name }}</span>
-            <span class="pair-card__separator">&</span>
-            <span class="pair-card__player">{{ pair.player2Name }}</span>
-          </div>
-          <div class="pair-card__meta">
-            <span>{{ pair.categoryName }}</span>
-            <span>{{ pair.genderLabel }}</span>
-          </div>
-        </div>
+      @if (pairs().length === 0) {
+        <app-empty-state message="confirmedPairs.empty"></app-empty-state>
+      } @else {
+        <ol class="pairs-grid">
+          @for (pair of pairs(); track pair.position) {
+            <li class="pair-card">
+              <span class="pair-card__position" aria-hidden="true">{{ pair.position }}</span>
+              <div class="pair-card__players">
+                @for (name of pairNames(pair); track $index; let last = $last) {
+                  <span class="pair-card__name">{{ name }}</span>
+                  @if (!last) {
+                    <span class="pair-card__separator" aria-hidden="true">&amp;</span>
+                  }
+                }
+              </div>
+            </li>
+          }
+        </ol>
       }
-    </div>
+    }
   }
 </div>

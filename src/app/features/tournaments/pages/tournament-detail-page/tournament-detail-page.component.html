@@ -99,6 +99,25 @@
             }
           </dl>
 
+          @if (registration(); as info) {
+            <section class="tournament-detail__registration" aria-labelledby="tournament-registration-title">
+              <h2 id="tournament-registration-title">{{ 'publicTournaments.registration.title' | t }}</h2>
+              @if (info.isOpen) {
+                @if (info.capacity.waitlistOnly) {
+                  <p class="tournament-detail__registration-hint tournament-detail__registration-hint--warning">{{ 'registration.public.waitlistOnly' | t }}</p>
+                } @else if (placesLeftText(); as placesLeft) {
+                  <p class="tournament-detail__registration-hint">{{ placesLeft }}</p>
+                }
+                <a class="tournament-detail__register" [routerLink]="registerPath()">
+                  <mat-icon aria-hidden="true">how_to_reg</mat-icon>
+                  {{ 'publicTournaments.registration.cta' | t }}
+                </a>
+              } @else {
+                <p class="tournament-detail__registration-hint" role="status">{{ registrationClosedKey() | t }}</p>
+              }
+            </section>
+          }
+
           @if (t.description) {
             <section class="tournament-detail__text tournament-detail__description">
               <h2>{{ 'publicTournaments.field.description' | t }}</h2>
