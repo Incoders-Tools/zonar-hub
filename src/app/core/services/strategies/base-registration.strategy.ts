@@ -9,8 +9,4 @@ export abstract class BaseRegistrationStrategy {
 
   abstract getSlotCount(): number;
   abstract getSlotLabel(index: number): string;
-
-  isCategoryCompatible(playerCategoryLevel: number, requiredCategoryLevel: number): boolean {
-    return Math.abs(playerCategoryLevel - requiredCategoryLevel) <= this.config.categoryToleranceLevels;
-  }
 }

@@ -23,15 +23,6 @@ export interface SportRegistrationRuleSet {
   config: SportParticipantConfig;
 }
 
-// --- Strategy interface for sport-specific registration behavior ---
-
-export interface RegistrationStrategy {
-  readonly config: SportParticipantConfig;
-  getSlotCount(): number;
-  getSlotLabel(index: number): string;
-  isCategoryCompatible(playerCategoryLevel: number, requiredCategoryLevel: number): boolean;
-}
-
 // --- Validation result for a single participant in a slot ---
 
 export interface ParticipantValidationResult {

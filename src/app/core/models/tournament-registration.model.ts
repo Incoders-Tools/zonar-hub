@@ -1,7 +1,7 @@
 /**
  * Tournament registrations of the admin API (S4; D2, D5 of `odd/tasks/registrations.md`), shaped like
  * `GET /api/admin/tournaments/{tournamentId}/registrations` (`docs/api/admin-registrations.md` in the API repository).
- * Enum values are the API camelCase spelling. The legacy `Registration` model stays for the public wizard until F3.
+ * Enum values are the API camelCase spelling. The legacy `Registration` model stays only for the player registrations list.
  */
 
 export type TournamentRegistrationStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlisted' | 'cancelled';

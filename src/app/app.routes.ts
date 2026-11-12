@@ -24,8 +24,8 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tournaments/pages/tournament-detail-page/tournament-detail-page.component').then(m => m.TournamentDetailPageComponent)
       },
       {
-        // The registration wizard still resolves the tournament by its internal id through the admin API.
-        path: `${PUBLIC_TOURNAMENTS_ROUTE}/:id/register`,
+        // Anonymous registration wizard: reads only the public registration API by slug (S2, D4).
+        path: `${PUBLIC_TOURNAMENTS_ROUTE}/:slug/register`,
         loadComponent: () => import('./features/registration/pages/registration-wizard-page/registration-wizard-page.component').then(m => m.RegistrationWizardPageComponent)
       },
       {
